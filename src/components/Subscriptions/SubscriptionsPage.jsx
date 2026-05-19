@@ -67,14 +67,15 @@ function MemberDetailModal({ sub, allSubs, onClose, onEdit }) {
         {/* Backdrop */}
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-        {/* Modal */}
+        {/* Modal — sits above bottom nav bar (70px) on mobile */}
         <motion.div
           initial={{ y: 80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 80, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 320, damping: 30 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full sm:max-w-lg bg-[#0f1117] border border-white/10 rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl max-h-[82vh] sm:max-h-[90vh] flex flex-col"
+          className="relative w-full sm:max-w-lg bg-[#0f1117] border border-white/10 rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col"
+          style={{ maxHeight: 'calc(85vh - 70px)', marginBottom: '70px' }}
         >
           {/* Drag handle for mobile */}
           <div className="flex justify-center pt-3 pb-1 sm:hidden">
@@ -112,108 +113,112 @@ function MemberDetailModal({ sub, allSubs, onClose, onEdit }) {
             </div>
           </div>
 
-          {/* Stats row */}
-          <div className="grid grid-cols-3 divide-x divide-white/5 border-b border-white/5">
-            <div className="px-4 py-4 text-center">
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Joined</p>
-              <p className="text-white text-xs font-bold">
-                {joinDate
-                  ? new Date(joinDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })
-                  : '—'}
-              </p>
+          {/* Unified scrollable body — everything below the header scrolls together */}
+          <div className="overflow-y-auto flex-1 overscroll-contain">
+            {/* Stats row */}
+            <div className="grid grid-cols-3 divide-x divide-white/5 border-b border-white/5">
+              <div className="px-4 py-4 text-center">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Joined</p>
+                <p className="text-white text-xs font-bold">
+                  {joinDate
+                    ? new Date(joinDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })
+                    : '—'}
+                </p>
+              </div>
+              <div className="px-4 py-4 text-center">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Plans</p>
+                <p className="text-white text-xs font-bold">{loadingHistory ? '…' : history.length}</p>
+              </div>
+              <div className="px-4 py-4 text-center">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Total Spent</p>
+                <p className="text-emerald-400 text-xs font-bold">{loadingHistory ? '…' : `₹${totalSpent.toLocaleString('en-IN')}`}</p>
+              </div>
             </div>
-            <div className="px-4 py-4 text-center">
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Plans</p>
-              <p className="text-white text-xs font-bold">{loadingHistory ? '…' : history.length}</p>
-            </div>
-            <div className="px-4 py-4 text-center">
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Total Spent</p>
-              <p className="text-emerald-400 text-xs font-bold">{loadingHistory ? '…' : `₹${totalSpent.toLocaleString('en-IN')}`}</p>
-            </div>
-          </div>
 
-          {/* Current plan highlight */}
-          <div className="px-6 pt-5 pb-3">
-            <div className="flex items-center gap-2 mb-3">
-              <Layers className="w-3.5 h-3.5 text-[#3390ec]" />
-              <p className="text-[10px] text-[#3390ec] font-bold uppercase tracking-wider">Current Plan</p>
-            </div>
-            <div className="bg-[#3390ec]/5 border border-[#3390ec]/15 rounded-xl p-4 flex items-center justify-between">
-              <div>
-                <p className="text-white font-bold text-sm">{sub.plan_name}</p>
-                <p className="text-slate-500 text-[11px] mt-0.5 font-medium capitalize">{sub.duration_type}</p>
+            {/* Current plan highlight */}
+            <div className="px-6 pt-5 pb-3">
+              <div className="flex items-center gap-2 mb-3">
+                <Layers className="w-3.5 h-3.5 text-[#3390ec]" />
+                <p className="text-[10px] text-[#3390ec] font-bold uppercase tracking-wider">Current Plan</p>
               </div>
-              <div className="text-right">
-                <p className="text-emerald-400 font-bold text-base">₹{sub.amount}</p>
-                <StatusBadge status={sub.status} />
-              </div>
-            </div>
-            <div className="flex justify-between mt-2.5 px-1">
-              <div className="flex items-center gap-1.5">
-                <Calendar className="w-3 h-3 text-slate-500" />
-                <span className="text-slate-500 text-[10px] font-bold">
-                  {new Date(sub.start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-3 h-3 text-slate-500" />
-                <span className={`text-[10px] font-bold ${sub.status === 'expired' ? 'text-rose-400' : 'text-slate-500'}`}>
-                  {new Date(sub.expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Plan History */}
-          <div className="px-6 pb-2 flex items-center gap-2">
-            <History className="w-3.5 h-3.5 text-slate-500" />
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Plan History</p>
-          </div>
-
-          <div className="overflow-y-auto px-6 pb-8 sm:pb-6 flex-1 space-y-0">
-            {loadingHistory ? (
-              <div className="space-y-3 pt-2">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="h-16 bg-white/[0.03] rounded-xl animate-pulse" />
-                ))}
-              </div>
-            ) : history.length === 0 ? (
-              <p className="text-slate-600 text-xs text-center py-6">No history found.</p>
-            ) : (
-              <div className="relative pt-2">
-                {/* Timeline line */}
-                <div className="absolute left-[15px] top-4 bottom-4 w-[1px] bg-white/5" />
-                <div className="space-y-3">
-                  {history.map((h, idx) => {
-                    const cfg = statusConfig[h.status] || statusConfig.expired;
-                    const isCurrent = h.id === sub.id;
-                    return (
-                      <div key={h.id} className="flex items-start gap-4">
-                        {/* Dot */}
-                        <div className={`relative z-10 w-[30px] flex-shrink-0 flex items-center justify-center pt-3`}>
-                          <div className={`w-2.5 h-2.5 rounded-full ${cfg.dot} ${isCurrent ? 'ring-2 ring-offset-1 ring-offset-[#0f1117] ring-current' : ''}`} />
-                        </div>
-                        {/* Content */}
-                        <div className={`flex-1 rounded-xl p-3.5 border ${isCurrent ? 'bg-[#3390ec]/5 border-[#3390ec]/15' : 'bg-white/[0.02] border-white/5'}`}>
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="text-white text-xs font-bold">{h.plan_name}</p>
-                            <p className="text-emerald-400 text-xs font-bold">₹{h.amount}</p>
-                          </div>
-                          <div className="flex flex-col gap-0.5 mt-0.5">
-                             <p className="text-slate-500 text-[10px] font-medium capitalize">{h.duration_type}</p>
-                             <p className="text-slate-600 text-[10px] font-medium">
-                               {new Date(h.start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}
-                               {' → '}
-                               {new Date(h.expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}
-                             </p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+              <div className="bg-[#3390ec]/5 border border-[#3390ec]/15 rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-white font-bold text-sm">{sub.plan_name}</p>
+                  <p className="text-slate-500 text-[11px] mt-0.5 font-medium capitalize">{sub.duration_type}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-emerald-400 font-bold text-base">₹{sub.amount}</p>
+                  <StatusBadge status={sub.status} />
                 </div>
               </div>
-            )}
+              <div className="flex justify-between mt-2.5 px-1">
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="w-3 h-3 text-slate-500" />
+                  <span className="text-slate-500 text-[10px] font-bold">
+                    {new Date(sub.start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-3 h-3 text-slate-500" />
+                  <span className={`text-[10px] font-bold ${sub.status === 'expired' ? 'text-rose-400' : 'text-slate-500'}`}>
+                    {new Date(sub.expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Plan History label */}
+            <div className="px-6 pb-2 flex items-center gap-2">
+              <History className="w-3.5 h-3.5 text-slate-500" />
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Plan History</p>
+            </div>
+
+            {/* Plan History list */}
+            <div className="px-6 pb-6">
+              {loadingHistory ? (
+                <div className="space-y-3 pt-2">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="h-16 bg-white/[0.03] rounded-xl animate-pulse" />
+                  ))}
+                </div>
+              ) : history.length === 0 ? (
+                <p className="text-slate-600 text-xs text-center py-6">No history found.</p>
+              ) : (
+                <div className="relative pt-2">
+                  {/* Timeline line */}
+                  <div className="absolute left-[15px] top-4 bottom-4 w-[1px] bg-white/5" />
+                  <div className="space-y-3">
+                    {history.map((h) => {
+                      const cfg = statusConfig[h.status] || statusConfig.expired;
+                      const isCurrent = h.id === sub.id;
+                      return (
+                        <div key={h.id} className="flex items-start gap-4">
+                          {/* Dot */}
+                          <div className="relative z-10 w-[30px] flex-shrink-0 flex items-center justify-center pt-3">
+                            <div className={`w-2.5 h-2.5 rounded-full ${cfg.dot} ${isCurrent ? 'ring-2 ring-offset-1 ring-offset-[#0f1117] ring-current' : ''}`} />
+                          </div>
+                          {/* Content */}
+                          <div className={`flex-1 rounded-xl p-3.5 border ${isCurrent ? 'bg-[#3390ec]/5 border-[#3390ec]/15' : 'bg-white/[0.02] border-white/5'}`}>
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-white text-xs font-bold">{h.plan_name}</p>
+                              <p className="text-emerald-400 text-xs font-bold">₹{h.amount}</p>
+                            </div>
+                            <div className="flex flex-col gap-0.5 mt-0.5">
+                              <p className="text-slate-500 text-[10px] font-medium capitalize">{h.duration_type}</p>
+                              <p className="text-slate-600 text-[10px] font-medium">
+                                {new Date(h.start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}
+                                {' → '}
+                                {new Date(h.expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </motion.div>
       </motion.div>
