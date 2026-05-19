@@ -82,7 +82,7 @@ export default function PaymentsPage() {
       className="p-6 sm:p-8 max-w-7xl mx-auto space-y-10"
     >
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-7 h-7 rounded-lg bg-[#3390ec]/10 flex items-center justify-center border border-[#3390ec]/10">
@@ -90,16 +90,16 @@ export default function PaymentsPage() {
             </div>
             <p className="text-[#3390ec] font-bold text-[10px] uppercase tracking-wider">Finance</p>
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Revenue History</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Revenue History</h1>
           <p className="text-slate-500 text-[11px] font-bold uppercase tracking-wider">
             {loading ? 'Auditing ledger…' : `${payments.length} Transactions Logged`}
           </p>
         </div>
         <button
           onClick={() => navigate('/payments/new')}
-          className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#3390ec] hover:bg-[#2b5278] text-white font-bold text-sm transition-all shadow-lg shadow-[#3390ec]/10 active:scale-95"
+          className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#3390ec] hover:bg-[#2b5278] text-white font-bold text-sm transition-all shadow-lg shadow-[#3390ec]/10 active:scale-95 w-full md:w-auto"
         >
-          <DollarSign className="w-4.5 h-4.5" />
+          <DollarSign className="w-4 h-4" />
           <span>Manual Entry</span>
         </button>
       </div>

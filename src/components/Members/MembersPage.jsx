@@ -171,7 +171,7 @@ export default function MembersPage() {
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10"
+        className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10"
       >
         <div className="space-y-2">
           <div className="flex items-center gap-2.5 mb-2">
@@ -180,7 +180,7 @@ export default function MembersPage() {
             </div>
             <p className="text-[#3B82F6] font-bold text-[11px] uppercase tracking-widest">Community</p>
           </div>
-          <h1 className="text-4xl font-extrabold text-[#F8FAFC] tracking-tight">Gym Members</h1>
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-[#F8FAFC] tracking-tight">Gym Members</h1>
           <p className="text-[#64748B] text-xs font-bold uppercase tracking-widest">
             {loading ? 'Crunching numbers…' : `${counts.all} Athletes Registered`}
           </p>
@@ -188,7 +188,7 @@ export default function MembersPage() {
         <Link
           id="add-member-btn"
           to="/members/new"
-          className="group flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-[#3B82F6] hover:bg-[#2563EB] text-white font-bold text-[13px] transition-all shadow-lg shadow-[#3B82F6]/20 active:scale-95"
+          className="group flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-[#3B82F6] hover:bg-[#2563EB] text-white font-bold text-[13px] transition-all shadow-lg shadow-[#3B82F6]/20 active:scale-95 w-full md:w-auto"
         >
           <UserPlus className="w-5 h-5 group-hover:scale-110 transition-transform" />
           <span>Add Member</span>

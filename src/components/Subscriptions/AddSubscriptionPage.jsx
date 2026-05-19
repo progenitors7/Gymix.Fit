@@ -45,7 +45,7 @@ export default function AddSubscriptionPage() {
   };
 
   return (
-    <div className="p-6 sm:p-10 lg:p-12 max-w-3xl mx-auto space-y-10">
+    <div className="p-6 sm:p-10 lg:p-12 max-w-3xl mx-auto space-y-10 pb-28 sm:pb-10">
       {/* Header */}
       <div className="flex items-center gap-6">
         <button

@@ -61,7 +61,7 @@ function MemberDetailModal({ sub, allSubs, onClose, onEdit }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+        className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4"
         onClick={onClose}
       >
         {/* Backdrop */}
@@ -74,7 +74,7 @@ function MemberDetailModal({ sub, allSubs, onClose, onEdit }) {
           exit={{ y: 80, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 320, damping: 30 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full sm:max-w-lg bg-[#0f1117] border border-white/10 rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
+          className="relative w-full sm:max-w-lg bg-[#0f1117] border border-white/10 rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl max-h-[82vh] sm:max-h-[90vh] flex flex-col"
         >
           {/* Drag handle for mobile */}
           <div className="flex justify-center pt-3 pb-1 sm:hidden">
@@ -170,7 +170,7 @@ function MemberDetailModal({ sub, allSubs, onClose, onEdit }) {
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Plan History</p>
           </div>
 
-          <div className="overflow-y-auto px-6 pb-6 flex-1 space-y-0">
+          <div className="overflow-y-auto px-6 pb-8 sm:pb-6 flex-1 space-y-0">
             {loadingHistory ? (
               <div className="space-y-3 pt-2">
                 {[...Array(3)].map((_, i) => (
@@ -199,13 +199,13 @@ function MemberDetailModal({ sub, allSubs, onClose, onEdit }) {
                             <p className="text-white text-xs font-bold">{h.plan_name}</p>
                             <p className="text-emerald-400 text-xs font-bold">₹{h.amount}</p>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <p className="text-slate-500 text-[10px] font-medium capitalize">{h.duration_type}</p>
-                            <p className="text-slate-600 text-[10px] font-medium">
-                              {new Date(h.start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                              {' → '}
-                              {new Date(h.expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                            </p>
+                          <div className="flex flex-col gap-0.5 mt-0.5">
+                             <p className="text-slate-500 text-[10px] font-medium capitalize">{h.duration_type}</p>
+                             <p className="text-slate-600 text-[10px] font-medium">
+                               {new Date(h.start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}
+                               {' → '}
+                               {new Date(h.expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}
+                             </p>
                           </div>
                         </div>
                       </div>
@@ -264,7 +264,7 @@ export default function SubscriptionsPage() {
         className="p-6 sm:p-8 max-w-7xl mx-auto space-y-10"
       >
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-7 h-7 rounded-lg bg-[#3390ec]/10 flex items-center justify-center border border-[#3390ec]/10">
@@ -272,16 +272,16 @@ export default function SubscriptionsPage() {
               </div>
               <p className="text-[#3390ec] font-bold text-[10px] uppercase tracking-wider">Access Control</p>
             </div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">Active Plans</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Active Plans</h1>
             <p className="text-slate-500 text-[11px] font-bold uppercase tracking-wider">
               {loading ? 'Verifying plans…' : `${consolidatedSubscriptions.length} active plans tracking`}
             </p>
           </div>
           <button
             onClick={() => navigate('/subscriptions/new')}
-            className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#3390ec] hover:bg-[#2b5278] text-white font-bold text-sm transition-all shadow-lg shadow-[#3390ec]/10 active:scale-95"
+            className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#3390ec] hover:bg-[#2b5278] text-white font-bold text-sm transition-all shadow-lg shadow-[#3390ec]/10 active:scale-95 w-full md:w-auto"
           >
-            <Plus className="w-4.5 h-4.5" />
+            <Plus className="w-4 h-4" />
             <span>New Subscription</span>
           </button>
         </div>
@@ -414,23 +414,23 @@ export default function SubscriptionsPage() {
                 </div>
 
                 <div className="flex items-center justify-between text-[11px]">
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     <div className="flex items-center gap-1.5 text-slate-500">
-                      <Calendar className="w-3 h-3" />
+                      <Calendar className="w-3 h-3 flex-shrink-0" />
                       <p className="uppercase tracking-wider font-bold">Started</p>
                     </div>
                     <p className="text-slate-300 font-bold">
-                      {new Date(sub.start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      {new Date(sub.start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}
                     </p>
                   </div>
-                  <div className="flex-1 mx-4"><div className="h-[1px] bg-white/5" /></div>
-                  <div className="space-y-1 text-right">
+                  <div className="flex-1 mx-2"><div className="h-[1px] bg-white/5" /></div>
+                  <div className="space-y-0.5 text-right">
                     <div className="flex items-center gap-1.5 text-slate-500 justify-end">
-                      <Clock className="w-3 h-3" />
+                      <Clock className="w-3 h-3 flex-shrink-0" />
                       <p className="uppercase tracking-wider font-bold">Expires</p>
                     </div>
                     <p className={`font-bold ${sub.status === 'expired' ? 'text-rose-400' : 'text-slate-300'}`}>
-                      {new Date(sub.expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      {new Date(sub.expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}
                     </p>
                   </div>
                 </div>

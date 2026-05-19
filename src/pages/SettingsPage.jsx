@@ -441,7 +441,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6 pb-28 sm:pb-8">
       {gymLoading && (
         <div className="flex items-center justify-center py-20">
           <div className="w-8 h-8 border-2 border-white/10 border-t-[#3390ec] rounded-full animate-spin" />
