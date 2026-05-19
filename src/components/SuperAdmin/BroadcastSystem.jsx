@@ -85,13 +85,20 @@ export default function BroadcastSystem() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('Are you sure you want to delete this broadcast?')) return;
+    console.log('handleDelete triggered for broadcast ID:', id);
+    if (!window.confirm('Are you sure you want to delete this broadcast?')) {
+      console.log('Deletion cancelled by user in confirm dialog');
+      return;
+    }
     try {
+      console.log('Initiating deleteBroadcast API call in superAdminService...');
       await superAdminService.deleteBroadcast(id);
+      console.log('Broadcast successfully deleted from database.');
       setBroadcasts(prev => prev.filter(b => b.id !== id));
       showToast('Broadcast deleted');
     } catch (err) {
-      showToast('Failed to delete broadcast', 'error');
+      console.error('Failed to delete broadcast:', err);
+      showToast(err.message || 'Failed to delete broadcast', 'error');
     }
   }
 
@@ -224,7 +231,7 @@ export default function BroadcastSystem() {
                   </div>
                   <button 
                     onClick={() => handleDelete(b.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-500/10 text-gray-700 hover:text-red-500 transition-all"
+                    className="relative z-10 opacity-50 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-all cursor-pointer flex-shrink-0"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
