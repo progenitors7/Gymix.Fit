@@ -137,40 +137,38 @@ export default function AuthPage() {
       <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 relative overflow-y-auto overflow-x-hidden min-h-screen lg:h-screen w-full">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
         
-        <div className="w-full max-w-[420px] space-y-10 relative z-10">
-          <div className="text-center space-y-3">
-            <motion.div 
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="w-16 h-16 flex items-center justify-center mx-auto mb-6 lg:hidden"
-            >
-              <Logo className="w-16 h-16 drop-shadow-[0_0_8px_rgba(134,59,255,0.5)]" />
-            </motion.div>
-            <motion.h2 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-4xl font-black text-white tracking-tighter uppercase italic"
-            >
-              {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : 'Forgot Password'}
-            </motion.h2>
-            <motion.p 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-slate-500 text-sm font-medium"
-            >
-              {mode === 'login' ? 'Sign in to manage your gym dashboard.' : mode === 'signup' ? 'Start growing your business today.' : 'We will help you get back into your account.'}
-            </motion.p>
-          </div>
+        <div className="w-full max-w-[420px] space-y-6 relative z-10">
+          <motion.div 
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="w-16 h-16 flex items-center justify-center mx-auto lg:hidden"
+          >
+            <Logo className="w-16 h-16 drop-shadow-[0_0_8px_rgba(134,59,255,0.5)]" />
+          </motion.div>
 
           <AnimatePresence mode="wait">
             <motion.div
               key={mode}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              style={{ transition: 'none' }}
               className="glass-card border border-white/10 rounded-[2.5rem] p-8 sm:p-10 shadow-2xl relative overflow-hidden"
             >
+              {/* Header moved inside the glass-card for seamless transition sync */}
+              <div className="text-center space-y-3 mb-8">
+                <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase italic leading-none">
+                  {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : 'Forgot Password'}
+                </h2>
+                <p className="text-slate-500 text-sm font-medium leading-relaxed">
+                  {mode === 'login' 
+                    ? 'Sign in to manage your gym dashboard.' 
+                    : mode === 'signup' 
+                      ? 'Start growing your business today.' 
+                      : 'We will help you get back into your account.'}
+                </p>
+              </div>
               {/* Dynamic Tabs */}
               {mode !== 'forgot-password' && (
                 <div className="flex rounded-2xl bg-black/40 p-1.5 border border-white/5 mb-8">
