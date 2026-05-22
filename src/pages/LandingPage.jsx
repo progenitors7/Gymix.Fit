@@ -119,21 +119,21 @@ export default function LandingPage() {
 
       {/* ── STICKY HEADER ── */}
       <header className="sticky top-0 z-50 backdrop-blur-md border-b border-white/5 bg-[#0F1117]/80 transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Logo className="w-10 h-10 drop-shadow-[0_0_12px_rgba(167,112,255,0.4)] cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
-            <span className="font-black text-white text-xl tracking-tighter italic uppercase">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <Logo className="w-9 h-9 sm:w-10 sm:h-10 drop-shadow-[0_0_12px_rgba(167,112,255,0.4)] cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
+            <span className="font-black text-white text-base sm:text-lg md:text-xl tracking-tighter italic uppercase whitespace-nowrap">
               Gym Revenue <span className="text-[#A770FF]">OS</span>
             </span>
           </div>
 
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-400">
+          <nav className="hidden lg:flex items-center gap-8 text-sm font-semibold text-slate-400">
             <a href="#features" className="hover:text-white transition-colors">Core Features</a>
             <a href="#upcoming" className="hover:text-white transition-colors">Upcoming Roadmap</a>
             <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             {/* Direct PWA download if installable */}
             {deferredPrompt && (
               <button 
@@ -147,14 +147,14 @@ export default function LandingPage() {
 
             <button 
               onClick={() => navigate('/login')} 
-              className="text-sm font-bold text-white hover:text-emerald-400 transition-all duration-200 px-3 py-2"
+              className="text-sm font-bold text-white hover:text-emerald-400 transition-all duration-200 px-3 py-2 whitespace-nowrap"
             >
               Sign In
             </button>
 
             <button 
               onClick={() => navigate('/signup')} 
-              className="px-5 py-2.5 text-xs font-black uppercase tracking-wider bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black shadow-lg shadow-emerald-500/10 rounded-xl transition-all duration-300 flex items-center gap-2 hover:scale-105 active:scale-95"
+              className="hidden sm:flex px-5 py-2.5 text-xs font-black uppercase tracking-wider bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black shadow-lg shadow-emerald-500/10 rounded-xl transition-all duration-300 items-center gap-2 hover:scale-105 active:scale-95"
             >
               Start Free Trial
               <ArrowRight className="w-3.5 h-3.5" />
@@ -182,7 +182,7 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white leading-[0.95] tracking-tight uppercase italic max-w-5xl"
+          className="text-3xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white leading-[0.95] tracking-tight uppercase italic max-w-5xl"
         >
           UNLEASH YOUR <br className="hidden sm:inline" />
           GYM'S <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-400 to-[#A770FF]">REVENUE</span> POTENTIAL
@@ -250,27 +250,27 @@ export default function LandingPage() {
         >
           <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 via-purple-600/5 to-transparent blur-xl opacity-80 group-hover:scale-105 transition-transform duration-[10s]" />
           
-          <div className="relative rounded-[2rem] overflow-hidden border border-white/5 bg-slate-950/80 aspect-[16/10] p-6 flex flex-col justify-between">
+          <div className="relative rounded-[2rem] overflow-hidden border border-white/5 bg-slate-950/80 aspect-auto md:aspect-[16/10] p-4 sm:p-6 flex flex-col justify-between">
             {/* Mock Dashboard Top Header */}
-            <div className="flex justify-between items-center pb-4 border-b border-white/5">
+            <div className="flex flex-col sm:flex-row gap-3 justify-between sm:items-center pb-4 border-b border-white/5">
               <div className="flex items-center gap-3">
-                <div className="flex gap-1.5">
+                <div className="flex gap-1.5 flex-shrink-0">
                   <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
                   <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
                   <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
                 </div>
                 <div className="h-4 w-28 bg-white/5 rounded-md" />
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 justify-end flex-shrink-0">
                 <div className="h-6 w-20 bg-white/5 rounded-lg" />
                 <div className="h-6 w-8 bg-emerald-500/10 border border-emerald-500/20 rounded-lg" />
               </div>
             </div>
 
             {/* Dashboard Content Mockup */}
-            <div className="flex-1 grid grid-cols-3 gap-4 pt-6">
-              <div className="col-span-2 space-y-4">
-                <div className="grid grid-cols-3 gap-3">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 pt-6">
+              <div className="col-span-1 md:col-span-2 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[1, 2, 3].map((num) => (
                     <div key={num} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2">
                       <div className="flex justify-between">
@@ -291,7 +291,7 @@ export default function LandingPage() {
                     <div className="h-4 w-32 bg-white/10 rounded-md" />
                     <div className="h-4 w-12 bg-white/5 rounded-md" />
                   </div>
-                  <div className="h-24 w-full flex items-end gap-3 px-2">
+                  <div className="h-24 w-full flex items-end gap-1.5 sm:gap-3 px-2">
                     {[35, 45, 30, 55, 75, 60, 85, 90, 100].map((h, i) => (
                       <div key={i} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
                         <div 
@@ -307,7 +307,7 @@ export default function LandingPage() {
               </div>
 
               {/* Members Sidebar mock */}
-              <div className="col-span-1 p-4 rounded-[2rem] bg-white/[0.02] border border-white/5 space-y-4 flex flex-col">
+              <div className="col-span-1 p-4 rounded-[2rem] bg-white/[0.02] border border-white/5 space-y-4 flex flex-col mt-4 md:mt-0">
                 <div className="h-4 w-28 bg-white/10 rounded-md" />
                 <div className="flex-1 space-y-3">
                   {[
@@ -317,15 +317,15 @@ export default function LandingPage() {
                   ].map((user, idx) => (
                     <div key={idx} className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-white">
+                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
                           {user.name[0]}
                         </div>
-                        <div>
-                          <p className="text-[10px] font-black text-white">{user.name}</p>
-                          <p className="text-[8px] text-slate-500">{user.plan}</p>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-black text-white truncate">{user.name}</p>
+                          <p className="text-[8px] text-slate-500 truncate">{user.plan}</p>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex-shrink-0">
                         <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase ${
                           user.active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
                         }`}>
@@ -683,7 +683,7 @@ export default function LandingPage() {
                   {/* Included features list */}
                   <div className="pt-4 space-y-3">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Every plan includes unlimited access to:</p>
-                    <div className="grid grid-cols-2 gap-3 text-xs font-semibold text-slate-400">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-semibold text-slate-400">
                       {[
                         'Core Member Hub Records',
                         'Automatic Renewal Alerts',
@@ -693,8 +693,8 @@ export default function LandingPage() {
                         'Premium Mobile PWA Engine'
                       ].map((item, index) => (
                         <div key={index} className="flex items-center gap-2">
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
-                          {item}
+                          <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                          <span className="truncate">{item}</span>
                         </div>
                       ))}
                     </div>
@@ -746,11 +746,11 @@ export default function LandingPage() {
                                 placeholder="Enter code"
                                 value={inputCode}
                                 onChange={(e) => setInputCode(e.target.value)}
-                                className="flex-1 px-3 py-2 text-xs rounded-xl bg-white/[0.03] border border-white/10 text-white placeholder-slate-600 focus:outline-none focus:border-[#A770FF]"
+                                className="min-w-0 flex-1 px-3 py-2.5 text-xs rounded-xl bg-white/[0.03] border border-white/10 text-white placeholder-slate-600 focus:outline-none focus:border-[#A770FF]"
                               />
                               <button 
                                 type="submit"
-                                className="px-4 py-2 bg-[#A770FF] hover:bg-[#863BFF] text-black text-[10px] font-black uppercase tracking-wider rounded-xl transition-all"
+                                className="flex-shrink-0 px-4 py-2.5 bg-[#A770FF] hover:bg-[#863BFF] text-black text-[10px] font-black uppercase tracking-wider rounded-xl transition-all"
                               >
                                 Apply
                               </button>
