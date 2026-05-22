@@ -9,6 +9,7 @@ import ErrorBoundary from './components/Common/ErrorBoundary'
 import SuperAdminRoute from './components/Layout/SuperAdminRoute'
 import Logo from './components/UI/Logo'
 import { motion } from 'framer-motion'
+import { useAuth } from './hooks/useAuth'
 
 
 const LandingPage = React.lazy(() => import('./pages/LandingPage'))
@@ -71,6 +72,26 @@ function Protected({ children }) {
   )
 }
 
+function RootRoute() {
+  const { user, loading } = useAuth()
+  
+  // Check if launched as a standalone PWA
+  const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+  if (isPWA) {
+    if (loading) {
+      return (
+        <div className="h-screen flex items-center justify-center bg-[#0F1117]">
+          <LoadingScreen />
+        </div>
+      )
+    }
+    return user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+  }
+
+  return <LandingPage />
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -79,7 +100,7 @@ export default function App() {
           <Suspense fallback={<div className="h-screen flex items-center justify-center bg-[#1c1c1c]"><LoadingScreen /></div>}>
             <Routes>
               {/* ── Public ── */}
-              <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={<RootRoute />} />
               <Route path="/login" element={<AuthPage />} />
               <Route path="/signup" element={<AuthPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />

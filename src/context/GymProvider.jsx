@@ -56,15 +56,9 @@ export function GymProvider({ children }) {
 
       setGym(gymData)
     } catch (err) {
-      if (err.status === 401 || err.code === 'PGRST301') {
-        console.warn('[GymContext] Stale session — signing out.')
-        await supabase.auth.signOut()
-        setGym(null)
-      } else {
-        console.error('[GymContext] Error fetching gym:', err.message)
-        setGymError(err.message)
-        setGym(null)
-      }
+      console.error('[GymContext] Error fetching gym:', err.message || err)
+      setGymError(err.message || 'Error loading gym data.')
+      setGym(null)
     } finally {
       setGymLoading(false)
     }
