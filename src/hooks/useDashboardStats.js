@@ -93,6 +93,8 @@ export function useDashboardStats() {
 
       if (paymentsError) throw paymentsError;
 
+      const paymentsList = payments ?? [];
+
       // Calculate Dates in local timezone to prevent UTC timezone-shifting bugs
       const today = new Date();
       
@@ -124,7 +126,7 @@ export function useDashboardStats() {
       let todayRevenue = 0;
       let pendingAmount = 0;
 
-      payments.forEach(p => {
+      paymentsList.forEach(p => {
         const amount = Number(p.amount_paid);
         if (p.payment_status === 'paid') {
           totalRevenue += amount;
@@ -144,7 +146,7 @@ export function useDashboardStats() {
 
       // --- Widgets Data ---
       // 1. Pending/Overdue Payments
-      const pendingPaymentsList = payments
+      const pendingPaymentsList = paymentsList
         .filter(p => p.payment_status !== 'paid')
         .slice(0, 5); // top 5
 
@@ -163,7 +165,7 @@ export function useDashboardStats() {
           description: `${m.full_name} joined the gym.`,
           date: m.created_at
         })),
-        ...payments.map(p => ({
+        ...paymentsList.map(p => ({
           id: p.id,
           type: p.payment_status === 'paid' ? 'payment_received' : 'payment_pending',
           title: p.payment_status === 'paid' ? 'Payment Received' : 'Payment Pending',
@@ -185,7 +187,7 @@ export function useDashboardStats() {
         chartDataMap[dateStr] = { label: displayLabel, date: dateStr, value: 0 };
       }
 
-      payments.forEach(p => {
+      paymentsList.forEach(p => {
         if (p.payment_status === 'paid' && chartDataMap[p.payment_date]) {
           chartDataMap[p.payment_date].value += Number(p.amount_paid);
         }

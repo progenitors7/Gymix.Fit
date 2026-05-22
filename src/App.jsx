@@ -11,6 +11,7 @@ import Logo from './components/UI/Logo'
 import { motion } from 'framer-motion'
 
 
+const LandingPage = React.lazy(() => import('./pages/LandingPage'))
 const AuthPage = React.lazy(() => import('./components/Auth/AuthPage'))
 const Dashboard = React.lazy(() => import('./components/Dashboard/Dashboard'))
 const MembersPage = React.lazy(() => import('./components/Members/MembersPage'))
@@ -78,9 +79,10 @@ export default function App() {
           <Suspense fallback={<div className="h-screen flex items-center justify-center bg-[#1c1c1c]"><LoadingScreen /></div>}>
             <Routes>
               {/* ── Public ── */}
-            <Route path="/" element={<AuthPage />} />
-            <Route path="/login" element={<AuthPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<AuthPage />} />
+              <Route path="/signup" element={<AuthPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             {/* ── Protected ── */}
             <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />

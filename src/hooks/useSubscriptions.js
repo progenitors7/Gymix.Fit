@@ -18,7 +18,7 @@ export function useSubscriptions() {
       setLoading(true);
       setError(null);
       const data = await subscriptionService.getAllSubscriptions();
-      setSubscriptions(data);
+      setSubscriptions(data ?? []);
     } catch (err) {
       console.error('Error fetching subscriptions:', err);
       setError(err.message);

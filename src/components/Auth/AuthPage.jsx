@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../hooks/useAuth'
 import { ShieldCheck, Zap, ArrowRight, Activity, Users, TrendingUp } from 'lucide-react'
@@ -10,7 +10,24 @@ import ForgotPasswordForm from './ForgotPasswordForm'
 
 export default function AuthPage() {
   const { user, loading } = useAuth()
-  const [mode, setMode] = useState('login') // 'login' | 'signup' | 'forgot-password'
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const [mode, setMode] = useState(() => {
+    if (location.pathname === '/signup') return 'signup'
+    if (location.pathname === '/forgot-password') return 'forgot-password'
+    return 'login'
+  })
+
+  useEffect(() => {
+    if (location.pathname === '/signup') {
+      setMode('signup')
+    } else if (location.pathname === '/login') {
+      setMode('login')
+    } else if (location.pathname === '/forgot-password') {
+      setMode('forgot-password')
+    }
+  }, [location.pathname])
 
   if (!loading && user) {
     return <Navigate to="/dashboard" replace />
@@ -158,7 +175,7 @@ export default function AuthPage() {
               {mode !== 'forgot-password' && (
                 <div className="flex rounded-2xl bg-black/40 p-1.5 border border-white/5 mb-8">
                   <button
-                    onClick={() => setMode('login')}
+                    onClick={() => navigate('/login')}
                     className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
                       mode === 'login'
                         ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
@@ -168,7 +185,7 @@ export default function AuthPage() {
                     Login
                   </button>
                   <button
-                    onClick={() => setMode('signup')}
+                    onClick={() => navigate('/signup')}
                     className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
                       mode === 'signup'
                         ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
@@ -181,11 +198,15 @@ export default function AuthPage() {
               )}
 
               {mode === 'login' ? (
-                <LoginForm onSwitch={() => setMode('signup')} onForgotPassword={() => setMode('forgot-password')} />
+                <LoginForm onSwitch={() => navigate('/signup')} onForgotPassword={() => navigate('/forgot-password')} />
               ) : mode === 'signup' ? (
-                <SignupForm onSwitch={() => setMode('login')} />
+                <SignupForm onSwitch={() => navigate('/login')} />
               ) : (
-                <ForgotPasswordForm onSwitch={setMode} />
+                <ForgotPasswordForm onSwitch={(newMode) => {
+                  if (newMode === 'login') navigate('/login')
+                  else if (newMode === 'signup') navigate('/signup')
+                  else navigate('/login') // fallback
+                }} />
               )}
             </motion.div>
           </AnimatePresence>

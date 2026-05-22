@@ -18,7 +18,7 @@ export function usePayments() {
       setLoading(true);
       setError(null);
       const data = await paymentService.getAllPayments();
-      setPayments(data);
+      setPayments(data ?? []);
     } catch (err) {
       console.error('Error fetching payments:', err);
       setError(err.message);

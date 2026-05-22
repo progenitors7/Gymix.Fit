@@ -1,11 +1,12 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { CheckCircle2, AlertTriangle, X } from 'lucide-react';
 
 export default function Toast({ message, type, onClose }) {
   if (!message) return null;
 
-  return (
-    <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[100] min-w-[320px] animate-in slide-in-from-top-4 fade-in duration-300">
+  return createPortal(
+    <div className="fixed top-8 right-8 z-[9999] min-w-[320px] animate-in slide-in-from-top-4 fade-in duration-300">
       <div className={`flex items-center justify-between gap-4 px-5 py-4 rounded-2xl shadow-2xl border backdrop-blur-xl ${
         type === 'success' 
           ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
@@ -35,6 +36,8 @@ export default function Toast({ message, type, onClose }) {
           <X className="w-4 h-4 opacity-50" />
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
+
