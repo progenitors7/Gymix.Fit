@@ -176,11 +176,32 @@ serve(async (req: Request) => {
       }
 
       const promo = await getValidPromo(supabaseClient, promoId)
-      const baseAmount = DURATION_PRICES.get(selectedDuration)
+      
+      // Fetch dynamic plan price from DB with safety fallback
+      let baseAmount = DURATION_PRICES.get(selectedDuration) || 0
+      try {
+        let planIdToFetch = DEFAULT_PLAN_ID
+        if (selectedDuration === 3) planIdToFetch = '43b2c470-7e88-4976-bee1-9fa66d247d40'
+        else if (selectedDuration === 12) planIdToFetch = '81ba6dad-524b-4bd6-9987-e5759c3e11d4'
+        
+        const { data: dbPlan, error: fetchErr } = await supabaseClient
+          .from('saas_plans')
+          .select('price')
+          .eq('id', planIdToFetch)
+          .single()
+          
+        if (!fetchErr && dbPlan && dbPlan.price !== undefined) {
+          baseAmount = Number(dbPlan.price)
+          console.log(`EDGE_FUNCTION_LOG: Fetched price dynamically from DB: ${baseAmount} for duration ${selectedDuration}`)
+        }
+      } catch (err) {
+        console.warn('EDGE_FUNCTION_WARNING: Failed to fetch plan price from DB. Error:', err)
+      }
+
       const expectedAmount = calculateDiscountedAmount(baseAmount, promo)
 
       if (!Number.isFinite(selectedAmount) || selectedAmount !== expectedAmount || selectedAmount <= 0) {
-        throw new Error('Invalid payment amount')
+        throw new Error(`Invalid payment amount. Expected ${expectedAmount}, received ${selectedAmount}`)
       }
     }
 

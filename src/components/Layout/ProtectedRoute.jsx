@@ -15,7 +15,7 @@ import { useCurrentGym } from '../../hooks/useCurrentGym'
  *   7. All checks passed → render children
  */
 export default function ProtectedRoute({ children }) {
-  const { user, profile, loading: authLoading } = useAuth()
+  const { user, profile, loading: authLoading, signOut } = useAuth()
   const { gym, gymLoading, gymError } = useCurrentGym()
   const location = useLocation()
 
@@ -92,11 +92,46 @@ export default function ProtectedRoute({ children }) {
     )
   }
 
-  // ── Step 7: Owner billing redirect — no gym, pending, or expired ──
+  // ── Step 7: Blocked Gym owner check ──
+  if (isOwner && gym?.status === 'blocked') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0F1117] p-6 text-center">
+        <div className="max-w-md w-full bg-[#1c1c1c] border border-red-500/20 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 blur-[50px] rounded-full pointer-events-none" />
+          <div className="w-16 h-16 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 text-3xl mx-auto mb-6 border border-red-500/20">
+            🚫
+          </div>
+          <h2 className="text-2xl font-black text-white uppercase italic tracking-tight mb-2">Account Suspended</h2>
+          <p className="text-slate-400 text-sm mb-8 leading-relaxed font-medium">
+            Your gym account <strong className="text-white">"{gym?.gym_name}"</strong> has been suspended by the platform administrator due to a policy violation or outstanding dues. Please contact administration to resolve this.
+          </p>
+          <div className="space-y-3">
+            <a
+              href="mailto:support@gymrevenueos.com"
+              className="block w-full py-4 bg-red-500 hover:bg-red-400 text-white font-bold rounded-2xl transition-all uppercase text-xs tracking-wider shadow-lg shadow-red-500/10"
+            >
+              Contact Administration
+            </a>
+            <button
+              onClick={async () => {
+                await signOut();
+                window.location.href = '/login';
+              }}
+              className="w-full py-4 bg-white/5 hover:bg-white/10 text-slate-300 font-bold rounded-2xl transition-all border border-white/5 uppercase text-xs tracking-wider"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Step 8: Owner billing redirect — no gym, pending, or expired ──
   if (isOwner && !isAdminPage && (!gym || gym?.status === 'pending' || gym?.billing_status === 'expired')) {
     return <Navigate to="/billing" replace />
   }
 
-  // ── Step 8: All checks passed ──
+  // ── Step 9: All checks passed ──
   return children
 }

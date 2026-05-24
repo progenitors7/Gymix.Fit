@@ -330,7 +330,14 @@ export const superAdminService = {
    * Permanently delete a gym and all its associated data.
    */
   async deleteGym(gymId) {
-    // Manually delete dependent records to avoid foreign key constraints
+    // 1. Fetch gym to get owner_user_id
+    const { data: gym } = await supabase
+      .from('gyms')
+      .select('owner_user_id')
+      .eq('id', gymId)
+      .maybeSingle();
+
+    // 2. Manually delete dependent records to avoid foreign key constraints
     await supabase.from('payments').delete().eq('gym_id', gymId);
     await supabase.from('subscriptions').delete().eq('gym_id', gymId);
     await supabase.from('notifications').delete().eq('gym_id', gymId);
@@ -339,12 +346,22 @@ export const superAdminService = {
     await supabase.from('saas_subscriptions').delete().eq('gym_id', gymId);
     await supabase.from('support_tickets').delete().eq('gym_id', gymId);
     
-    const { error } = await supabase
+    // 3. Delete gym
+    const { error: gymError } = await supabase
       .from('gyms')
       .delete()
       .eq('id', gymId);
     
-    if (error) throw error;
+    if (gymError) throw gymError;
+
+    // 4. Delete the owner profile to completely strip owner login capabilities
+    if (gym?.owner_user_id) {
+      await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', gym.owner_user_id);
+    }
+
     return true;
   },
 
@@ -359,5 +376,123 @@ export const superAdminService = {
     
     if (error) throw error;
     return data;
+  },
+
+  /**
+   * Fetch all registered members/athletes across the platform with connected gym and profile metadata.
+   */
+  async getAllMembers() {
+    const { data, error } = await supabase
+      .from('members')
+      .select(`
+        *,
+        gyms (
+          id,
+          gym_name,
+          unique_code
+        ),
+        profiles (
+          email
+        ),
+        attendance (
+          id
+        )
+      `)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+
+    // Map check-in counts dynamically
+    return (data || []).map(member => ({
+      ...member,
+      check_in_count: member.attendance?.length || 0
+    }));
+  },
+
+  /**
+   * Permanently delete a member/athlete from the database and linked profile.
+   */
+  async deleteMember(memberId) {
+    if (!memberId) throw new Error('Member ID is required');
+
+    // 1. Fetch profile_id first to delete profile if it exists
+    const { data: member } = await supabase
+      .from('members')
+      .select('profile_id')
+      .eq('id', memberId)
+      .maybeSingle();
+
+    // 2. Cascade delete dependent logs to avoid constraint failures
+    await supabase.from('payments').delete().eq('member_id', memberId);
+    await supabase.from('subscriptions').delete().eq('member_id', memberId);
+    await supabase.from('attendance').delete().eq('member_id', memberId);
+    
+    // 3. Delete member
+    const { error: memberError } = await supabase
+      .from('members')
+      .delete()
+      .eq('id', memberId);
+      
+    if (memberError) throw memberError;
+
+    // 4. Delete profile if it exists (completely strips access)
+    if (member?.profile_id) {
+      await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', member.profile_id);
+    }
+    
+    return true;
+  },
+
+  /**
+   * Fetch real database-driven health metrics.
+   */
+  async getSystemHealth() {
+    try {
+      const startTime = performance.now();
+      
+      // Perform database ping count to measure response latency
+      const { count: profileCount, error: pingErr } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+        
+      const endTime = performance.now();
+      const pingLatency = Math.round(endTime - startTime);
+
+      if (pingErr) throw pingErr;
+
+      // Count rows in key tables for real-time diagnostics
+      const { count: gymsCount } = await supabase.from('gyms').select('*', { count: 'exact', head: true });
+      const { count: membersCount } = await supabase.from('members').select('*', { count: 'exact', head: true });
+      const { count: paymentsCount } = await supabase.from('payments').select('*', { count: 'exact', head: true });
+      const { count: ticketsCount } = await supabase.from('support_tickets').select('*', { count: 'exact', head: true });
+      const { count: openTicketsCount } = await supabase.from('support_tickets').select('*', { count: 'exact', head: true }).eq('status', 'open');
+      const { count: saasSubsCount } = await supabase.from('saas_subscriptions').select('*', { count: 'exact', head: true });
+      const { count: broadcastsCount } = await supabase.from('broadcasts').select('*', { count: 'exact', head: true });
+
+      // Retrieve system settings
+      const { data: settings } = await supabase.from('system_settings').select('*');
+
+      return {
+        databaseStatus: 'Connected',
+        latency: `${pingLatency}ms`,
+        dbEngine: 'PostgreSQL 17.6',
+        metrics: {
+          gyms: gymsCount || 0,
+          members: membersCount || 0,
+          payments: paymentsCount || 0,
+          tickets: ticketsCount || 0,
+          openTickets: openTicketsCount || 0,
+          saasSubs: saasSubsCount || 0,
+          broadcasts: broadcastsCount || 0
+        },
+        settings: settings || []
+      };
+    } catch (error) {
+      console.error('[superAdminService] System Health diagnostics failed:', error);
+      throw error;
+    }
   }
 };

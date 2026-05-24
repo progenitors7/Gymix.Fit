@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   CreditCard, 
   CheckCircle2, 
@@ -30,11 +30,50 @@ export default function BillingPage() {
   const [toastState, setToastState] = useState({ message: '', type: 'success' });
   
   // Selection State
+  const [durationsList, setDurationsList] = useState(DURATIONS);
   const [selectedDuration, setSelectedDuration] = useState(DURATIONS[0]);
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState(null);
   const [promoError, setPromoError] = useState('');
   const [verifyingPromo, setVerifyingPromo] = useState(false);
+
+  useEffect(() => {
+    async function loadDbPrices() {
+      try {
+        const { data, error } = await supabase
+          .from('saas_plans')
+          .select('*');
+        if (!error && data && data.length > 0) {
+          const updated = DURATIONS.map(dur => {
+            let dbPlan;
+            if (dur.months === 1) {
+              dbPlan = data.find(p => p.id === PRO_PLAN_ID || p.name.includes('1 Month'));
+            } else if (dur.months === 3) {
+              dbPlan = data.find(p => p.id === '43b2c470-7e88-4976-bee1-9fa66d247d40' || p.name.includes('3 Months'));
+            } else if (dur.months === 12) {
+              dbPlan = data.find(p => p.id === '81ba6dad-524b-4bd6-9987-e5759c3e11d4' || p.name.includes('12 Months'));
+            }
+            if (dbPlan) {
+              return {
+                ...dur,
+                price: Number(dbPlan.price)
+              };
+            }
+            return dur;
+          });
+          setDurationsList(updated);
+          // Sync selected duration with new price
+          setSelectedDuration(prev => {
+            const found = updated.find(u => u.months === prev.months);
+            return found || prev;
+          });
+        }
+      } catch (err) {
+        console.error('Error loading DB prices:', err);
+      }
+    }
+    loadDbPrices();
+  }, []);
 
   const handleVerifyPromo = async () => {
     if (!promoCode) return;
@@ -69,7 +108,7 @@ export default function BillingPage() {
 
       setAppliedPromo(data);
       if (data.discount_type === 'full_free') {
-        const freeDuration = DURATIONS.find((duration) => duration.months === FREE_PROMO_DURATION_MONTHS);
+        const freeDuration = durationsList.find((duration) => duration.months === FREE_PROMO_DURATION_MONTHS);
         if (freeDuration) setSelectedDuration(freeDuration);
       }
       setPromoError('');
@@ -290,7 +329,7 @@ export default function BillingPage() {
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {DURATIONS.map((dur) => (
+              {durationsList.map((dur) => (
                 <button
                   key={dur.months}
                   onClick={() => !isDurationDisabled && setSelectedDuration(dur)}
