@@ -115,16 +115,45 @@ export default function Dashboard() {
           </div>
         </div>
         <h2 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 mb-6 tracking-tight">Level Up Your Gym</h2>
-        <p className="text-[#94A3B8] text-lg sm:text-xl max-w-xl mb-12 leading-relaxed">
-          Welcome to <span className="text-white font-bold">Gym Revenue OS</span>. Your workspace is ready! Start by adding your first member to unlock real-time analytics and revenue tracking.
+        <p className="text-[#94A3B8] text-lg sm:text-xl max-w-xl mb-8 leading-relaxed">
+          Welcome to <span className="text-white font-bold">Gym Revenue OS</span>. Your workspace is ready! Invite your members to download the app and connect using your Gym Code, or add them manually.
         </p>
-        <Link 
-          to="/members" 
-          className="group relative flex items-center gap-3 px-8 py-4 bg-white text-[#0F1117] font-bold rounded-2xl shadow-xl shadow-white/10 transition-all hover:scale-105 active:scale-95"
-        >
-          <span className="text-lg">Add Your First Member</span>
-          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-        </Link>
+
+        {/* Gym connection code display */}
+        <div className="bg-[#1A1F2B] border border-white/5 p-6 rounded-3xl max-w-md w-full mb-10 flex flex-col items-center gap-4">
+          <p className="text-[#94A3B8] text-xs font-bold uppercase tracking-widest">Your Gym Connection Code</p>
+          <div className="bg-[#0F1117] px-6 py-4 rounded-2xl border border-white/10 flex items-center justify-between w-full group">
+            <span className="text-[#3B82F6] font-mono text-3xl font-black tracking-widest select-all">{gym?.unique_code}</span>
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText(gym?.unique_code);
+                alert('Copied Gym Code to clipboard!');
+              }}
+              className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold text-white transition-all active:scale-95 cursor-pointer"
+            >
+              Copy Code
+            </button>
+          </div>
+          <p className="text-slate-500 text-[11px] font-medium leading-relaxed">
+            Members can enter this code in their mobile dashboard or scan to connect to your gym instantly!
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <Link 
+            to="/members" 
+            className="group relative flex items-center gap-3 px-8 py-4 bg-white text-[#0F1117] font-bold rounded-2xl shadow-xl shadow-white/10 transition-all hover:scale-105 active:scale-95"
+          >
+            <span className="text-lg">Add Member Manually</span>
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </Link>
+          <Link 
+            to="/scanner" 
+            className="group relative flex items-center gap-3 px-8 py-4 bg-[#1A1F2B] border border-white/10 text-white font-bold rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95"
+          >
+            <span className="text-lg">Open Gate Scanner</span>
+          </Link>
+        </div>
       </motion.div>
     );
   }
@@ -147,6 +176,19 @@ export default function Dashboard() {
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight flex items-center gap-3">
             <GymNameEditor gymName={gymName} onSave={updateGymName} />
           </h1>
+          <div className="flex items-center gap-2 mt-1 text-[#94A3B8] text-xs font-semibold uppercase tracking-wider">
+            <span>Gym Code:</span>
+            <span 
+              onClick={() => {
+                navigator.clipboard.writeText(gym?.unique_code);
+                alert("Gym code copied to clipboard!");
+              }} 
+              className="bg-[#1A1F2B] border border-white/10 hover:border-white/20 px-2.5 py-1 rounded-lg text-emerald-400 font-mono font-black tracking-widest cursor-pointer select-all select-none hover:bg-white/[0.03] transition-all"
+              title="Click to copy gym code"
+            >
+              {gym?.unique_code}
+            </span>
+          </div>
         </div>
         
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
