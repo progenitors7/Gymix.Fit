@@ -28,6 +28,7 @@ const ResetPasswordPage = React.lazy(() => import('./pages/ResetPasswordPage'))
 const SettingsPage = React.lazy(() => import('./pages/SettingsPage'))
 const SuperAdminPage = React.lazy(() => import('./pages/SuperAdminPage'))
 const BillingPage = React.lazy(() => import('./pages/BillingPage'))
+const AttendancePage = React.lazy(() => import('./pages/AttendancePage'))
 
 function LoadingScreen() {
   return (
@@ -122,6 +123,7 @@ export default function App() {
             <Route path="/notifications"     element={<Protected><NotificationsPage /></Protected>} />
             <Route path="/settings"          element={<Protected><SettingsPage /></Protected>} />
             <Route path="/billing"           element={<Protected><BillingPage /></Protected>} />
+            <Route path="/attendance"        element={<Protected><AttendancePage /></Protected>} />
             <Route path="/super-admin"      element={<Protected><SuperAdminRoute><SuperAdminPage /></SuperAdminRoute></Protected>} />
 
             {/* ── Catch-all ── */}

@@ -5,6 +5,7 @@ import { getMemberById } from '../../services/memberService'
 import { useMembers } from '../../hooks/useMembers'
 import MemberForm from './MemberForm'
 import StatusBadge from '../UI/StatusBadge'
+import MemberAttendanceCard from './MemberAttendanceCard'
 
 export default function EditMemberPage() {
   const { id } = useParams()
@@ -69,7 +70,7 @@ export default function EditMemberPage() {
   }
 
   return (
-    <div className="p-6 sm:p-10 lg:p-12 max-w-3xl mx-auto space-y-10 pb-28 sm:pb-10">
+    <div className="p-6 sm:p-10 lg:p-12 max-w-[1400px] mx-auto space-y-10 pb-28 sm:pb-10">
       {/* Header */}
       <div className="flex items-center gap-6">
         <button
@@ -93,17 +94,31 @@ export default function EditMemberPage() {
         </div>
       </div>
 
-      {/* Form card */}
-      <div className="glass-card border border-white/5 rounded-[2.5rem] p-8 sm:p-12 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="relative z-10">
-          <MemberForm
-            mode="edit"
-            initialValues={initialValues}
-            onSubmit={handleSubmit}
-            onCancel={() => navigate('/members')}
+      {/* Two Column Grid on Desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+        
+        {/* Column 1: Form card (spans 3) */}
+        <div className="lg:col-span-3 glass-card border border-white/5 rounded-[2.5rem] p-8 sm:p-12 relative overflow-hidden shadow-2xl">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+          <div className="relative z-10">
+            <MemberForm
+              mode="edit"
+              initialValues={initialValues}
+              onSubmit={handleSubmit}
+              onCancel={() => navigate('/members')}
+            />
+          </div>
+        </div>
+
+        {/* Column 2: Reusable MemberAttendanceCard (spans 2) */}
+        <div className="lg:col-span-2">
+          <MemberAttendanceCard 
+            memberId={member.id} 
+            memberName={member.full_name} 
+            joinDate={member.join_date} 
           />
         </div>
+
       </div>
     </div>
   )
