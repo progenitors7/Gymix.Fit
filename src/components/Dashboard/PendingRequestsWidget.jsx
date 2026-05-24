@@ -6,7 +6,7 @@ import {
 import { connectionService } from '../../services/connectionService'
 import SmartApprovalModal from './SmartApprovalModal'
 
-export default function PendingRequestsWidget({ gymId, onRefreshStats }) {
+export default function PendingRequestsWidget({ gymId, gymCode, onRefreshStats }) {
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedReq, setSelectedReq] = useState(null)
@@ -71,7 +71,31 @@ export default function PendingRequestsWidget({ gymId, onRefreshStats }) {
     )
   }
 
-  if (requests.length === 0) return null
+  if (requests.length === 0) {
+    return (
+      <div className="glass-card rounded-3xl p-6 sm:p-8 relative overflow-hidden group border border-white/5">
+        {/* Glow background decoration */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/[0.01] rounded-full blur-3xl -z-10" />
+
+        <div className="flex items-center gap-4 mb-5 relative z-10">
+          <div className="w-12 h-12 rounded-2xl bg-white/[0.03] flex items-center justify-center border border-white/5 text-slate-400">
+            <Users className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-[#F8FAFC] font-bold text-base">Connection Requests</h3>
+            <p className="text-slate-500 text-xs font-medium">0 Awaiting Approval</p>
+          </div>
+        </div>
+
+        <div className="p-5 rounded-2xl bg-white/[0.01] border border-dashed border-white/5 text-center space-y-2">
+          <p className="text-[#94A3B8] text-xs font-semibold">Ready to onboard new athletes?</p>
+          <p className="text-slate-500 text-[10px] leading-relaxed max-w-[240px] mx-auto uppercase">
+            Share your gym code <strong className="text-emerald-400 font-mono tracking-widest">{gymCode || 'active'}</strong> with members. When they enter the code in their app, their requests will appear here for you to approve or reject!
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="glass-card rounded-3xl p-6 sm:p-8 relative overflow-hidden group">

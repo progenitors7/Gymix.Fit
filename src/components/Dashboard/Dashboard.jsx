@@ -295,7 +295,7 @@ export default function Dashboard() {
         {/* Right Column (Actionable Widgets) */}
         <div className="space-y-6 sm:space-y-8">
           <motion.div variants={itemVariants}>
-            <PendingRequestsWidget gymId={gym?.id} onRefreshStats={fetchStats} />
+            <PendingRequestsWidget gymId={gym?.id} gymCode={gym?.unique_code} onRefreshStats={fetchStats} />
           </motion.div>
           <motion.div variants={itemVariants}>
             <ExpiringWidget members={stats.expiringMembers} onRefresh={fetchStats} />
