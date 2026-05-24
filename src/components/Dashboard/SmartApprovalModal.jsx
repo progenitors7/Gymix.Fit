@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   X, Check, AlertCircle, Award, Calendar, 
@@ -116,7 +117,7 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
 
   if (!open || !request) return null
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
         <motion.div
@@ -316,6 +317,7 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
 
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
