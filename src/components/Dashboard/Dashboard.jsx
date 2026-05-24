@@ -10,6 +10,9 @@ import RecentActivityFeed from './RecentActivityFeed';
 import ExpiringWidget from './ExpiringWidget';
 import PendingPaymentsWidget from './PendingPaymentsWidget';
 import { motion } from 'framer-motion';
+import { useAuth } from '../../hooks/useAuth';
+import MemberDashboard from './MemberDashboard';
+import PendingRequestsWidget from './PendingRequestsWidget';
 
 import { 
   Users, 
@@ -44,6 +47,13 @@ const itemVariants = {
 
 /* ── Main Dashboard ── */
 export default function Dashboard() {
+  const { profile } = useAuth()
+
+  // B2B2C Redirect: Member logs in to dynamic portal, owner logs in to core OS
+  if (profile?.role === 'member') {
+    return <MemberDashboard />
+  }
+
   const { gym, gymLoading, gymError, gymName, updateGymName } = useCurrentGym()
   const { stats, loading: statsLoading, error: statsError, fetchStats } = useDashboardStats();
   const navigate = useNavigate();
@@ -65,28 +75,29 @@ export default function Dashboard() {
     }
   };
 
-  if (gymLoading || statsLoading || (!stats && !gymError && !statsError)) return <DashboardSkeleton />
-  
+  if (!gym && !gymLoading) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center min-h-96 gap-3 text-center">
+        <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400 text-xl">!</div>
+        <p className="text-white font-semibold">Gym account not found</p>
+        <p className="text-slate-400 text-sm max-w-sm">We couldn't retrieve your gym record. Please refresh the page.</p>
+        <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors">Reload Page</button>
+      </div>
+    )
+  }
+
   if (gymError || statsError) {
     return (
       <div className="p-8 flex flex-col items-center justify-center min-h-96 gap-3 text-center">
         <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-400 text-xl">⚠</div>
         <p className="text-white font-semibold">Could not load your dashboard</p>
         <p className="text-slate-400 text-sm max-w-sm">{gymError || statsError}</p>
+        <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors">Reload Page</button>
       </div>
     )
   }
 
-  if (!gym && !gymLoading) {
-    return (
-      <div className="p-8 flex flex-col items-center justify-center min-h-96 gap-3 text-center">
-        <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400 text-xl">!</div>
-        <p className="text-white font-semibold">Gym account not found</p>
-        <p className="text-slate-400 text-sm max-w-sm">We couldn't retrieve your gym record. Try logging out and back in, or contact support.</p>
-        <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors">Retry</button>
-      </div>
-    )
-  }
+  if (gymLoading || statsLoading || (!stats && !gymError && !statsError)) return <DashboardSkeleton />
 
   // Handle completely empty state
   if (stats && stats.membership.total === 0) {
@@ -241,6 +252,9 @@ export default function Dashboard() {
 
         {/* Right Column (Actionable Widgets) */}
         <div className="space-y-6 sm:space-y-8">
+          <motion.div variants={itemVariants}>
+            <PendingRequestsWidget gymId={gym?.id} onRefreshStats={fetchStats} />
+          </motion.div>
           <motion.div variants={itemVariants}>
             <ExpiringWidget members={stats.expiringMembers} onRefresh={fetchStats} />
           </motion.div>

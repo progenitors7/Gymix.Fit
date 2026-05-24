@@ -6,7 +6,7 @@
 import { supabase } from '../lib/supabaseClient'
 
 const MEMBER_FIELDS = `
-  id, gym_id, full_name, phone_number, gender,
+  id, gym_id, profile_id, full_name, phone_number, gender,
   join_date, membership_plan, expiry_date, status, notes, created_at
 `
 

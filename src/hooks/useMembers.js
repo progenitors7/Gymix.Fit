@@ -5,9 +5,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getMembers, createMember, updateMember, deleteMember, filterMembers } from '../services/memberService'
 import { useCurrentGym } from './useCurrentGym'
+import { unifiedService } from '../services/unifiedService'
 
 export function useMembers() {
-  const { gymId, isReady } = useCurrentGym()
+  const { gym, gymId, isReady } = useCurrentGym()
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -44,11 +45,37 @@ export function useMembers() {
 
   const addMember = useCallback(async (formData) => {
     if (!gymId) throw new Error('Gym not loaded')
-    const payload = { ...formData, gym_id: gymId }
+    const { recordPayment, amountPaid, ...memberData } = formData
+    const payload = { ...memberData, gym_id: gymId }
     const newMember = await createMember(payload)
+    
+    if (newMember && gym) {
+      if (recordPayment && amountPaid > 0) {
+        await unifiedService.smartRenew(
+          gym.id,
+          newMember.id,
+          {
+            plan_name: newMember.membership_plan,
+            duration_type: 'custom',
+            amount: parseFloat(amountPaid),
+            expiry_date: newMember.expiry_date,
+            gym_id: gym.id
+          },
+          {
+            amount_paid: parseFloat(amountPaid),
+            payment_method: 'cash',
+            payment_status: 'paid',
+            notes: 'Initial registration payment'
+          }
+        );
+      } else {
+        await unifiedService.recordInitialMemberSetup(gym.id, newMember);
+      }
+    }
+
     setMembers((prev) => [newMember, ...prev])
     return newMember
-  }, [gymId])
+  }, [gymId, gym])
 
   const editMember = useCallback(async (id, formData) => {
     const updated = await updateMember(id, formData)

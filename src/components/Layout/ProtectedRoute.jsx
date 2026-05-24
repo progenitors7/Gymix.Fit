@@ -2,16 +2,25 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useCurrentGym } from '../../hooks/useCurrentGym'
 
+/**
+ * ProtectedRoute — Clean state machine guard.
+ *
+ * Evaluation order:
+ *   1. Auth loading → spinner
+ *   2. No user → redirect /login
+ *   3. Member → pass through immediately (no gym checks)
+ *   4. Owner: gym loading (non-admin pages only) → spinner
+ *   5. Owner: gym error (non-admin pages only) → error card
+ *   6. Owner: no gym / pending / expired (non-admin pages only) → redirect /billing
+ *   7. All checks passed → render children
+ */
 export default function ProtectedRoute({ children }) {
-  const { user, loading: authLoading } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
   const { gym, gymLoading, gymError } = useCurrentGym()
   const location = useLocation()
 
-  // Block rendering and show loading screen if:
-  // 1. Auth is loading
-  // 2. Gym is loading
-  // 3. User is authenticated, but gym object is not loaded yet and there is no gym loading error
-  if (authLoading || gymLoading || (user && !gym && !gymError)) {
+  // ── Step 1: Auth still loading (user + profile sync) ──
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#121212]">
         <div className="flex flex-col items-center gap-3">
@@ -22,8 +31,26 @@ export default function ProtectedRoute({ children }) {
     )
   }
 
-  // Show a clear error screen if gym loading failed (instead of crashing individual pages)
-  if (gymError) {
+  // ── Step 2: Not logged in ──
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
+  // ── Step 3: Determine role and page type ──
+  const isMember = profile?.role === 'member'
+  const isOwner = profile?.role === 'owner'
+  const isBillingPage = location.pathname === '/billing'
+  const isSettingsPage = location.pathname === '/settings'
+  const isSuperAdmin = location.pathname.startsWith('/super-admin')
+  const isAdminPage = isBillingPage || isSettingsPage || isSuperAdmin
+
+  // ── Step 4: Members skip ALL gym/billing checks ──
+  if (isMember) {
+    return children
+  }
+
+  // ── Step 5: Gym error — show error card (non-admin pages only) ──
+  if (gymError && !isAdminPage) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#121212] p-6 text-center">
         <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl">
@@ -53,20 +80,23 @@ export default function ProtectedRoute({ children }) {
     )
   }
 
-  if (!user) {
-    return <Navigate to="/login" replace />
+  // ── Step 6: Owner gym still loading — only block non-admin pages ──
+  if (isOwner && gymLoading && !isAdminPage) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#121212]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#3390ec] border-t-transparent rounded-full animate-spin" />
+          <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">Loading Gym...</p>
+        </div>
+      </div>
+    )
   }
 
-  // Subscription Paywall: Redirect to billing if gym is pending or expired.
-  // Allow access to /billing, /settings, and /super-admin
-  const isBillingPage = location.pathname === '/billing'
-  const isSettingsPage = location.pathname === '/settings'
-  const isSuperAdmin = location.pathname.startsWith('/super-admin')
-  const requiresBilling = gym?.status === 'pending' || gym?.billing_status === 'expired'
-  
-  if (requiresBilling && !isBillingPage && !isSettingsPage && !isSuperAdmin) {
+  // ── Step 7: Owner billing redirect — no gym, pending, or expired ──
+  if (isOwner && !isAdminPage && (!gym || gym?.status === 'pending' || gym?.billing_status === 'expired')) {
     return <Navigate to="/billing" replace />
   }
 
+  // ── Step 8: All checks passed ──
   return children
 }

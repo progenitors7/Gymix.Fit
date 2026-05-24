@@ -1,18 +1,54 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { Mail, Lock, Eye, EyeOff, Loader2, UserPlus, CheckCircle2 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { 
+  Mail, 
+  Lock, 
+  Eye, 
+  EyeOff, 
+  Loader2, 
+  UserPlus, 
+  CheckCircle2, 
+  Building, 
+  User, 
+  Sparkles 
+} from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function SignupForm({ onSwitch }) {
   const { signUp, signInWithGoogle } = useAuth()
+  const [searchParams] = useSearchParams()
+
+  // Parse URL Parameters
+  const paramRole = searchParams.get('role') // 'member' or 'owner'
+  const paramGym = searchParams.get('gym')   // gym connection code
+
+  // State Management
+  const [selectedRole, setSelectedRole] = useState(() => {
+    return paramRole === 'member' ? 'member' : 'owner'
+  })
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [gymName, setGymName] = useState('')
+  
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
+  const isRoleLocked = paramRole === 'member'
+
+  // Capture scanned gym code from URL and persist in localStorage for inside-app confirmation
+  useEffect(() => {
+    if (paramGym) {
+      localStorage.setItem('scanned_gym_code', paramGym.trim().toUpperCase())
+      console.log('[SignupForm] Persisted scanned gym code in localStorage:', paramGym)
+    }
+  }, [paramGym])
+
+  // Handle Google Auth (strictly as free member role)
   const handleGoogleSignup = async () => {
     try {
       setLoading(true)
@@ -39,7 +75,23 @@ export default function SignupForm({ onSwitch }) {
 
     setLoading(true)
     try {
-      await signUp(email, password)
+      if (selectedRole === 'owner') {
+        if (!gymName.trim()) {
+          setError('Gym Name is required.')
+          setLoading(false)
+          return
+        }
+        await signUp(email, password, 'owner', '', gymName.trim())
+      } else {
+        if (!fullName.trim()) {
+          setError('Full Name is required.')
+          setLoading(false)
+          return
+        }
+        
+        // 1. Sign up the athlete
+        await signUp(email, password, 'member', fullName.trim())
+      }
       setSuccess(true)
     } catch (err) {
       setError(err.message || 'Failed to create account.')
@@ -58,12 +110,15 @@ export default function SignupForm({ onSwitch }) {
         >
           <CheckCircle2 className="w-10 h-10 text-emerald-500" />
         </motion.div>
-        <div className="space-y-3">
-          <h2 className="text-2xl font-black text-white tracking-tight uppercase italic">Check Your Email</h2>
-          <p className="text-slate-400 text-sm leading-relaxed font-medium">
-            Verification link sent to <br />
+        <div className="space-y-4">
+          <h2 className="text-2xl font-black text-white tracking-tight uppercase italic">Verification Sent!</h2>
+          <p className="text-slate-400 text-sm leading-relaxed font-semibold">
+            We sent a verification link to:<br />
             <span className="text-emerald-500 font-bold">{email}</span>
           </p>
+          <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 text-[11.5px] font-bold text-slate-300 tracking-wide leading-relaxed max-w-sm mx-auto">
+            Please check your email and click the link to activate your account. Once verified, return here to log in and access your dashboard!
+          </div>
         </div>
         <button
           onClick={onSwitch}
@@ -76,7 +131,50 @@ export default function SignupForm({ onSwitch }) {
   }
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-6">
+      
+      {/* ── Premium Role Tabs ── */}
+      <div className="space-y-2">
+        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+          I am registering as:
+        </label>
+        <div className="flex rounded-2xl bg-black/40 p-1 border border-white/5 relative">
+          <button
+            type="button"
+            disabled={isRoleLocked}
+            onClick={() => setSelectedRole('owner')}
+            className={`flex-1 py-3 px-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+              selectedRole === 'owner'
+                ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-black shadow-lg shadow-emerald-500/15'
+                : 'text-slate-500 hover:text-slate-300'
+            } ${isRoleLocked ? 'opacity-40 cursor-not-allowed' : ''}`}
+          >
+            <Building className="w-3.5 h-3.5" />
+            Gym Owner
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedRole('member')}
+            className={`flex-1 py-3 px-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+              selectedRole === 'member'
+                ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-black shadow-lg shadow-emerald-500/15'
+                : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            <User className="w-3.5 h-3.5" />
+            Gym Athlete
+          </button>
+        </div>
+        
+        {isRoleLocked && (
+          <p className="text-[9px] font-bold text-emerald-500/60 uppercase tracking-wider ml-1.5 flex items-center gap-1.5 animate-pulse">
+            <Sparkles className="w-3 h-3" />
+            Locked to Athlete (Scanned QR Link active)
+          </p>
+        )}
+      </div>
+
+      {/* ── Google Signup ── */}
       <button
         type="button"
         onClick={handleGoogleSignup}
@@ -96,8 +194,8 @@ export default function SignupForm({ onSwitch }) {
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-white/5"></div>
         </div>
-        <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-[0.2em]">
-          <span className="bg-[#1A1F2B] px-4 text-slate-600">OR</span>
+        <div className="relative flex justify-center text-[9px] font-bold uppercase tracking-[0.25em]">
+          <span className="bg-[#191D26] px-4 text-slate-600">OR REGISTER WITH EMAIL</span>
         </div>
       </div>
 
@@ -111,9 +209,71 @@ export default function SignupForm({ onSwitch }) {
         </motion.div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-2">
-          <label htmlFor="signup-email" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+      {/* ── Signup Form ── */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        
+        {/* Dynamic Fields based on Role */}
+        <AnimatePresence mode="wait">
+          {selectedRole === 'owner' ? (
+            <motion.div
+              key="owner-fields"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ duration: 0.15 }}
+              className="space-y-4"
+            >
+              <div className="space-y-1.5">
+                <label htmlFor="gym-name" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                  Gym / Studio Name
+                </label>
+                <div className="relative group">
+                  <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-emerald-500 transition-colors" />
+                  <input
+                    id="gym-name"
+                    type="text"
+                    required
+                    value={gymName}
+                    onChange={(e) => setGymName(e.target.value)}
+                    placeholder="e.g. Iron Paradise Gym"
+                    className="w-full pl-12 pr-4 py-3 rounded-2xl bg-black/40 border border-white/5 text-white placeholder-slate-700 text-sm focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5 transition-all font-medium"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="member-fields"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.15 }}
+              className="space-y-4"
+            >
+              <div className="space-y-1.5">
+                <label htmlFor="member-fullname" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                  Your Full Name
+                </label>
+                <div className="relative group">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-emerald-500 transition-colors" />
+                  <input
+                    id="member-fullname"
+                    type="text"
+                    required
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="e.g. Rahul Sharma"
+                    className="w-full pl-12 pr-4 py-3 rounded-2xl bg-black/40 border border-white/5 text-white placeholder-slate-700 text-sm focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5 transition-all font-medium"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Credentials ── */}
+        <div className="space-y-1.5">
+          <label htmlFor="signup-email" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
             Email Address
           </label>
           <div className="relative group">
@@ -125,14 +285,14 @@ export default function SignupForm({ onSwitch }) {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="operator@gymrevenue.os"
-              className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-black/40 border border-white/5 text-white placeholder-slate-700 text-sm focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium"
+              placeholder="e.g. member@gymrevenue.os"
+              className="w-full pl-12 pr-4 py-3 rounded-2xl bg-black/40 border border-white/5 text-white placeholder-slate-700 text-sm focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5 transition-all font-medium"
             />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="signup-password" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+        <div className="space-y-1.5">
+          <label htmlFor="signup-password" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
             Choose Password
           </label>
           <div className="relative group">
@@ -145,7 +305,7 @@ export default function SignupForm({ onSwitch }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Min. 6 characters"
-              className="w-full pl-12 pr-12 py-3.5 rounded-2xl bg-black/40 border border-white/5 text-white placeholder-slate-700 text-sm focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium"
+              className="w-full pl-12 pr-12 py-3 rounded-2xl bg-black/40 border border-white/5 text-white placeholder-slate-700 text-sm focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5 transition-all font-medium"
             />
             <button
               type="button"
@@ -157,8 +317,8 @@ export default function SignupForm({ onSwitch }) {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="signup-confirm-password" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+        <div className="space-y-1.5">
+          <label htmlFor="signup-confirm-password" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
             Confirm Password
           </label>
           <div className="relative group">
@@ -171,7 +331,7 @@ export default function SignupForm({ onSwitch }) {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Re-enter passcode"
-              className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-black/40 border border-white/5 text-white placeholder-slate-700 text-sm focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium"
+              className="w-full pl-12 pr-4 py-3 rounded-2xl bg-black/40 border border-white/5 text-white placeholder-slate-700 text-sm focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5 transition-all font-medium"
             />
           </div>
         </div>
@@ -180,7 +340,7 @@ export default function SignupForm({ onSwitch }) {
           id="signup-submit-btn"
           type="submit"
           disabled={loading}
-          className="w-full py-4 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold text-sm transition-all shadow-xl shadow-emerald-500/20 active:scale-[0.98] flex items-center justify-center gap-3 mt-4"
+          className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-400 hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed text-black font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-emerald-500/10 active:scale-[0.98] flex items-center justify-center gap-3 mt-4"
         >
           {loading ? (
             <>
@@ -196,7 +356,7 @@ export default function SignupForm({ onSwitch }) {
         </button>
       </form>
 
-      <p className="pt-6 text-center text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+      <p className="pt-4 text-center text-[10px] font-bold text-slate-600 uppercase tracking-wider">
         Have an account?{' '}
         <button
           id="switch-to-login"

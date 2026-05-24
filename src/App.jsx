@@ -20,6 +20,7 @@ const AddMemberPage = React.lazy(() => import('./components/Members/AddMemberPag
 const EditMemberPage = React.lazy(() => import('./components/Members/EditMemberPage'))
 const SubscriptionsPage = React.lazy(() => import('./components/Subscriptions/SubscriptionsPage'))
 const AddSubscriptionPage = React.lazy(() => import('./components/Subscriptions/AddSubscriptionPage'))
+const ScannerPage = React.lazy(() => import('./components/Members/ScannerPage'))
 const PaymentsPage = React.lazy(() => import('./components/Payments/PaymentsPage'))
 const AddPaymentPage = React.lazy(() => import('./components/Payments/AddPaymentPage'))
 const NotificationsPage = React.lazy(() => import('./pages/NotificationsPage'))
@@ -110,6 +111,7 @@ export default function App() {
             <Route path="/members"          element={<Protected><MembersPage /></Protected>} />
             <Route path="/members/new"      element={<Protected><AddMemberPage /></Protected>} />
             <Route path="/members/:id/edit" element={<Protected><EditMemberPage /></Protected>} />
+            <Route path="/scanner"          element={<Protected><ScannerPage /></Protected>} />
             
             <Route path="/subscriptions"     element={<Protected><SubscriptionsPage /></Protected>} />
             <Route path="/subscriptions/new" element={<Protected><AddSubscriptionPage /></Protected>} />

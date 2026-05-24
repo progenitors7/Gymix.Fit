@@ -11,7 +11,6 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { User, Phone, Activity, Award, Calendar, FileText, CreditCard, Sparkles } from 'lucide-react'
 import DatePicker from '../UI/DatePicker'
-import { unifiedService } from '../../services/unifiedService'
 import { useCurrentGym } from '../../hooks/useCurrentGym'
 
 import { planService } from '../../services/planService';
@@ -108,34 +107,14 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
         Object.entries(form).map(([k, v]) => [k, v === '' ? null : v])
       )
       
-      // Create Member
-      const newMember = await onSubmit(payload)
-
-      // Unified Action: Record initial subscription and payment if requested
-      if (mode === 'add' && newMember && gym) {
-        if (recordPayment && amountPaid > 0) {
-          await unifiedService.smartRenew(
-            gym.id,
-            newMember.id,
-            {
-              plan_name: form.membership_plan,
-              duration_type: form.membership_plan.toLowerCase(),
-              amount: parseFloat(amountPaid),
-              expiry_date: form.expiry_date,
-              gym_id: gym.id
-            },
-            {
-              amount_paid: parseFloat(amountPaid),
-              payment_method: 'cash',
-              payment_status: 'paid',
-              notes: 'Initial registration payment'
-            }
-          );
-        } else {
-          // Just record the subscription without payment if not paying now
-          await unifiedService.recordInitialMemberSetup(gym.id, newMember);
-        }
+      // Pass payment details if in add mode
+      if (mode === 'add') {
+        payload.recordPayment = recordPayment
+        payload.amountPaid = amountPaid ? parseFloat(amountPaid) : 0
       }
+      
+      // Create Member and all related subscription/payment details
+      await onSubmit(payload)
     } catch (err) {
       setGlobalError(err.message || 'Something went wrong.')
     } finally {

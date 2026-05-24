@@ -19,7 +19,8 @@ import {
   Menu,
   X,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  QrCode
 } from 'lucide-react'
 import Logo from '../UI/Logo'
 
@@ -33,6 +34,11 @@ const NAV_ITEMS = [
     label: 'Dashboard',
     path: '/dashboard',
     icon: LayoutDashboard,
+  },
+  {
+    label: 'QR Scanner',
+    path: '/scanner',
+    icon: QrCode,
   },
   {
     label: 'Athletes',
@@ -256,6 +262,19 @@ function BottomNav() {
 }
 
 export default function AppLayout({ children }) {
+  const { profile } = useAuth()
+
+  // B2B2C Member Shell: Bypass owner layout sidebars & headers entirely
+  if (profile?.role === 'member') {
+    return (
+      <div className="flex h-screen bg-[#0F1117] overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+          {children}
+        </div>
+      </div>
+    )
+  }
+
   const [isSidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
   const { gym } = useGym()

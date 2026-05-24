@@ -89,7 +89,7 @@ function Toast({ message, type, onClose }) {
 
 export default function SettingsPage() {
   const { user, signIn, signOut, updatePassword, resetPasswordForEmail } = useAuth();
-  const { gym, gymName, gymLoading, updateGymName, ownerEmail } = useCurrentGym();
+  const { gym, gymName, gymLoading, gymError, updateGymName, ownerEmail } = useCurrentGym();
   const navigate = useNavigate();
   const gymId = gym?.id ?? null;
 
@@ -450,6 +450,15 @@ export default function SettingsPage() {
       {!gymLoading && (
       <>
       <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: 'success' })} />
+
+      {gymError && (
+        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-4 rounded-xl flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 shrink-0" />
+          <div className="text-sm font-medium">
+            <strong>Warning:</strong> {gymError}
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">

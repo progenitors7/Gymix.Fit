@@ -106,6 +106,20 @@ export default function LandingPage() {
     setShowInstallPrompt(false);
   };
 
+  const triggerInstallFlow = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        localStorage.setItem('gym_pwa_dismissed', 'true');
+        setShowInstallPrompt(false);
+      }
+      setDeferredPrompt(null);
+    } else {
+      setShowInstallPrompt(true);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0F1117] text-slate-100 overflow-x-hidden selection:bg-emerald-500/30 font-sans relative">
       
@@ -182,10 +196,10 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="text-3xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white leading-[0.95] tracking-tight uppercase italic max-w-5xl"
+          className="text-3xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white leading-[1.1] tracking-tight uppercase italic max-w-5xl py-2 px-1"
         >
           UNLEASH YOUR <br className="hidden sm:inline" />
-          GYM'S <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-400 to-[#A770FF]">REVENUE</span> POTENTIAL
+          GYM'S <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-400 to-[#A770FF] pb-1 px-1">REVENUE</span> POTENTIAL
         </motion.h1>
 
         <motion.p
@@ -340,6 +354,48 @@ export default function LandingPage() {
             </div>
           </div>
         </motion.div>
+      </section>
+
+      {/* ── DEDICATED PWA INSTALLATION SECTION ── */}
+      <section className="py-16 md:py-20 max-w-5xl mx-auto px-6 relative z-10">
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-[#A770FF]/5 rounded-[3rem] blur-2xl pointer-events-none" />
+        
+        <div className="glass-card border border-white/5 rounded-[3rem] p-8 sm:p-12 bg-white/[0.01] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-10">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+          
+          <div className="space-y-4 max-w-xl text-center md:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-black uppercase tracking-widest text-emerald-400">
+              <Smartphone className="w-3.5 h-3.5" />
+              Progressive Web App
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase italic leading-none">
+              TAKE YOUR GYM ON THE GO
+            </h2>
+            <p className="text-slate-400 text-sm sm:text-base leading-relaxed font-semibold">
+              Install Gym Revenue OS as a standalone mobile or desktop application. Runs with high offline speeds, zero app store downloads, minimal storage drag, and direct push alerts.
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row items-center gap-4 w-full sm:w-auto flex-shrink-0">
+            <button
+              onClick={triggerInstallFlow}
+              className="w-full sm:w-auto px-8 py-4.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black text-xs font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/20 hover:scale-[1.03] active:scale-95 transition-all duration-300 flex items-center justify-center gap-3 cursor-pointer"
+            >
+              <Download className="w-4 h-4" />
+              {isStandalone ? '✓ OS Already Installed' : 'Install Standalone App'}
+            </button>
+            
+            <button
+              onClick={() => {
+                setShowInstallPrompt(true);
+              }}
+              className="w-full sm:w-auto px-8 py-4.5 bg-white/[0.03] border border-white/5 hover:bg-white/[0.08] text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Share className="w-4 h-4 text-emerald-400" />
+              Installation Guide
+            </button>
+          </div>
+        </div>
       </section>
 
       {/* ── CORE FEATURES SECTION ── */}
