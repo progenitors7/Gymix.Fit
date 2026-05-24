@@ -94,7 +94,7 @@ export default function EditMemberPage() {
       </div>
 
       {/* Form card */}
-      <div className="glass-card border border-white/5 rounded-[2.5rem] p-8 sm:p-12 relative">
+      <div className="glass-card border border-white/5 rounded-[2.5rem] p-8 sm:p-12 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2" />
         <div className="relative z-10">
           <MemberForm
