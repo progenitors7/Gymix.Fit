@@ -573,19 +573,13 @@ export default function MemberDashboard() {
                 </div>
 
                 <div className="space-y-6 pt-6">
-                  {/* Premium QR placeholder container */}
+                  {/* Premium QR Code rendering */}
                   <div className="w-52 h-52 bg-white rounded-3xl p-5 mx-auto shadow-[0_0_30px_rgba(16,185,129,0.1)] border border-emerald-500/20 flex flex-col items-center justify-center relative group">
-                    <div className="w-full h-full border-4 border-dashed border-[#1E293B] rounded-2xl flex flex-col items-center justify-center opacity-70 p-4">
-                      {/* Simple visual fallback representing scanned dynamic QR */}
-                      <QrCode className="w-24 h-24 text-slate-900 stroke-[1.2]" />
-                      <div className="h-1.5 w-24 bg-emerald-500/20 rounded-full mt-4 overflow-hidden relative">
-                        <motion.div 
-                          className="h-full bg-emerald-500" 
-                          animate={{ width: ['0%', '100%'] }} 
-                          transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-                        />
-                      </div>
-                    </div>
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrToken)}`}
+                      alt="Gate Access Pass"
+                      className="w-full h-full object-contain rounded-xl select-none"
+                    />
                   </div>
 
                   <div className="space-y-1">
