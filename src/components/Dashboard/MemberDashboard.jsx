@@ -90,7 +90,8 @@ export default function MemberDashboard() {
     if (!profile?.id) return
     setLoading(true)
     setReqError('')
-    try {
+
+    const executeFetch = async () => {
       // 1. Check if user is already an approved member
       const { data: memberData, error: memberError } = await supabase
         .from('members')
@@ -146,9 +147,28 @@ export default function MemberDashboard() {
           setScannedGym(null)
         }
       }
+    }
+
+    try {
+      try {
+        await executeFetch()
+      } catch (err) {
+        if (err.status === 401 || err.code === 'PGRST301') {
+          console.warn('[MemberDashboard] Stale session (401/PGRST301). Refreshing token...')
+          const { data: { session }, error: refreshError } = await supabase.auth.refreshSession()
+          if (!refreshError && session) {
+            console.log('[MemberDashboard] Token refreshed. Retrying fetch...')
+            await executeFetch()
+          } else {
+            throw err
+          }
+        } else {
+          throw err
+        }
+      }
     } catch (err) {
       console.error('Error loading member system:', err)
-      setReqError('Failed to load profile connection status.')
+      setReqError(err.message || 'Failed to load profile connection status.')
     } finally {
       setLoading(false)
     }
