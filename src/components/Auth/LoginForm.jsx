@@ -17,7 +17,7 @@ export default function LoginForm({ onSwitch, onForgotPassword }) {
     try {
       setLoading(true)
       setError(null)
-      await signInWithGoogle()
+      await signInWithGoogle('member')
     } catch (err) {
       setError(err.message || 'Failed to connect with Google.')
       setLoading(false)

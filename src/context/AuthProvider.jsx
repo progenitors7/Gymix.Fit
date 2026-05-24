@@ -27,12 +27,15 @@ export function AuthProvider({ children }) {
     return data
   }
 
-  const buildFallbackProfile = (currUser) => ({
-    id: currUser.id,
-    full_name: currUser.user_metadata?.full_name || currUser.user_metadata?.name || 'New Member',
-    email: currUser.email,
-    role: currUser.user_metadata?.role || 'member'
-  })
+  const buildFallbackProfile = (currUser) => {
+    const savedRole = localStorage.getItem('oauth_signup_role') || currUser.user_metadata?.role || 'member'
+    return {
+      id: currUser.id,
+      full_name: currUser.user_metadata?.full_name || currUser.user_metadata?.name || 'New Member',
+      email: currUser.email,
+      role: savedRole
+    }
+  }
 
   const syncProfile = async (currUser) => {
     if (!currUser) {
@@ -50,13 +53,14 @@ export function AuthProvider({ children }) {
         let p = await fetchProfile(currUser.id)
         if (!p) {
           console.log('[AuthProvider] Profile not found, upserting fallback...')
+          const savedRole = localStorage.getItem('oauth_signup_role') || currUser.user_metadata?.role || 'member'
           const { data, error } = await supabase
             .from('profiles')
             .upsert({
               id: currUser.id,
               full_name: currUser.user_metadata?.full_name || currUser.user_metadata?.name || 'New Member',
               email: currUser.email,
-              role: currUser.user_metadata?.role || 'member'
+              role: savedRole
             })
             .select()
             .maybeSingle()
@@ -68,6 +72,9 @@ export function AuthProvider({ children }) {
             p = data || buildFallbackProfile(currUser)
           }
         }
+        
+        // Clear cached role once profile resolution has settled
+        localStorage.removeItem('oauth_signup_role')
         setProfile(p)
         return p
       } catch (err) {
@@ -208,7 +215,10 @@ export function AuthProvider({ children }) {
     if (error) throw error
   }
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (role = 'member') => {
+    if (role) {
+      localStorage.setItem('oauth_signup_role', role)
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

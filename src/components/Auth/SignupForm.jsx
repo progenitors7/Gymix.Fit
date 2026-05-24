@@ -48,12 +48,12 @@ export default function SignupForm({ onSwitch }) {
     }
   }, [paramGym])
 
-  // Handle Google Auth (strictly as free member role)
+  // Handle Google Auth (using selected role)
   const handleGoogleSignup = async () => {
     try {
       setLoading(true)
       setError(null)
-      await signInWithGoogle()
+      await signInWithGoogle(selectedRole)
     } catch (err) {
       setError(err.message || 'Failed to connect with Google.')
       setLoading(false)
