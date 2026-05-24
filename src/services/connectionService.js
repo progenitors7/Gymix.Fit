@@ -239,43 +239,63 @@ export const connectionService = {
       throw new Error(`Membership is Expired! (${member.full_name}) ❌`)
     }
 
-    // 6. Double check-in checks (Limit to 1 check-in per day)
+    // 6. Check if the member has an active check-in record today (where check_in_time is today, check_out_time is null)
     const startOfDay = new Date()
     startOfDay.setHours(0, 0, 0, 0)
     const endOfDay = new Date()
     endOfDay.setHours(23, 59, 59, 999)
 
-    const { data: existingCheckIn, error: checkInError } = await supabase
+    const { data: activeSession, error: checkInError } = await supabase
       .from('attendance')
-      .select('id')
+      .select('id, check_in_time, check_out_time')
       .eq('member_id', memberId)
       .eq('gym_id', gymId)
       .gte('check_in_time', startOfDay.toISOString())
       .lte('check_in_time', endOfDay.toISOString())
+      .is('check_out_time', null)
       .maybeSingle()
 
     if (checkInError) throw checkInError
-    if (existingCheckIn) {
-      throw new Error(`Already Checked In Today! (${member.full_name}) ⚠️`)
-    }
 
-    // 7. Insert check-in log
-    const { data: attendance, error: insertError } = await supabase
-      .from('attendance')
-      .insert({
-        gym_id: gymId,
-        member_id: memberId,
-        check_in_time: new Date().toISOString()
-      })
-      .select()
-      .single()
+    if (activeSession) {
+      // 7a. Active check-in today without checkout found, set check_out_time = now()
+      const { data: attendance, error: updateError } = await supabase
+        .from('attendance')
+        .update({
+          check_out_time: new Date().toISOString()
+        })
+        .eq('id', activeSession.id)
+        .select()
+        .single()
 
-    if (insertError) throw insertError
+      if (updateError) throw updateError
 
-    return {
-      success: true,
-      member,
-      attendance
+      return {
+        success: true,
+        action: 'checkout',
+        member,
+        attendance
+      }
+    } else {
+      // 7b. Perform check-in (insert a new attendance record)
+      const { data: attendance, error: insertError } = await supabase
+        .from('attendance')
+        .insert({
+          gym_id: gymId,
+          member_id: memberId,
+          check_in_time: new Date().toISOString()
+        })
+        .select()
+        .single()
+
+      if (insertError) throw insertError
+
+      return {
+        success: true,
+        action: 'checkin',
+        member,
+        attendance
+      }
     }
   }
 }

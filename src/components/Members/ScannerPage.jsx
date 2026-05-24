@@ -3,15 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { Html5Qrcode } from 'html5-qrcode'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Camera, ArrowLeft, CheckCircle2, ShieldAlert, 
-  Sparkles, Zap, ShieldCheck, RefreshCw, Smartphone 
+  Camera, ArrowLeft, ShieldAlert, LogIn, LogOut
 } from 'lucide-react'
 import { useCurrentGym } from '../../hooks/useCurrentGym'
 import { connectionService } from '../../services/connectionService'
 
 export default function ScannerPage() {
   const navigate = useNavigate()
-  const { gym, gymId } = useCurrentGym()
+  const { gymId } = useCurrentGym()
   
   const [scanning, setScanning] = useState(false)
   const [cameras, setCameras] = useState([])
@@ -57,7 +56,7 @@ export default function ScannerPage() {
     if (html5QrCodeRef.current) {
       try {
         await html5QrCodeRef.current.stop()
-      } catch (e) {
+      } catch {
         // Ignored
       }
     }
@@ -78,7 +77,7 @@ export default function ScannerPage() {
           // Trigger scan success
           await handleScanSuccess(decodedText)
         },
-        (errorMessage) => {
+        () => {
           // Silent callback for qr discovery failures (standard behavior)
         }
       )
@@ -113,12 +112,34 @@ export default function ScannerPage() {
       // Execute B2B2C secure rolling token validation checks
       const result = await connectionService.logAttendanceCheckIn(gymId, decodedText)
       
+      const checkInTime = result.attendance?.check_in_time 
+        ? new Date(result.attendance.check_in_time)
+        : null
+      const checkOutTime = result.attendance?.check_out_time 
+        ? new Date(result.attendance.check_out_time)
+        : null
+
+      let durationStr = null
+      if (checkInTime && checkOutTime) {
+        const durationMs = checkOutTime - checkInTime
+        const durationMins = Math.floor(durationMs / 60000)
+        const durationHrs = Math.floor(durationMins / 60)
+        const displayMins = durationMins % 60
+        durationStr = durationHrs > 0 ? `${durationHrs}h ${displayMins}m` : `${durationMins}m`
+      }
+
       // Success Overlay State
       setScanResult({
         success: true,
-        message: 'Attendance Checked-In successfully! ✅',
+        action: result.action,
+        message: result.action === 'checkout' 
+          ? 'Attendance Checked-Out successfully! 👋' 
+          : 'Attendance Checked-In successfully! ✅',
         member: result.member,
-        time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+        time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+        checkInTimeStr: checkInTime ? checkInTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : null,
+        checkOutTimeStr: checkOutTime ? checkOutTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : null,
+        durationStr
       })
     } catch (err) {
       // Error Overlay State
@@ -192,41 +213,87 @@ export default function ScannerPage() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className={`w-full p-8 rounded-[2rem] border relative overflow-hidden flex flex-col items-center justify-center space-y-6 ${
                   scanResult.success 
-                    ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-400' 
+                    ? scanResult.action === 'checkout'
+                      ? 'bg-sky-500/5 border-sky-500/20 text-sky-400'
+                      : 'bg-emerald-500/5 border-emerald-500/20 text-emerald-400' 
                     : 'bg-rose-500/5 border-rose-500/20 text-rose-400'
                 }`}
               >
+                {/* Glowing status-specific background blur effect */}
+                {scanResult.success && scanResult.action === 'checkout' && (
+                  <div className="absolute inset-0 bg-sky-500/[0.02] animate-pulse pointer-events-none" />
+                )}
+                {scanResult.success && scanResult.action === 'checkin' && (
+                  <div className="absolute inset-0 bg-emerald-500/[0.02] animate-pulse pointer-events-none" />
+                )}
+
                 <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-inner ${
-                  scanResult.success ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-rose-500/10 border border-rose-500/20'
+                  scanResult.success 
+                    ? scanResult.action === 'checkout'
+                      ? 'bg-sky-500/10 border border-sky-500/20'
+                      : 'bg-emerald-500/10 border border-emerald-500/20' 
+                    : 'bg-rose-500/10 border border-rose-500/20'
                 }`}>
                   {scanResult.success ? (
-                    <ShieldCheck className="w-8 h-8 text-emerald-400" />
+                    scanResult.action === 'checkout' ? (
+                      <LogOut className="w-8 h-8 text-sky-400" />
+                    ) : (
+                      <LogIn className="w-8 h-8 text-emerald-400" />
+                    )
                   ) : (
                     <ShieldAlert className="w-8 h-8 text-rose-400" />
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <h4 className="text-xl font-black uppercase italic tracking-tight">{scanResult.success ? 'Access Granted' : 'Access Denied'}</h4>
+                <div className="space-y-2 relative z-10">
+                  <h4 className="text-xl font-black uppercase italic tracking-tight">
+                    {scanResult.success 
+                      ? scanResult.action === 'checkout'
+                        ? 'Access Granted - Check-Out'
+                        : 'Access Granted - Check-In' 
+                      : 'Access Denied'}
+                  </h4>
                   <p className="text-xs font-bold leading-relaxed max-w-xs mx-auto text-slate-400 uppercase tracking-wide">
                     {scanResult.message}
                   </p>
                 </div>
 
                 {scanResult.success && scanResult.member && (
-                  <div className="w-full max-w-sm p-4.5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3.5 pt-4 text-left">
+                  <div className="w-full max-w-sm p-4.5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3.5 pt-4 text-left relative z-10">
                     <div className="flex justify-between items-baseline text-xs font-semibold text-slate-500">
                       <span>ATHLETE</span>
                       <strong className="text-white text-sm font-black uppercase italic">{scanResult.member.full_name}</strong>
                     </div>
                     <div className="flex justify-between items-center text-xs font-semibold text-slate-500">
                       <span>ACTIVE PLAN</span>
-                      <span className="text-emerald-400 font-bold uppercase tracking-wider">{scanResult.member.membership_plan}</span>
+                      <span className={`font-bold uppercase tracking-wider ${
+                        scanResult.action === 'checkout' ? 'text-sky-400' : 'text-emerald-400'
+                      }`}>{scanResult.member.membership_plan}</span>
                     </div>
-                    <div className="flex justify-between items-center text-xs font-semibold text-slate-500">
-                      <span>CHECK-IN TIME</span>
-                      <span className="text-white font-bold">{scanResult.time}</span>
-                    </div>
+
+                    {scanResult.action === 'checkout' ? (
+                      <>
+                        <div className="flex justify-between items-center text-xs font-semibold text-slate-500">
+                          <span>CHECK-IN TIME</span>
+                          <span className="text-white font-semibold">{scanResult.checkInTimeStr || '—'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs font-semibold text-slate-500">
+                          <span>CHECK-OUT TIME</span>
+                          <span className="text-sky-400 font-bold">{scanResult.checkOutTimeStr || scanResult.time}</span>
+                        </div>
+                        {scanResult.durationStr && (
+                          <div className="flex justify-between items-center text-xs font-semibold text-slate-500 pt-2 border-t border-white/5">
+                            <span>SESSION DURATION</span>
+                            <span className="text-white font-black uppercase tracking-wider bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">{scanResult.durationStr}</span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex justify-between items-center text-xs font-semibold text-slate-500">
+                        <span>CHECK-IN TIME</span>
+                        <span className="text-emerald-400 font-bold">{scanResult.time}</span>
+                      </div>
+                    )}
                   </div>
                 )}
                 

@@ -422,15 +422,44 @@ export default function MemberDashboard() {
   return (
     <div className="min-h-screen bg-[#0f111a] text-slate-100 font-sans p-4 sm:p-6 flex flex-col justify-between max-w-md mx-auto pb-28 relative overflow-x-hidden overflow-y-auto">
       {/* Background decorations */}
-      <div className="absolute -top-32 -right-32 w-64 h-64 bg-[#863BFF]/5 blur-[100px] rounded-full pointer-events-none" />
-      <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full pointer-events-none" />
+      <motion.div 
+        animate={{
+          scale: [1, 1.15, 1],
+          x: [0, 10, -10, 0],
+          y: [0, -15, 15, 0],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+        className="absolute -top-32 -right-32 w-64 h-64 bg-[#863BFF]/10 blur-[100px] rounded-full pointer-events-none z-0" 
+      />
+      <motion.div 
+        animate={{
+          scale: [1, 1.2, 1],
+          x: [0, -15, 15, 0],
+          y: [0, 20, -20, 0],
+        }}
+        transition={{
+          duration: 10,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+        className="absolute -bottom-32 -left-32 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none z-0" 
+      />
 
       {/* TOP HEADER */}
       <div className="flex items-center justify-between pb-5 border-b border-white/5 relative z-10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#863BFF] to-[#b370ff] flex items-center justify-center font-bold text-white shadow-lg shadow-[#863BFF]/20 text-sm">
+          <motion.div 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#863BFF] to-[#b370ff] flex items-center justify-center font-black text-white shadow-lg shadow-[#863BFF]/30 text-sm relative group overflow-hidden"
+          >
             {profile?.full_name?.charAt(0).toUpperCase() || 'M'}
-          </div>
+            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </motion.div>
           <div className="space-y-0.5">
             <h1 className="text-sm font-black text-white tracking-wider flex items-center gap-1.5">
               <span>Yo, {profile?.full_name?.split(' ')[0] || 'Athlete'}!</span>
@@ -474,9 +503,10 @@ export default function MemberDashboard() {
           {!membership && !connectionReq && (
             <motion.div
               key="connect-panel"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 350, damping: 25 }}
               className="space-y-6 pt-4"
             >
               <div className="text-center space-y-3">
@@ -491,16 +521,16 @@ export default function MemberDashboard() {
               </div>
 
               {scannedGymLoading ? (
-                <div className="glass-card border border-white/5 rounded-3xl p-8 text-center space-y-4 animate-pulse">
+                <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-3xl p-8 text-center space-y-4 animate-pulse">
                   <div className="w-8 h-8 border-2 border-[#863BFF]/20 border-t-[#863BFF] rounded-full animate-spin mx-auto" />
                   <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Verifying gym poster...</p>
                 </div>
               ) : scannedGym ? (
                 /* PRE-FILLED SCANNED GYM CONFIRMATION PANEL */
                 <motion.div 
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="glass-card border border-emerald-500/20 bg-gradient-to-b from-slate-900/40 via-[#131924]/60 to-emerald-500/[0.02] rounded-[2.5rem] p-8 text-center space-y-6 relative overflow-hidden"
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  className="backdrop-blur-md bg-[#12141c]/60 border border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.15)] rounded-[2.5rem] p-8 text-center space-y-6 relative overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-emerald-500/[0.01] animate-pulse rounded-[2.5rem]" />
                   
@@ -590,13 +620,14 @@ export default function MemberDashboard() {
           {!membership && connectionReq && (
             <motion.div
               key="pending-panel"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              className="glass-card border border-[#863BFF]/15 bg-gradient-to-br from-slate-900/50 via-[#1A1F2B]/60 to-[#863BFF]/5 rounded-[2.5rem] p-8 text-center space-y-6 relative overflow-hidden pt-10"
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 350, damping: 25 }}
+              className="backdrop-blur-md bg-[#12141c]/60 border border-[#863BFF]/30 shadow-[0_0_30px_rgba(134,59,255,0.15)] rounded-[2.5rem] p-8 text-center space-y-6 relative overflow-hidden pt-10"
             >
               {/* Pulsing loading background */}
-              <div className="absolute inset-0 bg-[#863BFF]/5 animate-pulse rounded-[2.5rem]" />
+              <div className="absolute inset-0 bg-[#863BFF]/5 animate-pulse rounded-[2.5rem] pointer-events-none" />
               
               <div className="relative space-y-6 z-10">
                 <div className="w-16 h-16 rounded-3xl bg-[#863BFF]/10 border border-[#863BFF]/20 flex items-center justify-center mx-auto animate-bounce">
@@ -651,28 +682,28 @@ export default function MemberDashboard() {
                 {activeTab === 'pass' && (
                   <motion.div
                     key="pass-tab"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ duration: 0.2 }}
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 25 }}
                     className="space-y-6"
                   >
                     {/* Expiry Header */}
-                    <div className="p-4.5 rounded-[2rem] bg-white/[0.01] border border-white/5 flex items-center justify-between">
+                    <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 p-4.5 rounded-[2rem] flex items-center justify-between shadow-lg">
                       <div className="space-y-0.5">
                         <p className="text-[8px] font-black uppercase text-slate-500 tracking-widest">Active Gym</p>
                         <h4 className="text-sm font-black text-white uppercase italic tracking-tight">{membership.gyms?.gym_name}</h4>
                       </div>
                       <div className="text-right space-y-0.5">
                         <p className="text-[8px] font-black uppercase text-slate-500 tracking-widest">Plan Tier</p>
-                        <span className="text-[9px] font-black uppercase bg-[#863BFF]/10 border border-[#863BFF]/20 text-[#b370ff] px-2 py-0.5 rounded-md">
+                        <span className="text-[9px] font-black uppercase bg-[#863BFF]/20 border border-[#863BFF]/40 text-[#b370ff] px-2.5 py-0.5 rounded-md">
                           {membership.membership_plan}
                         </span>
                       </div>
                     </div>
 
                     {/* Active Pass Card */}
-                    <div className="glass-card border border-white/5 rounded-[2.5rem] p-6.5 bg-gradient-to-b from-[#151722]/80 to-[#0e1017]/90 text-center relative overflow-hidden shadow-2xl">
+                    <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2.5rem] p-6.5 text-center relative overflow-hidden shadow-2xl transition-all duration-300 hover:border-white/20">
                       {/* Rotating ring spinner indicator */}
                       <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-black uppercase tracking-widest text-emerald-400">
                         <span className="relative flex h-1.5 w-1.5">
@@ -683,16 +714,21 @@ export default function MemberDashboard() {
                       </div>
 
                       <div className="space-y-6 pt-5">
-                        {/* QR Container */}
-                        <div className="w-52 h-52 bg-white rounded-3xl p-4.5 mx-auto shadow-[0_0_35px_rgba(134,59,255,0.1)] border border-[#863BFF]/20 flex flex-col items-center justify-center relative group">
-                          <img 
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrToken)}`}
-                            alt="Gate Access Pass"
-                            className="w-full h-full object-contain rounded-xl select-none"
-                          />
+                        {/* QR Container with neon glow effect */}
+                        <div className="relative w-52 h-52 mx-auto group">
+                          {/* Pulsing neon glow underlay */}
+                          <div className="absolute -inset-1.5 bg-gradient-to-r from-[#863BFF] to-[#b370ff] rounded-3xl blur-xl opacity-60 group-hover:opacity-80 transition duration-1000 group-hover:duration-200 animate-pulse" />
+                          
+                          <div className="relative w-full h-full bg-white rounded-3xl p-4.5 flex flex-col items-center justify-center border border-white/10 shadow-2xl transition-all duration-300 group-hover:scale-[1.02]">
+                            <img 
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrToken)}`}
+                              alt="Gate Access Pass"
+                              className="w-full h-full object-contain rounded-xl select-none"
+                            />
+                          </div>
                         </div>
 
-                        <div className="space-y-1">
+                        <div className="space-y-1 pt-2">
                           <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center justify-center gap-1.5">
                             <Shield className="w-3.5 h-3.5 text-emerald-400" />
                             ACTIVE PASS KEY
@@ -709,7 +745,7 @@ export default function MemberDashboard() {
                       {/* Streak Display widget */}
                       <div 
                         onClick={() => setActiveTab('streaks')}
-                        className="p-5 rounded-[2rem] bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 text-center space-y-1 relative group overflow-hidden transition-all cursor-pointer"
+                        className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 p-5 rounded-[2rem] text-center space-y-1 relative group overflow-hidden transition-all duration-300 hover:border-orange-500/30 hover:bg-orange-500/5 hover:scale-[1.02] cursor-pointer"
                       >
                         <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 blur-2xl rounded-full pointer-events-none" />
                         <Flame className="w-6 h-6 text-orange-500 mx-auto mb-1 group-hover:scale-110 transition-transform" />
@@ -718,7 +754,7 @@ export default function MemberDashboard() {
                       </div>
 
                       {/* Remaining Days Widget */}
-                      <div className="p-5 rounded-[2rem] bg-white/[0.01] border border-white/5 text-center space-y-1 relative group overflow-hidden">
+                      <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 p-5 rounded-[2rem] text-center space-y-1 relative group overflow-hidden transition-all duration-300 hover:border-emerald-500/30 hover:bg-emerald-500/5 hover:scale-[1.02]">
                         <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 blur-2xl rounded-full pointer-events-none" />
                         <Activity className="w-6 h-6 text-emerald-400 mx-auto mb-1 group-hover:scale-110 transition-transform" />
                         <p className="text-2xl font-black text-white">
@@ -734,14 +770,14 @@ export default function MemberDashboard() {
                 {activeTab === 'attendance' && (
                   <motion.div
                     key="attendance-tab"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ duration: 0.2 }}
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 25 }}
                     className="space-y-6"
                   >
                     {/* Dynamic Calendar card */}
-                    <div className="glass-card border border-white/5 rounded-[2rem] p-6 space-y-5 bg-white/[0.01]">
+                    <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2rem] p-6 space-y-5 shadow-2xl transition-all duration-300 hover:border-white/20">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
                           <Calendar className="w-4.5 h-4.5" />
@@ -768,7 +804,7 @@ export default function MemberDashboard() {
                     </div>
 
                     {/* Detailed Vertical Logs Timeline */}
-                    <div className="glass-card border border-white/5 rounded-[2rem] p-6 space-y-4 bg-white/[0.01]">
+                    <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2rem] p-6 space-y-4 shadow-2xl transition-all duration-300 hover:border-white/20">
                       <div className="flex items-center justify-between">
                         <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Check-in / Check-out Streams</p>
                         <span className="text-[8px] font-black uppercase bg-white/5 px-2 py-0.5 rounded text-slate-400">Total: {attendanceLogs.length}</span>
@@ -784,7 +820,7 @@ export default function MemberDashboard() {
                             const checkIn = new Date(log.check_in_time)
                             const checkOut = log.check_out_time ? new Date(log.check_out_time) : null
                             return (
-                              <div key={index} className="p-3.5 rounded-2xl bg-white/[0.01] border border-white/5 hover:border-white/10 transition-all flex items-center justify-between relative group">
+                              <div key={index} className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all flex items-center justify-between relative group shadow-sm hover:scale-[1.01]">
                                 <div className="flex items-center gap-3">
                                   <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
                                     <LogIn className="w-3.5 h-3.5" />
@@ -827,32 +863,48 @@ export default function MemberDashboard() {
                 {activeTab === 'streaks' && (
                   <motion.div
                     key="streaks-tab"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ duration: 0.2 }}
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 25 }}
                     className="space-y-6"
                   >
-                    {/* Gamified Fire Card */}
-                    <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-rose-600/10 border border-orange-500/20 shadow-[0_0_40px_rgba(249,115,22,0.15)] text-center relative overflow-hidden">
-                      {/* Abstract flame aura */}
-                      <div className="absolute inset-0 bg-radial-gradient from-orange-500/5 to-transparent blur-xl rounded-full" />
+                    {/* Gamified Fire Card with Pulsing Gradient Border and Reflection */}
+                    <div className="relative p-8 rounded-[2.5rem] bg-[#1a0f0a]/60 border border-orange-500/30 shadow-[0_0_40px_rgba(249,115,22,0.25)] text-center overflow-hidden group">
+                      {/* Moving pulsing glow mesh */}
+                      <motion.div 
+                        animate={{
+                          scale: [1, 1.2, 1],
+                          opacity: [0.15, 0.3, 0.15],
+                          rotate: [0, 180, 360]
+                        }}
+                        transition={{
+                          duration: 8,
+                          repeat: Infinity,
+                          ease: "linear"
+                        }}
+                        className="absolute inset-0 bg-gradient-to-br from-orange-600 via-amber-500 to-rose-600 blur-2xl rounded-[2.5rem] pointer-events-none"
+                      />
+                      {/* Inner dark glass mask to keep content clean */}
+                      <div className="absolute inset-[1px] bg-[#12141c]/90 rounded-[2.5rem] z-0" />
                       
                       <div className="relative z-10 space-y-5">
                         {/* Pulsing Flame graphic */}
                         <motion.div
                           animate={{ 
-                            scale: [1, 1.1, 1],
-                            rotate: [0, 5, -5, 0] 
+                            scale: [1, 1.15, 1],
+                            rotate: [0, 7, -7, 0] 
                           }}
                           transition={{ 
-                            duration: 3, 
+                            duration: 2.5, 
                             repeat: Infinity,
                             ease: "easeInOut"
                           }}
-                          className="w-18 h-18 bg-gradient-to-tr from-orange-500 to-amber-500 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-orange-500/30"
+                          className="w-18 h-18 bg-gradient-to-tr from-orange-500 via-amber-500 to-rose-500 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-orange-500/30 relative"
                         >
-                          <Flame className="w-10 h-10 text-white fill-white" />
+                          {/* Outer pulse ring */}
+                          <div className="absolute -inset-1 bg-orange-500/20 rounded-full blur-sm animate-ping pointer-events-none" />
+                          <Flame className="w-10 h-10 text-white fill-white relative z-10" />
                         </motion.div>
 
                         <div className="space-y-1">
@@ -863,7 +915,7 @@ export default function MemberDashboard() {
                         </div>
 
                         {/* Athlete Level Badge */}
-                        <div className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-xs font-black uppercase tracking-wider ${activeRank.color}`}>
+                        <div className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-xs font-black uppercase tracking-wider ${activeRank.color} shadow-[0_4px_12px_rgba(0,0,0,0.25)]`}>
                           <span>{activeRank.emoji}</span>
                           <span>{activeRank.name}</span>
                         </div>
@@ -871,7 +923,7 @@ export default function MemberDashboard() {
                     </div>
 
                     {/* Gamified stats */}
-                    <div className="glass-card border border-white/5 rounded-[2rem] p-6 space-y-4.5 bg-white/[0.01]">
+                    <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2rem] p-6 space-y-4.5 shadow-2xl transition-all duration-300 hover:border-white/20">
                       <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Weekly Consistency Flex</h4>
                       
                       {/* Visual 7 days bar */}
@@ -888,10 +940,10 @@ export default function MemberDashboard() {
                             <div key={day} className="flex-1 flex flex-col items-center gap-2">
                               <div className={`w-8 h-8 rounded-xl flex items-center justify-center border transition-all ${
                                 isActive 
-                                ? 'bg-orange-500/10 border-orange-500/30 text-orange-400 font-bold' 
-                                : 'bg-white/[0.01] border-white/5 text-slate-600 text-[10px]'
+                                ? 'bg-orange-500/20 border-orange-500/50 text-orange-400 font-bold shadow-[0_0_12px_rgba(249,115,22,0.25)] scale-105' 
+                                : 'bg-white/[0.02] border-white/5 text-slate-600 text-[10px]'
                               }`}>
-                                {isActive ? <Check className="w-4 h-4 text-orange-500" /> : day.charAt(0)}
+                                {isActive ? <Check className="w-4 h-4 text-orange-400" /> : day.charAt(0)}
                               </div>
                               <span className="text-[8px] font-black uppercase tracking-wider text-slate-500">{day.substring(0, 3)}</span>
                             </div>
@@ -900,7 +952,7 @@ export default function MemberDashboard() {
                       </div>
 
                       {/* Gamified Quotes */}
-                      <div className="mt-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5 relative overflow-hidden">
+                      <div className="mt-4 p-4 rounded-2xl bg-[#f97316]/5 border border-[#f97316]/10 relative overflow-hidden">
                         <div className="absolute top-3 left-3 opacity-10 font-serif text-3xl text-orange-400">“</div>
                         <p className="text-slate-300 text-xs font-bold leading-relaxed pl-5 pr-2">
                           {streakCount > 0 
@@ -917,10 +969,10 @@ export default function MemberDashboard() {
                 {activeTab === 'profile' && (
                   <motion.div
                     key="profile-tab"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ duration: 0.2 }}
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 25 }}
                     className="space-y-6"
                   >
                     {/* Settings Success/Error Alerts */}
@@ -939,7 +991,7 @@ export default function MemberDashboard() {
                     )}
 
                     {/* Edit Profile Form */}
-                    <div className="glass-card border border-white/5 rounded-[2rem] p-6 space-y-5 bg-white/[0.01]">
+                    <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2rem] p-6 space-y-5 shadow-2xl transition-all duration-300 hover:border-white/20">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-[#863BFF]/10 flex items-center justify-center border border-[#863BFF]/20 text-[#b370ff]">
                           <User className="w-4.5 h-4.5" />
@@ -961,7 +1013,7 @@ export default function MemberDashboard() {
                               value={profileName}
                               onChange={(e) => setProfileName(e.target.value)}
                               required
-                              className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.02] border border-white/5 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-[#863BFF]/50 transition-all"
+                              className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.02] border border-white/10 text-white placeholder-slate-500 text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-[#863BFF]/50 focus:ring-1 focus:ring-[#863BFF]/20 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)]"
                               placeholder="Display name"
                             />
                           </div>
@@ -976,7 +1028,7 @@ export default function MemberDashboard() {
                               type="text" 
                               value={profilePhone}
                               onChange={(e) => setProfilePhone(e.target.value)}
-                              className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.02] border border-white/5 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-[#863BFF]/50 transition-all"
+                              className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.02] border border-white/10 text-white placeholder-slate-500 text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-[#863BFF]/50 focus:ring-1 focus:ring-[#863BFF]/20 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)]"
                               placeholder="Add phone number"
                             />
                           </div>
@@ -991,10 +1043,10 @@ export default function MemberDashboard() {
                                 key={gender}
                                 type="button"
                                 onClick={() => setProfileGender(gender)}
-                                className={`py-3 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center cursor-pointer ${
+                                className={`py-3 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center cursor-pointer hover:border-white/20 ${
                                   profileGender === gender
-                                  ? 'bg-[#863BFF]/10 border-[#863BFF]/40 text-[#b370ff] font-bold shadow-md'
-                                  : 'bg-white/[0.01] border-white/5 text-slate-500'
+                                  ? 'bg-[#863BFF]/20 border-[#863BFF] text-white shadow-[0_0_15px_rgba(134,59,255,0.25)]'
+                                  : 'bg-white/[0.02] border-white/5 text-slate-500'
                                 }`}
                               >
                                 {gender}
@@ -1006,7 +1058,7 @@ export default function MemberDashboard() {
                         <button
                           type="submit"
                           disabled={savingProfile}
-                          className="w-full py-3.5 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          className="w-full py-3.5 bg-white hover:bg-slate-100 text-black text-[10px] font-black uppercase tracking-widest rounded-xl active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                         >
                           {savingProfile ? (
                             <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
@@ -1021,7 +1073,7 @@ export default function MemberDashboard() {
                     </div>
 
                     {/* Gym Membership detail block */}
-                    <div className="glass-card border border-white/5 rounded-[2rem] p-6 space-y-4 bg-white/[0.01]">
+                    <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2rem] p-6 space-y-4 shadow-2xl transition-all duration-300 hover:border-white/20">
                       <h4 className="text-[9px] font-black uppercase tracking-widest text-slate-500">Subscription Meta</h4>
                       
                       <div className="space-y-2.5 text-xs">
@@ -1057,56 +1109,84 @@ export default function MemberDashboard() {
               </AnimatePresence>
 
               {/* BOTTOM NAVIGATION BAR */}
-              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm rounded-[2rem] bg-gradient-to-b from-[#151722]/80 to-[#0e1017]/90 border border-white/5 backdrop-blur-xl shadow-2xl p-2 flex items-center justify-between z-50">
+              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-sm rounded-[2rem] bg-[#0c0e14]/70 border border-white/10 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-2 flex items-center justify-between z-50">
                 {/* BUTTON 1: PASS */}
                 <button
                   onClick={() => setActiveTab('pass')}
-                  className={`flex-1 flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition-all cursor-pointer ${
+                  className={`relative flex-1 flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition-all cursor-pointer z-10 ${
                     activeTab === 'pass' 
-                    ? 'text-[#b370ff] bg-white/[0.02] shadow-inner font-black' 
+                    ? 'text-[#b370ff] font-black' 
                     : 'text-slate-500 hover:text-slate-300 font-semibold'
                   }`}
                 >
-                  <QrCode className="w-5 h-5" />
+                  {activeTab === 'pass' && (
+                    <motion.div 
+                      layoutId="activeTabPill"
+                      className="absolute inset-0 bg-[#863BFF]/10 border border-[#863BFF]/20 rounded-2xl -z-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <QrCode className="w-5 h-5 transition-transform duration-200" />
                   <span className="text-[8px] uppercase tracking-wider leading-none">Pass</span>
                 </button>
 
                 {/* BUTTON 2: ATTENDANCE */}
                 <button
                   onClick={() => setActiveTab('attendance')}
-                  className={`flex-1 flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition-all cursor-pointer ${
+                  className={`relative flex-1 flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition-all cursor-pointer z-10 ${
                     activeTab === 'attendance' 
-                    ? 'text-[#b370ff] bg-white/[0.02] shadow-inner font-black' 
+                    ? 'text-[#b370ff] font-black' 
                     : 'text-slate-500 hover:text-slate-300 font-semibold'
                   }`}
                 >
-                  <Calendar className="w-5 h-5" />
+                  {activeTab === 'attendance' && (
+                    <motion.div 
+                      layoutId="activeTabPill"
+                      className="absolute inset-0 bg-[#863BFF]/10 border border-[#863BFF]/20 rounded-2xl -z-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <Calendar className="w-5 h-5 transition-transform duration-200" />
                   <span className="text-[8px] uppercase tracking-wider leading-none">History</span>
                 </button>
 
                 {/* BUTTON 3: STREAKS */}
                 <button
                   onClick={() => setActiveTab('streaks')}
-                  className={`flex-1 flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition-all cursor-pointer ${
+                  className={`relative flex-1 flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition-all cursor-pointer z-10 ${
                     activeTab === 'streaks' 
-                    ? 'text-orange-400 bg-white/[0.02] shadow-inner font-black' 
+                    ? 'text-orange-400 font-black' 
                     : 'text-slate-500 hover:text-slate-300 font-semibold'
                   }`}
                 >
-                  <Flame className="w-5 h-5" />
+                  {activeTab === 'streaks' && (
+                    <motion.div 
+                      layoutId="activeTabPill"
+                      className="absolute inset-0 bg-orange-500/10 border border-orange-500/20 rounded-2xl -z-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <Flame className="w-5 h-5 transition-transform duration-200" />
                   <span className="text-[8px] uppercase tracking-wider leading-none">Streak</span>
                 </button>
 
                 {/* BUTTON 4: PROFILE */}
                 <button
                   onClick={() => setActiveTab('profile')}
-                  className={`flex-1 flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition-all cursor-pointer ${
+                  className={`relative flex-1 flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition-all cursor-pointer z-10 ${
                     activeTab === 'profile' 
-                    ? 'text-[#b370ff] bg-white/[0.02] shadow-inner font-black' 
+                    ? 'text-[#b370ff] font-black' 
                     : 'text-slate-500 hover:text-slate-300 font-semibold'
                   }`}
                 >
-                  <User className="w-5 h-5" />
+                  {activeTab === 'profile' && (
+                    <motion.div 
+                      layoutId="activeTabPill"
+                      className="absolute inset-0 bg-[#863BFF]/10 border border-[#863BFF]/20 rounded-2xl -z-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <User className="w-5 h-5 transition-transform duration-200" />
                   <span className="text-[8px] uppercase tracking-wider leading-none">Profile</span>
                 </button>
               </div>
