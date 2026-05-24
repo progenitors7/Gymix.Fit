@@ -17,17 +17,37 @@ export function GymProvider({ children }) {
       return
     }
 
-    setGymLoading(true)
+    // Try to load from cache first for instant UX
+    const cacheKey = `gym_cache_${targetUser.id}`
+    const cached = localStorage.getItem(cacheKey)
+    let hasCache = false
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached)
+        if (parsed) {
+          setGym(parsed)
+          setGymLoading(false)
+          hasCache = true
+        }
+      } catch (e) {
+        console.error('[GymContext] Error parsing cached gym:', e)
+      }
+    } else {
+      setGymLoading(true)
+    }
+
     setGymError(null)
 
-    // Safety timeout: if fetch hangs beyond 8s, release loader with an error
+    // Safety timeout: if fetch hangs beyond 8s, release loader only if we don't have cached data
     let completed = false
     const timer = setTimeout(() => {
       if (!completed) {
         console.warn('[GymContext] fetchGym timed out after 8 seconds!')
         completed = true
-        setGymError('Loading timed out. Please check your connection and try again.')
-        setGymLoading(false)
+        if (!localStorage.getItem(cacheKey)) {
+          setGymError('Loading timed out. Please check your connection and try again.')
+          setGymLoading(false)
+        }
       }
     }, 8000)
 
@@ -74,6 +94,9 @@ export function GymProvider({ children }) {
         clearTimeout(timer)
         completed = true
         setGym(gymData)
+        
+        // Save to cache for next instant load
+        localStorage.setItem(cacheKey, JSON.stringify(gymData))
         setGymLoading(false)
       }
     } catch (err) {
@@ -81,9 +104,12 @@ export function GymProvider({ children }) {
       if (!completed) {
         clearTimeout(timer)
         completed = true
-        setGymError(err.message || 'Error loading gym data.')
-        setGym(null)
-        setGymLoading(false)
+        // Only trigger layout error if we don't even have cached data to show
+        if (!localStorage.getItem(cacheKey)) {
+          setGymError(err.message || 'Error loading gym data.')
+          setGym(null)
+          setGymLoading(false)
+        }
       }
     }
   }, [])

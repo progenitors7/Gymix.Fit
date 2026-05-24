@@ -103,11 +103,18 @@ export function AuthProvider({ children }) {
         const currUser = session?.user ?? null
         setUser(currUser)
         if (currUser) {
-          // CRITICAL: await profile sync BEFORE setting loading=false
-          // This ensures profile is available when ProtectedRoute evaluates
-          await syncProfile(currUser)
+          // OPTIMIZATION: Instantly set initial profile from user metadata to prevent loading screens
+          const fallback = buildFallbackProfile(currUser)
+          setProfile(fallback)
+          setLoading(false)
+          
+          // Sync profile in background without blocking mount
+          syncProfile(currUser).catch(err => {
+            console.error('[AuthProvider] Background profile sync failed:', err)
+          })
+        } else {
+          setLoading(false)
         }
-        setLoading(false)
       }
     }).catch(() => {
       if (!settled) {
@@ -121,7 +128,12 @@ export function AuthProvider({ children }) {
       const currUser = session?.user ?? null
       setUser(currUser)
       if (currUser) {
-        await syncProfile(currUser)
+        // OPTIMIZATION: Set instant profile, then sync in background
+        const fallback = buildFallbackProfile(currUser)
+        setProfile(fallback)
+        syncProfile(currUser).catch(err => {
+          console.error('[AuthProvider] Background profile sync failed:', err)
+        })
       } else {
         setProfile(null)
       }
@@ -175,6 +187,13 @@ export function AuthProvider({ children }) {
     if (error) throw error
     setUser(null)
     setProfile(null)
+    
+    // OPTIMIZATION: Clear all cached gym state on signout
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('gym_cache_')) {
+        localStorage.removeItem(key)
+      }
+    })
   }
 
   const resetPasswordForEmail = async (email) => {
