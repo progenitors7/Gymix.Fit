@@ -18,7 +18,8 @@ import {
   Calendar,
   Layers,
   ArrowRight,
-  MessageCircle
+  MessageCircle,
+  Fingerprint
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMembers } from '../../hooks/useMembers';
@@ -301,7 +302,22 @@ export default function MembersPage() {
                               {member.full_name?.slice(0, 1)}
                             </div>
                             <div>
-                              <p className="text-[#F8FAFC] font-bold text-[14px] group-hover:text-[#3B82F6] transition-colors">{member.full_name}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-[#F8FAFC] font-bold text-[14px] group-hover:text-[#3B82F6] transition-colors">{member.full_name}</p>
+                                {gym?.biometric_enabled && (
+                                  member.biometric_user_id ? (
+                                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[#10B981] text-[8px] font-black uppercase tracking-wider" title={`Biometric Linked (User ID: #${member.biometric_user_id})`}>
+                                      <Fingerprint className="w-2.5 h-2.5" />
+                                      Linked
+                                    </span>
+                                  ) : (
+                                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[8px] font-black uppercase tracking-wider" title="Biometric User ID Not Mapped">
+                                      <Fingerprint className="w-2.5 h-2.5" />
+                                      No Sync
+                                    </span>
+                                  )
+                                )}
+                              </div>
                               <p className="text-[#64748B] text-[10px] font-bold uppercase tracking-widest mt-0.5">{member.gender || 'Not Specified'}</p>
                             </div>
                           </div>
@@ -372,7 +388,22 @@ export default function MembersPage() {
                           {member.full_name?.slice(0, 1)}
                         </div>
                         <div>
-                          <p className="text-[#F8FAFC] font-extrabold text-[15px] tracking-tight">{member.full_name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-[#F8FAFC] font-extrabold text-[15px] tracking-tight">{member.full_name}</p>
+                            {gym?.biometric_enabled && (
+                              member.biometric_user_id ? (
+                                <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[#10B981] text-[8px] font-black uppercase tracking-wider">
+                                  <Fingerprint className="w-2.5 h-2.5" />
+                                  Linked
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[8px] font-black uppercase tracking-wider">
+                                  <Fingerprint className="w-2.5 h-2.5" />
+                                  No Sync
+                                </span>
+                              )
+                            )}
+                          </div>
                           <div className="flex items-center gap-1.5 mt-1 text-[#64748B]">
                             <Phone className="w-3.5 h-3.5" />
                             <p className="text-[12px] font-bold">{member.phone_number || 'No Phone'}</p>
