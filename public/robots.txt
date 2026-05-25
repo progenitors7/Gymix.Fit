@@ -1,0 +1,18 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Exclude protected admin dashboard routing from public crawls
+Disallow: /dashboard
+Disallow: /members
+Disallow: /scanner
+Disallow: /subscriptions
+Disallow: /payments
+Disallow: /notifications
+Disallow: /settings
+Disallow: /billing
+Disallow: /attendance
+Disallow: /super-admin
+
+# Link sitemap resource
+Sitemap: https://gymix.fit/sitemap.xml
