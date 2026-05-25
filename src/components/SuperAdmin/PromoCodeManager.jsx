@@ -148,7 +148,7 @@ export default function PromoCodeManager() {
                 <div>
                   <h3 className="text-xl font-black text-white tracking-tighter">{code.code}</h3>
                   <p className="text-gray-500 text-[10px] font-bold uppercase">
-                    {code.discount_type === 'full_free' ? '3 Months Free SaaS' : 
+                    {code.discount_type === 'full_free' ? '1 Month Free SaaS' : 
                      code.discount_type === 'percentage' ? `${code.discount_value}% Discount` : 
                      `₹${code.discount_value} OFF`}
                   </p>
@@ -202,7 +202,7 @@ export default function PromoCodeManager() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-[#1c1c1c] border border-white/10 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 duration-300">
             <h2 className="text-2xl font-black text-white tracking-tighter uppercase italic mb-2">Generate <span className="text-[#3390ec]">Promo Code</span></h2>
-            <p className="text-gray-500 text-xs font-medium mb-8">Create discounts or 3-month free SaaS access codes for gym owners.</p>
+            <p className="text-gray-500 text-xs font-medium mb-8">Create discounts or 1-month free SaaS access codes for gym owners.</p>
 
             <form onSubmit={handleCreateCode} className="space-y-6">
               <div className="space-y-2">
@@ -225,7 +225,7 @@ export default function PromoCodeManager() {
                     onChange={(e) => setNewCode({...newCode, discount_type: e.target.value})}
                     className="w-full bg-[#212121] border border-white/5 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-[#3390ec]/50 transition-all text-xs font-bold"
                   >
-                    <option value="full_free">3 Months Free</option>
+                    <option value="full_free">1 Month Free</option>
                     <option value="percentage">Percentage</option>
                     <option value="fixed">Fixed Amount</option>
                   </select>

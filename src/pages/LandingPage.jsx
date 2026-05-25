@@ -164,18 +164,18 @@ export default function LandingPage() {
   const handleApplyPromo = (e) => {
     e.preventDefault();
     const cleanCode = inputCode.trim().toUpperCase();
-    if (cleanCode === 'GYMIX3FREE' || cleanCode === 'GYMOS3FREE') {
-      // Auto-switch to 3-Month growth tier if not already selected
-      if (selectedDuration !== '3') {
-        setSelectedDuration('3');
+    if (cleanCode === 'GYMIX1FREE' || cleanCode === 'GYMOS1FREE') {
+      // Auto-switch to 1-Month growth tier if not already selected
+      if (selectedDuration !== '1') {
+        setSelectedDuration('1');
       }
       setPromoApplied(true);
       setCodeError('');
-      setPromoSuccessMsg(`Promo code "${cleanCode}" Applied! You unlocked 3 Months 100% Free!`);
+      setPromoSuccessMsg(`Promo code "${cleanCode}" Applied! You unlocked 1 Month 100% Free!`);
       setShowVoucherSuccessEffect(true);
       setTimeout(() => setShowVoucherSuccessEffect(false), 5000);
     } else {
-      setCodeError('Invalid promo code. Try "GYMIX3FREE"');
+      setCodeError('Invalid promo code. Try "GYMIX1FREE"');
     }
   };
 
@@ -262,8 +262,8 @@ export default function LandingPage() {
       a: "Absolutely. There are zero locked contracts or surprise hidden developer fees. You can modify, upgrade, or cancel your gym operational subscription whenever you choose, and easily download a clean, complete Excel/CSV database backup of all member records."
     },
     {
-      q: "How do I claim the 3 Months Free Trial?",
-      a: "Claiming early access is effortless! Choose the 3 Months Plan in our Pricing calculator, enter the elite promo code 'GYMIX3FREE' in the voucher box, and watch your total instantly calculate to ₹0. Create your administrative account to lock in lifetime access rates."
+      q: "How do I claim the 1 Month Free Trial?",
+      a: "Claiming early access is effortless! Choose the 1 Month Plan in our Pricing calculator, enter the elite promo code 'GYMIX1FREE' in the voucher box, and watch your total instantly calculate to ₹0. Create your administrative account to lock in lifetime access rates."
     }
   ];
 
@@ -1352,7 +1352,7 @@ export default function LandingPage() {
             </div>
             <h3 className="text-xl font-black text-white uppercase italic">Voucher Activated!</h3>
             <p className="text-xs text-slate-300 font-semibold leading-relaxed mt-2.5">
-              The promotional coupon code <strong className="text-[#10B981]">GYMIX3FREE</strong> has been applied to your checkout.
+              The promotional coupon code <strong className="text-[#10B981]">GYMIX1FREE</strong> has been applied to your checkout.
             </p>
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-4">
               Order Total discounted to ₹0
@@ -1408,7 +1408,7 @@ export default function LandingPage() {
                   <div className="space-y-1">
                     <span className="text-[8px] font-black uppercase text-slate-500 tracking-widest">Growth Starter</span>
                     <h4 className="text-lg sm:text-xl font-black text-white italic uppercase">1 Month Access</h4>
-                    <p className="text-[10px] text-[#10B981] font-bold uppercase tracking-wider">Perfect for testing system tools</p>
+                    <p className="text-[10px] text-[#10B981] font-bold uppercase tracking-wider">Eligible for voucher GYMIX1FREE</p>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-2xl sm:text-3xl font-black text-white">₹299</p>
@@ -1437,7 +1437,7 @@ export default function LandingPage() {
                   <div className="space-y-1">
                     <span className="text-[8px] font-black uppercase text-[#863BFF] tracking-widest">Growth Elite</span>
                     <h4 className="text-lg sm:text-xl font-black text-white italic uppercase">3 Months Access</h4>
-                    <p className="text-[10px] text-[#10B981] font-bold uppercase tracking-wider">Eligible for voucher GYMIX3FREE</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Frictionless operational value</p>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-2xl sm:text-3xl font-black text-white">₹699</p>
@@ -1482,7 +1482,7 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <h4 className="text-xs font-black uppercase tracking-wide text-white">Founding Gym Partner Scheme</h4>
-                  <p className="text-slate-400 text-xs font-semibold leading-normal pt-1">Early adopter license rates lock for life. Get 3 Months 100% Free inside the checkout calculator by entering voucher <strong className="text-emerald-400">GYMIX3FREE</strong> below.</p>
+                  <p className="text-slate-400 text-xs font-semibold leading-normal pt-1">Early adopter license rates lock for life. Get 1 Month 100% Free inside the checkout calculator by entering voucher <strong className="text-emerald-400">GYMIX1FREE</strong> below.</p>
                 </div>
               </div>
             </div>
@@ -1536,7 +1536,7 @@ export default function LandingPage() {
                       <form onSubmit={handleApplyPromo} className="space-y-2">
                         <div className="flex justify-between items-center text-[9px] font-black uppercase text-slate-500 tracking-wider">
                           <span>Apply Operational Coupon</span>
-                          <span className="text-[#10B981] animate-pulse">Try: GYMIX3FREE</span>
+                          <span className="text-[#10B981] animate-pulse">Try: GYMIX1FREE</span>
                         </div>
                         
                         <div className="flex gap-2">
@@ -1600,7 +1600,7 @@ export default function LandingPage() {
                   {/* Checkout CTA button action */}
                   <button
                     onClick={() => {
-                      const promoUrl = promoApplied ? '&promo=GYMIX3FREE' : '';
+                      const promoUrl = promoApplied ? '&promo=GYMIX1FREE' : '';
                       navigate(`/signup?plan=${selectedDuration}${promoUrl}`);
                     }}
                     className="w-full py-4.5 bg-[#10B981] hover:bg-[#1bc58c] text-black text-xs font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-[#10B981]/15 hover:shadow-[#10B981]/25 transition-all duration-300 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 cursor-pointer font-bold mt-2"

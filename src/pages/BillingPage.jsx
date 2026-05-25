@@ -16,7 +16,7 @@ import Toast from '../components/UI/Toast';
 
 const PRO_PLAN_ID = '770f855a-535c-44f1-9604-0ba7a74c6f59';
 const BILLING_FUNCTION = 'razorpay-subscription-v2';
-const FREE_PROMO_DURATION_MONTHS = 3;
+const FREE_PROMO_DURATION_MONTHS = 1;
 
 const DURATIONS = [
   { months: 1, label: '1 Month', price: 299, dailyText: 'Less than ₹10/day', discount: 0 },
@@ -143,7 +143,7 @@ export default function BillingPage() {
       if (finalAmount === 0) {
         if (!appliedPromo) throw new Error('A valid promo code is required for free activation.');
         if (appliedPromo.discount_type !== 'full_free') {
-          throw new Error('Only 3-month free promo codes can activate a free subscription.');
+          throw new Error('Only 1-month free promo codes can activate a free subscription.');
         }
 
         const { error: redeemError } = await supabase.functions.invoke(BILLING_FUNCTION, {
@@ -157,7 +157,7 @@ export default function BillingPage() {
 
         if (redeemError) throw redeemError;
 
-        setToastState({ message: '3 months free subscription activated successfully!', type: 'success' });
+        setToastState({ message: '1 month free subscription activated successfully!', type: 'success' });
         await refreshGym();
         window.location.reload();
         return;

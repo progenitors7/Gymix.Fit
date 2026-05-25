@@ -28,6 +28,15 @@ export function AuthProvider({ children }) {
   }
 
   const buildFallbackProfile = (currUser) => {
+    const cached = localStorage.getItem(`profile_cache_${currUser.id}`)
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached)
+        if (parsed) return parsed
+      } catch (e) {
+        console.error('[AuthProvider] Error parsing cached profile:', e)
+      }
+    }
     const savedRole = localStorage.getItem('oauth_signup_role') || currUser.user_metadata?.role || 'member'
     return {
       id: currUser.id,
@@ -51,16 +60,18 @@ export function AuthProvider({ children }) {
     const promise = (async () => {
       try {
         let p = await fetchProfile(currUser.id)
+        const savedRole = localStorage.getItem('oauth_signup_role')
+
         if (!p) {
           console.log('[AuthProvider] Profile not found, upserting fallback...')
-          const savedRole = localStorage.getItem('oauth_signup_role') || currUser.user_metadata?.role || 'member'
+          const finalRole = savedRole || currUser.user_metadata?.role || 'member'
           const { data, error } = await supabase
             .from('profiles')
             .upsert({
               id: currUser.id,
               full_name: currUser.user_metadata?.full_name || currUser.user_metadata?.name || 'New Member',
               email: currUser.email,
-              role: savedRole
+              role: finalRole
             })
             .select()
             .maybeSingle()
@@ -71,7 +82,29 @@ export function AuthProvider({ children }) {
           } else {
             p = data || buildFallbackProfile(currUser)
           }
+        } else {
+          // Profile exists in the database.
+          // If a specific role was requested via Google Signup and it differs from the database (which defaults to 'member'),
+          // we update the database record to match the explicitly requested signup role.
+          if (savedRole && p.role !== savedRole) {
+            console.log(`[AuthProvider] Syncing Google signup role. Updating DB from '${p.role}' to '${savedRole}'...`)
+            const { data: updatedData, error: updateError } = await supabase
+              .from('profiles')
+              .update({ role: savedRole })
+              .eq('id', currUser.id)
+              .select()
+              .maybeSingle()
+            
+            if (updateError) {
+              console.error('[AuthProvider] Sync profile role update failed:', updateError)
+            } else if (updatedData) {
+              p = updatedData
+            }
+          }
         }
+        
+        // Cache the profile in local storage for instant loading next time
+        localStorage.setItem(`profile_cache_${currUser.id}`, JSON.stringify(p))
         
         // Clear cached role once profile resolution has settled
         localStorage.removeItem('oauth_signup_role')
@@ -195,9 +228,9 @@ export function AuthProvider({ children }) {
     setUser(null)
     setProfile(null)
     
-    // OPTIMIZATION: Clear all cached gym state on signout
+    // OPTIMIZATION: Clear all cached gym and profile state on signout
     Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('gym_cache_')) {
+      if (key.startsWith('gym_cache_') || key.startsWith('profile_cache_')) {
         localStorage.removeItem(key)
       }
     })
@@ -215,9 +248,11 @@ export function AuthProvider({ children }) {
     if (error) throw error
   }
 
-  const signInWithGoogle = async (role = 'member') => {
+  const signInWithGoogle = async (role = null) => {
     if (role) {
       localStorage.setItem('oauth_signup_role', role)
+    } else {
+      localStorage.removeItem('oauth_signup_role')
     }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
