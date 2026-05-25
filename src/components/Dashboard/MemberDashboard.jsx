@@ -361,7 +361,14 @@ export default function MemberDashboard() {
         .order('recorded_at', { ascending: false })
       
       if (error) throw error
-      setProgressLogs(data || [])
+      
+      // Map DB lowercase log types ('pr', 'weight') to frontend expectation ('PR', 'BODYWEIGHT')
+      const mappedData = (data || []).map(log => ({
+        ...log,
+        log_type: log.log_type === 'pr' ? 'PR' : (log.log_type === 'weight' ? 'BODYWEIGHT' : log.log_type)
+      }))
+      
+      setProgressLogs(mappedData)
     } catch (err) {
       console.error('Error fetching progress logs:', err)
     } finally {
@@ -379,7 +386,7 @@ export default function MemberDashboard() {
         .from('member_progress_logs')
         .insert({
           member_id: membership.id,
-          log_type: newLogType,
+          log_type: newLogType === 'PR' ? 'pr' : 'weight',
           exercise_name: newLogType === 'BODYWEIGHT' ? 'Body Weight' : newExerciseName,
           value: parseFloat(newValue),
           notes: newNotes.trim() || null,
