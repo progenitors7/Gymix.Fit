@@ -23,6 +23,7 @@ const DEFAULTS = {
   join_date: new Date().toISOString().split('T')[0],
   expiry_date: '',
   notes: '',
+  biometric_user_id: '',
 }
 
 function Field({ label, required, children, error }) {
@@ -193,6 +194,29 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
           />
         </Field>
       </div>
+
+      {/* Biometric ID (Only if enabled in gym settings) */}
+      {gym?.biometric_enabled && (
+        <div className="grid sm:grid-cols-2 gap-5 animate-in fade-in duration-300">
+          <Field label="Biometric Device User ID" error={errors.biometric_user_id}>
+            <Activity className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
+            <input
+              id="member-biometric-id"
+              type="text"
+              value={form.biometric_user_id || ''}
+              onChange={set('biometric_user_id')}
+              placeholder="e.g. 105 (Must match machine ID)"
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmit(e)}
+              className={inputCls}
+            />
+          </Field>
+          <div className="flex items-center pb-1">
+            <p className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest leading-tight">
+              Enter the numeric User ID/Card ID of this member registered on the biometric fingerprint/face scanner.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Notes */}
       <Field label="Notes">

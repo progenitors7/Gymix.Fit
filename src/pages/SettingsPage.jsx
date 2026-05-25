@@ -19,7 +19,8 @@ import {
   LifeBuoy,
   MessageSquare,
   Clock,
-  CornerDownRight
+  CornerDownRight,
+  Copy
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -103,13 +104,79 @@ export default function SettingsPage() {
   const [coinRewardPerStreakMilestone, setCoinRewardPerStreakMilestone] = useState(gym?.coin_reward_per_streak_milestone || 50);
   const [savingCoinsSettings, setSavingCoinsSettings] = useState(false);
 
+  // Biometric integration states
+  const [biometricEnabled, setBiometricEnabled] = useState(gym?.biometric_enabled || false);
+  const [biometricDeviceSerial, setBiometricDeviceSerial] = useState(gym?.biometric_device_serial || '');
+  const [biometricApiKey, setBiometricApiKey] = useState(gym?.biometric_api_key || '');
+  const [savingBiometricSettings, setSavingBiometricSettings] = useState(false);
+  const [pwaGuideTab, setPwaGuideTab] = useState('zkteco'); // 'zkteco' | 'hikvision'
+
   useEffect(() => {
     if (gym) {
       setEnableGymCoins(gym.enable_gym_coins || false);
       setCoinRewardPerCheckin(gym.coin_reward_per_checkin || 10);
       setCoinRewardPerStreakMilestone(gym.coin_reward_per_streak_milestone || 50);
+      setBiometricEnabled(gym.biometric_enabled || false);
+      setBiometricDeviceSerial(gym.biometric_device_serial || '');
+      setBiometricApiKey(gym.biometric_api_key || '');
     }
   }, [gym]);
+
+  const handleSaveBiometricSettings = async () => {
+    if (!gym?.id) return;
+    setSavingBiometricSettings(true);
+    try {
+      const { error } = await supabase
+        .from('gyms')
+        .update({
+          biometric_enabled: biometricEnabled,
+          biometric_device_serial: biometricDeviceSerial.trim() || null
+        })
+        .eq('id', gym.id);
+
+      if (error) throw error;
+      showToast('Biometric integration settings updated successfully!');
+      
+      // Clear local storage cache for the gym so cache re-fetches updated settings
+      localStorage.removeItem(`gym_cache_${user.id}`);
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (err) {
+      showToast(err.message || 'Failed to save biometric settings', 'error');
+    } finally {
+      setSavingBiometricSettings(false);
+    }
+  };
+
+  const [testBioId, setTestBioId] = useState('');
+  const [simulatingBio, setSimulatingBio] = useState(false);
+
+  const handleSimulateBiometric = async () => {
+    if (!testBioId.trim() || !gym?.biometric_device_serial || !gym?.biometric_api_key) return;
+    setSimulatingBio(true);
+    try {
+      const { data, error } = await supabase
+        .rpc('log_biometric_attendance', {
+          p_device_serial: gym.biometric_device_serial,
+          p_biometric_api_key: gym.biometric_api_key,
+          p_biometric_user_id: testBioId.trim()
+        });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        showToast(`Simulation Success: ${data.member_name} ${data.action === 'checkin' ? 'Checked In' : 'Checked Out'}! ✅`);
+        setTestBioId('');
+      } else {
+        showToast(data?.error || 'Simulation failed ❌', 'error');
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to run biometric simulator ❌', 'error');
+    } finally {
+      setSimulatingBio(false);
+    }
+  };
 
   const handleSaveCoinsSettings = async () => {
     if (!gym?.id) return;
@@ -655,6 +722,189 @@ export default function SettingsPage() {
                 className="px-6 py-2.5 bg-[#3390ec] hover:bg-[#2b7ad2] disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-all"
               >
                 {savingCoinsSettings ? 'Saving...' : 'Save Loyalty Settings'}
+              </button>
+            </div>
+          </div>
+        </Section>
+
+        {/* Universal Biometric Integration */}
+        <Section 
+          icon={<Fingerprint className="w-5.5 h-5.5 text-[#10B981] fill-[#10B981]/10" />}
+          title="Universal Biometric Integration" 
+          description="Direct Cloud Plug-and-Play biometric face & fingerprint scanner dashboard sync"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4.5 rounded-2xl bg-white/[0.01] border border-white/5">
+              <div>
+                <p className="text-sm font-bold text-white">Enable Biometric Attendance System</p>
+                <p className="text-[10px] text-gray-500 font-medium">Link face/fingerprint terminals with cloud webhook auto check-ins. QR stays standard.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setBiometricEnabled(!biometricEnabled)}
+                className={`w-12 h-7 rounded-full p-1 transition-all cursor-pointer relative flex items-center ${biometricEnabled ? 'bg-emerald-500' : 'bg-white/10'}`}
+              >
+                <span className={`w-5 h-5 bg-white rounded-full shadow-md transition-all absolute ${biometricEnabled ? 'right-1' : 'left-1'}`} />
+              </button>
+            </div>
+
+            {biometricEnabled && (
+              <div className="space-y-4 pt-2 animate-in fade-in duration-300">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Field 
+                    label="Device Serial Number (Must be Unique)" 
+                    id="settings-bio-serial" 
+                    type="text" 
+                    value={biometricDeviceSerial} 
+                    onChange={e => setBiometricDeviceSerial(e.target.value)} 
+                    placeholder="e.g. ZK9500-2026113" 
+                  />
+                  
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-gray-400 px-1">Cloud API Webhook Address (Device Target)</label>
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        readOnly 
+                        value="https://api.gymix.fit/v1/biometric-push"
+                        className="w-full bg-[#161616] border border-white/5 rounded-lg pl-4 pr-12 py-2.5 text-xs text-gray-400 focus:outline-none transition-all select-all font-mono"
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText("https://api.gymix.fit/v1/biometric-push");
+                          showToast('Server URL copied to clipboard!');
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-white/5 rounded text-gray-400 hover:text-white transition-colors cursor-pointer"
+                        title="Copy URL"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-gray-400 px-1">Device Key / Secret Key</label>
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        readOnly 
+                        value={biometricApiKey || 'Not generated'}
+                        className="w-full bg-[#161616] border border-white/5 rounded-lg pl-4 pr-12 py-2.5 text-xs text-gray-400 focus:outline-none transition-all select-all font-mono"
+                      />
+                      {biometricApiKey && (
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(biometricApiKey);
+                            showToast('Device Key copied to clipboard!');
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-white/5 rounded text-gray-400 hover:text-white transition-colors cursor-pointer"
+                          title="Copy Key"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/10 text-[10px] text-amber-500/70 leading-normal flex items-start gap-2.5 font-medium">
+                    <AlertTriangle className="w-4.5 h-4.5 flex-shrink-0 text-amber-500" />
+                    <div>
+                      <span className="font-bold text-amber-400">Important:</span> Copy this Device Key and Server Webhook URL into your biometric machine communication setup. Gymix will reject logs from unknown machines.
+                    </div>
+                  </div>
+                </div>
+
+                {/* Platform Manual Guide Panel inside Settings */}
+                <div className="p-5 rounded-2xl bg-black/30 border border-white/5 space-y-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Biometric Device Integration Guides:</p>
+                  <div className="flex gap-2">
+                    <button 
+                      type="button"
+                      onClick={() => setPwaGuideTab('zkteco')}
+                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all border cursor-pointer ${pwaGuideTab === 'zkteco' ? 'bg-white/5 border-white/10 text-[#10B981]' : 'bg-transparent border-transparent text-slate-400'}`}
+                    >
+                      eSSL / ZKTeco Setup
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setPwaGuideTab('hikvision')}
+                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all border cursor-pointer ${pwaGuideTab === 'hikvision' ? 'bg-white/5 border-white/10 text-[#863BFF]' : 'bg-transparent border-transparent text-slate-400'}`}
+                    >
+                      Hikvision Setup
+                    </button>
+                  </div>
+                  
+                  {pwaGuideTab === 'zkteco' ? (
+                    <div className="text-[10px] text-slate-400 space-y-1.5 leading-normal">
+                      <p className="font-bold text-slate-200">1. Machine Menu open karein (M/OK long press).</p>
+                      <p>2. Go to <span className="text-white font-bold">Comm. (Communication) Settings</span> -&gt; <span className="text-white font-bold">ADMS / Cloud Server</span>.</p>
+                      <p>3. <span className="text-[#10B981] font-bold">Enable Server Settings</span> toggle karein aur select <span className="text-white font-bold">Domain Name</span>.</p>
+                      <p>4. Server Address mein <span className="text-white font-mono font-bold select-all">api.gymix.fit</span> aur Port mein <span className="text-white font-bold">80</span> daalein.</p>
+                      <p>5. Save karke restart karein, machine Gymix panel par automatic **ONLINE** aa jayegi! 🟢</p>
+                    </div>
+                  ) : (
+                    <div className="text-[10px] text-slate-400 space-y-1.5 leading-normal">
+                      <p className="font-bold text-slate-200">1. Hikvision IVMS portal ya machine interface login karein.</p>
+                      <p>2. Go to <span className="text-white font-bold">Network Configuration</span> -&gt; <span className="text-white font-bold">Advanced Settings</span> -&gt; <span className="text-white font-bold">ISUP/EHome</span>.</p>
+                      <p>3. Enable ISUP set karein, and Protocol Version select <span className="text-white font-bold">ISUP5.0</span>.</p>
+                      <p>4. Server Address mein <span className="text-[#863BFF] font-mono font-bold select-all">api.gymix.fit</span> aur target port configure karein.</p>
+                      <p>5. Apni machine ka actual Serial Number copy karke upar **Device Serial Number** field mein update karein.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Real-time Hardware Device Simulator Card */}
+                {gym?.biometric_device_serial && gym?.biometric_api_key && (
+                  <div className="p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-4.5 h-4.5 text-emerald-400 animate-pulse" />
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#10B981]">Hardware Sensor Simulator (Developer Test)</p>
+                    </div>
+                    <p className="text-[10px] text-slate-400 leading-normal font-semibold">
+                      Bina hardware install kiye aap yahan custom Biometric User ID enter karke instant punch signal test kar sakte hain!
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="flex-1">
+                        <input 
+                          type="text" 
+                          placeholder="e.g. 105" 
+                          value={testBioId}
+                          onChange={e => setTestBioId(e.target.value)}
+                          className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all font-mono"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSimulateBiometric}
+                        disabled={simulatingBio || !testBioId.trim()}
+                        className="px-5 py-2.5 bg-[#10B981] hover:bg-[#1bc58c] disabled:opacity-40 text-black text-[9px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        {simulatingBio ? (
+                          <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <>
+                            <Zap className="w-3.5 h-3.5" />
+                            Simulate Swipe ⚡
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="pt-2">
+              <button 
+                onClick={handleSaveBiometricSettings} 
+                disabled={savingBiometricSettings} 
+                className="px-6 py-2.5 bg-[#3390ec] hover:bg-[#2b7ad2] disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-all"
+              >
+                {savingBiometricSettings ? 'Saving...' : 'Save Biometric Settings'}
               </button>
             </div>
           </div>
