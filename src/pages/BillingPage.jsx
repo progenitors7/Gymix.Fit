@@ -190,7 +190,7 @@ export default function BillingPage() {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: data.amount,
         currency: data.currency,
-        name: 'Gym Revenue OS',
+        name: 'Gymix',
         description: `Pro Plan - ${selectedDuration.label}`,
         order_id: data.id,
         prefill: {
@@ -263,7 +263,7 @@ export default function BillingPage() {
               Activate Your Account
             </div>
             <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tighter uppercase italic">
-              Welcome to <span className="text-[#3390ec]">Gym OS</span>
+              Welcome to <span className="text-[#3390ec]">Gymix</span>
             </h1>
             <p className="text-gray-400 max-w-xl mx-auto text-sm font-medium leading-relaxed">
               You're one step away from managing your gym like a pro.
@@ -280,7 +280,7 @@ export default function BillingPage() {
               Used by growing gyms across India
             </div>
             <h1 className="text-5xl font-black text-white tracking-tighter uppercase italic">
-              Gym OS <span className="text-[#3390ec]">Growth Plan</span>
+              Gymix <span className="text-[#3390ec]">Growth Plan</span>
             </h1>
             <p className="text-gray-500 max-w-xl mx-auto text-sm font-medium leading-relaxed">
               Unlock unlimited potential. One plan, everything included. 

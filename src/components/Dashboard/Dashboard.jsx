@@ -116,7 +116,7 @@ export default function Dashboard() {
         </div>
         <h2 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 mb-6 tracking-tight">Level Up Your Gym</h2>
         <p className="text-[#94A3B8] text-lg sm:text-xl max-w-xl mb-8 leading-relaxed">
-          Welcome to <span className="text-white font-bold">Gym Revenue OS</span>. Your workspace is ready! Invite your members to download the app and connect using your Gym Code, or add them manually.
+          Welcome to <span className="text-white font-bold">Gymix</span>. Your workspace is ready! Invite your members to download the app and connect using your Gym Code, or add them manually.
         </p>
 
         {/* Gym connection code display */}

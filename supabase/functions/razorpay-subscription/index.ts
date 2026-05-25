@@ -71,16 +71,16 @@ async function sendSubscriptionEmail(userEmail: string, userName: string, planNa
       </div>
       <div style="padding: 30px; background-color: #ffffff;">
         <p style="font-size: 16px; color: #333;">Hi ${userName},</p>
-        <p style="font-size: 16px; color: #333;">Great news! Your <strong>Gym OS ${planName}</strong> has been activated successfully.</p>
+        <p style="font-size: 16px; color: #333;">Great news! Your <strong>Gymix ${planName}</strong> has been activated successfully.</p>
         <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
           <p style="margin: 5px 0; color: #555;"><strong>Duration:</strong> ${duration}</p>
           <p style="margin: 5px 0; color: #555;"><strong>Amount Paid:</strong> ₹${amount}</p>
         </div>
-        <p style="font-size: 16px; color: #333;">Thank you for choosing Gym Revenue OS to grow your fitness empire. You now have access to all premium features.</p>
+        <p style="font-size: 16px; color: #333;">Thank you for choosing Gymix to grow your fitness empire. You now have access to all premium features.</p>
         <p style="font-size: 16px; color: #333;">If you have any questions, feel free to contact our support team.</p>
       </div>
       <div style="background-color: #f4f4f4; padding: 15px; text-align: center; color: #888; font-size: 12px;">
-        <p style="margin: 0;">© ${new Date().getFullYear()} Gym Revenue OS. All rights reserved.</p>
+        <p style="margin: 0;">© ${new Date().getFullYear()} Gymix. All rights reserved.</p>
       </div>
     </div>
   `;
@@ -93,9 +93,9 @@ async function sendSubscriptionEmail(userEmail: string, userName: string, planNa
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Gym OS <onboarding@resend.dev>', // Note: Use verified domain in production
+        from: 'Gymix <onboarding@resend.dev>', // Note: Use verified domain in production
         to: [userEmail],
-        subject: 'Your Gym OS Subscription is Active! 🚀',
+        subject: 'Your Gymix Subscription is Active! 🚀',
         html: html
       })
     });

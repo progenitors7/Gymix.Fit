@@ -55,7 +55,7 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-sm glass-panel p-8 rounded-2xl shadow-2xl">
         <div className="flex items-center gap-3 mb-8 justify-center">
           <Logo className="w-8 h-8 drop-shadow-[0_0_8px_rgba(134,59,255,0.3)]" />
-          <span className="font-bold text-white tracking-tight">Gym Revenue OS</span>
+          <span className="font-bold text-white tracking-tight">Gymix</span>
         </div>
 
         <div className="mb-7 text-center">

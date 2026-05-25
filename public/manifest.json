@@ -1,6 +1,6 @@
 {
-  "name": "Gym Revenue OS",
-  "short_name": "GymOS",
+  "name": "Gymix",
+  "short_name": "Gymix",
   "description": "Premium Revenue Management for Gym Owners",
   "start_url": "/",
   "display": "standalone",

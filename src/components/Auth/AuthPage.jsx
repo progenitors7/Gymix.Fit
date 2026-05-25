@@ -64,7 +64,7 @@ export default function AuthPage() {
             <div className="w-12 h-12 flex items-center justify-center">
               <Logo className="w-12 h-12 drop-shadow-[0_0_15px_rgba(134,59,255,0.3)]" />
             </div>
-            <span className="font-black text-white text-2xl tracking-tighter italic uppercase">Gym Revenue <span className="text-[#863BFF]">OS</span></span>
+            <span className="font-black text-white text-2xl tracking-tighter italic uppercase">Gym<span className="text-[#863BFF]">ix</span></span>
           </motion.div>
 
           <div className="space-y-8">
@@ -216,7 +216,7 @@ export default function AuthPage() {
             className="text-center space-y-4"
           >
             <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.3em]">
-              © 2026 GYM REVENUE OS
+              © 2026 GYMIX
             </p>
           </motion.div>
         </div>

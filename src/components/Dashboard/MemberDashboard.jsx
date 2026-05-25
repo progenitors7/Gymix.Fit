@@ -2345,7 +2345,7 @@ export default function MemberDashboard() {
       {!membership && (
         <div className="absolute bottom-6 left-0 right-0 text-center relative z-10 md:hidden">
           <p className="text-[8px] font-black uppercase text-slate-600 tracking-[0.25em]">
-            Powered by Gym Revenue Operating System
+            Powered by Gymix
           </p>
         </div>
       )}

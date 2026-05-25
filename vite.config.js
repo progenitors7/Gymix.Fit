@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],
       manifest: {
-        name: 'Gym Revenue OS',
-        short_name: 'GymOS',
+        name: 'Gymix',
+        short_name: 'Gymix',
         description: 'Revenue management platform for gym owners',
         theme_color: '#0f172a',
         background_color: '#0f172a',
