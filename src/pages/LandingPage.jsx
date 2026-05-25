@@ -455,7 +455,7 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-[#863BFF]/5 rounded-full blur-md opacity-75 animate-pulse" />
           <Sparkles className="w-3.5 h-3.5 relative z-10 animate-spin" style={{ animationDuration: '6s' }} />
           <span className="relative z-10 text-white">LIMITED OFFER:</span> 
-          <span className="relative z-10 text-[#10B981] animate-pulse">3 MONTHS FREE TRIAL</span>
+          <span className="relative z-10 text-[#10B981] animate-pulse">1 MONTH FREE TRIAL</span>
         </motion.div>
 
         {/* Hero Title Typography */}
