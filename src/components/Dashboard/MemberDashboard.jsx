@@ -46,50 +46,64 @@ export default function MemberDashboard() {
   const [profileSuccess, setProfileSuccess] = useState('')
   const [profileError, setProfileError] = useState('')
 
-  // Calculate check-in streaks dynamically from database logs
+  const getLocalDateStr = (d) => {
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const date = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${date}`
+  }
+
+  // Calculate check-in streaks dynamically from database logs (skipping Sundays as rest days)
   const calculateStreak = (logs) => {
     if (!logs || logs.length === 0) {
       setStreakCount(0)
       return
     }
 
-    // Get unique YYYY-MM-DD dates of check-ins
     const checkInDates = new Set(
-      logs.map(log => new Date(log.check_in_time).toISOString().split('T')[0])
+      logs.map(log => getLocalDateStr(new Date(log.check_in_time)))
     )
 
     let streak = 0
-    let checkDate = new Date() // Start checking from today
-    const todayStr = checkDate.toISOString().split('T')[0]
+    let checkDate = new Date()
+    checkDate.setHours(0, 0, 0, 0)
 
-    // If they checked in today, start counting from today
-    if (checkInDates.has(todayStr)) {
-      streak++
-      checkDate.setDate(checkDate.getDate() - 1)
-    } else {
-      // If not checked in today, check if they checked in yesterday
-      const yesterday = new Date()
-      yesterday.setDate(yesterday.getDate() - 1)
-      const yesterdayStr = yesterday.toISOString().split('T')[0]
-      
-      if (checkInDates.has(yesterdayStr)) {
-        streak++
-        checkDate = yesterday
-        checkDate.setDate(checkDate.getDate() - 1)
-      } else {
-        // No check-in today and no check-in yesterday -> streak is 0
+    // Trace back to find the most recent check-in date
+    let daysSinceLastCheckIn = 0
+    let tempDate = new Date(checkDate)
+
+    while (true) {
+      const dateStr = getLocalDateStr(tempDate)
+      if (checkInDates.has(dateStr)) {
+        break // Found the most recent check-in!
+      }
+      if (tempDate.getDay() !== 0) { // Not Sunday
+        daysSinceLastCheckIn++
+      }
+      // If looked back more than 1 active gym day missed, the streak is dead
+      if (daysSinceLastCheckIn > 1) {
         setStreakCount(0)
         return
       }
+      tempDate.setDate(tempDate.getDate() - 1)
     }
 
-    // Loop backwards to count consecutive active days
+    // Now trace backwards from the last check-in date
+    checkDate = new Date(tempDate)
+
     while (true) {
-      const dateStr = checkDate.toISOString().split('T')[0]
-      if (checkInDates.has(dateStr)) {
+      const dateStr = getLocalDateStr(checkDate)
+      const hasCheckedIn = checkInDates.has(dateStr)
+      const isSunday = checkDate.getDay() === 0
+
+      if (hasCheckedIn) {
         streak++
         checkDate.setDate(checkDate.getDate() - 1)
+      } else if (isSunday) {
+        // It's Sunday and no check-in. Skip it without breaking the streak.
+        checkDate.setDate(checkDate.getDate() - 1)
       } else {
+        // It's a weekday/Saturday and they didn't check in -> streak is broken!
         break
       }
     }
@@ -371,14 +385,14 @@ export default function MemberDashboard() {
     }
 
     const checkInDates = new Set(
-      attendanceLogs.map(log => new Date(log.check_in_time).toISOString().split('T')[0])
+      attendanceLogs.map(log => getLocalDateStr(new Date(log.check_in_time)))
     )
 
-    const todayStr = new Date().toISOString().split('T')[0]
+    const todayStr = getLocalDateStr(new Date())
 
     for (let d = 1; d <= totalDays; d++) {
       const date = new Date(year, month, d)
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = getLocalDateStr(date)
       const hasCheckedIn = checkInDates.has(dateStr)
       const isPast = dateStr < todayStr
       const isToday = dateStr === todayStr
