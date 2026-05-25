@@ -44,6 +44,7 @@ export default function MemberDashboard() {
   // Instagram Share modal states
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [activeShareLog, setActiveShareLog] = useState(null)
+  const [shareTheme, setShareTheme] = useState('cyber')
   
   // Connection Form states
   const [gymCode, setGymCode] = useState('')
@@ -251,6 +252,222 @@ export default function MemberDashboard() {
     })
     
     return prs
+  }
+
+  // Dynamic colors and styles for Instagram PR themes
+  const getThemeStyles = (theme) => {
+    switch (theme) {
+      case 'volcano':
+        return {
+          bg: 'from-[#140b08] via-[#22100d] to-[#1c0c1e]',
+          glow1: 'bg-rose-500/10',
+          glow2: 'bg-orange-500/10',
+          border: 'border-rose-500/30',
+          shadow: 'shadow-rose-500/20 shadow-[0_0_40px_rgba(244,63,94,0.15)]',
+          titleColor: 'text-rose-400',
+          statColor: 'text-transparent bg-clip-text bg-gradient-to-r from-white via-rose-300 to-orange-400',
+          gymColor: 'text-orange-400'
+        }
+      case 'emerald':
+        return {
+          bg: 'from-[#07130e] via-[#0d2217] to-[#1a0f24]',
+          glow1: 'bg-emerald-500/10',
+          glow2: 'bg-yellow-500/10',
+          border: 'border-emerald-500/30',
+          shadow: 'shadow-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.15)]',
+          titleColor: 'text-emerald-400',
+          statColor: 'text-transparent bg-clip-text bg-gradient-to-r from-white via-emerald-300 to-yellow-400',
+          gymColor: 'text-emerald-400'
+        }
+      case 'cyber':
+      default:
+        return {
+          bg: 'from-[#0c0e17] via-[#121424] to-[#1c111e]',
+          glow1: 'bg-amber-500/10',
+          glow2: 'bg-purple-500/10',
+          border: 'border-purple-500/30',
+          shadow: 'shadow-purple-500/20 shadow-[0_0_40px_rgba(134,59,255,0.15)]',
+          titleColor: 'text-purple-400',
+          statColor: 'text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-300 to-indigo-400',
+          gymColor: 'text-emerald-400'
+        }
+    }
+  }
+
+  // Draw high-resolution dynamic vertical story poster on HTML5 Canvas and download
+  const handleDownloadImage = () => {
+    if (!activeShareLog) return
+    
+    const canvas = document.createElement('canvas')
+    canvas.width = 720
+    canvas.height = 1280
+    const ctx = canvas.getContext('2d')
+    
+    // Draw background gradient
+    const grad = ctx.createLinearGradient(0, 0, 720, 1280)
+    if (shareTheme === 'volcano') {
+      grad.addColorStop(0, '#140b08')
+      grad.addColorStop(0.5, '#22100d')
+      grad.addColorStop(1, '#1c0c1e')
+    } else if (shareTheme === 'emerald') {
+      grad.addColorStop(0, '#07130e')
+      grad.addColorStop(0.5, '#0d2217')
+      grad.addColorStop(1, '#1a0f24')
+    } else {
+      grad.addColorStop(0, '#0c0e17')
+      grad.addColorStop(0.5, '#121424')
+      grad.addColorStop(1, '#1c111e')
+    }
+    ctx.fillStyle = grad
+    ctx.fillRect(0, 0, 720, 1280)
+    
+    // Draw radial glowing backgrounds
+    const themeStyle = getThemeStyles(shareTheme)
+    
+    const radial1 = ctx.createRadialGradient(100, 200, 0, 100, 200, 400)
+    radial1.addColorStop(0, themeStyle.glow1.replace('0.1', '0.25'))
+    radial1.addColorStop(1, 'rgba(0,0,0,0)')
+    ctx.fillStyle = radial1
+    ctx.fillRect(0, 0, 720, 1280)
+
+    const radial2 = ctx.createRadialGradient(620, 1080, 0, 620, 1080, 400)
+    radial2.addColorStop(0, themeStyle.glow2.replace('0.1', '0.25'))
+    radial2.addColorStop(1, 'rgba(0,0,0,0)')
+    ctx.fillStyle = radial2
+    ctx.fillRect(0, 0, 720, 1280)
+    
+    // Central Glass Panel
+    ctx.save()
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'
+    ctx.shadowBlur = 50
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.02)'
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)'
+    ctx.lineWidth = 2
+    
+    const x = 70, y = 140, w = 580, h = 960, r = 48
+    ctx.beginPath()
+    ctx.moveTo(x + r, y)
+    ctx.lineTo(x + w - r, y)
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r)
+    ctx.lineTo(x + w, y + h - r)
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
+    ctx.lineTo(x + r, y + h)
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r)
+    ctx.lineTo(x, y + r)
+    ctx.quadraticCurveTo(x, y, x + r, y)
+    ctx.closePath()
+    ctx.fill()
+    ctx.stroke()
+    ctx.restore()
+    
+    // Draw Header: Logo & Branding
+    ctx.fillStyle = '#FFFFFF'
+    ctx.font = 'bold 24px sans-serif'
+    ctx.textAlign = 'left'
+    ctx.fillText('AthletOS', 110, 205)
+    
+    ctx.fillStyle = '#64748B'
+    ctx.font = '900 12px sans-serif'
+    ctx.fillText('MEMBER TERMINAL', 110, 228)
+    
+    // Draw Verified Stamp
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.08)'
+    ctx.strokeStyle = 'rgba(16, 185, 129, 0.25)'
+    ctx.lineWidth = 1.5
+    const bX = 430, bY = 175, bW = 180, bH = 46, bR = 23
+    ctx.beginPath()
+    ctx.moveTo(bX + bR, bY)
+    ctx.lineTo(bX + bW - bR, bY)
+    ctx.quadraticCurveTo(bX + bW, bY, bX + bW, bY + bR)
+    ctx.lineTo(bX + bW, bY + bH - bR)
+    ctx.quadraticCurveTo(bX + bW, bY + bH, bX + bW - bR, bY + bH)
+    ctx.lineTo(bX + bR, bY + bH)
+    ctx.quadraticCurveTo(bX, bY + bH, bX, bY + bH - bR)
+    ctx.lineTo(bX, bY + bR)
+    ctx.quadraticCurveTo(bX, bY, bX + bR, bY)
+    ctx.closePath()
+    ctx.fill()
+    ctx.stroke()
+    
+    ctx.fillStyle = '#10B981'
+    ctx.font = 'black 14px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('✓ GymOS Verified', 520, 203)
+    
+    // Draw PR Content
+    ctx.fillStyle = '#64748B'
+    ctx.font = '900 15px sans-serif'
+    ctx.fillText(activeShareLog.log_type === 'PR' ? 'NEW PERSONAL RECORD' : 'BODY WEIGHT UPDATE', 360, 440)
+    
+    ctx.fillStyle = '#FFFFFF'
+    ctx.font = '900 italic 38px sans-serif'
+    ctx.fillText(activeShareLog.exercise_name.toUpperCase(), 360, 495)
+    
+    // Main PR weight value
+    ctx.font = '900 italic 124px sans-serif'
+    if (shareTheme === 'volcano') ctx.fillStyle = '#F43F5E'
+    else if (shareTheme === 'emerald') ctx.fillStyle = '#10B981'
+    else ctx.fillStyle = '#A855F7'
+    ctx.fillText(`${activeShareLog.value}`, 360, 640)
+    
+    ctx.fillStyle = '#64748B'
+    ctx.font = 'bold italic 28px sans-serif'
+    ctx.fillText('kg', 360, 690)
+
+    if (activeShareLog.notes) {
+      ctx.fillStyle = '#94A3B8'
+      ctx.font = 'italic bold 20px sans-serif'
+      ctx.fillText(`“${activeShareLog.notes}”`, 360, 750)
+    }
+    
+    // Divider line
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)'
+    ctx.beginPath()
+    ctx.moveTo(110, 840)
+    ctx.lineTo(610, 840)
+    ctx.stroke()
+    
+    // Draw Footer Statistics
+    ctx.fillStyle = '#64748B'
+    ctx.font = '900 13px sans-serif'
+    ctx.textAlign = 'left'
+    ctx.fillText('ATHLETE IDENTITY', 110, 885)
+    ctx.textAlign = 'right'
+    ctx.fillStyle = '#FFFFFF'
+    ctx.font = 'bold 16px sans-serif'
+    ctx.fillText(profile?.full_name || 'Athlete', 610, 885)
+    
+    ctx.fillStyle = '#64748B'
+    ctx.font = '900 13px sans-serif'
+    ctx.textAlign = 'left'
+    ctx.fillText('CONSISTENCY STREAK', 110, 940)
+    ctx.textAlign = 'right'
+    ctx.fillStyle = '#F97316'
+    ctx.font = 'black 16px sans-serif'
+    ctx.fillText(`🔥 ${streakCount} Days Active`, 610, 940)
+    
+    ctx.fillStyle = '#64748B'
+    ctx.font = '900 13px sans-serif'
+    ctx.textAlign = 'left'
+    ctx.fillText('TRAINING HUB', 110, 995)
+    ctx.textAlign = 'right'
+    if (shareTheme === 'volcano') ctx.fillStyle = '#F97316'
+    else if (shareTheme === 'emerald') ctx.fillStyle = '#10B981'
+    else ctx.fillStyle = '#10B981'
+    ctx.font = 'black 16px sans-serif'
+    ctx.fillText(membership?.gyms?.gym_name || 'Training Gym', 610, 995)
+    
+    // Neon Marketing Watermark
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'
+    ctx.font = '900 13px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('⚡ POWERED BY ATHLETOS • RETENTION RETIRED ✨', 360, 1160)
+    
+    // Download File Action
+    const link = document.createElement('a')
+    link.download = `${profile?.full_name?.replace(/\s+/g, '_') || 'athlete'}_${activeShareLog.exercise_name?.replace(/\s+/g, '_')}_PR.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
   }
 
   // Get dynamic athlete rank based on streaks
@@ -1969,77 +2186,107 @@ export default function MemberDashboard() {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="max-w-md w-full flex flex-col items-center space-y-6"
+              className="max-w-md w-full flex flex-col items-center space-y-5"
             >
-              {/* THE SHARABLE CARD */}
+              {/* THE SHARABLE CARD (DYNAMIZED WITH LIVE THEME SELECTION) */}
               <div 
                 id="share-pr-card"
-                className="w-full max-w-[340px] aspect-[9/16] rounded-[2.5rem] bg-gradient-to-br from-[#0c0e17] via-[#121424] to-[#1c111e] border-2 border-white/10 p-6 flex flex-col justify-between relative overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.8)] shadow-purple-500/10 group select-none animate-in fade-in zoom-in-95 duration-300"
+                className={`w-full max-w-[310px] sm:max-w-[330px] aspect-[9/16] rounded-[2.2rem] bg-gradient-to-br ${getThemeStyles(shareTheme).bg} border-2 ${getThemeStyles(shareTheme).border} p-5.5 flex flex-col justify-between relative overflow-hidden shadow-2xl ${getThemeStyles(shareTheme).shadow} transition-all duration-500 select-none`}
               >
                 {/* Visual design glow backdrops */}
-                <div className="absolute top-[-10%] left-[-20%] w-60 h-60 bg-amber-500/10 blur-[80px] rounded-full pointer-events-none" />
-                <div className="absolute bottom-[-10%] right-[-20%] w-60 h-60 bg-purple-500/10 blur-[80px] rounded-full pointer-events-none" />
+                <div className={`absolute top-[-10%] left-[-20%] w-60 h-60 ${getThemeStyles(shareTheme).glow1} blur-[80px] rounded-full pointer-events-none transition-all duration-500`} />
+                <div className={`absolute bottom-[-10%] right-[-20%] w-60 h-60 ${getThemeStyles(shareTheme).glow2} blur-[80px] rounded-full pointer-events-none transition-all duration-500`} />
                 
                 {/* CARD HEADER */}
                 <div className="flex justify-between items-center relative z-10">
                   <div className="flex items-center gap-2">
-                    <Logo className="w-7 h-7 drop-shadow-[0_0_8px_rgba(134,59,255,0.4)]" />
-                    <span className="text-[10px] font-black uppercase text-white tracking-[0.2em] italic">GymOS</span>
+                    <Logo className="w-6.5 h-6.5 drop-shadow-[0_0_8px_rgba(134,59,255,0.4)]" />
+                    <span className="text-[9px] font-black uppercase text-white tracking-[0.2em] italic">GymOS</span>
                   </div>
                   
                   {/* Verified Badge */}
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[8px] font-black uppercase tracking-wider text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)] animate-pulse">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[7px] font-black uppercase tracking-wider text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)] animate-pulse">
                     <Check className="w-2.5 h-2.5" />
                     <span>GymOS Verified</span>
                   </div>
                 </div>
 
                 {/* CARD BODY (CENTER DETAILS) */}
-                <div className="my-auto text-center space-y-5 relative z-10 pt-4">
-                  <span className="px-3.5 py-1 rounded-full bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-[0.25em] text-slate-400">
+                <div className="my-auto text-center space-y-4 relative z-10 pt-4">
+                  <span className="px-3 py-0.5 rounded-full bg-white/5 border border-white/10 text-[8px] font-black uppercase tracking-[0.25em] text-slate-400">
                     {activeShareLog.log_type === 'PR' ? 'New Personal Record' : 'Body Weight Log'}
                   </span>
                   
-                  <div className="space-y-1.5">
-                    <h2 className="text-sm font-black text-slate-500 uppercase tracking-widest">{activeShareLog.exercise_name}</h2>
-                    <h1 className="text-5xl font-black italic tracking-tighter text-white drop-shadow-[0_2px_15px_rgba(255,255,255,0.1)]">
-                      {activeShareLog.value} <span className="text-xl font-medium text-slate-400 not-italic">kg</span>
+                  <div className="space-y-1">
+                    <h2 className={`text-xs font-black uppercase tracking-widest transition-colors duration-500 ${getThemeStyles(shareTheme).titleColor}`}>{activeShareLog.exercise_name}</h2>
+                    <h1 className={`text-4.5xl font-black italic tracking-tighter transition-all duration-500 ${getThemeStyles(shareTheme).statColor} drop-shadow-[0_2px_15px_rgba(255,255,255,0.05)]`}>
+                      {activeShareLog.value} <span className="text-lg font-medium text-slate-400 not-italic">kg</span>
                     </h1>
                   </div>
 
                   {activeShareLog.notes && (
-                    <p className="text-xs font-semibold text-slate-300 italic max-w-[240px] mx-auto leading-relaxed">
+                    <p className="text-[11px] font-semibold text-slate-300 italic max-w-[220px] mx-auto leading-relaxed">
                       “{activeShareLog.notes}”
                     </p>
                   )}
                 </div>
 
                 {/* CARD FOOTER */}
-                <div className="pt-4 border-t border-white/5 relative z-10 flex flex-col gap-3">
-                  <div className="flex justify-between items-center text-[10px] font-semibold text-slate-500 uppercase">
+                <div className="pt-3 border-t border-white/5 relative z-10 flex flex-col gap-2">
+                  <div className="flex justify-between items-center text-[9px] font-semibold text-slate-500 uppercase">
                     <span>Athlete</span>
                     <span className="text-white font-black">{profile?.full_name || 'Athlete'}</span>
                   </div>
-                  <div className="flex justify-between items-center text-[10px] font-semibold text-slate-500 uppercase">
+                  <div className="flex justify-between items-center text-[9px] font-semibold text-slate-500 uppercase">
                     <span>Consistency Streak</span>
                     <span className="text-orange-400 font-black flex items-center gap-1">
                       <span>{streakCount} Days</span>
                       <span>🔥</span>
                     </span>
                   </div>
-                  <div className="flex justify-between items-center text-[10px] font-semibold text-slate-500 uppercase">
+                  <div className="flex justify-between items-center text-[9px] font-semibold text-slate-500 uppercase">
                     <span>Training Hub</span>
-                    <span className="text-emerald-400 font-black">{membership?.gyms?.gym_name || 'My Gym'}</span>
+                    <span className={`font-black transition-colors duration-500 ${getThemeStyles(shareTheme).gymColor}`}>{membership?.gyms?.gym_name || 'My Gym'}</span>
                   </div>
                 </div>
               </div>
 
-              {/* FLOATING ACTION OVERLAY CONTROLS */}
-              <div className="w-full space-y-3 pt-2 text-center">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  💡 Tip: Take a screenshot to post directly to your Instagram story!
-                </p>
-                <div className="flex gap-3 justify-center">
+              {/* DYNAMIC INSTAGRAM THEME SWAP BUTTONS */}
+              <div className="w-full text-center space-y-2">
+                <span className="text-[8px] font-black uppercase text-slate-500 tracking-widest">Select Story Poster Color Theme</span>
+                <div className="flex gap-2 justify-center">
+                  <button 
+                    onClick={() => setShareTheme('cyber')}
+                    className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border cursor-pointer hover:scale-102 ${shareTheme === 'cyber' ? 'bg-[#863BFF]/20 border-[#863BFF] text-white shadow-[0_0_12px_rgba(134,59,255,0.25)]' : 'bg-white/5 border-white/5 text-slate-400'}`}
+                  >
+                    🌌 Cyber Glow
+                  </button>
+                  <button 
+                    onClick={() => setShareTheme('volcano')}
+                    className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border cursor-pointer hover:scale-102 ${shareTheme === 'volcano' ? 'bg-rose-500/20 border-rose-500 text-white shadow-[0_0_12px_rgba(244,63,94,0.25)]' : 'bg-white/5 border-white/5 text-slate-400'}`}
+                  >
+                    🌋 Volcano Fire
+                  </button>
+                  <button 
+                    onClick={() => setShareTheme('emerald')}
+                    className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border cursor-pointer hover:scale-102 ${shareTheme === 'emerald' ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.25)]' : 'bg-white/5 border-white/5 text-slate-400'}`}
+                  >
+                    🌲 Forest Power
+                  </button>
+                </div>
+              </div>
+
+              {/* ACTION BUTTONS (DOWLOAD PNG POSTER IN 1-CLICK) */}
+              <div className="w-full space-y-2.5 text-center">
+                <div className="flex gap-3.5 justify-center">
+                  <button 
+                    onClick={handleDownloadImage}
+                    className="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-xl shadow-amber-500/10"
+                  >
+                    <Sparkles className="w-4 h-4 fill-black/25" />
+                    Download PNG Poster
+                  </button>
+                  
                   <button 
                     onClick={() => {
                       const shareText = `💪 Verified Lift: I just smashed a new ${activeShareLog.exercise_name} PR of ${activeShareLog.value} kg at ${membership?.gyms?.gym_name || 'My Gym'} on GymOS! Consistency Streak: ${streakCount} Days! 🔥 #GymOS #FitnessGoal`;
@@ -2049,7 +2296,7 @@ export default function MemberDashboard() {
                     className="px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-lg animate-in slide-in-from-bottom duration-300"
                   >
                     <Copy className="w-4 h-4" />
-                    Copy Captions
+                    Copy Caption
                   </button>
 
                   <button 
@@ -2057,9 +2304,9 @@ export default function MemberDashboard() {
                       setShareModalOpen(false);
                       setActiveShareLog(null);
                     }}
-                    className="px-5 py-3 rounded-xl bg-[#863BFF] hover:bg-[#722ce0] text-white text-xs font-black uppercase tracking-widest transition-all cursor-pointer active:scale-95 shadow-lg shadow-[#863BFF]/20 animate-in slide-in-from-bottom duration-300"
+                    className="px-5 py-3 rounded-xl bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/10 text-rose-400 text-xs font-black uppercase tracking-widest transition-all cursor-pointer active:scale-95 shadow-lg animate-in slide-in-from-bottom duration-300"
                   >
-                    Close Preview
+                    Close
                   </button>
                 </div>
               </div>
