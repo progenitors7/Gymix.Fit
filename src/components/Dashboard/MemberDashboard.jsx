@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   QrCode, Activity, LogOut, CheckCircle2, AlertCircle, 
   Clock, ShieldAlert, Sparkles, Send, RefreshCw, Calendar, 
-  Building, Flame, User, LogIn, ChevronRight, Edit2, Check, Shield, Copy, Lock, Trophy, Menu, X
+  Building, Flame, User, LogIn, ChevronRight, Edit2, Check, Shield, Copy, Lock, Trophy, Menu, X, Bell
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../lib/supabaseClient'
@@ -32,6 +32,10 @@ export default function MemberDashboard() {
   const [coinsLoading, setCoinsLoading] = useState(false)
   const [leaderboard, setLeaderboard] = useState([])
   const [leaderboardLoading, setLeaderboardLoading] = useState(false)
+
+  // Notifications states
+  const [notifications, setNotifications] = useState([])
+  const [notifsLoading, setNotifsLoading] = useState(false)
 
   // Progress Tracker states
   const [progressLogs, setProgressLogs] = useState([])
@@ -148,6 +152,160 @@ export default function MemberDashboard() {
       console.error('Error fetching coin transactions:', err)
     } finally {
       setCoinsLoading(false)
+    }
+  }
+
+  // Fetch member specific notifications + global announcements
+  const fetchMemberNotifications = async (memberId, gymId) => {
+    setNotifsLoading(true)
+    try {
+      // 1. Fetch personal notifications
+      const { data: dbNotifs, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('related_member_id', memberId)
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (error) throw error
+
+      // 2. Fetch platform broadcasts
+      let broadcastNotifs = []
+      try {
+        const { data: broadcasts, error: bcError } = await supabase
+          .from('broadcasts')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(10)
+
+        if (bcError) throw bcError
+
+        let dismissedIds = []
+        try {
+          const saved = localStorage.getItem('dismissed_broadcasts')
+          dismissedIds = saved ? JSON.parse(saved) : []
+        } catch (e) {
+          console.error('Dismissed broadcasts parsing error:', e)
+        }
+
+        broadcastNotifs = (broadcasts || []).map(b => ({
+          id: b.id,
+          type: 'system_broadcast',
+          title: b.title,
+          message: b.message,
+          related_member_id: null,
+          is_read: dismissedIds.includes(b.id),
+          created_at: b.created_at
+        }))
+      } catch (bcErr) {
+        console.error('Error fetching broadcasts for member:', bcErr)
+      }
+
+      // Merge and sort
+      const merged = [...(dbNotifs || []), ...broadcastNotifs].sort((a, b) => {
+        return new Date(b.created_at) - new Date(a.created_at)
+      })
+
+      setNotifications(merged)
+    } catch (err) {
+      console.error('Error fetching member notifications:', err)
+    } finally {
+      setNotifsLoading(false)
+    }
+  }
+
+  // Automatic verification function to check for access pass expiry and send notification
+  const syncMemberNotifications = async (memberData) => {
+    if (!memberData || !memberData.expiry_date) return
+
+    try {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      const expiry = new Date(memberData.expiry_date)
+      expiry.setHours(0, 0, 0, 0)
+
+      const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24))
+
+      // Fetch recent unacknowledged or similar type notifications for this member
+      const { data: recentNotifs, error } = await supabase
+        .from('notifications')
+        .select('type, created_at')
+        .eq('related_member_id', memberData.id)
+        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // last 7 days
+
+      if (error) throw error
+
+      const existingTypes = new Set(recentNotifs?.map(n => n.type) || [])
+
+      const newNotifs = []
+
+      // Access Expired Notification
+      if (diffDays < 0) {
+        if (!existingTypes.has('membership_expired')) {
+          newNotifs.push({
+            gym_id: memberData.gym_id,
+            related_member_id: memberData.id,
+            type: 'membership_expired',
+            title: 'Access Pass Expired 🚨',
+            message: `Your access pass has expired on ${new Date(memberData.expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}. Please visit the gym desk to renew your membership immediately.`,
+            is_read: false
+          })
+        }
+      } 
+      // Access Expiring Soon Notification (0 to 3 days remaining)
+      else if (diffDays <= 3) {
+        if (!existingTypes.has('membership_expiring')) {
+          const daysText = diffDays === 0 ? 'today' : diffDays === 1 ? 'tomorrow' : `in ${diffDays} days`
+          newNotifs.push({
+            gym_id: memberData.gym_id,
+            related_member_id: memberData.id,
+            type: 'membership_expiring',
+            title: 'Access Pass Expiring Soon ⏳',
+            message: `Your access pass will expire ${daysText}. Please visit the front desk to renew your plan and keep your consistency streak going!`,
+            is_read: false
+          })
+        }
+      }
+
+      if (newNotifs.length > 0) {
+        const { error: insertError } = await supabase
+          .from('notifications')
+          .insert(newNotifs)
+
+        if (insertError) throw insertError
+        
+        // Refresh local notifications state
+        await fetchMemberNotifications(memberData.id, memberData.gym_id)
+      }
+    } catch (err) {
+      console.warn('Silent warning syncing member notifications:', err)
+    }
+  }
+
+  // Mark single notification as read
+  const markMemberNotifAsRead = async (notifId, type) => {
+    try {
+      if (type === 'system_broadcast') {
+        const saved = localStorage.getItem('dismissed_broadcasts')
+        let dismissed = saved ? JSON.parse(saved) : []
+        if (!dismissed.includes(notifId)) {
+          dismissed.push(notifId)
+          localStorage.setItem('dismissed_broadcasts', JSON.stringify(dismissed))
+        }
+      } else {
+        const { error } = await supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .eq('id', notifId)
+
+        if (error) throw error
+      }
+
+      // Update local state directly
+      setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, is_read: true } : n))
+    } catch (err) {
+      console.error('Error marking notification as read:', err)
     }
   }
 
@@ -528,6 +686,10 @@ export default function MemberDashboard() {
 
         // 6. Fetch progress and PR logs
         fetchProgressLogs(memberData.id)
+
+        // 7. Fetch and sync member notifications automatically
+        fetchMemberNotifications(memberData.id, memberData.gym_id)
+        syncMemberNotifications(memberData)
       } else {
         setMembership(null)
         // 4. If not, check if they have a pending request
@@ -862,6 +1024,7 @@ export default function MemberDashboard() {
           <nav className="flex flex-col gap-2">
             {[
               { id: 'pass', label: 'Access Pass Key', icon: QrCode },
+              { id: 'notifications', label: 'Alerts & Inbox', icon: Bell, badge: notifications.filter(n => !n.is_read).length > 0 ? `${notifications.filter(n => !n.is_read).length} New` : null },
               { id: 'attendance', label: 'Attendance logs', icon: Calendar },
               { id: 'streaks', label: 'Workout Streaks', icon: Flame, badge: `${streakCount} Days` },
               { id: 'leaderboard', label: 'Gym Leaderboard', icon: Trophy },
@@ -924,29 +1087,44 @@ export default function MemberDashboard() {
 
       {/* MAIN CONTAINER CONTENT VIEW (padding left to accommodate sidebar on desktop) */}
       <div className="flex-1 flex flex-col min-h-screen md:pl-80 pb-28 md:pb-8 relative z-10 w-full">
-        <div className="max-w-4xl lg:max-w-5xl mx-auto w-full p-4 sm:p-6 md:p-8 space-y-6">
-          
-          {/* MOBILE ONLY HEADER */}
-          <div className="flex items-center justify-between pb-5 border-b border-white/5 md:hidden">
-            <div className="flex items-center gap-3">
-              <motion.div 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#863BFF] to-[#b370ff] flex items-center justify-center font-black text-white shadow-lg shadow-[#863BFF]/30 text-sm relative group overflow-hidden"
-              >
-                {profile?.full_name?.charAt(0).toUpperCase() || 'M'}
-                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </motion.div>
-              <div className="space-y-0.5">
-                <h1 className="text-sm font-black text-white tracking-wider flex items-center gap-1.5">
-                  <span>Yo, {profile?.full_name?.split(' ')[0] || 'Athlete'}!</span>
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                </h1>
-                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-none">
-                  {membership ? membership.gyms?.gym_name : 'No Connected Gym'}
-                </p>
-              </div>
+        
+        {/* MOBILE ONLY STICKY HEADER */}
+        <div className="sticky top-0 z-40 md:hidden flex items-center justify-between px-6 py-4 bg-[#0f111a]/85 backdrop-blur-xl border-b border-white/10 w-full shadow-lg shadow-black/20">
+          <div className="flex items-center gap-3">
+            <motion.div 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#863BFF] to-[#b370ff] flex items-center justify-center font-black text-white shadow-lg shadow-[#863BFF]/30 text-sm relative group overflow-hidden"
+            >
+              {profile?.full_name?.charAt(0).toUpperCase() || 'M'}
+              <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </motion.div>
+            <div className="space-y-0.5">
+              <h1 className="text-sm font-black text-white tracking-wider flex items-center gap-1.5">
+                <span>Yo, {profile?.full_name?.split(' ')[0] || 'Athlete'}!</span>
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              </h1>
+              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-none">
+                {membership ? membership.gyms?.gym_name : 'No Connected Gym'}
+              </p>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {membership && (
+              <button
+                onClick={() => setActiveTab('notifications')}
+                className="w-10 h-10 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 active:scale-95 transition-all cursor-pointer relative"
+                title="Notifications"
+              >
+                <Bell className="w-5 h-5" />
+                {notifications.filter(n => !n.is_read).length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 rounded-full flex items-center justify-center text-[9px] font-black text-white border border-[#0f1117]">
+                    {notifications.filter(n => !n.is_read).length}
+                  </span>
+                )}
+              </button>
+            )}
 
             <button
               onClick={() => setMobileMenuOpen(true)}
@@ -956,7 +1134,9 @@ export default function MemberDashboard() {
               <Menu className="w-5 h-5" />
             </button>
           </div>
+        </div>
 
+        <div className="max-w-4xl lg:max-w-5xl mx-auto w-full p-4 sm:p-6 md:p-8 space-y-6">
           {/* MAIN SWITCHBOARD OR NOT CONNECTED PANEL */}
           <div className="w-full flex-1 flex flex-col justify-start">
             
@@ -1472,192 +1652,201 @@ export default function MemberDashboard() {
 
                       </div>
 
-                      {/* DYNAMIC LEADERBOARD AND LOYALTY MODULES GRID */}
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 items-stretch animate-in fade-in duration-300">
-                        
-                        {/* GYM COINS WALLET (Locked with glass overlay if disabled by owner) */}
-                        <div className="backdrop-blur-md bg-gradient-to-tr from-amber-500/[0.03] via-yellow-500/[0.01] to-amber-600/[0.03] border border-amber-500/20 rounded-[2rem] p-6 space-y-5 shadow-2xl relative overflow-hidden transition-all duration-300 hover:border-amber-500/40 min-h-[300px] flex flex-col justify-between">
+                      {/* LOYALTY MODULES (Only displayed when Gym Loyalty Coins is enabled by owner) */}
+                      {membership.gyms?.enable_gym_coins && (
+                        <div className="space-y-6 mt-6 animate-in fade-in duration-300">
                           
-                          {/* LOCKED STATE OVERLAY */}
-                          {!membership.gyms?.enable_gym_coins && (
-                            <div className="absolute inset-0 backdrop-blur-md bg-[#12141c]/80 flex flex-col items-center justify-center p-6 text-center z-20 rounded-[2rem] border border-amber-500/10">
-                              <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mb-3 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-                                <Lock className="w-5 h-5 text-amber-400" />
+                          {/* GYM COINS WALLET */}
+                          <div className="backdrop-blur-md bg-gradient-to-tr from-amber-500/[0.03] via-yellow-500/[0.01] to-amber-600/[0.03] border border-amber-500/20 rounded-[2rem] p-6 space-y-5 shadow-2xl relative overflow-hidden transition-all duration-300 hover:border-amber-500/40 min-h-[220px] flex flex-col justify-between">
+                            <div className="relative z-10 w-full space-y-5">
+                              {/* Gold shimmering particles effect */}
+                              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 blur-3xl rounded-full pointer-events-none" />
+                              
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-400">
+                                    <Sparkles className="w-4.5 h-4.5 fill-amber-400/20 animate-pulse" />
+                                  </div>
+                                  <div>
+                                    <h4 className="text-xs font-black text-white uppercase tracking-wider">Gym Coins Wallet</h4>
+                                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Earned Loyalty Rewards</p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 font-mono tracking-tight drop-shadow-[0_2px_10px_rgba(245,158,11,0.2)]">
+                                    {membership.gym_coins_balance || 0} 🪙
+                                  </div>
+                                </div>
                               </div>
-                              <h5 className="text-sm font-black text-white uppercase tracking-wider">Loyalty Rewards Deactivated</h5>
-                              <p className="text-[10px] text-slate-400 max-w-xs mx-auto leading-relaxed mt-1 font-semibold">
-                                The Gym Loyalty Coins program is currently turned off by the owner. To enable daily rewards, transaction ledger, and redeemable store items, toggle "Enable Gym Loyalty Coins" in the Gym Settings!
-                              </p>
-                            </div>
-                          )}
 
-                          <div className="relative z-10 w-full space-y-5">
-                            {/* Gold shimmering particles effect */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 blur-3xl rounded-full pointer-events-none" />
-                            
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-400">
-                                  <Sparkles className="w-4.5 h-4.5 fill-amber-400/20 animate-pulse" />
-                                </div>
-                                <div>
-                                  <h4 className="text-xs font-black text-white uppercase tracking-wider">Gym Coins Wallet</h4>
-                                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Earned Loyalty Rewards</p>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 font-mono tracking-tight drop-shadow-[0_2px_10px_rgba(245,158,11,0.2)]">
-                                  {membership.gym_coins_balance || 0} 🪙
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Transactions scroll area */}
-                            <div className="space-y-3">
-                              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Transaction History</p>
-                              {coinsLoading ? (
-                                <div className="text-center py-6 text-slate-500 text-[10px] uppercase font-bold tracking-widest animate-pulse">Syncing transactions...</div>
-                              ) : coinTransactions.length === 0 ? (
-                                <div className="text-center py-6 text-slate-500 text-xs font-medium">
-                                  No transactions logged yet. Start checking in to accumulate coins!
-                                </div>
-                              ) : (
-                                <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
-                                  {coinTransactions.map((tx, index) => (
-                                    <div key={index} className="p-3 rounded-xl bg-white/[0.01] border border-white/5 flex items-center justify-between text-xs hover:bg-white/[0.02] transition-colors">
-                                      <div className="space-y-0.5">
-                                        <span className="font-bold text-slate-200">{tx.reason}</span>
-                                        <p className="text-[8px] text-slate-500 font-medium">
-                                          {new Date(tx.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                                        </p>
+                              {/* Transactions scroll area */}
+                              <div className="space-y-3">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Transaction History</p>
+                                {coinsLoading ? (
+                                  <div className="text-center py-6 text-slate-500 text-[10px] uppercase font-bold tracking-widest animate-pulse">Syncing transactions...</div>
+                                ) : coinTransactions.length === 0 ? (
+                                  <div className="text-center py-6 text-slate-500 text-xs font-medium">
+                                    No transactions logged yet. Start checking in to accumulate coins!
+                                  </div>
+                                ) : (
+                                  <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+                                    {coinTransactions.map((tx, index) => (
+                                      <div key={index} className="p-3 rounded-xl bg-white/[0.01] border border-white/5 flex items-center justify-between text-xs hover:bg-white/[0.02] transition-colors">
+                                        <div className="space-y-0.5">
+                                          <span className="font-bold text-slate-200">{tx.reason}</span>
+                                          <p className="text-[8px] text-slate-500 font-medium">
+                                            {new Date(tx.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                          </p>
+                                        </div>
+                                        <span className={`font-mono font-black ${tx.amount >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                          {tx.amount >= 0 ? `+${tx.amount}` : tx.amount}
+                                        </span>
                                       </div>
-                                      <span className={`font-mono font-black ${tx.amount >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                        {tx.amount >= 0 ? `+${tx.amount}` : tx.amount}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        {/* COMMUNITY LEADERBOARD (ALWAYS active & ranked by attendance count) */}
-                        <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2rem] p-6 space-y-5 shadow-2xl transition-all duration-300 hover:border-white/20 flex flex-col justify-between">
-                          <div className="space-y-5 w-full">
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl bg-[#863BFF]/10 flex items-center justify-center border border-[#863BFF]/20 text-[#b370ff]">
-                                <Flame className="w-4.5 h-4.5 animate-pulse" />
-                              </div>
+                          {/* COINS REDEEM SHOP */}
+                          <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2rem] p-6 space-y-4 shadow-2xl transition-all duration-300 hover:border-white/20 relative overflow-hidden">
+                            <div className="relative z-10 w-full space-y-4">
                               <div>
-                                <h4 className="text-xs font-black text-white uppercase tracking-wider">Gym Leaderboard</h4>
-                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Top Active Members Ranked by Check-ins</p>
+                                <h4 className="text-xs font-black text-white uppercase tracking-wider">Loyalty Rewards Shop</h4>
+                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Redeem your coins at the gym counter</p>
                               </div>
-                            </div>
-
-                            {leaderboardLoading ? (
-                              <div className="text-center py-6 text-slate-500 text-[10px] uppercase font-bold tracking-widest animate-pulse">Calculating rankings...</div>
-                            ) : leaderboard.length === 0 ? (
-                              <div className="text-center py-6 text-slate-500 text-xs font-medium">
-                                No check-in records found.
-                              </div>
-                            ) : (
-                              <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
-                                {leaderboard.map((userRow, index) => {
-                                  const isCurrentUser = userRow.id === membership.id;
-                                  let medal = '';
-                                  let bgStyle = 'bg-white/[0.01] border-white/5';
-                                  if (index === 0) {
-                                    medal = '👑';
-                                    bgStyle = 'bg-amber-500/[0.05] border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.05)]';
-                                  } else if (index === 1) {
-                                    medal = '🥈';
-                                    bgStyle = 'bg-slate-400/[0.05] border-slate-400/20';
-                                  } else if (index === 2) {
-                                    medal = '🥉';
-                                    bgStyle = 'bg-amber-700/[0.05] border-amber-700/20';
-                                  }
-                                  
-                                  if (isCurrentUser) {
-                                    bgStyle = 'bg-[#863BFF]/10 border-[#863BFF]/30 shadow-[0_0_15px_rgba(134,59,255,0.1)]';
-                                  }
-
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                                {[
+                                  { name: 'Free Protein Shake', cost: 100, desc: 'Fresh post-workout whey shake from gym juice bar.' },
+                                  { name: 'Custom Shaker Bottle', cost: 200, desc: 'High-quality leak-proof GymOS branded shaker.' },
+                                  { name: 'Premium Gym T-Shirt', cost: 500, desc: 'High-performance athletic tee.' }
+                                ].map((reward, i) => {
+                                  const canAfford = (membership.gym_coins_balance || 0) >= reward.cost;
                                   return (
-                                    <div 
-                                      key={userRow.id} 
-                                      className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-all ${bgStyle} ${isCurrentUser ? 'scale-[1.01] font-black' : ''}`}
-                                    >
-                                      <div className="flex items-center gap-3">
-                                        <span className="font-mono text-[10px] font-black text-slate-500 w-4">#{index + 1}</span>
-                                        <span className="font-bold text-slate-200">{userRow.full_name} {isCurrentUser && ' (You)'}</span>
+                                    <div key={i} className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col justify-between space-y-3 relative group text-left">
+                                      <div className="space-y-1">
+                                        <div className="flex justify-between items-start">
+                                          <h5 className="text-xs font-black text-white uppercase tracking-wider">{reward.name}</h5>
+                                          <span className={`text-[10px] font-black font-mono px-2 py-0.5 rounded ${canAfford ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-white/5 text-slate-500'}`}>{reward.cost} 🪙</span>
+                                        </div>
+                                        <p className="text-[10px] text-slate-400 font-medium leading-relaxed">{reward.desc}</p>
                                       </div>
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-black bg-white/5 border border-white/5 px-2 py-0.5 rounded text-slate-400">{userRow.checkins_count} check-ins</span>
-                                        {medal && <span className="text-sm">{medal}</span>}
-                                      </div>
+                                      <button 
+                                        disabled
+                                        className={`w-full py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border ${
+                                          canAfford 
+                                          ? 'bg-amber-500/5 border-amber-500/20 text-amber-400 group-hover:bg-amber-500/10 group-hover:border-amber-500/30' 
+                                          : 'bg-white/[0.01] border-white/5 text-slate-600'
+                                        }`}
+                                      >
+                                        Ask Desk to Redeem
+                                      </button>
                                     </div>
                                   );
                                 })}
                               </div>
-                            )}
+                            </div>
                           </div>
+
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+
+                  {/* TAB 4: MEMBER NOTIFICATIONS HUB */}
+                  {activeTab === 'notifications' && (
+                    <motion.div
+                      key="notifications-tab"
+                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                      transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                      className="space-y-6 animate-in fade-in duration-300"
+                    >
+                      <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2rem] p-6 space-y-6 shadow-2xl transition-all duration-300 hover:border-white/20">
+                        
+                        <div className="flex items-center justify-between pb-4 border-b border-white/5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-sky-500/10 flex items-center justify-center border border-sky-500/20 text-sky-400">
+                              <Bell className="w-4.5 h-4.5" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-black text-white uppercase tracking-wider">Gym Alerts & Broadcasts</h4>
+                              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Stay updated with your membership & announcements</p>
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-black uppercase bg-white/5 border border-white/5 px-2.5 py-1 rounded-md text-slate-400">
+                            Unread: {notifications.filter(n => !n.is_read).length}
+                          </span>
                         </div>
 
-                      </div>
-
-                      {/* COINS REDEEM SHOP (with lock overlay if deactivated by owner) */}
-                      <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2rem] p-6 space-y-4 shadow-2xl transition-all duration-300 hover:border-white/20 mt-6 relative overflow-hidden">
-                        
-                        {/* LOCKED STATE OVERLAY */}
-                        {!membership.gyms?.enable_gym_coins && (
-                          <div className="absolute inset-0 backdrop-blur-md bg-[#12141c]/80 flex flex-col items-center justify-center p-6 text-center z-20 rounded-[2rem] border border-amber-500/10">
-                            <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mb-3 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-                              <Lock className="w-5 h-5 text-amber-400" />
+                        {notifsLoading ? (
+                          <div className="text-center py-12 text-slate-500 text-[10px] uppercase font-bold tracking-widest animate-pulse">
+                            Loading your inbox...
+                          </div>
+                        ) : notifications.length === 0 ? (
+                          <div className="text-center py-16 space-y-3">
+                            <div className="w-12 h-12 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-center mx-auto text-slate-600">
+                              <Check className="w-5 h-5" />
                             </div>
-                            <h5 className="text-sm font-black text-white uppercase tracking-wider">Rewards Store Locked</h5>
-                            <p className="text-[10px] text-slate-400 max-w-xs mx-auto leading-relaxed mt-1 font-semibold">
-                              The rewards catalog is currently inactive. Ask your gym owner to activate the Gym Loyalty Rewards program under Settings!
-                            </p>
+                            <div className="space-y-1">
+                              <h5 className="text-xs font-black text-white uppercase tracking-wider">No notifications yet</h5>
+                              <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Your inbox is completely empty and clean!</p>
+                            </div>
                           </div>
-                        )}
+                        ) : (
+                          <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                            {notifications.map((n) => {
+                              const isBroadcast = n.type === 'system_broadcast'
+                              const styles = isBroadcast 
+                                ? { bg: 'bg-indigo-500/10', border: 'border-indigo-500/20', text: 'text-indigo-400', label: 'ANNOUNCEMENT' }
+                                : n.type === 'membership_expired'
+                                ? { bg: 'bg-rose-500/10', border: 'border-rose-500/20', text: 'text-rose-400', label: 'EXPIRED ALERT' }
+                                : { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400', label: 'EXPIRING ALERT' }
 
-                        <div className="relative z-10 w-full space-y-4">
-                          <div>
-                            <h4 className="text-xs font-black text-white uppercase tracking-wider">Loyalty Rewards Shop</h4>
-                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Redeem your coins at the gym counter</p>
-                          </div>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                            {[
-                              { name: 'Free Protein Shake', cost: 100, desc: 'Fresh post-workout whey shake from gym juice bar.' },
-                              { name: 'Custom Shaker Bottle', cost: 200, desc: 'High-quality leak-proof GymOS branded shaker.' },
-                              { name: 'Premium Gym T-Shirt', cost: 500, desc: 'High-performance athletic tee.' }
-                            ].map((reward, i) => {
-                              const canAfford = (membership.gym_coins_balance || 0) >= reward.cost;
                               return (
-                                <div key={i} className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col justify-between space-y-3 relative group text-left">
-                                  <div className="space-y-1">
-                                    <div className="flex justify-between items-start">
-                                      <h5 className="text-xs font-black text-white uppercase tracking-wider">{reward.name}</h5>
-                                      <span className={`text-[10px] font-black font-mono px-2 py-0.5 rounded ${canAfford ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-white/5 text-slate-500'}`}>{reward.cost} 🪙</span>
+                                <div 
+                                  key={n.id} 
+                                  className={`p-4 rounded-2xl border transition-all relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                                    n.is_read 
+                                      ? 'bg-white/[0.01] border-white/5 opacity-50' 
+                                      : `${styles.bg} ${styles.border} shadow-[0_0_15px_rgba(0,0,0,0.15)]`
+                                  }`}
+                                >
+                                  <div className="space-y-1.5 flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${n.is_read ? 'bg-white/5 text-slate-500' : 'bg-white/10 text-white'}`}>
+                                        {styles.label}
+                                      </span>
+                                      <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">
+                                        {new Date(n.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                      </span>
                                     </div>
-                                    <p className="text-[10px] text-slate-400 font-medium leading-relaxed">{reward.desc}</p>
+                                    <h5 className={`text-xs font-black uppercase tracking-wide ${n.is_read ? 'text-slate-400' : 'text-white'}`}>
+                                      {n.title}
+                                    </h5>
+                                    <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
+                                      {n.message}
+                                    </p>
                                   </div>
-                                  <button 
-                                    disabled
-                                    className={`w-full py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border ${
-                                      canAfford 
-                                      ? 'bg-amber-500/5 border-amber-500/20 text-amber-400 group-hover:bg-amber-500/10 group-hover:border-amber-500/30' 
-                                      : 'bg-white/[0.01] border-white/5 text-slate-600'
-                                    }`}
-                                  >
-                                    Ask Desk to Redeem
-                                  </button>
+
+                                  <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+                                    {!n.is_read && (
+                                      <button
+                                        onClick={() => markMemberNotifAsRead(n.id, n.type)}
+                                        className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/20 text-white text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                                      >
+                                        Acknowledge
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
-                              );
+                              )
                             })}
                           </div>
-                        </div>
+                        )}
                       </div>
                     </motion.div>
                   )}
@@ -2548,6 +2737,7 @@ export default function MemberDashboard() {
                 <nav className="flex flex-col gap-1.5">
                   {[
                     { id: 'pass', label: 'Access Pass Key', icon: QrCode },
+                    { id: 'notifications', label: 'Alerts & Inbox', icon: Bell, color: 'text-sky-400', badge: notifications.filter(n => !n.is_read).length > 0 ? notifications.filter(n => !n.is_read).length : null },
                     { id: 'progress', label: 'PR & Progress', icon: Sparkles, color: 'text-amber-400' },
                     { id: 'attendance', label: 'Attendance logs', icon: Calendar },
                     { id: 'leaderboard', label: 'Gym Leaderboard', icon: Trophy, color: 'text-yellow-400' },
