@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   QrCode, Activity, LogOut, CheckCircle2, AlertCircle, 
   Clock, ShieldAlert, Sparkles, Send, RefreshCw, Calendar, 
-  Building, Flame, User, LogIn, ChevronRight, Edit2, Check, Shield, Copy, Lock
+  Building, Flame, User, LogIn, ChevronRight, Edit2, Check, Shield, Copy, Lock, Trophy, Menu, X
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../lib/supabaseClient'
@@ -18,6 +18,7 @@ export default function MemberDashboard() {
   
   // Navigation & View tab: 'pass' | 'attendance' | 'streaks' | 'profile' | 'progress'
   const [activeTab, setActiveTab] = useState('pass')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   // Loading & State variables
   const [loading, setLoading] = useState(true)
@@ -863,6 +864,7 @@ export default function MemberDashboard() {
               { id: 'pass', label: 'Access Pass Key', icon: QrCode },
               { id: 'attendance', label: 'Attendance logs', icon: Calendar },
               { id: 'streaks', label: 'Workout Streaks', icon: Flame, badge: `${streakCount} Days` },
+              { id: 'leaderboard', label: 'Gym Leaderboard', icon: Trophy },
               { id: 'progress', label: 'PR & Progress', icon: Sparkles },
               { id: 'profile', label: 'Profile settings', icon: User }
             ].map((item) => {
@@ -884,13 +886,15 @@ export default function MemberDashboard() {
                         ? 'bg-orange-500/10 border-orange-500/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
                         : item.id === 'progress'
                         ? 'bg-amber-500/10 border-amber-500/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
+                        : item.id === 'leaderboard'
+                        ? 'bg-yellow-500/10 border-yellow-500/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
                         : 'bg-[#863BFF]/10 border-[#863BFF]/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
                       }`}
                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
                     />
                   )}
                   <div className="flex items-center gap-3">
-                    <Icon className={`w-5 h-5 ${isActive ? (item.id === 'streaks' ? 'text-orange-400' : item.id === 'progress' ? 'text-amber-400' : 'text-[#b370ff]') : 'text-slate-500'}`} />
+                    <Icon className={`w-5 h-5 ${isActive ? (item.id === 'streaks' ? 'text-orange-400' : item.id === 'progress' ? 'text-amber-400' : item.id === 'leaderboard' ? 'text-yellow-400' : 'text-[#b370ff]') : 'text-slate-500'}`} />
                     <span className="text-xs uppercase tracking-wider">{item.label}</span>
                   </div>
                   {item.badge && (
@@ -945,11 +949,11 @@ export default function MemberDashboard() {
             </div>
 
             <button
-              onClick={signOut}
-              className="w-10 h-10 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/5 active:scale-95 transition-all cursor-pointer"
-              title="Sign Out"
+              onClick={() => setMobileMenuOpen(true)}
+              className="w-10 h-10 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 active:scale-95 transition-all cursor-pointer"
+              title="Open Navigation Menu"
             >
-              <LogOut className="w-4 h-4" />
+              <Menu className="w-5 h-5" />
             </button>
           </div>
 
@@ -1237,6 +1241,23 @@ export default function MemberDashboard() {
                               {membership.expiry_date ? Math.max(0, Math.ceil((new Date(membership.expiry_date) - new Date()) / (1000 * 60 * 60 * 24))) : '—'} Days
                             </p>
                             <p className="text-[9px] font-black uppercase text-slate-500 tracking-widest leading-relaxed">Remaining Access Pass</p>
+                          </div>
+
+                          {/* Mobile Quick-Access to Lifts PR */}
+                          <div 
+                            onClick={() => setActiveTab('progress')}
+                            className="md:hidden p-4.5 rounded-[2rem] bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-600/10 border border-amber-500/20 flex items-center justify-between cursor-pointer active:scale-98 transition-all duration-300 shadow-md hover:scale-[1.01]"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-400">
+                                <Sparkles className="w-4 h-4 fill-amber-400/25 animate-pulse" />
+                              </div>
+                              <div className="text-left">
+                                <span className="text-[8px] font-black uppercase text-amber-400 tracking-widest leading-none">Athlete Logs</span>
+                                <h4 className="text-[10px] font-bold text-white uppercase tracking-wide mt-0.5">Track Lifts & PR Progress</h4>
+                              </div>
+                            </div>
+                            <ChevronRight className="w-3.5 h-3.5 text-amber-400" />
                           </div>
                         </div>
 
@@ -1641,6 +1662,145 @@ export default function MemberDashboard() {
                     </motion.div>
                   )}
 
+                  {/* TAB 4.5: DEDICATED GYM PODIUM LEADERBOARD HUB */}
+                  {activeTab === 'leaderboard' && (
+                    <motion.div
+                      key="leaderboard-tab"
+                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                      transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                      className="space-y-6"
+                    >
+                      {(() => {
+                        const getPodiumMember = (index) => {
+                          return leaderboard[index] || { full_name: 'Empty Slot', checkins_count: 0, id: 'empty' };
+                        };
+                        return (
+                          <>
+                            {/* 3D GLASSMORPHIC PODIUM */}
+                            <div className="p-6 rounded-[2.5rem] bg-white/[0.01] border border-white/5 shadow-2xl relative overflow-hidden flex flex-col items-center">
+                              <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#863BFF]/5 to-transparent blur-xl rounded-full pointer-events-none" />
+                              
+                              <span className="px-3.5 py-1 rounded-full bg-[#863BFF]/10 border border-[#863BFF]/20 text-[9px] font-black uppercase tracking-widest text-[#b370ff] mb-6">
+                                Gym Arena Hall of Fame
+                              </span>
+
+                              <div className="flex items-end justify-center gap-4 sm:gap-6 w-full max-w-lg pt-12 pb-6 border-b border-white/5">
+                                
+                                {/* RANK 2 (SILVER) */}
+                                <div className="flex-1 flex flex-col items-center">
+                                  {/* Avatar wrapper */}
+                                  <div className="w-12 h-12 rounded-full bg-slate-500/10 border-2 border-slate-400/40 flex items-center justify-center font-bold text-white text-xs shadow-lg relative mb-3">
+                                    <span className="text-[16px]">🥈</span>
+                                    <div className="absolute -bottom-1 -right-1 bg-slate-400 text-black font-black text-[8px] px-1.5 py-0.5 rounded-full">#2</div>
+                                  </div>
+                                  <span className="text-[10px] font-bold text-slate-300 truncate max-w-[80px] sm:max-w-[100px] block">{getPodiumMember(1).full_name}</span>
+                                  <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{getPodiumMember(1).checkins_count} check-ins</span>
+                                  
+                                  {/* Pedestal block */}
+                                  <div className="w-full h-24 mt-4 rounded-t-2xl bg-gradient-to-t from-slate-400/5 to-slate-400/15 border-t border-x border-slate-400/30 flex items-center justify-center font-black text-slate-400 text-xl tracking-tighter shadow-2xl shadow-slate-400/5">
+                                    II
+                                  </div>
+                                </div>
+
+                                {/* RANK 1 (GOLD) */}
+                                <div className="flex-1 flex flex-col items-center transform -translate-y-4">
+                                  {/* Glowing Ring Avatar wrapper */}
+                                  <div className="w-16 h-16 rounded-full bg-amber-500/10 border-2 border-amber-400 flex items-center justify-center font-bold text-white text-sm shadow-2xl relative mb-3 shadow-amber-400/15 animate-pulse">
+                                    <span className="text-[24px]">👑</span>
+                                    <div className="absolute -bottom-1 -right-1 bg-amber-400 text-black font-black text-[9px] px-2 py-0.5 rounded-full shadow-lg">#1</div>
+                                  </div>
+                                  <span className="text-xs font-black text-white truncate max-w-[90px] sm:max-w-[120px] block">{getPodiumMember(0).full_name}</span>
+                                  <span className="text-[10px] text-amber-400 font-black uppercase tracking-wider">{getPodiumMember(0).checkins_count} check-ins</span>
+                                  
+                                  {/* Pedestal block */}
+                                  <div className="w-full h-32 mt-4 rounded-t-2xl bg-gradient-to-t from-amber-500/10 to-amber-500/20 border-t border-x border-amber-500/40 flex items-center justify-center font-black text-amber-400 text-2xl tracking-tighter shadow-2xl shadow-amber-500/10">
+                                    I
+                                  </div>
+                                </div>
+
+                                {/* RANK 3 (BRONZE) */}
+                                <div className="flex-1 flex flex-col items-center">
+                                  {/* Avatar wrapper */}
+                                  <div className="w-11 h-11 rounded-full bg-amber-700/10 border-2 border-amber-700/40 flex items-center justify-center font-bold text-white text-xs shadow-lg relative mb-3">
+                                    <span className="text-[14px]">🥉</span>
+                                    <div className="absolute -bottom-1 -right-1 bg-amber-700 text-white font-black text-[8px] px-1.5 py-0.5 rounded-full">#3</div>
+                                  </div>
+                                  <span className="text-[10px] font-bold text-slate-400 truncate max-w-[80px] sm:max-w-[100px] block">{getPodiumMember(2).full_name}</span>
+                                  <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{getPodiumMember(2).checkins_count} check-ins</span>
+                                  
+                                  {/* Pedestal block */}
+                                  <div className="w-full h-18 mt-4 rounded-t-2xl bg-gradient-to-t from-amber-700/5 to-amber-700/15 border-t border-x border-amber-700/30 flex items-center justify-center font-black text-amber-700 text-lg tracking-tighter shadow-2xl shadow-amber-700/5">
+                                    III
+                                  </div>
+                                </div>
+
+                              </div>
+                            </div>
+
+                            {/* RANKS 4 TO 10 LIST */}
+                            <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2.5rem] p-6 space-y-4 shadow-2xl transition-all duration-300 hover:border-white/20">
+                              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Arena Contenders (Ranks 4-10)</p>
+                              
+                              {leaderboard.length <= 3 ? (
+                                <div className="text-center py-6 text-slate-500 text-xs font-medium">No other contenders active yet. Scan entries to rise in rank!</div>
+                              ) : (
+                                <div className="space-y-2.5">
+                                  {leaderboard.slice(3, 10).map((userRow, index) => {
+                                    const isCurrentUser = userRow.id === membership.id
+                                    const currentRank = index + 4
+                                    return (
+                                      <div 
+                                        key={userRow.id}
+                                        className={`p-3.5 rounded-2xl border flex items-center justify-between text-xs transition-all ${
+                                          isCurrentUser
+                                          ? 'bg-[#863BFF]/10 border-[#863BFF]/40 shadow-[0_0_15px_rgba(134,59,255,0.15)] scale-[1.01] font-black'
+                                          : 'bg-white/[0.01] border-white/5 hover:bg-white/[0.02] hover:border-white/10'
+                                        }`}
+                                      >
+                                        <div className="flex items-center gap-3">
+                                          <span className="font-mono text-[10px] font-black text-slate-500 w-4">#{currentRank}</span>
+                                          <span className="text-slate-200 font-bold">{userRow.full_name} {isCurrentUser && ' (You)'}</span>
+                                        </div>
+                                        <span className="text-[10px] font-black bg-white/5 border border-white/5 px-2.5 py-1 rounded text-slate-400">{userRow.checkins_count} check-ins</span>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* YOUR STANDINGS STICKY SUMMARY CARD */}
+                            {(() => {
+                              const userIndex = leaderboard.findIndex(u => u.id === membership.id)
+                              const userRank = userIndex !== -1 ? userIndex + 1 : null
+                              const nextContender = userIndex > 0 ? leaderboard[userIndex - 1] : null
+                              const checkinsDiff = (userRank && nextContender) ? nextContender.checkins_count - leaderboard[userIndex].checkins_count : 0
+
+                              let berdiriText = ''
+                              if (userRank === 1) {
+                                berdiriText = '🥇 You are dominating the Leaderboard! Keep up the grind to defend your Crown!'
+                              } else if (userRank) {
+                                berdiriText = nextContender 
+                                  ? `💪 Rank #${userRank} • You're just ${checkinsDiff + 1} check-ins away from beating ${nextContender.full_name} at Rank #${userRank - 1}!` 
+                                  : `🔥 Rank #${userRank} • Keep checking in daily to rise in standing!`
+                              } else {
+                                berdiriText = '⚡ Unranked • Check in at the reception to claim your spot in the Arena!'
+                              }
+
+                              return (
+                                <div className="p-5 rounded-2xl bg-gradient-to-r from-[#863BFF]/10 via-[#b370ff]/5 to-[#863BFF]/10 border border-[#863BFF]/30 shadow-lg text-center animate-in slide-in-from-bottom duration-300">
+                                  <p className="text-xs font-black text-white tracking-wide">{berdiriText}</p>
+                                </div>
+                              )
+                            })()}
+                          </>
+                        );
+                      })()}
+                    </motion.div>
+                  )}
+
                   {/* TAB 5: PR & PROGRESS HUB */}
                   {activeTab === 'progress' && (
                     <motion.div
@@ -1885,6 +2045,23 @@ export default function MemberDashboard() {
                         </div>
                       )}
 
+                      {/* Mobile Quick-Access to Lifts PR */}
+                      <div 
+                        onClick={() => setActiveTab('progress')}
+                        className="md:hidden p-4.5 rounded-[2rem] bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-600/10 border border-amber-500/20 flex items-center justify-between cursor-pointer active:scale-98 transition-all duration-300 shadow-md hover:scale-[1.01] mb-2"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-400">
+                            <Sparkles className="w-4.5 h-4.5 fill-amber-400/25 animate-pulse" />
+                          </div>
+                          <div className="text-left">
+                            <span className="text-[8px] font-black uppercase text-amber-400 tracking-widest leading-none">Athlete Logs</span>
+                            <h4 className="text-xs font-bold text-white uppercase tracking-wide mt-0.5">Track Lifts & PR Progress</h4>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-amber-400" />
+                      </div>
+
                       {/* Desktop Two-Column Layout Grid for settings */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
                         
@@ -2122,24 +2299,24 @@ export default function MemberDashboard() {
             <span className="text-[8px] uppercase tracking-wider leading-none">Streak</span>
           </button>
 
-          {/* BUTTON 4: PROGRESS */}
+          {/* BUTTON 4: LEADERBOARD / ARENA */}
           <button
-            onClick={() => setActiveTab('progress')}
+            onClick={() => setActiveTab('leaderboard')}
             className={`relative flex-1 flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition-all cursor-pointer z-10 ${
-              activeTab === 'progress' 
-              ? 'text-amber-400 font-black' 
+              activeTab === 'leaderboard' 
+              ? 'text-yellow-400 font-black' 
               : 'text-slate-500 hover:text-slate-300 font-semibold'
             }`}
           >
-            {activeTab === 'progress' && (
+            {activeTab === 'leaderboard' && (
               <motion.div 
                 layoutId="activeTabPill"
-                className="absolute inset-0 bg-amber-500/10 border border-amber-500/20 rounded-2xl -z-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
+                className="absolute inset-0 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl -z-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
                 transition={{ type: "spring", stiffness: 380, damping: 30 }}
               />
             )}
-            <Sparkles className="w-5 h-5 transition-transform duration-200" />
-            <span className="text-[8px] uppercase tracking-wider leading-none">PRs</span>
+            <Trophy className="w-5 h-5 transition-transform duration-200" />
+            <span className="text-[8px] uppercase tracking-wider leading-none">Arena</span>
           </button>
 
           {/* BUTTON 5: PROFILE */}
@@ -2312,6 +2489,131 @@ export default function MemberDashboard() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* MOBILE SIDE NAVIGATION DRAWER */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            {/* Backdrop blur overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="fixed inset-0 backdrop-blur-sm bg-black/60 z-40 md:hidden"
+            />
+            
+            {/* Drawer panel content */}
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 bottom-0 left-0 w-[290px] bg-[#0c0e14]/95 border-r border-white/10 backdrop-blur-3xl p-6 flex flex-col justify-between z-50 md:hidden shadow-2xl"
+            >
+              <div className="space-y-7">
+                {/* Brand & Close button header */}
+                <div className="flex items-center justify-between pb-5 border-b border-white/5">
+                  <div className="flex items-center gap-3">
+                    <Logo className="w-8 h-8 drop-shadow-[0_0_10px_rgba(134,59,255,0.4)]" />
+                    <div className="space-y-0.5">
+                      <h1 className="text-sm font-black text-white uppercase tracking-wider italic">AthletOS</h1>
+                      <p className="text-[9px] font-bold text-[#b370ff] uppercase tracking-widest leading-none">Drawer</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Profile Identity Widget */}
+                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-3.5 shadow-inner">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#863BFF] to-[#b370ff] flex items-center justify-center font-black text-white text-xs shadow-md">
+                    {profile?.full_name?.charAt(0).toUpperCase() || 'M'}
+                  </div>
+                  <div className="space-y-0.5 overflow-hidden">
+                    <h4 className="text-xs font-black text-white truncate">Yo, {profile?.full_name?.split(' ')[0] || 'Athlete'}!</h4>
+                    <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest leading-none truncate">
+                      {membership ? membership.gyms?.gym_name : 'No Connected Gym'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Navigation Links inside Drawer */}
+                <nav className="flex flex-col gap-1.5">
+                  {[
+                    { id: 'pass', label: 'Access Pass Key', icon: QrCode },
+                    { id: 'progress', label: 'PR & Progress', icon: Sparkles, color: 'text-amber-400' },
+                    { id: 'attendance', label: 'Attendance logs', icon: Calendar },
+                    { id: 'leaderboard', label: 'Gym Leaderboard', icon: Trophy, color: 'text-yellow-400' },
+                    { id: 'streaks', label: 'Workout Streaks', icon: Flame, badge: `${streakCount} Days`, color: 'text-orange-400' },
+                    { id: 'profile', label: 'Profile settings', icon: User }
+                  ].map((item) => {
+                    const Icon = item.icon
+                    const isActive = activeTab === item.id
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveTab(item.id)
+                          setMobileMenuOpen(false)
+                        }}
+                        className={`relative flex items-center justify-between px-4 py-3 rounded-xl transition-all cursor-pointer text-left w-full z-10 ${
+                          isActive ? 'text-white font-black' : 'text-slate-500 hover:text-slate-300 font-semibold'
+                        }`}
+                      >
+                        {isActive && (
+                          <motion.div
+                            layoutId="activeTabPillMobileDrawer"
+                            className={`absolute inset-0 rounded-xl -z-10 border ${
+                              item.id === 'streaks'
+                              ? 'bg-orange-500/10 border-orange-500/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
+                              : item.id === 'progress'
+                              ? 'bg-amber-500/10 border-amber-500/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
+                              : item.id === 'leaderboard'
+                              ? 'bg-yellow-500/10 border-yellow-500/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
+                              : 'bg-[#863BFF]/10 border-[#863BFF]/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
+                            }`}
+                            transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                          />
+                        )}
+                        <div className="flex items-center gap-3">
+                          <Icon className={`w-4.5 h-4.5 ${isActive ? (item.color || 'text-[#b370ff]') : 'text-slate-500'}`} />
+                          <span className="text-xs uppercase tracking-wider">{item.label}</span>
+                        </div>
+                        {item.badge && (
+                          <span className={`text-[9px] font-black px-2 py-0.5 rounded-md ${
+                            isActive 
+                            ? 'bg-orange-500/20 text-orange-400' 
+                            : 'bg-white/5 text-slate-500'
+                          }`}>
+                            {item.badge}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </nav>
+              </div>
+
+              {/* Mobile Drawer Logout */}
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false)
+                  signOut()
+                }}
+                className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-2xl bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/10 text-rose-400 text-xs font-black uppercase tracking-widest transition-all cursor-pointer active:scale-98 shadow-sm"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
