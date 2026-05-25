@@ -1,9 +1,9 @@
 import { supabase } from '../lib/supabaseClient';
 
 export const paymentService = {
-  // Get all payments (RLS handles filtering by gym)
-  async getAllPayments() {
-    const { data, error } = await supabase
+  // Get all payments for a specific gym (protects against Super Admin leakage in dashboard)
+  async getAllPayments(gymId) {
+    let query = supabase
       .from('payments')
       .select(`
         *,
@@ -14,7 +14,13 @@ export const paymentService = {
         subscriptions (
           plan_name
         )
-      `)
+      `);
+
+    if (gymId) {
+      query = query.eq('gym_id', gymId);
+    }
+
+    const { data, error } = await query
       .order('payment_date', { ascending: false })
       .order('created_at', { ascending: false });
 

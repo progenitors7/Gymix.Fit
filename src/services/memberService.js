@@ -60,11 +60,17 @@ const syncMemberFromLatestSubscription = (member) => {
  * Fetch all members for the current user's gym.
  * @returns {Promise<Array>}
  */
-export async function getMembers() {
-  const { data, error } = await supabase
+export async function getMembers(gymId) {
+  let query = supabase
     .from('members')
     .select(MEMBER_WITH_SUBSCRIPTIONS)
     .order('created_at', { ascending: false })
+
+  if (gymId) {
+    query = query.eq('gym_id', gymId)
+  }
+
+  const { data, error } = await query
 
   if (error) throw error
   return (data ?? []).map(syncMemberFromLatestSubscription)

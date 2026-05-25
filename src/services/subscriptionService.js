@@ -8,9 +8,9 @@ const formatDate = (date) => {
 const AUTO_DURATION_TYPES = new Set(['monthly', 'quarterly', 'yearly']);
 
 export const subscriptionService = {
-  // Get all subscriptions for the current gym (RLS handles filtering by gym)
-  async getAllSubscriptions() {
-    const { data, error } = await supabase
+  // Get all subscriptions for a specific gym (protects against Super Admin leakage in dashboard)
+  async getAllSubscriptions(gymId) {
+    let query = supabase
       .from('subscriptions')
       .select(`
         *,
@@ -20,7 +20,13 @@ export const subscriptionService = {
           phone_number,
           join_date
         )
-      `)
+      `);
+
+    if (gymId) {
+      query = query.eq('gym_id', gymId);
+    }
+
+    const { data, error } = await query
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -40,11 +46,17 @@ export const subscriptionService = {
   },
 
   // Get active subscriptions count
-  async getActiveSubscriptionsCount() {
-    const { count, error } = await supabase
+  async getActiveSubscriptionsCount(gymId) {
+    let query = supabase
       .from('subscriptions')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'active');
+
+    if (gymId) {
+      query = query.eq('gym_id', gymId);
+    }
+
+    const { count, error } = await query;
 
     if (error) throw error;
     return count;

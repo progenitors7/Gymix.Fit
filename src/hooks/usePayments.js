@@ -17,7 +17,7 @@ export function usePayments() {
     try {
       setLoading(true);
       setError(null);
-      const data = await paymentService.getAllPayments();
+      const data = await paymentService.getAllPayments(gym?.id);
       setPayments(data ?? []);
     } catch (err) {
       console.error('Error fetching payments:', err);
@@ -25,7 +25,7 @@ export function usePayments() {
     } finally {
       setLoading(false);
     }
-  }, [isReady]);
+  }, [isReady, gym?.id]);
 
   const addPayment = async (paymentData) => {
     try {

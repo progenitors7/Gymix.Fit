@@ -17,7 +17,7 @@ export function useSubscriptions() {
     try {
       setLoading(true);
       setError(null);
-      const data = await subscriptionService.getAllSubscriptions();
+      const data = await subscriptionService.getAllSubscriptions(gym?.id);
       setSubscriptions(data ?? []);
     } catch (err) {
       console.error('Error fetching subscriptions:', err);
@@ -25,7 +25,7 @@ export function useSubscriptions() {
     } finally {
       setLoading(false);
     }
-  }, [isReady]);
+  }, [isReady, gym?.id]);
 
   const addSubscription = async (subscriptionData) => {
     try {

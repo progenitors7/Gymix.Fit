@@ -22,14 +22,14 @@ export function useMembers() {
     setLoading(true)
     setError(null)
     try {
-      const data = await getMembers()
+      const data = await getMembers(gymId)
       setMembers(data)
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
-  }, [isReady])
+  }, [isReady, gymId])
 
   useEffect(() => {
     let mounted = true;

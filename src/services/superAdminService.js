@@ -77,13 +77,31 @@ export const superAdminService = {
    * Fetch all registered gyms with their status and metadata.
    */
   async getAllGyms() {
-    const { data, error } = await supabase
+    const { data: gyms, error: gymsError } = await supabase
       .from('gyms')
       .select('*, saas_plans(*)')
       .order('created_at', { ascending: false });
     
-    if (error) throw error;
-    return data;
+    if (gymsError) throw gymsError;
+
+    try {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*');
+      
+      const profileMap = {};
+      profiles?.forEach(p => {
+        profileMap[p.id] = p;
+      });
+
+      return (gyms || []).map(gym => ({
+        ...gym,
+        owner_profile: profileMap[gym.owner_user_id] || null
+      }));
+    } catch (e) {
+      console.error('[superAdminService] Error mapping owner profiles:', e);
+      return gyms || [];
+    }
   },
 
   /**
@@ -98,6 +116,16 @@ export const superAdminService = {
       .single();
     
     if (error) throw error;
+
+    // If blocked, also delete the owner user from auth.users to force fresh registration/block access
+    if (status === 'blocked' && data?.owner_user_id) {
+      try {
+        await supabase.rpc('delete_user_by_admin', { target_user_id: data.owner_user_id });
+      } catch (err) {
+        console.error('[superAdminService] Failed to call delete_user_by_admin for blocked owner:', err);
+      }
+    }
+
     return data;
   },
 
@@ -354,12 +382,16 @@ export const superAdminService = {
     
     if (gymError) throw gymError;
 
-    // 4. Delete the owner profile to completely strip owner login capabilities
+    // 4. Delete the owner profile and auth.users entry completely to strip owner login capabilities
     if (gym?.owner_user_id) {
-      await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', gym.owner_user_id);
+      const { error: rpcError } = await supabase.rpc('delete_user_by_admin', { target_user_id: gym.owner_user_id });
+      if (rpcError) {
+        // Fallback to profile deletion if RPC has issues
+        await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', gym.owner_user_id);
+      }
     }
 
     return true;
@@ -435,12 +467,16 @@ export const superAdminService = {
       
     if (memberError) throw memberError;
 
-    // 4. Delete profile if it exists (completely strips access)
+    // 4. Delete profile and auth.users entry completely (completely strips access)
     if (member?.profile_id) {
-      await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', member.profile_id);
+      const { error: rpcError } = await supabase.rpc('delete_user_by_admin', { target_user_id: member.profile_id });
+      if (rpcError) {
+        // Fallback to profile deletion if RPC has issues
+        await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', member.profile_id);
+      }
     }
     
     return true;
