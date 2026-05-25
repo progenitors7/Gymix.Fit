@@ -334,13 +334,13 @@ export default function LandingPage() {
 
             <button 
               onClick={() => {
-                setSelectedDuration('3');
+                setSelectedDuration('1');
                 setPromoApplied(true);
                 scrollToId('pricing');
               }} 
               className="hidden sm:flex px-4.5 py-2.5 text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-[#863BFF] to-[#601bdf] hover:from-[#9c5eff] hover:to-[#863BFF] text-white shadow-lg shadow-[#863BFF]/20 rounded-xl transition-all duration-300 items-center gap-1.5 hover:scale-105 active:scale-95 border border-[#863BFF]/30"
             >
-              Claim 3 Months Free
+              Claim 1 Month Free
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
 
@@ -428,13 +428,13 @@ export default function LandingPage() {
                 
                 <button
                   onClick={() => {
-                    setSelectedDuration('3');
+                    setSelectedDuration('1');
                     setPromoApplied(true);
                     scrollToId('pricing');
                   }}
                   className="w-full py-3.5 bg-gradient-to-r from-[#863BFF] to-[#601bdf] hover:from-[#9c5eff] hover:to-[#863BFF] text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-[#863BFF]/10 text-center block border border-[#863BFF]/20"
                 >
-                  Get 3 Months Free
+                  Get 1 Month Free
                 </button>
               </div>
             </motion.div>
@@ -489,13 +489,13 @@ export default function LandingPage() {
         >
           <button
             onClick={() => {
-              setSelectedDuration('3');
+              setSelectedDuration('1');
               setPromoApplied(true);
               scrollToId('pricing');
             }}
             className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-[#863BFF] to-[#601bdf] hover:from-[#9c5eff] hover:to-[#863BFF] text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-[#863BFF]/25 transition-all duration-300 hover:scale-[1.03] active:scale-95 flex items-center justify-center gap-2.5 border border-[#863BFF]/30 cursor-pointer"
           >
-            Get 3 Months Free Access
+            Get 1 Month Free Access
             <ArrowRight className="w-4 h-4 text-white" />
           </button>
           
