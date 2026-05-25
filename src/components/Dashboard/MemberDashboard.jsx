@@ -1089,24 +1089,34 @@ export default function MemberDashboard() {
       const hasCheckedIn = checkInDates.has(dateStr)
       const isPast = dateStr < todayStr
       const isToday = dateStr === todayStr
+      const isSunday = date.getDay() === 0
 
       let dayClass = 'w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold transition-all relative '
       let dotColor = ''
+      let tooltipTitle = ''
 
       if (hasCheckedIn) {
-        dayClass += 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-black'
-        dotColor = 'bg-emerald-400'
+        dayClass += 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-black shadow-[0_0_12px_rgba(16,185,129,0.15)]'
+        dotColor = 'bg-emerald-400 animate-pulse'
+        tooltipTitle = 'Present 💪'
       } else if (isToday) {
-        dayClass += 'bg-white/5 border border-white/10 text-white animate-pulse'
+        dayClass += 'bg-blue-500/10 border border-blue-500/40 text-blue-400 font-black animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.15)]'
+        tooltipTitle = 'Today'
+      } else if (isSunday) {
+        dayClass += 'bg-amber-500/5 border border-amber-500/20 text-amber-500/60 font-semibold'
+        dotColor = 'bg-amber-500/40'
+        tooltipTitle = 'Sunday Rest Day 💤'
       } else if (isPast && membership.join_date && dateStr >= membership.join_date) {
-        dayClass += 'bg-white/[0.01] border border-white/5 text-slate-600'
-        dotColor = 'bg-rose-500/10'
+        dayClass += 'bg-rose-500/5 border border-rose-500/20 text-rose-400/60 font-medium'
+        dotColor = 'bg-rose-500'
+        tooltipTitle = 'Absent ❌'
       } else {
-        dayClass += 'text-slate-600 opacity-30'
+        dayClass += 'bg-white/[0.01] border border-white/5 text-slate-700 opacity-40'
+        tooltipTitle = 'Rest/Not Active'
       }
 
       days.push(
-        <div key={d} className={dayClass} title={hasCheckedIn ? `Checked-in` : `Absent/Rest`}>
+        <div key={d} className={dayClass} title={tooltipTitle}>
           {d}
           {dotColor && <span className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${dotColor}`} />}
         </div>
@@ -1775,6 +1785,26 @@ export default function MemberDashboard() {
                           {/* Calendar Grid */}
                           <div className="grid grid-cols-7 gap-2 justify-items-center">
                             {renderCalendarGrid()}
+                          </div>
+
+                          {/* Beautiful Premium Legend */}
+                          <div className="flex flex-wrap items-center justify-center gap-x-3.5 gap-y-1.5 pt-3.5 border-t border-white/5 text-[8px] font-black uppercase tracking-wider text-slate-500">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-2.5 h-2.5 rounded bg-emerald-500/20 border border-emerald-500/40" />
+                              <span>Present</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-2.5 h-2.5 rounded bg-rose-500/5 border border-rose-500/20" />
+                              <span>Absent</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-2.5 h-2.5 rounded bg-amber-500/5 border border-amber-500/20" />
+                              <span>Sunday Off</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-2.5 h-2.5 rounded bg-blue-500/10 border border-blue-500/40" />
+                              <span>Today</span>
+                            </div>
                           </div>
                         </div>
 
