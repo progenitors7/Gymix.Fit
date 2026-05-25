@@ -232,7 +232,17 @@ export function AuthProvider({ children }) {
     if (error) throw error
   }
 
-  const value = { user, profile, loading, signUp, signIn, signOut, resetPasswordForEmail, updatePassword, signInWithGoogle }
+  const refreshProfile = async () => {
+    if (user) {
+      const p = await fetchProfile(user.id)
+      setProfile(p)
+      return p
+    }
+    return null
+  }
+
+  const value = { user, profile, loading, signUp, signIn, signOut, resetPasswordForEmail, updatePassword, signInWithGoogle, refreshProfile }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
+

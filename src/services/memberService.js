@@ -117,6 +117,22 @@ export async function updateMember(id, payload) {
     .single()
 
   if (error) throw error
+
+  // If a profile is linked, sync name, phone, and gender to the profiles table
+  if (data && data.profile_id) {
+    const profileUpdates = {}
+    if (payload.full_name) profileUpdates.full_name = payload.full_name
+    if (payload.phone_number !== undefined) profileUpdates.phone_number = payload.phone_number
+    if (payload.gender !== undefined) profileUpdates.gender = payload.gender
+    
+    if (Object.keys(profileUpdates).length > 0) {
+      await supabase
+        .from('profiles')
+        .update(profileUpdates)
+        .eq('id', data.profile_id)
+    }
+  }
+
   return data
 }
 

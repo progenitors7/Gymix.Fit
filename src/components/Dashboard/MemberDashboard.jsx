@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   QrCode, Activity, LogOut, CheckCircle2, AlertCircle, 
   Clock, ShieldAlert, Sparkles, Send, RefreshCw, Calendar, 
-  Building, Flame, User, LogIn, ChevronRight, Edit2, Check, Shield, Copy, Lock, Trophy, Menu, X, Bell
+  Building, Flame, User, LogIn, ChevronRight, Edit2, Check, Shield, Copy, Lock, Trophy, Menu, X, Bell, Phone
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../lib/supabaseClient'
@@ -14,11 +14,24 @@ import Logo from '../UI/Logo'
 const inputCls = 'w-full pl-12 pr-5 py-4 rounded-2xl bg-white/[0.02] border border-white/5 text-white placeholder-slate-600 text-sm font-medium focus:outline-none focus:bg-white/[0.04] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all'
 
 export default function MemberDashboard() {
-  const { profile, signOut } = useAuth()
+  const { profile, signOut, refreshProfile } = useAuth()
   
   // Navigation & View tab: 'pass' | 'attendance' | 'streaks' | 'profile' | 'progress'
   const [activeTab, setActiveTab] = useState('pass')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Onboarding Profile states
+  const [onboardingCompleted, setOnboardingCompleted] = useState(true)
+  const [onboardName, setOnboardName] = useState('')
+  const [onboardPhone, setOnboardPhone] = useState('')
+  const [onboardGender, setOnboardGender] = useState('male')
+  const [onboardSaving, setOnboardSaving] = useState(false)
+  const [onboardError, setOnboardError] = useState('')
+  
+  // Cooldown and quota states
+  const [cooldownTimeLeft, setCooldownTimeLeft] = useState(0)
+  const [nameChangeCount, setNameChangeCount] = useState(0)
+  const [lastNameChangeAt, setLastNameChangeAt] = useState(null)
 
   // Loading & State variables
   const [loading, setLoading] = useState(true)
@@ -645,8 +658,43 @@ export default function MemberDashboard() {
     setReqError('')
 
     const executeFetch = async () => {
-      // Set initial profile name from global context
-      setProfileName(profile.full_name || '')
+      // 0. Fetch latest profile details from database to compute onboarding completed and cooldowns
+      const { data: dbProfile, error: profileErr } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', profile.id)
+        .single()
+
+      if (profileErr) throw profileErr
+
+      setOnboardingCompleted(dbProfile.onboarding_completed || false)
+      setProfileName(dbProfile.full_name || '')
+      setProfilePhone(dbProfile.phone_number || '')
+      setProfileGender(dbProfile.gender || 'male')
+      setNameChangeCount(dbProfile.name_change_count || 0)
+      setLastNameChangeAt(dbProfile.last_name_change_at || null)
+
+      // Initialize onboarding fields if not completed yet
+      if (!dbProfile.onboarding_completed) {
+        setOnboardName(dbProfile.full_name || '')
+        setOnboardPhone(dbProfile.phone_number || '')
+        setOnboardGender(dbProfile.gender || 'male')
+      }
+
+      // Calculate 14-day cooldown
+      const chgCount = dbProfile.name_change_count || 0
+      const lastChgAt = dbProfile.last_name_change_at
+      let daysRemaining = 0
+      if (chgCount >= 3 && lastChgAt) {
+        const lastChangeDate = new Date(lastChgAt)
+        const currentDate = new Date()
+        const diffMs = currentDate - lastChangeDate
+        const diffDays = diffMs / (1000 * 60 * 60 * 24)
+        if (diffDays < 14) {
+          daysRemaining = Math.ceil(14 - diffDays)
+        }
+      }
+      setCooldownTimeLeft(daysRemaining)
 
       // 1. Check if user is already an approved member
       const { data: memberData, error: memberError } = await supabase
@@ -854,6 +902,62 @@ export default function MemberDashboard() {
     }
   };
 
+  // Onboarding profile submission logic
+  const handleOnboardSubmit = async (e) => {
+    e.preventDefault()
+    if (!onboardName.trim()) {
+      setOnboardError('Full name is required!')
+      return
+    }
+    if (!onboardPhone.trim()) {
+      setOnboardError('Phone number is required!')
+      return
+    }
+
+    setOnboardSaving(true)
+    setOnboardError('')
+
+    try {
+      const { error: onboardErr } = await supabase
+        .from('profiles')
+        .update({
+          full_name: onboardName.trim(),
+          phone_number: onboardPhone.trim(),
+          gender: onboardGender,
+          onboarding_completed: true
+        })
+        .eq('id', profile.id)
+
+      if (onboardErr) throw onboardErr
+
+      // Sync member table if already connected (fallback)
+      if (membership) {
+        const { error: memberErr } = await supabase
+          .from('members')
+          .update({
+            full_name: onboardName.trim(),
+            phone_number: onboardPhone.trim(),
+            gender: onboardGender
+          })
+          .eq('id', membership.id)
+
+        if (memberErr) throw memberErr
+      }
+
+      // Refresh global authentication profile state
+      if (refreshProfile) {
+        await refreshProfile()
+      }
+
+      // Reload dashboard configuration
+      await loadMemberSystem()
+    } catch (err) {
+      setOnboardError(err.message || 'Failed to complete profile setup. Please try again.')
+    } finally {
+      setOnboardSaving(false)
+    }
+  }
+
   // Profile Edit logic
   const handleUpdateProfile = async (e) => {
     e.preventDefault()
@@ -864,11 +968,56 @@ export default function MemberDashboard() {
     setProfileError('')
 
     try {
+      // 0. Fetch latest profile details from database to check limits securely
+      const { data: dbProfile, error: fetchErr } = await supabase
+        .from('profiles')
+        .select('full_name, phone_number, name_change_count, last_name_change_at')
+        .eq('id', profile.id)
+        .single()
+
+      if (fetchErr) throw fetchErr
+
+      const nameChanged = dbProfile.full_name !== profileName.trim()
+      const phoneChanged = dbProfile.phone_number !== profilePhone.trim()
+      const eitherChanged = nameChanged || phoneChanged
+
+      let newCount = dbProfile.name_change_count || 0
+      let newLastChangeAt = dbProfile.last_name_change_at
+
+      if (eitherChanged) {
+        // Evaluate cooldown status
+        const chgCount = dbProfile.name_change_count || 0
+        const lastChgAt = dbProfile.last_name_change_at
+        
+        if (chgCount >= 3 && lastChgAt) {
+          const lastChangeDate = new Date(lastChgAt)
+          const currentDate = new Date()
+          const diffMs = currentDate - lastChangeDate
+          const diffDays = diffMs / (1000 * 60 * 60 * 24)
+          if (diffDays < 14) {
+            const daysRemaining = Math.ceil(14 - diffDays)
+            throw new Error(`You have reached the limit of 3 profile changes. You can edit your name/number again in ${daysRemaining} days, or ask your Gym Owner to change it from their dashboard.`)
+          } else {
+            // Cooldown has expired! Reset count to 1 and update last_name_change_at
+            newCount = 1
+            newLastChangeAt = new Date().toISOString()
+          }
+        } else {
+          // Increment changes counter and update timestamp
+          newCount = chgCount + 1
+          newLastChangeAt = new Date().toISOString()
+        }
+      }
+
       // 1. Update globally inside profiles table
       const { error: profileErr } = await supabase
         .from('profiles')
         .update({
-          full_name: profileName.trim()
+          full_name: profileName.trim(),
+          phone_number: profilePhone.trim(),
+          gender: profileGender,
+          name_change_count: newCount,
+          last_name_change_at: newLastChangeAt
         })
         .eq('id', profile.id)
 
@@ -889,6 +1038,12 @@ export default function MemberDashboard() {
       }
 
       setProfileSuccess('Profile updated successfully! ✨')
+      
+      // Sync global auth provider details
+      if (refreshProfile) {
+        await refreshProfile()
+      }
+      
       await loadMemberSystem()
     } catch (err) {
       setProfileError(err.message || 'Failed to update profile settings.')
@@ -958,6 +1113,137 @@ export default function MemberDashboard() {
     return (
       <div className="min-h-screen bg-[#0F1117] flex items-center justify-center">
         <Logo className="w-12 h-12 drop-shadow-[0_0_15px_rgba(134,59,255,0.3)] animate-pulse" />
+      </div>
+    )
+  }
+
+  // FORCE ONBOARDING PROFILE SETUP FIRST
+  if (!onboardingCompleted) {
+    return (
+      <div className="min-h-screen bg-[#0f111a] text-slate-100 font-sans relative overflow-x-hidden flex items-center justify-center p-4">
+        {/* Background decorations */}
+        <div className="absolute -top-32 -right-32 w-64 h-64 bg-[#863BFF]/10 blur-[100px] rounded-full pointer-events-none z-0" />
+        <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none z-0" />
+
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: "spring", stiffness: 350, damping: 25 }}
+          className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 shadow-[0_0_50px_rgba(134,59,255,0.15)] rounded-[2.5rem] p-8 text-center space-y-6 relative overflow-hidden pt-10 max-w-md w-full z-10"
+        >
+          <div className="absolute inset-0 bg-[#863BFF]/5 animate-pulse rounded-[2.5rem] pointer-events-none" />
+
+          <div className="relative space-y-6 z-10">
+            <div className="w-16 h-16 rounded-3xl bg-white/[0.01] border border-white/5 shadow-inner flex items-center justify-center mx-auto mb-4 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-[#863BFF]/5 blur-md rounded-full" />
+              <User className="w-8 h-8 text-[#b370ff]" />
+            </div>
+            
+            <div className="space-y-2">
+              <span className="px-3.5 py-1 rounded-full bg-[#863BFF]/10 border border-[#863BFF]/20 text-[9px] font-black uppercase tracking-widest text-[#b370ff]">
+                Setup Your Athlete Profile
+              </span>
+              <h3 className="text-2xl font-black text-white uppercase italic tracking-tight pt-1">
+                Yo, Welcome to Gymix!
+              </h3>
+              <p className="text-slate-400 text-xs leading-relaxed max-w-xs mx-auto font-semibold">
+                Please complete your display profile to get connected to your Gym Hub.
+              </p>
+            </div>
+
+            {onboardError && (
+              <div className="px-4.5 py-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-black uppercase tracking-wider text-left">
+                <ShieldAlert className="w-4 h-4 inline mr-2 text-rose-400" />
+                {onboardError}
+              </div>
+            )}
+
+            <form onSubmit={handleOnboardSubmit} className="space-y-4 text-left">
+              {/* Full Name */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Full Display Name</label>
+                <div className="relative group">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-[#863BFF] transition-colors" />
+                  <input
+                    type="text"
+                    placeholder="E.g. Shubh Sharma"
+                    value={onboardName}
+                    onChange={(e) => setOnboardName(e.target.value)}
+                    required
+                    disabled={onboardSaving}
+                    className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/[0.02] border border-white/10 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-[#863BFF]/50 focus:ring-1 focus:ring-[#863BFF]/20 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)]"
+                  />
+                </div>
+              </div>
+
+              {/* Phone Number */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Mobile Number</label>
+                <div className="relative group">
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-[#863BFF] transition-colors" />
+                  <input
+                    type="tel"
+                    placeholder="E.g. +91 9999999999"
+                    value={onboardPhone}
+                    onChange={(e) => setOnboardPhone(e.target.value)}
+                    required
+                    disabled={onboardSaving}
+                    className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/[0.02] border border-white/10 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-[#863BFF]/50 focus:ring-1 focus:ring-[#863BFF]/20 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)]"
+                  />
+                </div>
+              </div>
+
+              {/* Gender Preference */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Gender Preference</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {['male', 'female', 'other'].map((gender) => (
+                    <button
+                      key={gender}
+                      type="button"
+                      disabled={onboardSaving}
+                      onClick={() => setOnboardGender(gender)}
+                      className={`py-3 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center cursor-pointer hover:border-white/20 ${
+                        onboardGender === gender
+                        ? 'bg-[#863BFF]/20 border-[#863BFF] text-white shadow-[0_0_15px_rgba(134,59,255,0.25)]'
+                        : 'bg-white/[0.02] border-white/5 text-slate-500'
+                      }`}
+                    >
+                      {gender}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={onboardSaving}
+                className="w-full py-4.5 bg-gradient-to-r from-[#863BFF] to-[#b370ff] hover:from-[#762fe6] hover:to-[#a25eff] text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-[#863BFF]/20 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
+              >
+                {onboardSaving ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Complete Profile Setup
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Logout Action */}
+            <div className="pt-4 border-t border-white/5">
+              <button
+                onClick={signOut}
+                type="button"
+                className="text-[10px] font-black text-rose-400 hover:text-rose-300 uppercase tracking-widest transition-colors cursor-pointer"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </motion.div>
       </div>
     )
   }
@@ -2267,6 +2553,19 @@ export default function MemberDashboard() {
                           </div>
 
                           <form onSubmit={handleUpdateProfile} className="space-y-4">
+                            {/* Quota & Cooldown display status */}
+                            {cooldownTimeLeft > 0 ? (
+                              <div className="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
+                                <Lock className="w-3.5 h-3.5" />
+                                <span>Changes Locked (Cooldown: {cooldownTimeLeft} days left)</span>
+                              </div>
+                            ) : (
+                              <div className="px-4 py-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-slate-400 text-[9px] font-bold uppercase tracking-wider flex justify-between items-center">
+                                <span>Name/Phone Changes Quota</span>
+                                <span className="text-emerald-400 font-black">{nameChangeCount}/3 changes used</span>
+                              </div>
+                            )}
+
                             {/* Name field */}
                             <div className="space-y-1.5">
                               <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Full Display Name</label>
@@ -2277,7 +2576,8 @@ export default function MemberDashboard() {
                                   value={profileName}
                                   onChange={(e) => setProfileName(e.target.value)}
                                   required
-                                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.02] border border-white/10 text-white placeholder-slate-500 text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-[#863BFF]/50 focus:ring-1 focus:ring-[#863BFF]/20 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)]"
+                                  disabled={cooldownTimeLeft > 0 || savingProfile}
+                                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.02] border border-white/10 text-white placeholder-slate-500 text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-[#863BFF]/50 focus:ring-1 focus:ring-[#863BFF]/20 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
                                   placeholder="Display name"
                                 />
                               </div>
@@ -2287,18 +2587,19 @@ export default function MemberDashboard() {
                             <div className="space-y-1.5">
                               <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Mobile Number</label>
                               <div className="relative group">
-                                <Activity className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-[#863BFF] transition-colors" />
+                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-[#863BFF] transition-colors" />
                                 <input 
                                   type="text" 
                                   value={profilePhone}
                                   onChange={(e) => setProfilePhone(e.target.value)}
-                                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.02] border border-white/10 text-white placeholder-slate-500 text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-[#863BFF]/50 focus:ring-1 focus:ring-[#863BFF]/20 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)]"
+                                  disabled={cooldownTimeLeft > 0 || savingProfile}
+                                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.02] border border-white/10 text-white placeholder-slate-500 text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-[#863BFF]/50 focus:ring-1 focus:ring-[#863BFF]/20 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
                                   placeholder="Add phone number"
                                 />
                               </div>
                             </div>
 
-                            {/* Gender selection buttons */}
+                            {/* Gender preference preference */}
                             <div className="space-y-1.5">
                               <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Gender Preference</label>
                               <div className="grid grid-cols-3 gap-2">
@@ -2321,11 +2622,16 @@ export default function MemberDashboard() {
 
                             <button
                               type="submit"
-                              disabled={savingProfile}
-                              className="w-full py-3.5 bg-white hover:bg-slate-100 text-black text-[10px] font-black uppercase tracking-widest rounded-xl active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              disabled={cooldownTimeLeft > 0 || savingProfile}
+                              className="w-full py-3.5 bg-white hover:bg-slate-100 text-black text-[10px] font-black uppercase tracking-widest rounded-xl active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-300"
                             >
                               {savingProfile ? (
                                 <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                              ) : cooldownTimeLeft > 0 ? (
+                                <>
+                                  <Lock className="w-3.5 h-3.5" />
+                                  Changes Locked
+                                </>
                               ) : (
                                 <>
                                   <Edit2 className="w-3.5 h-3.5" />
