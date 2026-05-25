@@ -27,7 +27,7 @@ import { useCurrentGym } from '../hooks/useCurrentGym';
 import { supabase } from '../lib/supabaseClient';
 import { planService } from '../services/planService';
 // ... imports
-import { Plus, X as CloseIcon, Edit2 } from 'lucide-react';
+import { Plus, X as CloseIcon, Edit2, Sparkles } from 'lucide-react';
 
 const WA_PRESETS = [
   { label: 'Professional Reminder', text: 'Hello {{name}}, this is a friendly reminder that your {{plan}} plan expires on {{date}}. Please renew to avoid interruption.' },
