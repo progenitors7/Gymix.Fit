@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   QrCode, Activity, LogOut, CheckCircle2, AlertCircle, 
@@ -406,8 +406,8 @@ export default function MemberDashboard() {
     }
   }
 
-  // Calculate top PR values for lifting cards
-  const getPRValues = () => {
+  // Calculate top PR values for lifting cards (cached using useMemo to optimize render performance on low-end devices)
+  const prValues = useMemo(() => {
     const prs = {
       'Bench Press': 0,
       'Squat': 0,
@@ -431,7 +431,7 @@ export default function MemberDashboard() {
     })
     
     return prs
-  }
+  }, [progressLogs])
 
   // Dynamic colors and styles for Instagram PR themes
   const getThemeStyles = (theme) => {
@@ -2328,28 +2328,28 @@ export default function MemberDashboard() {
                         {/* Bench Press Card */}
                         <div className="backdrop-blur-md bg-gradient-to-tr from-amber-500/[0.05] via-transparent to-amber-600/[0.05] border border-amber-500/20 p-5 rounded-[2rem] text-center space-y-2 relative group overflow-hidden shadow-xl hover:scale-[1.02] hover:border-amber-500/40 transition-all duration-300">
                           <p className="text-[8px] font-black uppercase text-amber-500 tracking-widest">Bench Press Max</p>
-                          <p className="text-2xl font-black text-white">{getPRValues()['Bench Press'] || '—'} <span className="text-xs text-slate-500 font-bold">kg</span></p>
+                          <p className="text-2xl font-black text-white">{prValues['Bench Press'] || '—'} <span className="text-xs text-slate-500 font-bold">kg</span></p>
                           <span className="text-[8px] text-slate-500 font-bold uppercase">PR Lift 🔥</span>
                         </div>
 
                         {/* Squat Card */}
                         <div className="backdrop-blur-md bg-gradient-to-tr from-amber-500/[0.05] via-transparent to-amber-600/[0.05] border border-amber-500/20 p-5 rounded-[2rem] text-center space-y-2 relative group overflow-hidden shadow-xl hover:scale-[1.02] hover:border-amber-500/40 transition-all duration-300">
                           <p className="text-[8px] font-black uppercase text-amber-500 tracking-widest">Squat Max</p>
-                          <p className="text-2xl font-black text-white">{getPRValues()['Squat'] || '—'} <span className="text-xs text-slate-500 font-bold">kg</span></p>
+                          <p className="text-2xl font-black text-white">{prValues['Squat'] || '—'} <span className="text-xs text-slate-500 font-bold">kg</span></p>
                           <span className="text-[8px] text-slate-500 font-bold uppercase">PR Lift 🔥</span>
                         </div>
 
                         {/* Deadlift Card */}
                         <div className="backdrop-blur-md bg-gradient-to-tr from-amber-500/[0.05] via-transparent to-amber-600/[0.05] border border-amber-500/20 p-5 rounded-[2rem] text-center space-y-2 relative group overflow-hidden shadow-xl hover:scale-[1.02] hover:border-amber-500/40 transition-all duration-300">
                           <p className="text-[8px] font-black uppercase text-amber-500 tracking-widest">Deadlift Max</p>
-                          <p className="text-2xl font-black text-white">{getPRValues()['Deadlift'] || '—'} <span className="text-xs text-slate-500 font-bold">kg</span></p>
+                          <p className="text-2xl font-black text-white">{prValues['Deadlift'] || '—'} <span className="text-xs text-slate-500 font-bold">kg</span></p>
                           <span className="text-[8px] text-slate-500 font-bold uppercase">PR Lift 🔥</span>
                         </div>
 
                         {/* Body Weight Card */}
                         <div className="backdrop-blur-md bg-gradient-to-tr from-emerald-500/[0.05] via-transparent to-emerald-600/[0.05] border border-emerald-500/20 p-5 rounded-[2rem] text-center space-y-2 relative group overflow-hidden shadow-xl hover:scale-[1.02] hover:border-emerald-500/40 transition-all duration-300">
                           <p className="text-[8px] font-black uppercase text-emerald-400 tracking-widest">Body Weight</p>
-                          <p className="text-2xl font-black text-white">{getPRValues()['Body Weight'] || '—'} <span className="text-xs text-slate-500 font-bold">kg</span></p>
+                          <p className="text-2xl font-black text-white">{prValues['Body Weight'] || '—'} <span className="text-xs text-slate-500 font-bold">kg</span></p>
                           <span className="text-[8px] text-slate-500 font-bold uppercase">Latest Log ⚖️</span>
                         </div>
                       </div>

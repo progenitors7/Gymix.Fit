@@ -1825,7 +1825,7 @@ export default function LandingPage() {
                       </div>
                     </div>
                   </div>
-                ) : (
+                ) : deferredPrompt ? (
                   <div className="flex gap-2 justify-end">
                     <button 
                       onClick={dismissPrompt} 
@@ -1841,6 +1841,19 @@ export default function LandingPage() {
                       <Download className="w-3.5 h-3.5" />
                       Install Now
                     </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Browser Setup Actions (Manual):</p>
+                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                      <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
+                        Direct installation is restricted by this browser. Follow these steps to install:
+                      </p>
+                      <ol className="text-[10px] text-slate-300 pl-4 list-decimal space-y-1 pt-0.5 font-medium">
+                        <li>Tap your browser's menu (three dots <span className="font-bold text-[#10B981]">⋮</span> in the top-right corner).</li>
+                        <li>Select <span className="font-black text-white">"Install app"</span> or <span className="font-black text-white">"Add to Home Screen"</span>.</li>
+                      </ol>
+                    </div>
                   </div>
                 )}
               </div>
