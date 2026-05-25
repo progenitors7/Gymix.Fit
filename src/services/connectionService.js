@@ -290,6 +290,117 @@ export const connectionService = {
 
       if (insertError) throw insertError
 
+      // Automatic Loyalty Coins Reward Logic
+      try {
+        const { data: gymConfig } = await supabase
+          .from('gyms')
+          .select('enable_gym_coins, coin_reward_per_checkin, coin_reward_per_streak_milestone')
+          .eq('id', gymId)
+          .maybeSingle();
+
+        if (gymConfig?.enable_gym_coins) {
+          const rewardCoins = gymConfig.coin_reward_per_checkin || 10;
+          
+          // Get recent check-ins to compute streak (including current check-in)
+          const { data: logs } = await supabase
+            .from('attendance')
+            .select('check_in_time')
+            .eq('member_id', memberId)
+            .order('check_in_time', { ascending: false });
+
+          const allLogs = [{ check_in_time: attendance.check_in_time }, ...(logs || [])];
+
+          // local streak calculation (skipping Sundays)
+          let streak = 0;
+          let checkDate = new Date();
+          checkDate.setHours(0, 0, 0, 0);
+
+          const getLocalDateStr = (d) => {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const dateVal = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${dateVal}`;
+          };
+
+          const checkInDates = new Set(
+            allLogs.map(log => getLocalDateStr(new Date(log.check_in_time)))
+          );
+
+          let tempDate = new Date(checkDate);
+          while (true) {
+            const dateStr = getLocalDateStr(tempDate);
+            if (checkInDates.has(dateStr)) {
+              break;
+            }
+            if (tempDate.getDay() !== 0) break; // Missed a active day
+            tempDate.setDate(tempDate.getDate() - 1);
+          }
+
+          checkDate = new Date(tempDate);
+          while (true) {
+            const dateStr = getLocalDateStr(checkDate);
+            const hasCheckedIn = checkInDates.has(dateStr);
+            const isSunday = checkDate.getDay() === 0;
+
+            if (hasCheckedIn) {
+              streak++;
+              checkDate.setDate(checkDate.getDate() - 1);
+            } else if (isSunday) {
+              checkDate.setDate(checkDate.getDate() - 1);
+            } else {
+              break;
+            }
+          }
+
+          // Check streak milestones
+          let bonusCoins = 0;
+          let isMilestone = false;
+          if (streak === 3 || streak === 7 || streak === 15 || streak === 30) {
+            bonusCoins = gymConfig.coin_reward_per_streak_milestone || 50;
+            isMilestone = true;
+          }
+
+          const totalAwarded = rewardCoins + bonusCoins;
+
+          // Fetch current balance
+          const { data: currentMember } = await supabase
+            .from('members')
+            .select('gym_coins_balance')
+            .eq('id', memberId)
+            .maybeSingle();
+
+          const newBalance = (currentMember?.gym_coins_balance || 0) + totalAwarded;
+
+          // Update member balance
+          await supabase
+            .from('members')
+            .update({ gym_coins_balance: newBalance })
+            .eq('id', memberId);
+
+          // Log transaction for Check-In
+          await supabase
+            .from('member_coins_transactions')
+            .insert({
+              member_id: memberId,
+              amount: rewardCoins,
+              reason: 'Daily Check-In Reward'
+            });
+
+          // Log transaction for Milestone
+          if (isMilestone && bonusCoins > 0) {
+            await supabase
+              .from('member_coins_transactions')
+              .insert({
+                member_id: memberId,
+                amount: bonusCoins,
+                reason: `${streak}-Day Streak Milestone! 🔥`
+              });
+          }
+        }
+      } catch (coinErr) {
+        console.error('[connectionService] Error awarding loyalty coins:', coinErr);
+      }
+
       return {
         success: true,
         action: 'checkin',

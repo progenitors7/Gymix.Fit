@@ -97,6 +97,49 @@ export default function SettingsPage() {
   const [newGymName, setNewGymName] = useState(gymName || '');
   const [savingProfile, setSavingProfile] = useState(false);
 
+  // Gym Coins Loyalty settings states
+  const [enableGymCoins, setEnableGymCoins] = useState(gym?.enable_gym_coins || false);
+  const [coinRewardPerCheckin, setCoinRewardPerCheckin] = useState(gym?.coin_reward_per_checkin || 10);
+  const [coinRewardPerStreakMilestone, setCoinRewardPerStreakMilestone] = useState(gym?.coin_reward_per_streak_milestone || 50);
+  const [savingCoinsSettings, setSavingCoinsSettings] = useState(false);
+
+  useEffect(() => {
+    if (gym) {
+      setEnableGymCoins(gym.enable_gym_coins || false);
+      setCoinRewardPerCheckin(gym.coin_reward_per_checkin || 10);
+      setCoinRewardPerStreakMilestone(gym.coin_reward_per_streak_milestone || 50);
+    }
+  }, [gym]);
+
+  const handleSaveCoinsSettings = async () => {
+    if (!gym?.id) return;
+    setSavingCoinsSettings(true);
+    try {
+      const { error } = await supabase
+        .from('gyms')
+        .update({
+          enable_gym_coins: enableGymCoins,
+          coin_reward_per_checkin: parseInt(coinRewardPerCheckin),
+          coin_reward_per_streak_milestone: parseInt(coinRewardPerStreakMilestone)
+        })
+        .eq('id', gym.id);
+
+      if (error) throw error;
+      showToast('Gym Loyalty Coins settings updated successfully!');
+      
+      // Clear local storage cache for the gym so GymProvider re-fetches updated settings
+      localStorage.removeItem(`gym_cache_${user.id}`);
+      // Refresh current gym context without hard-reload if possible, or reload cleanly
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (err) {
+      showToast(err.message || 'Failed to save coins settings', 'error');
+    } finally {
+      setSavingCoinsSettings(false);
+    }
+  };
+
   // Password state
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
@@ -558,6 +601,60 @@ export default function SettingsPage() {
               >
                 <Plus className="w-5 h-5 mb-1 text-gray-600 group-hover:text-[#3390ec] transition-colors" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Add New Plan</span>
+              </button>
+            </div>
+          </div>
+        </Section>
+
+        {/* Gym Loyalty Coins */}
+        <Section 
+          icon={<Sparkles className="w-5.5 h-5.5 text-amber-400 fill-amber-400/20" />}
+          title="Gym Loyalty Coins" 
+          description="Reward members with loyalty coins for check-ins, active streaks, and dedication"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4.5 rounded-2xl bg-white/[0.01] border border-white/5">
+              <div>
+                <p className="text-sm font-bold text-white">Enable Gym Loyalty Coins</p>
+                <p className="text-[10px] text-gray-500 font-medium">Turn rewards on/off. Great for small gyms to control balances.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEnableGymCoins(!enableGymCoins)}
+                className={`w-12 h-7 rounded-full p-1 transition-all cursor-pointer relative flex items-center ${enableGymCoins ? 'bg-emerald-500' : 'bg-white/10'}`}
+              >
+                <span className={`w-5 h-5 bg-white rounded-full shadow-md transition-all absolute ${enableGymCoins ? 'right-1' : 'left-1'}`} />
+              </button>
+            </div>
+
+            {enableGymCoins && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 animate-in fade-in duration-300">
+                <Field 
+                  label="Coins Earned per Check-in" 
+                  id="settings-coins-checkin" 
+                  type="number" 
+                  value={coinRewardPerCheckin} 
+                  onChange={e => setCoinRewardPerCheckin(e.target.value)} 
+                  placeholder="e.g. 10" 
+                />
+                <Field 
+                  label="Coins Earned per Streak Milestone" 
+                  id="settings-coins-streak" 
+                  type="number" 
+                  value={coinRewardPerStreakMilestone} 
+                  onChange={e => setCoinRewardPerStreakMilestone(e.target.value)} 
+                  placeholder="e.g. 50" 
+                />
+              </div>
+            )}
+
+            <div className="pt-2">
+              <button 
+                onClick={handleSaveCoinsSettings} 
+                disabled={savingCoinsSettings} 
+                className="px-6 py-2.5 bg-[#3390ec] hover:bg-[#2b7ad2] disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-all"
+              >
+                {savingCoinsSettings ? 'Saving...' : 'Save Loyalty Settings'}
               </button>
             </div>
           </div>

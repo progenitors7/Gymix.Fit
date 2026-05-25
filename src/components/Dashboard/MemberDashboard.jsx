@@ -16,7 +16,7 @@ const inputCls = 'w-full pl-12 pr-5 py-4 rounded-2xl bg-white/[0.02] border bord
 export default function MemberDashboard() {
   const { profile, signOut } = useAuth()
   
-  // Navigation & View tab: 'pass' | 'attendance' | 'streaks' | 'profile'
+  // Navigation & View tab: 'pass' | 'attendance' | 'streaks' | 'profile' | 'progress'
   const [activeTab, setActiveTab] = useState('pass')
 
   // Loading & State variables
@@ -25,6 +25,25 @@ export default function MemberDashboard() {
   const [connectionReq, setConnectionReq] = useState(null)
   const [attendanceLogs, setAttendanceLogs] = useState([])
   const [streakCount, setStreakCount] = useState(0)
+
+  // Loyalty Coins and Leaderboard states
+  const [coinTransactions, setCoinTransactions] = useState([])
+  const [coinsLoading, setCoinsLoading] = useState(false)
+  const [leaderboard, setLeaderboard] = useState([])
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false)
+
+  // Progress Tracker states
+  const [progressLogs, setProgressLogs] = useState([])
+  const [progressLoading, setProgressLoading] = useState(false)
+  const [newLogType, setNewLogType] = useState('PR') // 'PR' or 'BODYWEIGHT'
+  const [newExerciseName, setNewExerciseName] = useState('Bench Press')
+  const [newValue, setNewValue] = useState('')
+  const [newNotes, setNewNotes] = useState('')
+  const [loggingProgress, setLoggingProgress] = useState(false)
+
+  // Instagram Share modal states
+  const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [activeShareLog, setActiveShareLog] = useState(null)
   
   // Connection Form states
   const [gymCode, setGymCode] = useState('')
@@ -111,6 +130,129 @@ export default function MemberDashboard() {
     setStreakCount(streak)
   }
 
+  // Fetch Loyalty Coin transaction logs
+  const fetchCoinsData = async (memberId) => {
+    setCoinsLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('member_coins_transactions')
+        .select('*')
+        .eq('member_id', memberId)
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      setCoinTransactions(data || [])
+    } catch (err) {
+      console.error('Error fetching coin transactions:', err)
+    } finally {
+      setCoinsLoading(false)
+    }
+  }
+
+  // Fetch Community Check-in Leaderboard
+  const fetchLeaderboard = async (gymId) => {
+    setLeaderboardLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('members')
+        .select('id, full_name, attendance(id)')
+        .eq('gym_id', gymId)
+      
+      if (error) throw error
+      
+      const ranked = (data || [])
+        .map(m => ({
+          id: m.id,
+          full_name: m.full_name || 'Anonymous Athlete',
+          checkins_count: m.attendance?.length || 0
+        }))
+        .sort((a, b) => b.checkins_count - a.checkins_count)
+        .slice(0, 10);
+      
+      setLeaderboard(ranked)
+    } catch (err) {
+      console.error('Error fetching leaderboard:', err)
+    } finally {
+      setLeaderboardLoading(false)
+    }
+  }
+
+  // Fetch member progress tracking logs
+  const fetchProgressLogs = async (memberId) => {
+    setProgressLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('member_progress_logs')
+        .select('*')
+        .eq('member_id', memberId)
+        .order('recorded_at', { ascending: false })
+      
+      if (error) throw error
+      setProgressLogs(data || [])
+    } catch (err) {
+      console.error('Error fetching progress logs:', err)
+    } finally {
+      setProgressLoading(false)
+    }
+  }
+
+  // Handle adding progress logs in frontend
+  const handleAddProgressLog = async (e) => {
+    e.preventDefault()
+    if (!membership) return
+    setLoggingProgress(true)
+    try {
+      const { error } = await supabase
+        .from('member_progress_logs')
+        .insert({
+          member_id: membership.id,
+          log_type: newLogType,
+          exercise_name: newLogType === 'BODYWEIGHT' ? 'Body Weight' : newExerciseName,
+          value: parseFloat(newValue),
+          notes: newNotes.trim() || null,
+          recorded_at: new Date().toISOString()
+        })
+      
+      if (error) throw error
+      setNewValue('')
+      setNewNotes('')
+      await fetchProgressLogs(membership.id)
+      alert('Progress logged successfully! 💪')
+    } catch (err) {
+      console.error('Error adding progress log:', err)
+      alert(err.message || 'Failed to save progress entry.')
+    } finally {
+      setLoggingProgress(false)
+    }
+  }
+
+  // Calculate top PR values for lifting cards
+  const getPRValues = () => {
+    const prs = {
+      'Bench Press': 0,
+      'Squat': 0,
+      'Deadlift': 0,
+      'Body Weight': 0
+    }
+    
+    progressLogs.forEach(log => {
+      if (log.log_type === 'PR') {
+        const name = log.exercise_name
+        if (prs[name] !== undefined) {
+          prs[name] = Math.max(prs[name], parseFloat(log.value))
+        } else {
+          prs[name] = Math.max(prs[name] || 0, parseFloat(log.value))
+        }
+      } else if (log.log_type === 'BODYWEIGHT') {
+        if (prs['Body Weight'] === 0) {
+          prs['Body Weight'] = parseFloat(log.value)
+        }
+      }
+    })
+    
+    return prs
+  }
+
   // Get dynamic athlete rank based on streaks
   const getAthleteRank = (streak) => {
     if (streak >= 30) return { name: 'Immortal Gym Lord', emoji: '👑', color: 'text-amber-400 border-amber-500/30 bg-amber-500/10' }
@@ -133,7 +275,7 @@ export default function MemberDashboard() {
       // 1. Check if user is already an approved member
       const { data: memberData, error: memberError } = await supabase
         .from('members')
-        .select('*, gyms(id, gym_name, unique_code)')
+        .select('*, gyms(*)')
         .eq('profile_id', profile.id)
         .maybeSingle()
 
@@ -159,6 +301,15 @@ export default function MemberDashboard() {
         
         // 3. Calculate dynamic streaks
         calculateStreak(logs || [])
+
+        // 4. Fetch loyalty coins transactions
+        fetchCoinsData(memberData.id)
+
+        // 5. Fetch community check-in leaderboard
+        fetchLeaderboard(memberData.gym_id)
+
+        // 6. Fetch progress and PR logs
+        fetchProgressLogs(memberData.id)
       } else {
         setMembership(null)
         // 4. If not, check if they have a pending request
@@ -495,6 +646,7 @@ export default function MemberDashboard() {
               { id: 'pass', label: 'Access Pass Key', icon: QrCode },
               { id: 'attendance', label: 'Attendance logs', icon: Calendar },
               { id: 'streaks', label: 'Workout Streaks', icon: Flame, badge: `${streakCount} Days` },
+              { id: 'progress', label: 'PR & Progress', icon: Sparkles },
               { id: 'profile', label: 'Profile settings', icon: User }
             ].map((item) => {
               const Icon = item.icon
@@ -513,13 +665,15 @@ export default function MemberDashboard() {
                       className={`absolute inset-0 rounded-2xl -z-10 border ${
                         item.id === 'streaks'
                         ? 'bg-orange-500/10 border-orange-500/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
+                        : item.id === 'progress'
+                        ? 'bg-amber-500/10 border-amber-500/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
                         : 'bg-[#863BFF]/10 border-[#863BFF]/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
                       }`}
                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
                     />
                   )}
                   <div className="flex items-center gap-3">
-                    <Icon className={`w-5 h-5 ${isActive ? (item.id === 'streaks' ? 'text-orange-400' : 'text-[#b370ff]') : 'text-slate-500'}`} />
+                    <Icon className={`w-5 h-5 ${isActive ? (item.id === 'streaks' ? 'text-orange-400' : item.id === 'progress' ? 'text-amber-400' : 'text-[#b370ff]') : 'text-slate-500'}`} />
                     <span className="text-xs uppercase tracking-wider">{item.label}</span>
                   </div>
                   {item.badge && (
@@ -1079,6 +1233,381 @@ export default function MemberDashboard() {
                         </div>
 
                       </div>
+
+                      {/* IF GYM COINS ARE ENABLED */}
+                      {membership.gyms?.enable_gym_coins && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 animate-in fade-in duration-300">
+                          
+                          {/* GYM COINS WALLET */}
+                          <div className="backdrop-blur-md bg-gradient-to-tr from-amber-500/[0.03] via-yellow-500/[0.01] to-amber-600/[0.03] border border-amber-500/20 rounded-[2rem] p-6 space-y-5 shadow-2xl relative overflow-hidden transition-all duration-300 hover:border-amber-500/40">
+                            {/* Gold shimmering particles effect */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 blur-3xl rounded-full pointer-events-none" />
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-400">
+                                  <Sparkles className="w-4.5 h-4.5 fill-amber-400/20 animate-pulse" />
+                                </div>
+                                <div>
+                                  <h4 className="text-xs font-black text-white uppercase tracking-wider">Gym Coins Wallet</h4>
+                                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Earned Loyalty Rewards</p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 font-mono tracking-tight drop-shadow-[0_2px_10px_rgba(245,158,11,0.2)]">
+                                  {membership.gym_coins_balance || 0} 🪙
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Transactions scroll area */}
+                            <div className="space-y-3">
+                              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Transaction History</p>
+                              {coinsLoading ? (
+                                <div className="text-center py-6 text-slate-500 text-[10px] uppercase font-bold tracking-widest animate-pulse">Syncing transactions...</div>
+                              ) : coinTransactions.length === 0 ? (
+                                <div className="text-center py-6 text-slate-500 text-xs font-medium">
+                                  No transactions logged yet. Start checking in to accumulate coins!
+                                </div>
+                              ) : (
+                                <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                                  {coinTransactions.map((tx, index) => (
+                                    <div key={index} className="p-3 rounded-xl bg-white/[0.01] border border-white/5 flex items-center justify-between text-xs hover:bg-white/[0.02] transition-colors">
+                                      <div className="space-y-0.5">
+                                        <span className="font-bold text-slate-200">{tx.reason}</span>
+                                        <p className="text-[8px] text-slate-500 font-medium">
+                                          {new Date(tx.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                        </p>
+                                      </div>
+                                      <span className={`font-mono font-black ${tx.amount >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                        {tx.amount >= 0 ? `+${tx.amount}` : tx.amount}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* COMMUNITY LEADERBOARD */}
+                          <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2rem] p-6 space-y-5 shadow-2xl transition-all duration-300 hover:border-white/20">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-[#863BFF]/10 flex items-center justify-center border border-[#863BFF]/20 text-[#b370ff]">
+                                <Flame className="w-4.5 h-4.5 animate-pulse" />
+                              </div>
+                              <div>
+                                <h4 className="text-xs font-black text-white uppercase tracking-wider">Gym Leaderboard</h4>
+                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Top Active Members Ranked by Check-ins</p>
+                              </div>
+                            </div>
+
+                            {leaderboardLoading ? (
+                              <div className="text-center py-6 text-slate-500 text-[10px] uppercase font-bold tracking-widest animate-pulse">Calculating rankings...</div>
+                            ) : leaderboard.length === 0 ? (
+                              <div className="text-center py-6 text-slate-500 text-xs font-medium">
+                                No check-in records found.
+                              </div>
+                            ) : (
+                              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                                {leaderboard.map((userRow, index) => {
+                                  const isCurrentUser = userRow.id === membership.id;
+                                  let medal = '';
+                                  let bgStyle = 'bg-white/[0.01] border-white/5';
+                                  if (index === 0) {
+                                    medal = '👑';
+                                    bgStyle = 'bg-amber-500/[0.05] border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.05)]';
+                                  } else if (index === 1) {
+                                    medal = '🥈';
+                                    bgStyle = 'bg-slate-400/[0.05] border-slate-400/20';
+                                  } else if (index === 2) {
+                                    medal = '🥉';
+                                    bgStyle = 'bg-amber-700/[0.05] border-amber-700/20';
+                                  }
+                                  
+                                  if (isCurrentUser) {
+                                    bgStyle = 'bg-[#863BFF]/10 border-[#863BFF]/30 shadow-[0_0_15px_rgba(134,59,255,0.1)]';
+                                  }
+
+                                  return (
+                                    <div 
+                                      key={userRow.id} 
+                                      className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-all ${bgStyle} ${isCurrentUser ? 'scale-[1.01] font-black' : ''}`}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <span className="font-mono text-[10px] font-black text-slate-500 w-4">#{index + 1}</span>
+                                        <span className="font-bold text-slate-200">{userRow.full_name} {isCurrentUser && ' (You)'}</span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-black bg-white/5 border border-white/5 px-2 py-0.5 rounded text-slate-400">{userRow.checkins_count} check-ins</span>
+                                        {medal && <span className="text-sm">{medal}</span>}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* COINS REDEEM SHOP */}
+                          <div className="lg:col-span-2 backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2rem] p-6 space-y-4 shadow-2xl transition-all duration-300 hover:border-white/20">
+                            <div>
+                              <h4 className="text-xs font-black text-white uppercase tracking-wider">Loyalty Rewards Shop</h4>
+                              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Redeem your coins at the gym counter</p>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                              {[
+                                { name: 'Free Protein Shake', cost: 100, desc: 'Fresh post-workout whey shake from gym juice bar.' },
+                                { name: 'Custom Shaker Bottle', cost: 200, desc: 'High-quality leak-proof GymOS branded shaker.' },
+                                { name: 'Premium Gym T-Shirt', cost: 500, desc: 'High-performance athletic tee.' }
+                              ].map((reward, i) => {
+                                const canAfford = (membership.gym_coins_balance || 0) >= reward.cost;
+                                return (
+                                  <div key={i} className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col justify-between space-y-3 relative group">
+                                    <div className="space-y-1">
+                                      <div className="flex justify-between items-start">
+                                        <h5 className="text-xs font-black text-white uppercase tracking-wider">{reward.name}</h5>
+                                        <span className={`text-[10px] font-black font-mono px-2 py-0.5 rounded ${canAfford ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-white/5 text-slate-500'}`}>{reward.cost} 🪙</span>
+                                      </div>
+                                      <p className="text-[10px] text-slate-400 font-medium leading-relaxed">{reward.desc}</p>
+                                    </div>
+                                    <button 
+                                      disabled
+                                      className={`w-full py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border ${
+                                        canAfford 
+                                        ? 'bg-amber-500/5 border-amber-500/20 text-amber-400 group-hover:bg-amber-500/10 group-hover:border-amber-500/30' 
+                                        : 'bg-white/[0.01] border-white/5 text-slate-600'
+                                      }`}
+                                    >
+                                      Ask Desk to Redeem
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+
+                  {/* TAB 5: PR & PROGRESS HUB */}
+                  {activeTab === 'progress' && (
+                    <motion.div
+                      key="progress-tab"
+                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                      transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                      className="space-y-6"
+                    >
+                      {/* PR Lift Cards Grid */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {/* Bench Press Card */}
+                        <div className="backdrop-blur-md bg-gradient-to-tr from-amber-500/[0.05] via-transparent to-amber-600/[0.05] border border-amber-500/20 p-5 rounded-[2rem] text-center space-y-2 relative group overflow-hidden shadow-xl hover:scale-[1.02] hover:border-amber-500/40 transition-all duration-300">
+                          <p className="text-[8px] font-black uppercase text-amber-500 tracking-widest">Bench Press Max</p>
+                          <p className="text-2xl font-black text-white">{getPRValues()['Bench Press'] || '—'} <span className="text-xs text-slate-500 font-bold">kg</span></p>
+                          <span className="text-[8px] text-slate-500 font-bold uppercase">PR Lift 🔥</span>
+                        </div>
+
+                        {/* Squat Card */}
+                        <div className="backdrop-blur-md bg-gradient-to-tr from-amber-500/[0.05] via-transparent to-amber-600/[0.05] border border-amber-500/20 p-5 rounded-[2rem] text-center space-y-2 relative group overflow-hidden shadow-xl hover:scale-[1.02] hover:border-amber-500/40 transition-all duration-300">
+                          <p className="text-[8px] font-black uppercase text-amber-500 tracking-widest">Squat Max</p>
+                          <p className="text-2xl font-black text-white">{getPRValues()['Squat'] || '—'} <span className="text-xs text-slate-500 font-bold">kg</span></p>
+                          <span className="text-[8px] text-slate-500 font-bold uppercase">PR Lift 🔥</span>
+                        </div>
+
+                        {/* Deadlift Card */}
+                        <div className="backdrop-blur-md bg-gradient-to-tr from-amber-500/[0.05] via-transparent to-amber-600/[0.05] border border-amber-500/20 p-5 rounded-[2rem] text-center space-y-2 relative group overflow-hidden shadow-xl hover:scale-[1.02] hover:border-amber-500/40 transition-all duration-300">
+                          <p className="text-[8px] font-black uppercase text-amber-500 tracking-widest">Deadlift Max</p>
+                          <p className="text-2xl font-black text-white">{getPRValues()['Deadlift'] || '—'} <span className="text-xs text-slate-500 font-bold">kg</span></p>
+                          <span className="text-[8px] text-slate-500 font-bold uppercase">PR Lift 🔥</span>
+                        </div>
+
+                        {/* Body Weight Card */}
+                        <div className="backdrop-blur-md bg-gradient-to-tr from-emerald-500/[0.05] via-transparent to-emerald-600/[0.05] border border-emerald-500/20 p-5 rounded-[2rem] text-center space-y-2 relative group overflow-hidden shadow-xl hover:scale-[1.02] hover:border-emerald-500/40 transition-all duration-300">
+                          <p className="text-[8px] font-black uppercase text-emerald-400 tracking-widest">Body Weight</p>
+                          <p className="text-2xl font-black text-white">{getPRValues()['Body Weight'] || '—'} <span className="text-xs text-slate-500 font-bold">kg</span></p>
+                          <span className="text-[8px] text-slate-500 font-bold uppercase">Latest Log ⚖️</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+                        
+                        {/* LOG PROGRESS FORM */}
+                        <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2.5rem] p-6 space-y-5 shadow-2xl transition-all duration-300 hover:border-white/20">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-400">
+                              <Sparkles className="w-4.5 h-4.5 animate-pulse" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-black text-white uppercase tracking-wider">Log Workout Progress</h4>
+                              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5 font-medium">Record PRs or Body Weight updates</p>
+                            </div>
+                          </div>
+
+                          <form onSubmit={handleAddProgressLog} className="space-y-4">
+                            {/* Log Type Selector */}
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setNewLogType('PR');
+                                  setNewExerciseName('Bench Press');
+                                }}
+                                className={`py-3 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center cursor-pointer ${
+                                  newLogType === 'PR'
+                                  ? 'bg-amber-500/20 border-amber-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.25)]'
+                                  : 'bg-white/[0.02] border-white/5 text-slate-500'
+                                }`}
+                              >
+                                Max Lift PR 🔥
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setNewLogType('BODYWEIGHT');
+                                  setNewExerciseName('Body Weight');
+                                }}
+                                className={`py-3 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center cursor-pointer ${
+                                  newLogType === 'BODYWEIGHT'
+                                  ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.25)]'
+                                  : 'bg-white/[0.02] border-white/5 text-slate-500'
+                                }`}
+                              >
+                                Body Weight ⚖️
+                              </button>
+                            </div>
+
+                            {/* Exercise Selection (Only if Log Type is PR) */}
+                            {newLogType === 'PR' && (
+                              <div className="space-y-1.5 animate-in fade-in duration-300">
+                                <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Select Exercise</label>
+                                <select 
+                                  value={newExerciseName}
+                                  onChange={(e) => setNewExerciseName(e.target.value)}
+                                  className="w-full px-4 py-3 rounded-xl bg-[#0c0e14] border border-white/10 text-white text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-amber-500/50 transition-all select-none"
+                                >
+                                  {['Bench Press', 'Squat', 'Deadlift', 'Shoulder Press', 'Barbell Row', 'Incline Bench Press', 'Bicep Curl'].map((name) => (
+                                    <option key={name} value={name} className="bg-[#12141c] text-white py-2">{name}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
+
+                            {/* Weight / Value Input */}
+                            <div className="space-y-1.5">
+                              <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">
+                                {newLogType === 'PR' ? 'Lift Weight (kg)' : 'Body Weight (kg)'}
+                              </label>
+                              <input 
+                                type="number" 
+                                step="0.1"
+                                value={newValue}
+                                onChange={(e) => setNewValue(e.target.value)}
+                                required
+                                placeholder="e.g. 85.5"
+                                className="w-full px-4 py-3 rounded-xl bg-white/[0.02] border border-white/10 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-amber-500/50 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)]"
+                              />
+                            </div>
+
+                            {/* Notes Input */}
+                            <div className="space-y-1.5">
+                              <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Notes / Logs</label>
+                              <input 
+                                type="text" 
+                                value={newNotes}
+                                onChange={(e) => setNewNotes(e.target.value)}
+                                placeholder="e.g. Felt light, clean reps! (Optional)"
+                                className="w-full px-4 py-3 rounded-xl bg-white/[0.02] border border-white/10 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-amber-500/50 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)]"
+                              />
+                            </div>
+
+                            <button
+                              type="submit"
+                              disabled={loggingProgress}
+                              className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-[10px] font-black uppercase tracking-widest rounded-xl active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            >
+                              {loggingProgress ? (
+                                <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <>
+                                  <Sparkles className="w-3.5 h-3.5 fill-black/20" />
+                                  Log Entry
+                                </>
+                              )}
+                            </button>
+                          </form>
+                        </div>
+
+                        {/* PROGRESS LOG TIMELINE */}
+                        <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2.5rem] p-6 space-y-4 shadow-2xl transition-all duration-300 hover:border-white/20">
+                          <div>
+                            <h4 className="text-xs font-black text-white uppercase tracking-wider">Progress Timeline</h4>
+                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5 font-medium">History of your workout gains</p>
+                          </div>
+
+                          {progressLoading ? (
+                            <div className="text-center py-10 text-slate-500 text-[10px] uppercase font-bold tracking-widest animate-pulse">Retreiving PR logs...</div>
+                          ) : progressLogs.length === 0 ? (
+                            <div className="text-center py-12 text-slate-500 text-xs font-semibold">
+                              No progress entries logged yet. Record your lifts above to start tracking!
+                            </div>
+                          ) : (
+                            <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+                              {progressLogs.map((log) => {
+                                const date = new Date(log.recorded_at);
+                                const isPR = log.log_type === 'PR';
+                                return (
+                                  <div key={log.id} className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all flex items-center justify-between shadow-sm relative group">
+                                    <div className="flex items-center gap-3">
+                                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center border text-xs font-black ${
+                                        isPR 
+                                        ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' 
+                                        : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                      }`}>
+                                        {isPR ? 'PR' : 'BW'}
+                                      </div>
+                                      <div className="space-y-0.5">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-xs font-black text-white uppercase tracking-wide">
+                                            {log.exercise_name}
+                                          </span>
+                                          <span className="text-[9px] text-slate-500 font-bold">
+                                            {date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                                          </span>
+                                        </div>
+                                        {log.notes && (
+                                          <p className="text-[10px] text-slate-400 font-medium italic">
+                                            “{log.notes}”
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className={`text-sm font-black ${isPR ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                        {log.value} kg
+                                      </span>
+                                      <button
+                                        onClick={() => {
+                                          setActiveShareLog(log);
+                                          setShareModalOpen(true);
+                                        }}
+                                        className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow active:scale-95"
+                                        title="Share PR"
+                                      >
+                                        <Send className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                      </div>
                     </motion.div>
                   )}
 
@@ -1283,7 +1812,7 @@ export default function MemberDashboard() {
 
       {/* MOBILE BOTTOM NAVIGATION BAR */}
       {membership && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-sm rounded-[2rem] bg-[#0c0e14]/70 border border-white/10 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-2 flex items-center justify-between z-50 md:hidden">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-[420px] rounded-[2rem] bg-[#0c0e14]/70 border border-white/10 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-2 flex items-center justify-between z-50 md:hidden animate-in slide-in-from-bottom duration-300">
           {/* BUTTON 1: PASS */}
           <button
             onClick={() => setActiveTab('pass')}
@@ -1344,7 +1873,27 @@ export default function MemberDashboard() {
             <span className="text-[8px] uppercase tracking-wider leading-none">Streak</span>
           </button>
 
-          {/* BUTTON 4: PROFILE */}
+          {/* BUTTON 4: PROGRESS */}
+          <button
+            onClick={() => setActiveTab('progress')}
+            className={`relative flex-1 flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition-all cursor-pointer z-10 ${
+              activeTab === 'progress' 
+              ? 'text-amber-400 font-black' 
+              : 'text-slate-500 hover:text-slate-300 font-semibold'
+            }`}
+          >
+            {activeTab === 'progress' && (
+              <motion.div 
+                layoutId="activeTabPill"
+                className="absolute inset-0 bg-amber-500/10 border border-amber-500/20 rounded-2xl -z-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
+                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              />
+            )}
+            <Sparkles className="w-5 h-5 transition-transform duration-200" />
+            <span className="text-[8px] uppercase tracking-wider leading-none">PRs</span>
+          </button>
+
+          {/* BUTTON 5: PROFILE */}
           <button
             onClick={() => setActiveTab('profile')}
             className={`relative flex-1 flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition-all cursor-pointer z-10 ${
@@ -1374,6 +1923,118 @@ export default function MemberDashboard() {
           </p>
         </div>
       )}
+
+      {/* INSTAGRAM SHARE MODAL */}
+      <AnimatePresence>
+        {shareModalOpen && activeShareLog && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 backdrop-blur-xl bg-black/80 flex items-center justify-center p-4 z-[100]"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="max-w-md w-full flex flex-col items-center space-y-6"
+            >
+              {/* THE SHARABLE CARD */}
+              <div 
+                id="share-pr-card"
+                className="w-full max-w-[340px] aspect-[9/16] rounded-[2.5rem] bg-gradient-to-br from-[#0c0e17] via-[#121424] to-[#1c111e] border-2 border-white/10 p-6 flex flex-col justify-between relative overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.8)] shadow-purple-500/10 group select-none animate-in fade-in zoom-in-95 duration-300"
+              >
+                {/* Visual design glow backdrops */}
+                <div className="absolute top-[-10%] left-[-20%] w-60 h-60 bg-amber-500/10 blur-[80px] rounded-full pointer-events-none" />
+                <div className="absolute bottom-[-10%] right-[-20%] w-60 h-60 bg-purple-500/10 blur-[80px] rounded-full pointer-events-none" />
+                
+                {/* CARD HEADER */}
+                <div className="flex justify-between items-center relative z-10">
+                  <div className="flex items-center gap-2">
+                    <Logo className="w-7 h-7 drop-shadow-[0_0_8px_rgba(134,59,255,0.4)]" />
+                    <span className="text-[10px] font-black uppercase text-white tracking-[0.2em] italic">GymOS</span>
+                  </div>
+                  
+                  {/* Verified Badge */}
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[8px] font-black uppercase tracking-wider text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)] animate-pulse">
+                    <Check className="w-2.5 h-2.5" />
+                    <span>GymOS Verified</span>
+                  </div>
+                </div>
+
+                {/* CARD BODY (CENTER DETAILS) */}
+                <div className="my-auto text-center space-y-5 relative z-10 pt-4">
+                  <span className="px-3.5 py-1 rounded-full bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-[0.25em] text-slate-400">
+                    {activeShareLog.log_type === 'PR' ? 'New Personal Record' : 'Body Weight Log'}
+                  </span>
+                  
+                  <div className="space-y-1.5">
+                    <h2 className="text-sm font-black text-slate-500 uppercase tracking-widest">{activeShareLog.exercise_name}</h2>
+                    <h1 className="text-5xl font-black italic tracking-tighter text-white drop-shadow-[0_2px_15px_rgba(255,255,255,0.1)]">
+                      {activeShareLog.value} <span className="text-xl font-medium text-slate-400 not-italic">kg</span>
+                    </h1>
+                  </div>
+
+                  {activeShareLog.notes && (
+                    <p className="text-xs font-semibold text-slate-300 italic max-w-[240px] mx-auto leading-relaxed">
+                      “{activeShareLog.notes}”
+                    </p>
+                  )}
+                </div>
+
+                {/* CARD FOOTER */}
+                <div className="pt-4 border-t border-white/5 relative z-10 flex flex-col gap-3">
+                  <div className="flex justify-between items-center text-[10px] font-semibold text-slate-500 uppercase">
+                    <span>Athlete</span>
+                    <span className="text-white font-black">{profile?.full_name || 'Athlete'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px] font-semibold text-slate-500 uppercase">
+                    <span>Consistency Streak</span>
+                    <span className="text-orange-400 font-black flex items-center gap-1">
+                      <span>{streakCount} Days</span>
+                      <span>🔥</span>
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px] font-semibold text-slate-500 uppercase">
+                    <span>Training Hub</span>
+                    <span className="text-emerald-400 font-black">{membership?.gyms?.gym_name || 'My Gym'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* FLOATING ACTION OVERLAY CONTROLS */}
+              <div className="w-full space-y-3 pt-2 text-center">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  💡 Tip: Take a screenshot to post directly to your Instagram story!
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <button 
+                    onClick={() => {
+                      const shareText = `💪 Verified Lift: I just smashed a new ${activeShareLog.exercise_name} PR of ${activeShareLog.value} kg at ${membership?.gyms?.gym_name || 'My Gym'} on GymOS! Consistency Streak: ${streakCount} Days! 🔥 #GymOS #FitnessGoal`;
+                      navigator.clipboard.writeText(shareText);
+                      alert('Share text copied! Feel free to paste it into your caption or post.');
+                    }}
+                    className="px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-lg animate-in slide-in-from-bottom duration-300"
+                  >
+                    <Copy className="w-4 h-4" />
+                    Copy Captions
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      setShareModalOpen(false);
+                      setActiveShareLog(null);
+                    }}
+                    className="px-5 py-3 rounded-xl bg-[#863BFF] hover:bg-[#722ce0] text-white text-xs font-black uppercase tracking-widest transition-all cursor-pointer active:scale-95 shadow-lg shadow-[#863BFF]/20 animate-in slide-in-from-bottom duration-300"
+                  >
+                    Close Preview
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
