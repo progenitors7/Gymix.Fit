@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   QrCode, Activity, LogOut, CheckCircle2, AlertCircle, 
   Clock, ShieldAlert, Sparkles, Send, RefreshCw, Calendar, 
-  Building, Flame, User, LogIn, ChevronRight, Edit2, Check, Shield, Copy
+  Building, Flame, User, LogIn, ChevronRight, Edit2, Check, Shield, Copy, Lock
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../lib/supabaseClient'
@@ -1234,12 +1234,26 @@ export default function MemberDashboard() {
 
                       </div>
 
-                      {/* IF GYM COINS ARE ENABLED */}
-                      {membership.gyms?.enable_gym_coins && (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 animate-in fade-in duration-300">
+                      {/* DYNAMIC LEADERBOARD AND LOYALTY MODULES GRID */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 items-stretch animate-in fade-in duration-300">
+                        
+                        {/* GYM COINS WALLET (Locked with glass overlay if disabled by owner) */}
+                        <div className="backdrop-blur-md bg-gradient-to-tr from-amber-500/[0.03] via-yellow-500/[0.01] to-amber-600/[0.03] border border-amber-500/20 rounded-[2rem] p-6 space-y-5 shadow-2xl relative overflow-hidden transition-all duration-300 hover:border-amber-500/40 min-h-[300px] flex flex-col justify-between">
                           
-                          {/* GYM COINS WALLET */}
-                          <div className="backdrop-blur-md bg-gradient-to-tr from-amber-500/[0.03] via-yellow-500/[0.01] to-amber-600/[0.03] border border-amber-500/20 rounded-[2rem] p-6 space-y-5 shadow-2xl relative overflow-hidden transition-all duration-300 hover:border-amber-500/40">
+                          {/* LOCKED STATE OVERLAY */}
+                          {!membership.gyms?.enable_gym_coins && (
+                            <div className="absolute inset-0 backdrop-blur-md bg-[#12141c]/80 flex flex-col items-center justify-center p-6 text-center z-20 rounded-[2rem] border border-amber-500/10">
+                              <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mb-3 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                                <Lock className="w-5 h-5 text-amber-400" />
+                              </div>
+                              <h5 className="text-sm font-black text-white uppercase tracking-wider">Loyalty Rewards Deactivated</h5>
+                              <p className="text-[10px] text-slate-400 max-w-xs mx-auto leading-relaxed mt-1 font-semibold">
+                                The Gym Loyalty Coins program is currently turned off by the owner. To enable daily rewards, transaction ledger, and redeemable store items, toggle "Enable Gym Loyalty Coins" in the Gym Settings!
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="relative z-10 w-full space-y-5">
                             {/* Gold shimmering particles effect */}
                             <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 blur-3xl rounded-full pointer-events-none" />
                             
@@ -1270,7 +1284,7 @@ export default function MemberDashboard() {
                                   No transactions logged yet. Start checking in to accumulate coins!
                                 </div>
                               ) : (
-                                <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                                <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
                                   {coinTransactions.map((tx, index) => (
                                     <div key={index} className="p-3 rounded-xl bg-white/[0.01] border border-white/5 flex items-center justify-between text-xs hover:bg-white/[0.02] transition-colors">
                                       <div className="space-y-0.5">
@@ -1288,9 +1302,11 @@ export default function MemberDashboard() {
                               )}
                             </div>
                           </div>
+                        </div>
 
-                          {/* COMMUNITY LEADERBOARD */}
-                          <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2rem] p-6 space-y-5 shadow-2xl transition-all duration-300 hover:border-white/20">
+                        {/* COMMUNITY LEADERBOARD (ALWAYS active & ranked by attendance count) */}
+                        <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2rem] p-6 space-y-5 shadow-2xl transition-all duration-300 hover:border-white/20 flex flex-col justify-between">
+                          <div className="space-y-5 w-full">
                             <div className="flex items-center gap-3">
                               <div className="w-9 h-9 rounded-xl bg-[#863BFF]/10 flex items-center justify-center border border-[#863BFF]/20 text-[#b370ff]">
                                 <Flame className="w-4.5 h-4.5 animate-pulse" />
@@ -1308,7 +1324,7 @@ export default function MemberDashboard() {
                                 No check-in records found.
                               </div>
                             ) : (
-                              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                              <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
                                 {leaderboard.map((userRow, index) => {
                                   const isCurrentUser = userRow.id === membership.id;
                                   let medal = '';
@@ -1347,48 +1363,64 @@ export default function MemberDashboard() {
                               </div>
                             )}
                           </div>
-
-                          {/* COINS REDEEM SHOP */}
-                          <div className="lg:col-span-2 backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2rem] p-6 space-y-4 shadow-2xl transition-all duration-300 hover:border-white/20">
-                            <div>
-                              <h4 className="text-xs font-black text-white uppercase tracking-wider">Loyalty Rewards Shop</h4>
-                              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Redeem your coins at the gym counter</p>
-                            </div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                              {[
-                                { name: 'Free Protein Shake', cost: 100, desc: 'Fresh post-workout whey shake from gym juice bar.' },
-                                { name: 'Custom Shaker Bottle', cost: 200, desc: 'High-quality leak-proof GymOS branded shaker.' },
-                                { name: 'Premium Gym T-Shirt', cost: 500, desc: 'High-performance athletic tee.' }
-                              ].map((reward, i) => {
-                                const canAfford = (membership.gym_coins_balance || 0) >= reward.cost;
-                                return (
-                                  <div key={i} className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col justify-between space-y-3 relative group">
-                                    <div className="space-y-1">
-                                      <div className="flex justify-between items-start">
-                                        <h5 className="text-xs font-black text-white uppercase tracking-wider">{reward.name}</h5>
-                                        <span className={`text-[10px] font-black font-mono px-2 py-0.5 rounded ${canAfford ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-white/5 text-slate-500'}`}>{reward.cost} 🪙</span>
-                                      </div>
-                                      <p className="text-[10px] text-slate-400 font-medium leading-relaxed">{reward.desc}</p>
-                                    </div>
-                                    <button 
-                                      disabled
-                                      className={`w-full py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border ${
-                                        canAfford 
-                                        ? 'bg-amber-500/5 border-amber-500/20 text-amber-400 group-hover:bg-amber-500/10 group-hover:border-amber-500/30' 
-                                        : 'bg-white/[0.01] border-white/5 text-slate-600'
-                                      }`}
-                                    >
-                                      Ask Desk to Redeem
-                                    </button>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-
                         </div>
-                      )}
+
+                      </div>
+
+                      {/* COINS REDEEM SHOP (with lock overlay if deactivated by owner) */}
+                      <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2rem] p-6 space-y-4 shadow-2xl transition-all duration-300 hover:border-white/20 mt-6 relative overflow-hidden">
+                        
+                        {/* LOCKED STATE OVERLAY */}
+                        {!membership.gyms?.enable_gym_coins && (
+                          <div className="absolute inset-0 backdrop-blur-md bg-[#12141c]/80 flex flex-col items-center justify-center p-6 text-center z-20 rounded-[2rem] border border-amber-500/10">
+                            <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mb-3 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                              <Lock className="w-5 h-5 text-amber-400" />
+                            </div>
+                            <h5 className="text-sm font-black text-white uppercase tracking-wider">Rewards Store Locked</h5>
+                            <p className="text-[10px] text-slate-400 max-w-xs mx-auto leading-relaxed mt-1 font-semibold">
+                              The rewards catalog is currently inactive. Ask your gym owner to activate the Gym Loyalty Rewards program under Settings!
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="relative z-10 w-full space-y-4">
+                          <div>
+                            <h4 className="text-xs font-black text-white uppercase tracking-wider">Loyalty Rewards Shop</h4>
+                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Redeem your coins at the gym counter</p>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                            {[
+                              { name: 'Free Protein Shake', cost: 100, desc: 'Fresh post-workout whey shake from gym juice bar.' },
+                              { name: 'Custom Shaker Bottle', cost: 200, desc: 'High-quality leak-proof GymOS branded shaker.' },
+                              { name: 'Premium Gym T-Shirt', cost: 500, desc: 'High-performance athletic tee.' }
+                            ].map((reward, i) => {
+                              const canAfford = (membership.gym_coins_balance || 0) >= reward.cost;
+                              return (
+                                <div key={i} className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col justify-between space-y-3 relative group text-left">
+                                  <div className="space-y-1">
+                                    <div className="flex justify-between items-start">
+                                      <h5 className="text-xs font-black text-white uppercase tracking-wider">{reward.name}</h5>
+                                      <span className={`text-[10px] font-black font-mono px-2 py-0.5 rounded ${canAfford ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-white/5 text-slate-500'}`}>{reward.cost} 🪙</span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 font-medium leading-relaxed">{reward.desc}</p>
+                                  </div>
+                                  <button 
+                                    disabled
+                                    className={`w-full py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border ${
+                                      canAfford 
+                                      ? 'bg-amber-500/5 border-amber-500/20 text-amber-400 group-hover:bg-amber-500/10 group-hover:border-amber-500/30' 
+                                      : 'bg-white/[0.01] border-white/5 text-slate-600'
+                                    }`}
+                                  >
+                                    Ask Desk to Redeem
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
                     </motion.div>
                   )}
 
