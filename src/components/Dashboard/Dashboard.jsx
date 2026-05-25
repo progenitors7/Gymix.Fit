@@ -25,7 +25,9 @@ import {
   History,
   TrendingUp,
   ArrowRight,
-  BellRing
+  BellRing,
+  Printer,
+  QrCode
 } from 'lucide-react'
 import Logo from '../UI/Logo'
 
@@ -61,6 +63,141 @@ export default function Dashboard() {
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
+
+  const handlePrintPoster = () => {
+    const printWindow = window.open('', '_blank', 'width=800,height=1000')
+    const scanUrl = `${window.location.origin}/signup?gym=${gym?.unique_code}&role=member`
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(scanUrl)}`
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print QR Poster - ${gymName}</title>
+          <style>
+            body {
+              font-family: 'Inter', -apple-system, sans-serif;
+              text-align: center;
+              padding: 40px;
+              color: #0F1117;
+              background-color: #FFFFFF;
+            }
+            .poster-container {
+              border: 10px double #863BFF;
+              border-radius: 30px;
+              padding: 60px 40px;
+              max-width: 600px;
+              margin: 0 auto;
+              box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            }
+            .logo-placeholder {
+              font-size: 32px;
+              font-weight: 900;
+              letter-spacing: 2px;
+              color: #863BFF;
+              margin-bottom: 10px;
+              text-transform: uppercase;
+              font-style: italic;
+            }
+            .subtitle {
+              font-size: 14px;
+              font-weight: 800;
+              color: #64748B;
+              letter-spacing: 4px;
+              text-transform: uppercase;
+              margin-bottom: 40px;
+            }
+            .title {
+              font-size: 40px;
+              font-weight: 900;
+              color: #0F1117;
+              margin-bottom: 5px;
+              text-transform: uppercase;
+            }
+            .gym-name {
+              font-size: 30px;
+              font-weight: 800;
+              color: #863BFF;
+              margin-bottom: 40px;
+              text-transform: uppercase;
+              font-style: italic;
+            }
+            .qr-code {
+              width: 320px;
+              height: 320px;
+              margin: 0 auto 40px auto;
+              border: 4px solid #F1F5F9;
+              border-radius: 20px;
+              padding: 15px;
+              box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+            }
+            .qr-code img {
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+            }
+            .instructions {
+              font-size: 14px;
+              color: #334155;
+              line-height: 1.6;
+              max-width: 480px;
+              margin: 0 auto 30px auto;
+              font-weight: 600;
+            }
+            .code-box {
+              display: inline-block;
+              background: #F8FAFC;
+              border: 2px dashed #E2E8F0;
+              padding: 10px 25px;
+              border-radius: 12px;
+              font-family: monospace;
+              font-size: 24px;
+              font-weight: 900;
+              color: #0F1117;
+              letter-spacing: 4px;
+            }
+            @media print {
+              body {
+                padding: 0;
+              }
+              .poster-container {
+                border: 8px double #863BFF;
+                box-shadow: none;
+                margin-top: 50px;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="poster-container">
+            <div class="logo-placeholder">GYMIX</div>
+            <div class="subtitle">Connect Terminal Gateway</div>
+            
+            <div class="title">SCAN TO CONNECT TO</div>
+            <div class="gym-name">${gymName}</div>
+            
+            <div class="qr-code">
+              <img src="${qrUrl}" alt="Scan to Connect" />
+            </div>
+            
+            <div class="instructions">
+              Open your mobile camera or any QR scanner to scan and connect instantly. Setup your athlete profile or log in, then tap 'Connect Terminal'!
+            </div>
+            
+            <div style="margin-top: 25px;">
+              <p style="font-size: 10px; font-weight: 800; color: #64748B; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 2px;">Manual Code Entry</p>
+              <div class="code-box">${gym?.unique_code}</div>
+            </div>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            }
+          </script>
+        </body>
+      </html>
+    `)
+    printWindow.document.close()
+  }
 
   const greeting = (() => {
     const h = new Date().getHours()
@@ -137,6 +274,13 @@ export default function Dashboard() {
           <p className="text-slate-500 text-[11px] font-medium leading-relaxed">
             Members can enter this code in their mobile dashboard or scan to connect to your gym instantly!
           </p>
+          <button 
+            onClick={handlePrintPoster}
+            className="w-full py-3.5 bg-[#863BFF]/10 hover:bg-[#863BFF]/20 border border-[#863BFF]/20 rounded-2xl text-xs font-black uppercase tracking-wider text-[#b370ff] transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2 mt-2"
+          >
+            <Printer className="w-4 h-4" />
+            Print Wall QR Poster
+          </button>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -188,6 +332,14 @@ export default function Dashboard() {
             >
               {gym?.unique_code}
             </span>
+            <button 
+              onClick={handlePrintPoster}
+              className="ml-2 bg-[#863BFF]/10 hover:bg-[#863BFF]/20 border border-[#863BFF]/20 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider text-[#b370ff] transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+              title="Print Wall QR Poster"
+            >
+              <Printer className="w-3 h-3" />
+              <span>Print QR Poster</span>
+            </button>
           </div>
         </div>
         

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../hooks/useAuth'
 import { ShieldCheck, Zap, ArrowRight, Activity, Users, TrendingUp } from 'lucide-react'
@@ -12,6 +12,16 @@ export default function AuthPage() {
   const { user, loading } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const paramGym = searchParams.get('gym')
+
+  // Capture scanned gym code from URL parameter securely
+  useEffect(() => {
+    if (paramGym) {
+      localStorage.setItem('scanned_gym_code', paramGym.trim().toUpperCase())
+      console.log('[AuthPage] Saved scanned gym code into localStorage:', paramGym)
+    }
+  }, [paramGym])
 
   const [mode, setMode] = useState(() => {
     if (location.pathname === '/signup') return 'signup'
