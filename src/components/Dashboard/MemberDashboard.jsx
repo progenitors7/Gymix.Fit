@@ -1696,7 +1696,7 @@ export default function MemberDashboard() {
           <div className="p-4.5 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-3.5 shadow-inner">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#863BFF] to-[#b370ff] flex items-center justify-center font-black text-white shadow-md text-sm overflow-hidden border border-white/10">
               {(membership?.avatar_url || profile?.avatar_url) ? (
-                <img src={membership.avatar_url || profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                <img src={membership?.avatar_url || profile?.avatar_url} alt="Profile" className="w-full h-full object-cover" />
               ) : (
                 profile?.full_name?.charAt(0).toUpperCase() || 'M'
               )}
@@ -1784,7 +1784,7 @@ export default function MemberDashboard() {
               className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#863BFF] to-[#b370ff] flex items-center justify-center font-black text-white shadow-lg shadow-[#863BFF]/30 text-sm relative group overflow-hidden border border-white/10"
             >
               {(membership?.avatar_url || profile?.avatar_url) ? (
-                <img src={membership.avatar_url || profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                <img src={membership?.avatar_url || profile?.avatar_url} alt="Profile" className="w-full h-full object-cover" />
               ) : (
                 profile?.full_name?.charAt(0).toUpperCase() || 'M'
               )}
@@ -3817,7 +3817,7 @@ export default function MemberDashboard() {
                 <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-3.5 shadow-inner">
                   <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#863BFF] to-[#b370ff] flex items-center justify-center font-black text-white text-xs shadow-md overflow-hidden border border-white/10">
                     {(membership?.avatar_url || profile?.avatar_url) ? (
-                      <img src={membership.avatar_url || profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                      <img src={membership?.avatar_url || profile?.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
                       profile?.full_name?.charAt(0).toUpperCase() || 'M'
                     )}
