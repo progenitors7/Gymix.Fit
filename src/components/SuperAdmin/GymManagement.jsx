@@ -284,8 +284,12 @@ export default function GymManagement() {
                     <tr key={gym.id} className="hover:bg-white/[0.01] transition-colors group">
                       <td className="px-7 py-5">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-slate-900 to-slate-800 flex items-center justify-center text-[#3390ec] font-black text-base border border-white/10 shadow-inner group-hover:scale-105 transition-transform duration-300">
-                            {gym.gym_name ? gym.gym_name.charAt(0).toUpperCase() : 'G'}
+                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-slate-900 to-slate-800 flex items-center justify-center text-[#3390ec] font-black text-base border border-white/10 shadow-inner group-hover:scale-105 transition-transform duration-300 overflow-hidden">
+                            {gym.owner_profile?.avatar_url ? (
+                              <img src={gym.owner_profile.avatar_url} alt="Owner" className="w-full h-full object-cover" />
+                            ) : (
+                              gym.gym_name ? gym.gym_name.charAt(0).toUpperCase() : 'G'
+                            )}
                           </div>
                           <div className="space-y-1">
                             <p className="text-white font-extrabold text-sm tracking-tight">{gym.gym_name || 'No Name Gym'}</p>
@@ -466,8 +470,12 @@ export default function GymManagement() {
                       <tr key={member.id} className="hover:bg-white/[0.01] transition-colors group">
                         <td className="px-7 py-5">
                           <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#3390ec]/5 to-[#3390ec]/20 flex items-center justify-center text-[#3390ec] font-black text-base border border-[#3390ec]/20 shadow-inner group-hover:scale-105 transition-transform duration-300">
-                              {member.full_name ? member.full_name.charAt(0).toUpperCase() : 'M'}
+                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#3390ec]/5 to-[#3390ec]/20 flex items-center justify-center text-[#3390ec] font-black text-base border border-[#3390ec]/20 shadow-inner group-hover:scale-105 transition-transform duration-300 overflow-hidden">
+                              {(member.avatar_url || member.profiles?.avatar_url) ? (
+                                <img src={member.avatar_url || member.profiles.avatar_url} alt="Athlete" className="w-full h-full object-cover" />
+                              ) : (
+                                member.full_name ? member.full_name.charAt(0).toUpperCase() : 'M'
+                              )}
                             </div>
                             <div className="space-y-1">
                               <p className="text-white font-extrabold text-sm tracking-tight">{member.full_name || 'No Name Athlete'}</p>

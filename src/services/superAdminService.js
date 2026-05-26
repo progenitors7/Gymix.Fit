@@ -424,7 +424,8 @@ export const superAdminService = {
           unique_code
         ),
         profiles (
-          email
+          email,
+          avatar_url
         ),
         attendance (
           id
