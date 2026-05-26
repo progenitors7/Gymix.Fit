@@ -4,7 +4,7 @@ import {
   QrCode, Activity, LogOut, CheckCircle2, AlertCircle, 
   Clock, ShieldAlert, Sparkles, Send, RefreshCw, Calendar, 
   Building, Flame, User, LogIn, ChevronRight, Edit2, Check, Shield, Copy, Lock, Trophy, Menu, X, Bell, Phone,
-  Fingerprint, Info, AlertTriangle, Camera, Upload
+  Fingerprint, Info, AlertTriangle, Camera, Upload, Trash2
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../lib/supabaseClient'
@@ -37,6 +37,8 @@ export default function MemberDashboard() {
   const [avatarCooldownTimeLeft, setAvatarCooldownTimeLeft] = useState(0)
   const [avatarChangeCount, setAvatarChangeCount] = useState(0)
   const [lastAvatarChangeAt, setLastAvatarChangeAt] = useState(null)
+  const [copiedGymCode, setCopiedGymCode] = useState(false)
+  const [copiedAthleteId, setCopiedAthleteId] = useState(false)
 
   // Loading & State variables
   const [loading, setLoading] = useState(true)
@@ -3313,12 +3315,12 @@ export default function MemberDashboard() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
                         
                         {/* Profile editing card */}
-                        <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2rem] p-6 space-y-5 shadow-2xl transition-all duration-300 hover:border-white/20">
+                        <div className="backdrop-blur-xl bg-gradient-to-b from-[#131625]/85 to-[#0b0c16]/95 border border-white/10 rounded-[2rem] p-6 space-y-6 shadow-2xl hover:border-white/15 transition-all duration-300">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-[#863BFF]/10 flex items-center justify-center border border-[#863BFF]/20 text-[#b370ff]">
+                            <div className="w-9 h-9 rounded-xl bg-[#863BFF]/10 flex items-center justify-center border border-[#863BFF]/20 text-[#b370ff] shadow-[0_0_15px_rgba(134,59,255,0.1)]">
                               <User className="w-4.5 h-4.5" />
                             </div>
-                            <div>
+                            <div className="text-left">
                               <h4 className="text-xs font-black text-white uppercase tracking-wider">Personal Settings</h4>
                               <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Configure your athlete identity</p>
                             </div>
@@ -3329,26 +3331,35 @@ export default function MemberDashboard() {
                             <div className="flex flex-col items-center gap-4 p-5 rounded-2xl bg-white/[0.01] border border-white/5 relative overflow-hidden">
                               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#863BFF]/5 to-transparent blur-xl rounded-full pointer-events-none" />
                               
-                              <div className="relative group w-20 h-20 rounded-full border-2 border-white/10 flex items-center justify-center bg-gradient-to-tr from-[#1E293B] to-[#0F172A] shadow-2xl overflow-hidden hover:border-[#863BFF]/40 transition-all duration-300">
-                                {profileAvatar ? (
-                                  <img src={profileAvatar} alt="Profile" className="w-full h-full object-cover" />
-                                ) : (
-                                  <User className="w-8 h-8 text-slate-600" />
-                                )}
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                  <Camera className="w-5 h-5 text-white" />
+                              {/* Glowing Avatar Frame */}
+                              <div className="relative group w-24 h-24 rounded-full p-[3px] bg-gradient-to-tr from-[#863BFF] via-[#EC4899] to-[#6366F1] shadow-[0_0_20px_rgba(134,59,255,0.2)] hover:shadow-[0_0_30px_rgba(134,59,255,0.4)] transition-all duration-300">
+                                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#863BFF] via-[#EC4899] to-[#6366F1] animate-[spin_8s_linear_infinite] opacity-75 blur-[1px]" />
+                                <div className="absolute inset-[2px] rounded-full bg-[#0a0c16]" />
+                                <div className="relative w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-slate-900">
+                                  {profileAvatar ? (
+                                    <img src={profileAvatar} alt="Profile" className="w-full h-full object-cover" />
+                                  ) : (
+                                    <User className="w-8 h-8 text-slate-500" />
+                                  )}
+                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                                    <Camera className="w-6 h-6 text-white" />
+                                  </div>
                                 </div>
                               </div>
 
-                              <div className="text-center space-y-1">
-                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Profile Photo</span>
+                              <div className="text-center space-y-2">
+                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Profile Photo</span>
                                 {profileAvatar && (
-                                  <p className="text-[9px] font-black text-[#10B981] uppercase tracking-wider">
-                                    {profileAvatar.startsWith('data:') ? `Compressed: ${getBase64SizeKB(profileAvatar) || '—'} KB` : 'Google Linked 🌐'}
-                                  </p>
+                                  <div>
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[9px] font-black uppercase tracking-wider shadow-[0_2px_10px_rgba(16,185,129,0.05)]">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                      <span>{profileAvatar.startsWith('data:') ? `${getBase64SizeKB(profileAvatar) || '—'} KB` : 'Google Synced 🌐'}</span>
+                                    </span>
+                                  </div>
                                 )}
                               </div>
 
+                              {/* Icon-first action row */}
                               <div className="flex items-center gap-2 flex-wrap justify-center pt-1.5">
                                 <input
                                   type="file"
@@ -3360,30 +3371,30 @@ export default function MemberDashboard() {
                                 />
                                 <label
                                   htmlFor="dashboard-avatar-upload"
-                                  className={`px-3.5 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-md ${avatarCooldownTimeLeft > 0 ? 'opacity-50 pointer-events-none' : ''}`}
+                                  className={`p-2.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white rounded-xl text-xs transition-all flex items-center justify-center cursor-pointer shadow-md active:scale-95 ${avatarCooldownTimeLeft > 0 ? 'opacity-50 pointer-events-none' : ''}`}
+                                  title="Upload Photo"
                                 >
-                                  <Upload className="w-3.5 h-3.5 text-[#b370ff]" />
-                                  Upload Photo
+                                  <Upload className="w-4 h-4 text-[#b370ff]" />
                                 </label>
 
                                 <button
                                   type="button"
                                   onClick={startCamera}
                                   disabled={avatarCooldownTimeLeft > 0 || savingProfile}
-                                  className="px-3.5 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
+                                  className="p-2.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white rounded-xl text-xs transition-all flex items-center justify-center cursor-pointer shadow-md active:scale-95 disabled:opacity-50"
+                                  title="Take Photo"
                                 >
-                                  <Camera className="w-3.5 h-3.5 text-emerald-400" />
-                                  Take Photo
+                                  <Camera className="w-4 h-4 text-emerald-400" />
                                 </button>
 
                                 <button
                                   type="button"
                                   onClick={fetchGoogleAvatar}
                                   disabled={avatarCooldownTimeLeft > 0 || savingProfile}
-                                  className="px-3.5 py-2 bg-white/5 border border-white/10 hover:bg-[#863BFF]/20 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
+                                  className="p-2.5 bg-white/5 border border-white/10 hover:bg-[#863BFF]/20 hover:border-[#863BFF]/40 text-white rounded-xl text-xs transition-all flex items-center justify-center cursor-pointer shadow-md active:scale-95 disabled:opacity-50"
+                                  title="Sync Google Photo"
                                 >
-                                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                                  Google Sync
+                                  <Sparkles className="w-4 h-4 text-amber-400" />
                                 </button>
 
                                 {profileAvatar && (
@@ -3394,88 +3405,124 @@ export default function MemberDashboard() {
                                       setAvatarSize(null);
                                     }}
                                     disabled={avatarCooldownTimeLeft > 0 || savingProfile}
-                                    className="px-3 py-2 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-400 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-md disabled:opacity-50"
+                                    className="p-2.5 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 hover:border-rose-500/35 text-rose-400 rounded-xl text-xs transition-all flex items-center justify-center cursor-pointer shadow-md active:scale-95 disabled:opacity-50"
+                                    title="Clear Photo"
                                   >
-                                    Clear
+                                    <Trash2 className="w-4 h-4" />
                                   </button>
                                 )}
                               </div>
                               
                               {/* Photo Quota display */}
                               {avatarCooldownTimeLeft > 0 ? (
-                                <div className="px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/25 text-rose-400 text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 justify-center mt-1">
-                                  <Lock className="w-3 h-3" />
+                                <div className="px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 justify-center mt-1 shadow-sm">
+                                  <Lock className="w-3.5 h-3.5" />
                                   <span>Photo Changes Locked ({avatarCooldownTimeLeft} days left)</span>
                                 </div>
                               ) : (
-                                <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider text-center mt-1">
-                                  Photo Quota: <span className="text-emerald-400 font-black">{avatarChangeCount}/3 changes used</span> (in 3 months)
+                                <div className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl bg-white/[0.02] border border-white/5 mt-1 text-[9px]">
+                                  <span className="font-bold text-slate-500 uppercase tracking-wider">Photo Updates Quota</span>
+                                  <div className="flex items-center gap-1">
+                                    {[1, 2, 3].map((slot) => (
+                                      <span 
+                                        key={slot} 
+                                        className={`w-2.5 h-2.5 rounded-full border transition-all ${
+                                          slot <= avatarChangeCount 
+                                            ? 'bg-[#863BFF] border-[#863BFF] shadow-[0_0_8px_rgba(134,59,255,0.6)]' 
+                                            : 'bg-transparent border-white/20'
+                                        }`}
+                                        title={slot <= avatarChangeCount ? 'Used Slot' : 'Available Slot'}
+                                      />
+                                    ))}
+                                  </div>
                                 </div>
                               )}
                             </div>
                             
                             {/* Name Quota & Cooldown display status */}
                             {cooldownTimeLeft > 0 ? (
-                              <div className="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
+                              <div className="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[9px] font-black uppercase tracking-wider flex items-center gap-2 justify-center shadow-sm">
                                 <Lock className="w-3.5 h-3.5" />
                                 <span>Name/Phone Changes Locked ({cooldownTimeLeft} days left)</span>
                               </div>
                             ) : (
-                              <div className="px-4 py-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-slate-400 text-[9px] font-bold uppercase tracking-wider flex justify-between items-center">
-                                <span>Name/Phone Changes Quota</span>
-                                <span className="text-emerald-400 font-black">{nameChangeCount}/3 changes used (in 3 months)</span>
+                              <div className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-[9px]">
+                                <span className="font-bold text-slate-500 uppercase tracking-wider">Name/Phone Edits Quota</span>
+                                <div className="flex items-center gap-1">
+                                  {[1, 2, 3].map((slot) => (
+                                    <span 
+                                      key={slot} 
+                                      className={`w-2.5 h-2.5 rounded-full border transition-all ${
+                                        slot <= nameChangeCount 
+                                          ? 'bg-emerald-500 border-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' 
+                                          : 'bg-transparent border-white/20'
+                                      }`}
+                                      title={slot <= nameChangeCount ? 'Used Slot' : 'Available Slot'}
+                                    />
+                                  ))}
+                                </div>
                               </div>
                             )}
 
                             {/* Name field */}
-                            <div className="space-y-1.5">
-                              <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Full Display Name</label>
+                            <div className="space-y-1.5 text-left">
+                              <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Full Display Name</label>
                               <div className="relative group">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-[#863BFF] transition-colors" />
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+                                  <User className="w-4 h-4 text-slate-500 group-focus-within:text-[#863BFF] group-focus-within:drop-shadow-[0_0_8px_rgba(134,59,255,0.4)] transition-all duration-300" />
+                                </div>
                                 <input 
                                   type="text" 
                                   value={profileName}
                                   onChange={(e) => setProfileName(e.target.value)}
                                   required
                                   disabled={cooldownTimeLeft > 0 || savingProfile}
-                                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.02] border border-white/10 text-white placeholder-slate-500 text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-[#863BFF]/50 focus:ring-1 focus:ring-[#863BFF]/20 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-slate-950/40 border border-white/5 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:bg-slate-950/60 focus:border-[#863BFF]/50 focus:ring-1 focus:ring-[#863BFF]/20 transition-all duration-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] disabled:opacity-40 disabled:cursor-not-allowed"
                                   placeholder="Display name"
                                 />
                               </div>
                             </div>
 
                             {/* Phone field */}
-                            <div className="space-y-1.5">
-                              <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Mobile Number</label>
+                            <div className="space-y-1.5 text-left">
+                              <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Mobile Number</label>
                               <div className="relative group">
-                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-[#863BFF] transition-colors" />
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+                                  <Phone className="w-4 h-4 text-slate-500 group-focus-within:text-[#863BFF] group-focus-within:drop-shadow-[0_0_8px_rgba(134,59,255,0.4)] transition-all duration-300" />
+                                </div>
                                 <input 
                                   type="text" 
                                   value={profilePhone}
                                   onChange={(e) => setProfilePhone(e.target.value)}
                                   disabled={cooldownTimeLeft > 0 || savingProfile}
-                                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.02] border border-white/10 text-white placeholder-slate-500 text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-[#863BFF]/50 focus:ring-1 focus:ring-[#863BFF]/20 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-slate-950/40 border border-white/5 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:bg-slate-950/60 focus:border-[#863BFF]/50 focus:ring-1 focus:ring-[#863BFF]/20 transition-all duration-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] disabled:opacity-40 disabled:cursor-not-allowed"
                                   placeholder="Add phone number"
                                 />
                               </div>
                             </div>
 
                             {/* Gender preference preference */}
-                            <div className="space-y-1.5">
-                              <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Gender Preference</label>
+                            <div className="space-y-1.5 text-left">
+                              <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Gender Preference</label>
                               <div className="grid grid-cols-3 gap-2">
                                 {['male', 'female', 'other'].map((gender) => (
                                   <button
                                     key={gender}
                                     type="button"
                                     onClick={() => setProfileGender(gender)}
-                                    className={`py-3 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center cursor-pointer hover:border-white/20 ${
+                                    disabled={savingProfile}
+                                    className={`py-3.5 rounded-2xl border text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95 duration-200 ${
                                       profileGender === gender
-                                      ? 'bg-[#863BFF]/20 border-[#863BFF] text-white shadow-[0_0_15px_rgba(134,59,255,0.25)]'
-                                      : 'bg-white/[0.02] border-white/5 text-slate-500'
+                                      ? 'bg-gradient-to-r from-[#863BFF]/25 to-[#6366F1]/20 border-[#863BFF] text-white shadow-[0_0_20px_rgba(134,59,255,0.25),inset_0_1px_1px_rgba(255,255,255,0.15)]'
+                                      : 'bg-slate-950/30 border-white/5 text-slate-500 hover:border-white/10 hover:text-slate-400'
                                     }`}
                                   >
-                                    {gender}
+                                    <span>
+                                      {gender === 'male' && '♂'}
+                                      {gender === 'female' && '♀'}
+                                      {gender === 'other' && '⚧'}
+                                    </span>
+                                    <span>{gender}</span>
                                   </button>
                                 ))}
                               </div>
@@ -3484,10 +3531,10 @@ export default function MemberDashboard() {
                             <button
                               type="submit"
                               disabled={cooldownTimeLeft > 0 || savingProfile}
-                              className="w-full py-3.5 bg-white hover:bg-slate-100 text-black text-[10px] font-black uppercase tracking-widest rounded-xl active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-300"
+                              className="w-full py-4 bg-gradient-to-r from-[#863BFF] to-[#6366F1] text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:shadow-[0_0_25px_rgba(134,59,255,0.45)] active:scale-[0.97] transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:from-slate-800 disabled:to-slate-900 disabled:text-slate-500 disabled:hover:shadow-none"
                             >
                               {savingProfile ? (
-                                <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                               ) : cooldownTimeLeft > 0 ? (
                                 <>
                                   <Lock className="w-3.5 h-3.5" />
@@ -3495,7 +3542,7 @@ export default function MemberDashboard() {
                                 </>
                               ) : (
                                 <>
-                                  <Edit2 className="w-3.5 h-3.5" />
+                                  <Check className="w-3.5 h-3.5" />
                                   Save Changes
                                 </>
                               )}
@@ -3504,68 +3551,105 @@ export default function MemberDashboard() {
                         </div>
 
                         {/* Connected Gym & Active membership metadata card */}
-                        <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2rem] p-6 space-y-5 shadow-2xl transition-all duration-300 hover:border-white/20 flex flex-col justify-between">
-                          <div className="space-y-5">
-                            {/* Gym Header Hub details */}
-                            <div className="p-4.5 rounded-2xl bg-emerald-500/[0.02] border border-emerald-500/10 space-y-3">
-                              <div className="flex items-center gap-2">
-                                <Building className="w-4 h-4 text-emerald-400" />
-                                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">CONNECTED HUB</span>
-                              </div>
-                              <div className="space-y-1">
-                                <h3 className="text-lg font-black text-white uppercase italic tracking-tight">{membership.gyms?.gym_name || 'My Gym'}</h3>
-                                <div className="flex items-center gap-2 pt-1">
-                                  <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider">Unique Code:</span>
-                                  <span 
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(membership.gyms?.unique_code)
-                                      alert('Gym connection code copied!')
-                                    }}
-                                    className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold tracking-widest cursor-pointer select-all select-none hover:bg-emerald-500/20 transition-all"
-                                    title="Click to copy gym code"
-                                  >
-                                    {membership.gyms?.unique_code}
-                                  </span>
+                        <div className="backdrop-blur-xl bg-gradient-to-b from-[#131625]/85 to-[#0b0c16]/95 border border-white/10 rounded-[2rem] p-6 space-y-6 shadow-2xl flex flex-col justify-between hover:border-white/15 transition-all duration-300">
+                          <div className="space-y-6">
+                            
+                            {/* VIP Membership Header Card */}
+                            <div className="relative p-5 rounded-2xl bg-gradient-to-r from-emerald-950/20 to-slate-950/60 border border-emerald-500/15 overflow-hidden group shadow-lg">
+                              {/* Ambient neon emerald glow in corner */}
+                              <div className="absolute -top-10 -right-10 w-24 h-24 bg-emerald-500/10 blur-xl rounded-full group-hover:bg-emerald-500/15 transition-all duration-500 pointer-events-none" />
+                              
+                              <div className="space-y-3 relative z-10 text-left">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                                    <Building className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                                  </div>
+                                  <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest leading-none">CONNECTED GYM HUB</span>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                  <h3 className="text-xl font-black text-white uppercase italic tracking-tight drop-shadow-md leading-tight">
+                                    {membership.gyms?.gym_name || 'My Gym'}
+                                  </h3>
+                                  
+                                  {/* Code copy block */}
+                                  <div className="flex items-center gap-2 pt-0.5">
+                                    <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider">Access Code:</span>
+                                    <button 
+                                      type="button"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(membership.gyms?.unique_code || '')
+                                        setCopiedGymCode(true)
+                                        setTimeout(() => setCopiedGymCode(false), 2000)
+                                      }}
+                                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-900/80 border border-white/5 hover:border-emerald-500/30 text-emerald-400 hover:text-emerald-300 font-mono text-[10px] font-bold tracking-widest cursor-pointer hover:bg-slate-950/95 transition-all active:scale-95 shadow-md"
+                                      title="Copy gym access code"
+                                    >
+                                      <span>{membership.gyms?.unique_code}</span>
+                                      {copiedGymCode ? (
+                                        <Check className="w-3 h-3 text-emerald-400" />
+                                      ) : (
+                                        <Copy className="w-3 h-3 text-slate-500" />
+                                      )}
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
 
                             {/* Athlete Info Stack */}
-                            <div className="space-y-3">
-                              <h4 className="text-[9px] font-black uppercase tracking-widest text-slate-500">Athlete Pass Meta</h4>
+                            <div className="space-y-4">
+                              <h4 className="text-[9px] font-black uppercase tracking-widest text-slate-500 text-left ml-1">Athlete Pass Meta</h4>
                               
-                              <div className="space-y-2.5 text-xs">
-                                <div className="flex justify-between items-center py-1.5 border-b border-white/5 text-slate-400">
-                                  <span>Athlete ID</span>
-                                  <div className="flex items-center gap-1.5">
+                              <div className="space-y-2 text-xs">
+                                {/* Athlete ID Row */}
+                                <div className="flex justify-between items-center py-2.5 px-4 rounded-xl bg-slate-950/30 border border-white/5 hover:border-white/10 transition-colors">
+                                  <span className="text-slate-400 font-medium">Athlete ID</span>
+                                  <div className="flex items-center gap-2">
                                     <span className="text-white font-mono font-bold select-all text-[10px] max-w-[120px] truncate">{membership.id}</span>
                                     <button 
+                                      type="button"
                                       onClick={() => {
                                         navigator.clipboard.writeText(membership.id)
-                                        alert('Athlete ID copied to clipboard!')
+                                        setCopiedAthleteId(true)
+                                        setTimeout(() => setCopiedAthleteId(false), 2000)
                                       }}
-                                      className="text-slate-500 hover:text-white p-1 transition-all cursor-pointer"
+                                      className="text-slate-500 hover:text-white p-1 transition-all cursor-pointer active:scale-90"
                                       title="Copy Athlete ID"
                                     >
-                                      <Copy className="w-3.5 h-3.5" />
+                                      {copiedAthleteId ? (
+                                        <Check className="w-3.5 h-3.5 text-emerald-400 animate-in fade-in zoom-in-50 duration-250" />
+                                      ) : (
+                                        <Copy className="w-3.5 h-3.5" />
+                                      )}
                                     </button>
                                   </div>
                                 </div>
-                                <div className="flex justify-between items-center py-1.5 border-b border-white/5 text-slate-400">
-                                  <span>Email Address</span>
+
+                                {/* Email Address Row */}
+                                <div className="flex justify-between items-center py-2.5 px-4 rounded-xl bg-slate-950/30 border border-white/5">
+                                  <span className="text-slate-400 font-medium">Email Address</span>
                                   <span className="text-white font-semibold">{profile?.email}</span>
                                 </div>
-                                <div className="flex justify-between items-center py-1.5 border-b border-white/5 text-slate-400">
-                                  <span>Active Pass Plan</span>
-                                  <span className="text-emerald-400 font-bold uppercase tracking-wider text-[10px]">{membership.membership_plan}</span>
+
+                                {/* Active Pass Plan Row */}
+                                <div className="flex justify-between items-center py-2.5 px-4 rounded-xl bg-slate-950/30 border border-white/5">
+                                  <span className="text-slate-400 font-medium">Active Pass Plan</span>
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 font-bold uppercase tracking-wider text-[9px] shadow-[0_2px_10px_rgba(16,185,129,0.05)]">
+                                    {membership.membership_plan}
+                                  </span>
                                 </div>
-                                <div className="flex justify-between items-center py-1.5 border-b border-white/5 text-slate-400">
-                                  <span>Member Since</span>
+
+                                {/* Member Since Row */}
+                                <div className="flex justify-between items-center py-2.5 px-4 rounded-xl bg-slate-950/30 border border-white/5">
+                                  <span className="text-slate-400 font-medium">Member Since</span>
                                   <span className="text-white font-semibold">{membership.join_date}</span>
                                 </div>
-                                <div className="flex justify-between items-center py-1.5 text-slate-400">
-                                  <span>Pass Expiry</span>
-                                  <span className="text-rose-400 font-bold">{membership.expiry_date || '—'}</span>
+
+                                {/* Pass Expiry Row */}
+                                <div className="flex justify-between items-center py-2.5 px-4 rounded-xl bg-slate-950/30 border border-white/5">
+                                  <span className="text-slate-400 font-medium">Pass Expiry</span>
+                                  <span className="text-rose-400 font-bold uppercase tracking-wider text-[10px]">{membership.expiry_date || '—'}</span>
                                 </div>
                               </div>
                             </div>
@@ -3573,8 +3657,9 @@ export default function MemberDashboard() {
                           
                           {/* DANGER: LEAVE GYM BUTTON */}
                           <button
+                            type="button"
                             onClick={handleLeaveGym}
-                            className="w-full py-3.5 rounded-xl bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/10 hover:border-rose-500/20 text-rose-400 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer mt-4"
+                            className="w-full py-4 rounded-2xl bg-rose-950/10 hover:bg-rose-500/10 border border-rose-500/10 hover:border-rose-500/20 text-rose-400 hover:text-rose-300 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer mt-4 active:scale-[0.97]"
                           >
                             Disconnect from Gym Hub
                           </button>
