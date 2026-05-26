@@ -4,7 +4,7 @@ import {
   QrCode, Activity, LogOut, CheckCircle2, AlertCircle, 
   Clock, ShieldAlert, Sparkles, Send, RefreshCw, Calendar, 
   Building, Flame, User, LogIn, ChevronRight, Edit2, Check, Shield, Copy, Lock, Trophy, Menu, X, Bell, Phone,
-  Fingerprint
+  Fingerprint, Info, AlertTriangle
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../lib/supabaseClient'
@@ -47,6 +47,7 @@ export default function MemberDashboard() {
   const [coinsLoading, setCoinsLoading] = useState(false)
   const [leaderboard, setLeaderboard] = useState([])
   const [leaderboardLoading, setLeaderboardLoading] = useState(false)
+  const [showLeaderboardInfo, setShowLeaderboardInfo] = useState(false)
 
   // Notifications states
   const [notifications, setNotifications] = useState([])
@@ -330,7 +331,7 @@ export default function MemberDashboard() {
     try {
       const { data, error } = await supabase
         .from('members')
-        .select('id, full_name, attendance(id)')
+        .select('id, full_name, leaderboard_xp')
         .eq('gym_id', gymId)
       
       if (error) throw error
@@ -339,9 +340,9 @@ export default function MemberDashboard() {
         .map(m => ({
           id: m.id,
           full_name: m.full_name || 'Anonymous Athlete',
-          checkins_count: m.attendance?.length || 0
+          xp_points: m.leaderboard_xp || 0
         }))
-        .sort((a, b) => b.checkins_count - a.checkins_count)
+        .sort((a, b) => b.xp_points - a.xp_points)
         .slice(0, 10);
       
       setLeaderboard(ranked)
@@ -2427,7 +2428,7 @@ export default function MemberDashboard() {
                     >
                       {(() => {
                         const getPodiumMember = (index) => {
-                          return leaderboard[index] || { full_name: 'Empty Slot', checkins_count: 0, id: 'empty' };
+                          return leaderboard[index] || { full_name: 'Empty Slot', xp_points: 0, id: 'empty' };
                         };
                         return (
                           <>
@@ -2435,9 +2436,18 @@ export default function MemberDashboard() {
                             <div className="p-6 rounded-[2.5rem] bg-white/[0.01] border border-white/5 shadow-2xl relative overflow-hidden flex flex-col items-center">
                               <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#863BFF]/5 to-transparent blur-xl rounded-full pointer-events-none" />
                               
-                              <span className="px-3.5 py-1 rounded-full bg-[#863BFF]/10 border border-[#863BFF]/20 text-[9px] font-black uppercase tracking-widest text-[#b370ff] mb-6">
-                                Gym Arena Hall of Fame
-                              </span>
+                              <div className="flex items-center gap-2 mb-6">
+                                <span className="px-3.5 py-1 rounded-full bg-[#863BFF]/10 border border-[#863BFF]/20 text-[9px] font-black uppercase tracking-widest text-[#b370ff]">
+                                  Gym Arena Hall of Fame
+                                </span>
+                                <button 
+                                  onClick={() => setShowLeaderboardInfo(true)}
+                                  className="w-5.5 h-5.5 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 flex items-center justify-center text-slate-400 hover:text-[#b370ff] hover:bg-[#863BFF]/10 transition-all cursor-pointer shadow-md"
+                                  title="Leaderboard Scoring Rules"
+                                >
+                                  <Info className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
 
                               <div className="flex items-end justify-center gap-4 sm:gap-6 w-full max-w-lg pt-12 pb-6 border-b border-white/5">
                                 
@@ -2449,7 +2459,7 @@ export default function MemberDashboard() {
                                     <div className="absolute -bottom-1 -right-1 bg-slate-400 text-black font-black text-[8px] px-1.5 py-0.5 rounded-full">#2</div>
                                   </div>
                                   <span className="text-[10px] font-bold text-slate-300 truncate max-w-[80px] sm:max-w-[100px] block">{getPodiumMember(1).full_name}</span>
-                                  <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{getPodiumMember(1).checkins_count} check-ins</span>
+                                  <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{getPodiumMember(1).xp_points} XP</span>
                                   
                                   {/* Pedestal block */}
                                   <div className="w-full h-24 mt-4 rounded-t-2xl bg-gradient-to-t from-slate-400/5 to-slate-400/15 border-t border-x border-slate-400/30 flex items-center justify-center font-black text-slate-400 text-xl tracking-tighter shadow-2xl shadow-slate-400/5">
@@ -2465,7 +2475,7 @@ export default function MemberDashboard() {
                                     <div className="absolute -bottom-1 -right-1 bg-amber-400 text-black font-black text-[9px] px-2 py-0.5 rounded-full shadow-lg">#1</div>
                                   </div>
                                   <span className="text-xs font-black text-white truncate max-w-[90px] sm:max-w-[120px] block">{getPodiumMember(0).full_name}</span>
-                                  <span className="text-[10px] text-amber-400 font-black uppercase tracking-wider">{getPodiumMember(0).checkins_count} check-ins</span>
+                                  <span className="text-[10px] text-amber-400 font-black uppercase tracking-wider">{getPodiumMember(0).xp_points} XP</span>
                                   
                                   {/* Pedestal block */}
                                   <div className="w-full h-32 mt-4 rounded-t-2xl bg-gradient-to-t from-amber-500/10 to-amber-500/20 border-t border-x border-amber-500/40 flex items-center justify-center font-black text-amber-400 text-2xl tracking-tighter shadow-2xl shadow-amber-500/10">
@@ -2481,7 +2491,7 @@ export default function MemberDashboard() {
                                     <div className="absolute -bottom-1 -right-1 bg-amber-700 text-white font-black text-[8px] px-1.5 py-0.5 rounded-full">#3</div>
                                   </div>
                                   <span className="text-[10px] font-bold text-slate-400 truncate max-w-[80px] sm:max-w-[100px] block">{getPodiumMember(2).full_name}</span>
-                                  <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{getPodiumMember(2).checkins_count} check-ins</span>
+                                  <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{getPodiumMember(2).xp_points} XP</span>
                                   
                                   {/* Pedestal block */}
                                   <div className="w-full h-18 mt-4 rounded-t-2xl bg-gradient-to-t from-amber-700/5 to-amber-700/15 border-t border-x border-amber-700/30 flex items-center justify-center font-black text-amber-700 text-lg tracking-tighter shadow-2xl shadow-amber-700/5">
@@ -2516,7 +2526,7 @@ export default function MemberDashboard() {
                                           <span className="font-mono text-[10px] font-black text-slate-500 w-4">#{currentRank}</span>
                                           <span className="text-slate-200 font-bold">{userRow.full_name} {isCurrentUser && ' (You)'}</span>
                                         </div>
-                                        <span className="text-[10px] font-black bg-white/5 border border-white/5 px-2.5 py-1 rounded text-slate-400">{userRow.checkins_count} check-ins</span>
+                                        <span className="text-[10px] font-black bg-white/5 border border-white/5 px-2.5 py-1 rounded text-slate-400">{userRow.xp_points} XP</span>
                                       </div>
                                     )
                                   })}
@@ -2529,17 +2539,17 @@ export default function MemberDashboard() {
                               const userIndex = leaderboard.findIndex(u => u.id === membership.id)
                               const userRank = userIndex !== -1 ? userIndex + 1 : null
                               const nextContender = userIndex > 0 ? leaderboard[userIndex - 1] : null
-                              const checkinsDiff = (userRank && nextContender) ? nextContender.checkins_count - leaderboard[userIndex].checkins_count : 0
+                              const xpDiff = (userRank && nextContender) ? nextContender.xp_points - leaderboard[userIndex].xp_points : 0
 
                               let berdiriText = ''
                               if (userRank === 1) {
                                 berdiriText = '🥇 You are dominating the Leaderboard! Keep up the grind to defend your Crown!'
                               } else if (userRank) {
                                 berdiriText = nextContender 
-                                  ? `💪 Rank #${userRank} • You're just ${checkinsDiff + 1} check-ins away from beating ${nextContender.full_name} at Rank #${userRank - 1}!` 
+                                  ? `💪 Rank #${userRank} • You're just ${xpDiff + 1} XP away from beating ${nextContender.full_name} at Rank #${userRank - 1}!` 
                                   : `🔥 Rank #${userRank} • Keep checking in daily to rise in standing!`
                               } else {
-                                berdiriText = '⚡ Unranked • Check in at the reception to claim your spot in the Arena!'
+                                berdiriText = '⚡ Unranked • Check out from your training sessions to claim your spot in the Arena!'
                               }
 
                               return (
@@ -2548,6 +2558,93 @@ export default function MemberDashboard() {
                                 </div>
                               )
                             })()}
+
+                            {/* INFO MODAL OVERLAY */}
+                            <AnimatePresence>
+                              {showLeaderboardInfo && (
+                                <motion.div 
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+                                >
+                                  <motion.div 
+                                    initial={{ scale: 0.95, y: 20 }}
+                                    animate={{ scale: 1, y: 0 }}
+                                    exit={{ scale: 0.95, y: 20 }}
+                                    className="w-full max-w-md bg-[#0F111A]/95 border border-white/10 rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden shadow-2xl"
+                                  >
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#863BFF]/5 blur-2xl rounded-full pointer-events-none" />
+                                    
+                                    <div className="flex justify-between items-start mb-6">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-2xl bg-[#863BFF]/10 border border-[#863BFF]/20 flex items-center justify-center text-[#b370ff]">
+                                          <Trophy className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                          <h3 className="text-sm font-black text-white uppercase tracking-wider">Scoring System</h3>
+                                          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Anti-Cheat Fair Play</p>
+                                        </div>
+                                      </div>
+                                      <button 
+                                        onClick={() => setShowLeaderboardInfo(false)}
+                                        className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer"
+                                      >
+                                        <X className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+
+                                    <div className="space-y-4 text-xs font-semibold text-slate-300">
+                                      <div className="p-4.5 rounded-2xl bg-white/[0.01] border border-white/5 space-y-3.5 leading-relaxed">
+                                        <div className="flex items-start gap-3">
+                                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
+                                          <div>
+                                            <strong className="text-white">⚡ Base check-in:</strong> Gate check-in scan complete karne par instant <span className="text-emerald-400 font-bold">+10 XP</span> credit hote hain.
+                                          </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3">
+                                          <div className="w-1.5 h-1.5 rounded-full bg-[#863BFF] mt-1.5 flex-shrink-0" />
+                                          <div>
+                                            <strong className="text-white">⏱️ Optimal Training Sweet Spot:</strong> Quality training is highly rewarded!
+                                            <ul className="mt-1.5 space-y-1 text-[10px] text-slate-400 pl-3 list-disc">
+                                              <li>Workout 45 - 75 mins: <span className="text-emerald-400 font-bold">+15 XP Golden Zone Bonus</span>.</li>
+                                              <li>Workout 30 - 45 mins / 75 - 90 mins: <span className="text-emerald-400 font-bold">+10 XP</span>.</li>
+                                              <li>Workout under 30 mins: <span className="text-emerald-400 font-bold">+5 XP</span>.</li>
+                                            </ul>
+                                          </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3">
+                                          <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-1.5 flex-shrink-0" />
+                                          <div>
+                                            <strong className="text-white">⏰ Temporal Clockwork Bonus:</strong> Continuous 3 din tak regular same-hour time window (discipline schedule) par check-in karne par <span className="text-yellow-400 font-bold">+10 XP</span> milega.
+                                          </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3">
+                                          <div className="w-1.5 h-1.5 rounded-full bg-orange-400 mt-1.5 flex-shrink-0" />
+                                          <div>
+                                            <strong className="text-white">🔥 Streak Multipliers:</strong> Gym continuous aane par aapki total base XP multiplier badh jayegi:
+                                            <ul className="mt-1.5 space-y-1 text-[10px] text-slate-400 pl-3 list-disc">
+                                              <li>3+ Day Streak: <span className="text-orange-400 font-bold">1.2x XP</span>.</li>
+                                              <li>7+ Day Streak: <span className="text-orange-400 font-bold">1.5x XP</span>.</li>
+                                            </ul>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className="p-3.5 rounded-2xl bg-rose-500/5 border border-rose-500/10 text-[10px] text-rose-400 leading-normal flex items-start gap-2.5 font-medium">
+                                        <AlertTriangle className="w-4.5 h-4.5 flex-shrink-0 text-rose-400 mt-0.5" />
+                                        <div>
+                                          <span className="font-bold text-rose-300">Important Anti-Ghosting Rule:</span> Agar aap gym chodte waqt <span className="font-black text-rose-300">CHECK-OUT scan</span> karna bhool jate hain, toh us check-in ka **0 XP** milega aur streaks reset ho jayegi! Always scan when leaving the gym.
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </>
                         );
                       })()}
