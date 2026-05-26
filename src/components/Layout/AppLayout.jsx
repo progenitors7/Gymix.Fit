@@ -21,7 +21,8 @@ import {
   ShieldCheck,
   ChevronRight,
   QrCode,
-  Clock
+  Clock,
+  Trophy
 } from 'lucide-react'
 import Logo from '../UI/Logo'
 
@@ -45,6 +46,11 @@ const NAV_ITEMS = [
     label: 'Athletes',
     path: '/members',
     icon: Users,
+  },
+  {
+    label: 'Leaderboard',
+    path: '/leaderboard',
+    icon: Trophy,
   },
   {
     label: 'Attendance',
