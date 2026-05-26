@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   User, Phone, Sparkles, Upload, Camera, Trash2, 
-  Lock, Building, Copy, Check, CheckCircle2, ShieldAlert, X 
+  Lock, Building, Copy, Check, CheckCircle2, ShieldAlert, X, ChevronRight
 } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
 
