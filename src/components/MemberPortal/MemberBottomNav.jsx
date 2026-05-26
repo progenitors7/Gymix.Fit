@@ -1,0 +1,43 @@
+import { QrCode, Flame, Trophy, Sparkles, User } from 'lucide-react'
+
+export default function MemberBottomNav({ activeTab, setActiveTab, streakCount }) {
+  const visibleItems = [
+    { id: 'pass', icon: QrCode, label: 'Pass' },
+    { id: 'streaks', icon: Flame, label: 'Streaks', badge: streakCount > 0 ? streakCount : null },
+    { id: 'leaderboard', icon: Trophy, label: 'Leaderboard' },
+    { id: 'progress', icon: Sparkles, label: 'PR' },
+    { id: 'profile', icon: User, label: 'Settings' }
+  ]
+
+  return (
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#1A1F2B]/90 backdrop-blur-xl border-t border-white/5 z-50 pb-safe shadow-lg">
+      <div className="flex items-center justify-around h-full px-2">
+        {visibleItems.map((item) => {
+          const isActive = activeTab === item.id
+          const Icon = item.icon
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`relative flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all duration-200 cursor-pointer ${
+                isActive ? "text-[#3B82F6]" : "text-[#94A3B8]"
+              }`}
+            >
+              <div className="relative z-10">
+                <Icon className="w-5 h-5" />
+                {isActive && (
+                  <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#3B82F6]" />
+                )}
+                {item.badge !== undefined && item.badge !== null && (
+                  <span className="absolute -top-1 -right-2 flex items-center justify-center min-w-[14px] h-[14px] px-1 rounded-full bg-[#3B82F6] text-white text-[8px] font-bold z-20">
+                    {item.badge}
+                  </span>
+                )}
+              </div>
+            </button>
+          )
+        })}
+      </div>
+    </nav>
+  )
+}
