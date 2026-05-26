@@ -21,7 +21,9 @@ export const connectionService = {
         profiles (
           full_name,
           email,
-          avatar_url
+          avatar_url,
+          phone_number,
+          gender
         )
       `)
       .eq('gym_id', gymId)
@@ -130,8 +132,8 @@ export const connectionService = {
       profile_id,
       avatar_url: memberData.avatar_url || profiles?.avatar_url || null,
       full_name: memberData.full_name || profiles?.full_name || 'Member',
-      phone_number: memberData.phone_number || null,
-      gender: memberData.gender || null,
+      phone_number: memberData.phone_number || profiles?.phone_number || null,
+      gender: memberData.gender || profiles?.gender || null,
       membership_plan: memberData.membership_plan,
       join_date: memberData.join_date || new Date().toISOString().split('T')[0],
       expiry_date: memberData.expiry_date,

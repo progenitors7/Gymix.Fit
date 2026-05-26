@@ -67,6 +67,17 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
     }
   }, [open, gym?.id])
 
+  // Pre-fill phone_number and gender from the request's profile details when modal opens
+  useEffect(() => {
+    if (open && request?.profiles) {
+      setForm(f => ({
+        ...f,
+        phone_number: request.profiles.phone_number || '',
+        gender: request.profiles.gender || ''
+      }))
+    }
+  }, [open, request])
+
   // Calculate Expiry Date based on Plan selection
   useEffect(() => {
     if (!form.join_date || !form.membership_plan || plans.length === 0) return
