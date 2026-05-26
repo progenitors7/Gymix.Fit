@@ -460,7 +460,7 @@ export default function MemberDashboard() {
     try {
       const { data, error } = await supabase
         .from('members')
-        .select('id, full_name, leaderboard_xp')
+        .select('id, full_name, leaderboard_xp, avatar_url')
         .eq('gym_id', gymId)
       
       if (error) throw error
@@ -469,7 +469,8 @@ export default function MemberDashboard() {
         .map(m => ({
           id: m.id,
           full_name: m.full_name || 'Anonymous Athlete',
-          xp_points: m.leaderboard_xp || 0
+          xp_points: m.leaderboard_xp || 0,
+          avatar_url: m.avatar_url || ''
         }))
         .sort((a, b) => b.xp_points - a.xp_points)
         .slice(0, 10);
@@ -2643,9 +2644,14 @@ export default function MemberDashboard() {
                                 {/* RANK 2 (SILVER) */}
                                 <div className="flex-1 flex flex-col items-center">
                                   {/* Avatar wrapper */}
-                                  <div className="w-12 h-12 rounded-full bg-slate-500/10 border-2 border-slate-400/40 flex items-center justify-center font-bold text-white text-xs shadow-lg relative mb-3">
-                                    <span className="text-[16px]">🥈</span>
-                                    <div className="absolute -bottom-1 -right-1 bg-slate-400 text-black font-black text-[8px] px-1.5 py-0.5 rounded-full">#2</div>
+                                  <div className="w-12 h-12 rounded-full bg-slate-500/10 border-2 border-slate-400/40 flex items-center justify-center font-bold text-white text-xs shadow-lg relative mb-3 overflow-hidden">
+                                    {getPodiumMember(1).avatar_url ? (
+                                      <img src={getPodiumMember(1).avatar_url} alt="Rank 2" className="w-full h-full object-cover" />
+                                    ) : (
+                                      <span className="text-slate-400 text-sm font-black">{getPodiumMember(1).full_name.charAt(0).toUpperCase()}</span>
+                                    )}
+                                    <div className="absolute top-0.5 left-0.5 text-[10px] z-10">🥈</div>
+                                    <div className="absolute -bottom-1 -right-1 bg-slate-400 text-black font-black text-[8px] px-1.5 py-0.5 rounded-full z-10">#2</div>
                                   </div>
                                   <span className="text-[10px] font-bold text-slate-300 truncate max-w-[80px] sm:max-w-[100px] block">{getPodiumMember(1).full_name}</span>
                                   <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{getPodiumMember(1).xp_points} XP</span>
@@ -2658,10 +2664,17 @@ export default function MemberDashboard() {
 
                                 {/* RANK 1 (GOLD) */}
                                 <div className="flex-1 flex flex-col items-center transform -translate-y-4">
-                                  {/* Glowing Ring Avatar wrapper */}
-                                  <div className="w-16 h-16 rounded-full bg-amber-500/10 border-2 border-amber-400 flex items-center justify-center font-bold text-white text-sm shadow-2xl relative mb-3 shadow-amber-400/15 animate-pulse">
-                                    <span className="text-[24px]">👑</span>
-                                    <div className="absolute -bottom-1 -right-1 bg-amber-400 text-black font-black text-[9px] px-2 py-0.5 rounded-full shadow-lg">#1</div>
+                                  {/* Floating Crown above Avatar */}
+                                  <div className="relative mb-3 flex flex-col items-center">
+                                    <div className="absolute -top-4 text-[18px] z-20 filter drop-shadow-[0_2px_4px_rgba(245,158,11,0.5)]">👑</div>
+                                    <div className="w-16 h-16 rounded-full bg-amber-500/10 border-2 border-amber-400 flex items-center justify-center font-bold text-white text-sm shadow-2xl relative shadow-amber-400/15 overflow-hidden">
+                                      {getPodiumMember(0).avatar_url ? (
+                                        <img src={getPodiumMember(0).avatar_url} alt="Rank 1" className="w-full h-full object-cover" />
+                                      ) : (
+                                        <span className="text-amber-400 text-lg font-black">{getPodiumMember(0).full_name.charAt(0).toUpperCase()}</span>
+                                      )}
+                                      <div className="absolute -bottom-1 -right-1 bg-amber-400 text-black font-black text-[9px] px-2 py-0.5 rounded-full shadow-lg z-10">#1</div>
+                                    </div>
                                   </div>
                                   <span className="text-xs font-black text-white truncate max-w-[90px] sm:max-w-[120px] block">{getPodiumMember(0).full_name}</span>
                                   <span className="text-[10px] text-amber-400 font-black uppercase tracking-wider">{getPodiumMember(0).xp_points} XP</span>
@@ -2675,9 +2688,14 @@ export default function MemberDashboard() {
                                 {/* RANK 3 (BRONZE) */}
                                 <div className="flex-1 flex flex-col items-center">
                                   {/* Avatar wrapper */}
-                                  <div className="w-11 h-11 rounded-full bg-amber-700/10 border-2 border-amber-700/40 flex items-center justify-center font-bold text-white text-xs shadow-lg relative mb-3">
-                                    <span className="text-[14px]">🥉</span>
-                                    <div className="absolute -bottom-1 -right-1 bg-amber-700 text-white font-black text-[8px] px-1.5 py-0.5 rounded-full">#3</div>
+                                  <div className="w-11 h-11 rounded-full bg-amber-700/10 border-2 border-amber-700/40 flex items-center justify-center font-bold text-white text-xs shadow-lg relative mb-3 overflow-hidden">
+                                    {getPodiumMember(2).avatar_url ? (
+                                      <img src={getPodiumMember(2).avatar_url} alt="Rank 3" className="w-full h-full object-cover" />
+                                    ) : (
+                                      <span className="text-amber-700 text-xs font-black">{getPodiumMember(2).full_name.charAt(0).toUpperCase()}</span>
+                                    )}
+                                    <div className="absolute top-0.5 left-0.5 text-[10px] z-10">🥉</div>
+                                    <div className="absolute -bottom-1 -right-1 bg-amber-700 text-white font-black text-[8px] px-1.5 py-0.5 rounded-full z-10">#3</div>
                                   </div>
                                   <span className="text-[10px] font-bold text-slate-400 truncate max-w-[80px] sm:max-w-[100px] block">{getPodiumMember(2).full_name}</span>
                                   <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{getPodiumMember(2).xp_points} XP</span>
@@ -2713,6 +2731,13 @@ export default function MemberDashboard() {
                                       >
                                         <div className="flex items-center gap-3">
                                           <span className="font-mono text-[10px] font-black text-slate-500 w-4">#{currentRank}</span>
+                                          <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 text-[10px] font-bold overflow-hidden flex-shrink-0">
+                                            {userRow.avatar_url ? (
+                                              <img src={userRow.avatar_url} alt={userRow.full_name} className="w-full h-full object-cover" />
+                                            ) : (
+                                              userRow.full_name.charAt(0).toUpperCase()
+                                            )}
+                                          </div>
                                           <span className="text-slate-200 font-bold">{userRow.full_name} {isCurrentUser && ' (You)'}</span>
                                         </div>
                                         <span className="text-[10px] font-black bg-white/5 border border-white/5 px-2.5 py-1 rounded text-slate-400">{userRow.xp_points} XP</span>
