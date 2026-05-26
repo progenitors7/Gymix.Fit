@@ -27,8 +27,8 @@ export default function EditMemberPage() {
 
   const handleSubmit = async (formData) => {
     // Only pass editable fields to the update
-    const { full_name, phone_number, membership_plan, expiry_date, notes, gender } = formData
-    await editMember(id, { full_name, phone_number, membership_plan, expiry_date, notes, gender })
+    const { full_name, phone_number, membership_plan, expiry_date, notes, gender, biometric_user_id } = formData
+    await editMember(id, { full_name, phone_number, membership_plan, expiry_date, notes, gender, biometric_user_id })
     navigate('/members')
   }
 
@@ -67,6 +67,7 @@ export default function EditMemberPage() {
     join_date: member.join_date ?? '',
     expiry_date: member.expiry_date ?? '',
     notes: member.notes ?? '',
+    biometric_user_id: member.biometric_user_id ?? '',
   }
 
   return (
