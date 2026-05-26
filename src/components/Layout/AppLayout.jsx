@@ -85,7 +85,7 @@ const NAV_ITEMS = [
 ]
 
 function SidebarContent({ onClose, isMobile }) {
-  const { user, signOut } = useAuth()
+  const { user, profile, signOut } = useAuth()
   const { gym } = useGym()
   const { unreadCount } = useNotifications()
   const location = useLocation()
@@ -183,8 +183,12 @@ function SidebarContent({ onClose, isMobile }) {
       {/* User Footer Profile */}
       <div className="p-4 border-t border-white/5 bg-[#151922]">
         <div className="group flex items-center gap-3 px-3 py-3 rounded-2xl bg-[#1A1F2B] border border-white/5 transition-all hover:border-[#3B82F6]/30">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#1A1F2B] to-[#2D3748] border border-white/10 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-inner">
-            {initials}
+          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#1A1F2B] to-[#2D3748] border border-white/10 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-inner overflow-hidden">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              initials
+            )}
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[#F8FAFC] text-[13px] font-semibold truncate leading-tight">{gym?.gym_name || 'Admin'}</p>
