@@ -2637,7 +2637,7 @@ export default function MemberDashboard() {
                                       <div className="p-3.5 rounded-2xl bg-rose-500/5 border border-rose-500/10 text-[10px] text-rose-400 leading-normal flex items-start gap-2.5 font-medium">
                                         <AlertTriangle className="w-4.5 h-4.5 flex-shrink-0 text-rose-400 mt-0.5" />
                                         <div>
-                                          <span className="font-bold text-rose-300">Important Anti-Ghosting Rule:</span> Agar aap gym chodte waqt <span className="font-black text-rose-300">CHECK-OUT scan</span> karna bhool jate hain, toh us check-in ka **0 XP** milega aur streaks reset ho jayegi! Always scan when leaving the gym.
+                                          <span className="font-bold text-rose-300">Important Anti-Ghosting Rule:</span> Agar aap gym chodte waqt <span className="font-black text-rose-300">CHECK-OUT scan</span> karna bhool jate hain, toh us training session ka **0 XP** milega (Lekin aapki <span className="font-bold text-emerald-400">Workout Streak safe rahegi!</span>). Always scan when leaving the gym.
                                         </div>
                                       </div>
                                     </div>
