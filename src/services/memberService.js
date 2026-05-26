@@ -118,12 +118,13 @@ export async function updateMember(id, payload) {
 
   if (error) throw error
 
-  // If a profile is linked, sync name, phone, and gender to the profiles table
+  // If a profile is linked, sync name, phone, gender, and avatar to the profiles table
   if (data && data.profile_id) {
     const profileUpdates = {}
     if (payload.full_name) profileUpdates.full_name = payload.full_name
     if (payload.phone_number !== undefined) profileUpdates.phone_number = payload.phone_number
     if (payload.gender !== undefined) profileUpdates.gender = payload.gender
+    if (payload.avatar_url !== undefined) profileUpdates.avatar_url = payload.avatar_url
     
     if (Object.keys(profileUpdates).length > 0) {
       await supabase

@@ -34,6 +34,9 @@ export default function MemberDashboard() {
   const [cooldownTimeLeft, setCooldownTimeLeft] = useState(0)
   const [nameChangeCount, setNameChangeCount] = useState(0)
   const [lastNameChangeAt, setLastNameChangeAt] = useState(null)
+  const [avatarCooldownTimeLeft, setAvatarCooldownTimeLeft] = useState(0)
+  const [avatarChangeCount, setAvatarChangeCount] = useState(0)
+  const [lastAvatarChangeAt, setLastAvatarChangeAt] = useState(null)
 
   // Loading & State variables
   const [loading, setLoading] = useState(true)
@@ -996,7 +999,7 @@ export default function MemberDashboard() {
         setOnboardGender(dbProfile.gender || 'male')
       }
 
-      // Calculate 14-day cooldown
+      // Calculate 3-month (90-day) cooldown for name/phone changes
       const chgCount = dbProfile.name_change_count || 0
       const lastChgAt = dbProfile.last_name_change_at
       let daysRemaining = 0
@@ -1005,11 +1008,28 @@ export default function MemberDashboard() {
         const currentDate = new Date()
         const diffMs = currentDate - lastChangeDate
         const diffDays = diffMs / (1000 * 60 * 60 * 24)
-        if (diffDays < 14) {
-          daysRemaining = Math.ceil(14 - diffDays)
+        if (diffDays < 90) {
+          daysRemaining = Math.ceil(90 - diffDays)
         }
       }
       setCooldownTimeLeft(daysRemaining)
+
+      // Calculate 3-month (90-day) cooldown for profile photo changes
+      const avChgCount = dbProfile.avatar_change_count || 0
+      const lastAvChgAt = dbProfile.last_avatar_change_at
+      let avDaysRemaining = 0
+      if (avChgCount >= 3 && lastAvChgAt) {
+        const lastChangeDate = new Date(lastAvChgAt)
+        const currentDate = new Date()
+        const diffMs = currentDate - lastChangeDate
+        const diffDays = diffMs / (1000 * 60 * 60 * 24)
+        if (diffDays < 90) {
+          avDaysRemaining = Math.ceil(90 - diffDays)
+        }
+      }
+      setAvatarCooldownTimeLeft(avDaysRemaining)
+      setAvatarChangeCount(avChgCount)
+      setLastAvatarChangeAt(lastAvChgAt)
 
       // 1. Check if user is already an approved member
       const { data: memberData, error: memberError } = await supabase
@@ -1287,7 +1307,7 @@ export default function MemberDashboard() {
       // 0. Fetch latest profile details from database to check limits securely
       const { data: dbProfile, error: fetchErr } = await supabase
         .from('profiles')
-        .select('full_name, phone_number, name_change_count, last_name_change_at')
+        .select('full_name, phone_number, name_change_count, last_name_change_at, avatar_url, avatar_change_count, last_avatar_change_at')
         .eq('id', profile.id)
         .single()
 
@@ -1310,9 +1330,9 @@ export default function MemberDashboard() {
           const currentDate = new Date()
           const diffMs = currentDate - lastChangeDate
           const diffDays = diffMs / (1000 * 60 * 60 * 24)
-          if (diffDays < 14) {
-            const daysRemaining = Math.ceil(14 - diffDays)
-            throw new Error(`You have reached the limit of 3 profile changes. You can edit your name/number again in ${daysRemaining} days, or ask your Gym Owner to change it from their dashboard.`)
+          if (diffDays < 90) {
+            const daysRemaining = Math.ceil(90 - diffDays)
+            throw new Error(`You have reached the limit of 3 profile changes in 3 months. You can edit your name/number again in ${daysRemaining} days, or ask your Gym Owner to change it from their dashboard.`)
           } else {
             // Cooldown has expired! Reset count to 1 and update last_name_change_at
             newCount = 1
@@ -1325,6 +1345,35 @@ export default function MemberDashboard() {
         }
       }
 
+      const avatarChanged = dbProfile.avatar_url !== (profileAvatar || null)
+      let newAvatarCount = dbProfile.avatar_change_count || 0
+      let newLastAvatarChangeAt = dbProfile.last_avatar_change_at
+
+      if (avatarChanged) {
+        // Evaluate avatar cooldown status
+        const avChgCount = dbProfile.avatar_change_count || 0
+        const lastAvChgAt = dbProfile.last_avatar_change_at
+        
+        if (avChgCount >= 3 && lastAvChgAt) {
+          const lastChangeDate = new Date(lastAvChgAt)
+          const currentDate = new Date()
+          const diffMs = currentDate - lastChangeDate
+          const diffDays = diffMs / (1000 * 60 * 60 * 24)
+          if (diffDays < 90) {
+            const daysRemaining = Math.ceil(90 - diffDays)
+            throw new Error(`You have reached the limit of 3 profile photo changes in 3 months. You can edit your photo again in ${daysRemaining} days, or ask your Gym Owner to change it from their dashboard.`)
+          } else {
+            // Cooldown has expired! Reset count to 1 and update last_avatar_change_at
+            newAvatarCount = 1
+            newLastAvatarChangeAt = new Date().toISOString()
+          }
+        } else {
+          // Increment changes counter and update timestamp
+          newAvatarCount = avChgCount + 1
+          newLastAvatarChangeAt = new Date().toISOString()
+        }
+      }
+
       // 1. Update globally inside profiles table
       const { error: profileErr } = await supabase
         .from('profiles')
@@ -1334,7 +1383,9 @@ export default function MemberDashboard() {
           gender: profileGender,
           avatar_url: profileAvatar || null,
           name_change_count: newCount,
-          last_name_change_at: newLastChangeAt
+          last_name_change_at: newLastChangeAt,
+          avatar_change_count: newAvatarCount,
+          last_avatar_change_at: newLastAvatarChangeAt
         })
         .eq('id', profile.id)
 
@@ -3097,11 +3148,11 @@ export default function MemberDashboard() {
                                   id="dashboard-avatar-upload"
                                   onChange={handleFileChange}
                                   className="hidden"
-                                  disabled={cooldownTimeLeft > 0 || savingProfile}
+                                  disabled={avatarCooldownTimeLeft > 0 || savingProfile}
                                 />
                                 <label
                                   htmlFor="dashboard-avatar-upload"
-                                  className={`px-3.5 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-md ${cooldownTimeLeft > 0 ? 'opacity-50 pointer-events-none' : ''}`}
+                                  className={`px-3.5 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-md ${avatarCooldownTimeLeft > 0 ? 'opacity-50 pointer-events-none' : ''}`}
                                 >
                                   <Upload className="w-3.5 h-3.5 text-[#b370ff]" />
                                   Upload Photo
@@ -3110,7 +3161,7 @@ export default function MemberDashboard() {
                                 <button
                                   type="button"
                                   onClick={startCamera}
-                                  disabled={cooldownTimeLeft > 0 || savingProfile}
+                                  disabled={avatarCooldownTimeLeft > 0 || savingProfile}
                                   className="px-3.5 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
                                 >
                                   <Camera className="w-3.5 h-3.5 text-emerald-400" />
@@ -3120,7 +3171,7 @@ export default function MemberDashboard() {
                                 <button
                                   type="button"
                                   onClick={fetchGoogleAvatar}
-                                  disabled={cooldownTimeLeft > 0 || savingProfile}
+                                  disabled={avatarCooldownTimeLeft > 0 || savingProfile}
                                   className="px-3.5 py-2 bg-white/5 border border-white/10 hover:bg-[#863BFF]/20 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
                                 >
                                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -3134,24 +3185,37 @@ export default function MemberDashboard() {
                                       setProfileAvatar('');
                                       setAvatarSize(null);
                                     }}
-                                    disabled={cooldownTimeLeft > 0 || savingProfile}
+                                    disabled={avatarCooldownTimeLeft > 0 || savingProfile}
                                     className="px-3 py-2 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-400 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-md disabled:opacity-50"
                                   >
                                     Clear
                                   </button>
                                 )}
                               </div>
+                              
+                              {/* Photo Quota display */}
+                              {avatarCooldownTimeLeft > 0 ? (
+                                <div className="px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/25 text-rose-400 text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 justify-center mt-1">
+                                  <Lock className="w-3 h-3" />
+                                  <span>Photo Changes Locked ({avatarCooldownTimeLeft} days left)</span>
+                                </div>
+                              ) : (
+                                <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider text-center mt-1">
+                                  Photo Quota: <span className="text-emerald-400 font-black">{avatarChangeCount}/3 changes used</span> (in 3 months)
+                                </div>
+                              )}
                             </div>
-                            {/* Quota & Cooldown display status */}
+                            
+                            {/* Name Quota & Cooldown display status */}
                             {cooldownTimeLeft > 0 ? (
                               <div className="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
                                 <Lock className="w-3.5 h-3.5" />
-                                <span>Changes Locked (Cooldown: {cooldownTimeLeft} days left)</span>
+                                <span>Name/Phone Changes Locked ({cooldownTimeLeft} days left)</span>
                               </div>
                             ) : (
                               <div className="px-4 py-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-slate-400 text-[9px] font-bold uppercase tracking-wider flex justify-between items-center">
                                 <span>Name/Phone Changes Quota</span>
-                                <span className="text-emerald-400 font-black">{nameChangeCount}/3 changes used</span>
+                                <span className="text-emerald-400 font-black">{nameChangeCount}/3 changes used (in 3 months)</span>
                               </div>
                             )}
 
