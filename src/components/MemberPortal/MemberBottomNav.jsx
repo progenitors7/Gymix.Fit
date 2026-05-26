@@ -10,7 +10,7 @@ export default function MemberBottomNav({ activeTab, setActiveTab, streakCount }
   ]
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#1A1F2B]/90 backdrop-blur-xl border-t border-white/5 z-50 pb-safe shadow-lg">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#1A1F2B] border-t border-white/5 z-50 pb-safe shadow-lg">
       <div className="flex items-center justify-around h-full px-2">
         {visibleItems.map((item) => {
           const isActive = activeTab === item.id
@@ -24,12 +24,13 @@ export default function MemberBottomNav({ activeTab, setActiveTab, streakCount }
               }`}
             >
               <div className="relative z-10">
-                <Icon className="w-5 h-5" />
-                {isActive && (
-                  <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#3B82F6]" />
-                )}
+                <Icon 
+                  className="w-5 h-5 transition-transform duration-200 active:scale-90" 
+                  fill={isActive && item.id !== 'pass' ? "currentColor" : "none"}
+                  strokeWidth={isActive && item.id === 'pass' ? 2.5 : 2}
+                />
                 {item.badge !== undefined && item.badge !== null && (
-                  <span className="absolute -top-1 -right-2 flex items-center justify-center min-w-[14px] h-[14px] px-1 rounded-full bg-[#3B82F6] text-white text-[8px] font-bold z-20">
+                  <span className="absolute -top-1.5 -right-2 flex items-center justify-center min-w-[14px] h-[14px] px-1 rounded-full bg-[#3B82F6] text-white text-[8px] font-bold z-20">
                     {item.badge}
                   </span>
                 )}
