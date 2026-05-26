@@ -113,7 +113,7 @@ export default function MemberDashboard() {
         const img = new Image()
         img.onload = () => {
           const canvas = document.createElement('canvas')
-          const maxDim = 150
+          const maxDim = 100
           let width = img.width
           let height = img.height
 
@@ -135,7 +135,7 @@ export default function MemberDashboard() {
           const ctx = canvas.getContext('2d')
           ctx.drawImage(img, 0, 0, width, height)
 
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6)
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.35)
           resolve(compressedBase64)
         }
         img.onerror = (err) => reject(err)
@@ -175,16 +175,16 @@ export default function MemberDashboard() {
     if (!videoEl) return
 
     const canvas = document.createElement('canvas')
-    canvas.width = 150
-    canvas.height = 150
+    canvas.width = 100
+    canvas.height = 100
     const ctx = canvas.getContext('2d')
 
     // Handle horizontal mirroring for natural screenshot
-    ctx.translate(150, 0)
+    ctx.translate(100, 0)
     ctx.scale(-1, 1)
-    ctx.drawImage(videoEl, 0, 0, 150, 150)
+    ctx.drawImage(videoEl, 0, 0, 100, 100)
 
-    const base64 = canvas.toDataURL('image/jpeg', 0.6)
+    const base64 = canvas.toDataURL('image/jpeg', 0.35)
     setProfileAvatar(base64)
     setAvatarSize(getBase64SizeKB(base64))
     stopCamera()

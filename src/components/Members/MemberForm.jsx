@@ -49,7 +49,7 @@ const compressImage = (src, callback) => {
   img.crossOrigin = 'anonymous'
   img.onload = () => {
     const canvas = document.createElement('canvas')
-    const size = 150
+    const size = 100
     canvas.width = size
     canvas.height = size
     const ctx = canvas.getContext('2d')
@@ -61,7 +61,7 @@ const compressImage = (src, callback) => {
     
     ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size)
     
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.6)
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.35)
     callback(dataUrl)
   }
   img.src = src
