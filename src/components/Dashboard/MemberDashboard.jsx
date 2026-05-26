@@ -4,7 +4,7 @@ import {
   QrCode, Activity, LogOut, CheckCircle2, AlertCircle, 
   Clock, ShieldAlert, Sparkles, Send, RefreshCw, Calendar, 
   Building, Flame, User, LogIn, ChevronRight, Edit2, Check, Shield, Copy, Lock, Trophy, Menu, X, Bell, Phone,
-  Fingerprint, Info, AlertTriangle
+  Fingerprint, Info, AlertTriangle, Camera, Upload
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../lib/supabaseClient'
@@ -86,6 +86,132 @@ export default function MemberDashboard() {
   const [savingProfile, setSavingProfile] = useState(false)
   const [profileSuccess, setProfileSuccess] = useState('')
   const [profileError, setProfileError] = useState('')
+  const [profileAvatar, setProfileAvatar] = useState('')
+  const [showCamera, setShowCamera] = useState(false)
+  const [cameraStream, setCameraStream] = useState(null)
+  const [avatarSize, setAvatarSize] = useState(null)
+
+  const getBase64SizeKB = (base64Str) => {
+    if (!base64Str) return null
+    const stringLength = base64Str.length - 'data:image/jpeg;base64,'.length
+    const sizeInBytes = 4 * Math.ceil(stringLength / 3) * 0.562489633
+    return (sizeInBytes / 1024).toFixed(1)
+  }
+
+  const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const img = new Image()
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          const maxDim = 150
+          let width = img.width
+          let height = img.height
+
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width)
+              width = maxDim
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height)
+              height = maxDim
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d')
+          ctx.drawImage(img, 0, 0, width, height)
+
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6)
+          resolve(compressedBase64)
+        }
+        img.onerror = (err) => reject(err)
+        img.src = event.target.result
+      }
+      reader.onerror = (err) => reject(err)
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const startCamera = async () => {
+    try {
+      setShowCamera(true)
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+      setCameraStream(stream)
+      setTimeout(() => {
+        const videoEl = document.getElementById('member-webcam')
+        if (videoEl) videoEl.srcObject = stream
+      }, 100)
+    } catch (err) {
+      console.error('[Webcam] Error starting camera:', err)
+      setProfileError('Failed to access camera. Check permissions.')
+      setShowCamera(false)
+    }
+  }
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop())
+      setCameraStream(null)
+    }
+    setShowCamera(false)
+  }
+
+  const captureSnapshot = () => {
+    const videoEl = document.getElementById('member-webcam')
+    if (!videoEl) return
+
+    const canvas = document.createElement('canvas')
+    canvas.width = 150
+    canvas.height = 150
+    const ctx = canvas.getContext('2d')
+
+    // Handle horizontal mirroring for natural screenshot
+    ctx.translate(150, 0)
+    ctx.scale(-1, 1)
+    ctx.drawImage(videoEl, 0, 0, 150, 150)
+
+    const base64 = canvas.toDataURL('image/jpeg', 0.6)
+    setProfileAvatar(base64)
+    setAvatarSize(getBase64SizeKB(base64))
+    stopCamera()
+  }
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    try {
+      const base64 = await compressImage(file)
+      setProfileAvatar(base64)
+      setAvatarSize(getBase64SizeKB(base64))
+    } catch (err) {
+      console.error('[File] Error compressing image:', err)
+      setProfileError('Failed to process image. Select another file.')
+    }
+  }
+
+  const fetchGoogleAvatar = async () => {
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      const googlePic = currentUser?.user_metadata?.avatar_url || currentUser?.user_metadata?.picture
+      if (googlePic) {
+        setProfileAvatar(googlePic)
+        setAvatarSize(null)
+        setProfileSuccess('Google profile photo imported! ✨')
+      } else {
+        setProfileError('No profile photo found in active Google Account.')
+      }
+    } catch (err) {
+      console.error('[Google] Error fetching profile picture:', err)
+      setProfileError('Failed to fetch from Google profile.')
+    }
+  }
 
   const getLocalDateStr = (d) => {
     const year = d.getFullYear()
@@ -859,6 +985,7 @@ export default function MemberDashboard() {
       setProfileName(dbProfile.full_name || '')
       setProfilePhone(dbProfile.phone_number || '')
       setProfileGender(dbProfile.gender || 'male')
+      setProfileAvatar(dbProfile.avatar_url || '')
       setNameChangeCount(dbProfile.name_change_count || 0)
       setLastNameChangeAt(dbProfile.last_name_change_at || null)
 
@@ -900,6 +1027,7 @@ export default function MemberDashboard() {
         // Load inputs for profile edit form
         setProfilePhone(memberData.phone_number || '')
         setProfileGender(memberData.gender || 'male')
+        setProfileAvatar(memberData.avatar_url || dbProfile.avatar_url || '')
 
         // 2. Fetch real check-in attendance logs
         const { data: logs, error: logsError } = await supabase
@@ -1204,6 +1332,7 @@ export default function MemberDashboard() {
           full_name: profileName.trim(),
           phone_number: profilePhone.trim(),
           gender: profileGender,
+          avatar_url: profileAvatar || null,
           name_change_count: newCount,
           last_name_change_at: newLastChangeAt
         })
@@ -1218,7 +1347,8 @@ export default function MemberDashboard() {
           .update({
             full_name: profileName.trim(),
             phone_number: profilePhone.trim(),
-            gender: profileGender
+            gender: profileGender,
+            avatar_url: profileAvatar || null
           })
           .eq('id', membership.id)
 
@@ -2936,6 +3066,82 @@ export default function MemberDashboard() {
                           </div>
 
                           <form onSubmit={handleUpdateProfile} className="space-y-4">
+                            {/* Photo Selection Widget */}
+                            <div className="flex flex-col items-center gap-4 p-5 rounded-2xl bg-white/[0.01] border border-white/5 relative overflow-hidden">
+                              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#863BFF]/5 to-transparent blur-xl rounded-full pointer-events-none" />
+                              
+                              <div className="relative group w-20 h-20 rounded-full border-2 border-white/10 flex items-center justify-center bg-gradient-to-tr from-[#1E293B] to-[#0F172A] shadow-2xl overflow-hidden hover:border-[#863BFF]/40 transition-all duration-300">
+                                {profileAvatar ? (
+                                  <img src={profileAvatar} alt="Profile" className="w-full h-full object-cover" />
+                                ) : (
+                                  <User className="w-8 h-8 text-slate-600" />
+                                )}
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Camera className="w-5 h-5 text-white" />
+                                </div>
+                              </div>
+
+                              <div className="text-center space-y-1">
+                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Profile Photo</span>
+                                {profileAvatar && (
+                                  <p className="text-[9px] font-black text-[#10B981] uppercase tracking-wider">
+                                    {profileAvatar.startsWith('data:') ? `Compressed: ${getBase64SizeKB(profileAvatar) || '—'} KB` : 'Google Linked 🌐'}
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-2 flex-wrap justify-center pt-1.5">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  id="dashboard-avatar-upload"
+                                  onChange={handleFileChange}
+                                  className="hidden"
+                                  disabled={cooldownTimeLeft > 0 || savingProfile}
+                                />
+                                <label
+                                  htmlFor="dashboard-avatar-upload"
+                                  className={`px-3.5 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-md ${cooldownTimeLeft > 0 ? 'opacity-50 pointer-events-none' : ''}`}
+                                >
+                                  <Upload className="w-3.5 h-3.5 text-[#b370ff]" />
+                                  Upload Photo
+                                </label>
+
+                                <button
+                                  type="button"
+                                  onClick={startCamera}
+                                  disabled={cooldownTimeLeft > 0 || savingProfile}
+                                  className="px-3.5 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
+                                >
+                                  <Camera className="w-3.5 h-3.5 text-emerald-400" />
+                                  Take Photo
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={fetchGoogleAvatar}
+                                  disabled={cooldownTimeLeft > 0 || savingProfile}
+                                  className="px-3.5 py-2 bg-white/5 border border-white/10 hover:bg-[#863BFF]/20 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
+                                >
+                                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                                  Google Sync
+                                </button>
+
+                                {profileAvatar && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setProfileAvatar('');
+                                      setAvatarSize(null);
+                                    }}
+                                    disabled={cooldownTimeLeft > 0 || savingProfile}
+                                    className="px-3 py-2 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-400 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-md disabled:opacity-50"
+                                  >
+                                    Clear
+                                  </button>
+                                )}
+                              </div>
+                            </div>
                             {/* Quota & Cooldown display status */}
                             {cooldownTimeLeft > 0 ? (
                               <div className="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
@@ -3512,6 +3718,78 @@ export default function MemberDashboard() {
               </button>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* ── WEBCAM SNAPSHOT MODAL OVERLAY ── */}
+      <AnimatePresence>
+        {showCamera && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="w-full max-w-md bg-[#0F111A]/95 border border-white/10 rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden shadow-2xl flex flex-col items-center gap-6"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-2xl rounded-full pointer-events-none" />
+              
+              <div className="w-full flex justify-between items-start">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <Camera className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-white uppercase tracking-wider">Webcam Capture</h3>
+                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Snap a display picture</p>
+                  </div>
+                </div>
+                <button 
+                  type="button"
+                  onClick={stopCamera}
+                  className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Viewfinder camera view */}
+              <div className="w-64 h-64 rounded-full border-4 border-emerald-500/40 relative overflow-hidden shadow-2xl bg-black flex items-center justify-center">
+                <video
+                  id="member-webcam"
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-cover scale-x-[-1]"
+                />
+                
+                {/* Neon Target circular crop guide */}
+                <div className="absolute inset-4 rounded-full border border-dashed border-emerald-500/50 pointer-events-none flex items-center justify-center">
+                  <div className="w-4 h-4 rounded-full border border-emerald-500/20" />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 w-full">
+                <button
+                  type="button"
+                  onClick={stopCamera}
+                  className="flex-1 py-4 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-slate-300 text-xs font-black uppercase tracking-wider rounded-2xl transition-all active:scale-95 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={captureSnapshot}
+                  className="flex-1 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black text-xs font-black uppercase tracking-wider rounded-2xl transition-all shadow-xl shadow-emerald-500/25 active:scale-95 cursor-pointer"
+                >
+                  Snap Photo
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
