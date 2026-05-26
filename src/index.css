@@ -128,3 +128,69 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
 }
+
+/* ── Gamified Podium Frames ── */
+.frame-gold-animated {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24, #d97706);
+  animation: gold-pulse 2.5s infinite alternate;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+}
+
+@keyframes gold-pulse {
+  0% {
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.5), inset 0 0 2px rgba(251, 191, 36, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.95), inset 0 0 10px rgba(251, 191, 36, 0.4);
+    transform: scale(1.02);
+  }
+}
+
+.frame-silver-animated {
+  background: linear-gradient(135deg, #e2e8f0, #94a3b8, #cbd5e1);
+  animation: silver-shimmer 3s infinite alternate;
+  box-shadow: 0 0 10px rgba(148, 163, 184, 0.35);
+}
+
+@keyframes silver-shimmer {
+  0% {
+    box-shadow: 0 0 8px rgba(148, 163, 184, 0.3), inset 0 0 1px rgba(226, 232, 240, 0.1);
+  }
+  100% {
+    box-shadow: 0 0 18px rgba(148, 163, 184, 0.7), inset 0 0 6px rgba(226, 232, 240, 0.3);
+  }
+}
+
+.frame-bronze-animated {
+  background: linear-gradient(135deg, #b45309, #d97706, #78350f);
+  animation: bronze-flicker 2s infinite alternate;
+  box-shadow: 0 0 8px rgba(180, 83, 9, 0.3);
+}
+
+@keyframes bronze-flicker {
+  0% {
+    box-shadow: 0 0 6px rgba(180, 83, 9, 0.25);
+    opacity: 0.95;
+  }
+  100% {
+    box-shadow: 0 0 14px rgba(180, 83, 9, 0.6);
+    opacity: 1;
+  }
+}
+
+/* Float animation for Rank 1 Crown */
+@keyframes float-crown {
+  0% {
+    transform: translateY(0px) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(3deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(-3deg);
+  }
+}
+
+.animate-float-crown {
+  animation: float-crown 3s ease-in-out infinite;
+}

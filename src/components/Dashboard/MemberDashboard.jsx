@@ -51,6 +51,11 @@ export default function MemberDashboard() {
   const [leaderboard, setLeaderboard] = useState([])
   const [leaderboardLoading, setLeaderboardLoading] = useState(false)
   const [showLeaderboardInfo, setShowLeaderboardInfo] = useState(false)
+  const [currentSeason, setCurrentSeason] = useState(1)
+  const [seasonEndDate, setSeasonEndDate] = useState(null)
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
+  const [seasonHistory, setSeasonHistory] = useState({})
+  const [historyLoading, setHistoryLoading] = useState(false)
 
   // Notifications states
   const [notifications, setNotifications] = useState([])
@@ -458,6 +463,27 @@ export default function MemberDashboard() {
   const fetchLeaderboard = async (gymId) => {
     setLeaderboardLoading(true)
     try {
+      // 1. Automatically check and rotate season if expired (lazy trigger)
+      try {
+        await supabase.rpc('check_and_rotate_gym_season', { target_gym_id: gymId })
+      } catch (rotationErr) {
+        console.error('[Seasons] Error rotating season:', rotationErr)
+      }
+
+      // 2. Fetch active season info
+      const { data: seasonData } = await supabase
+        .from('leaderboard_seasons')
+        .select('season_number, end_date')
+        .eq('gym_id', gymId)
+        .eq('status', 'active')
+        .maybeSingle()
+
+      if (seasonData) {
+        setCurrentSeason(seasonData.season_number)
+        setSeasonEndDate(seasonData.end_date)
+      }
+
+      // 3. Fetch current season members ranking
       const { data, error } = await supabase
         .from('members')
         .select('id, full_name, leaderboard_xp, avatar_url')
@@ -480,6 +506,53 @@ export default function MemberDashboard() {
       console.error('Error fetching leaderboard:', err)
     } finally {
       setLeaderboardLoading(false)
+    }
+  }
+
+  // Fetch past seasons history archive
+  const fetchSeasonHistory = async (gymId) => {
+    setHistoryLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('leaderboard_season_history')
+        .select(`
+          final_xp,
+          final_rank,
+          created_at,
+          leaderboard_seasons (
+            season_number
+          ),
+          members (
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('gym_id', gymId)
+        .order('created_at', { ascending: false })
+        .order('final_rank', { ascending: true })
+
+      if (error) throw error
+
+      const grouped = (data || []).reduce((acc, row) => {
+        const seasonNum = row.leaderboard_seasons?.season_number || 1
+        if (!acc[seasonNum]) {
+          acc[seasonNum] = []
+        }
+        acc[seasonNum].push({
+          full_name: row.members?.full_name || 'Anonymous Athlete',
+          avatar_url: row.members?.avatar_url || '',
+          final_xp: row.final_xp,
+          final_rank: row.final_rank,
+          date: row.created_at
+        })
+        return acc
+      }, {})
+
+      setSeasonHistory(grouped)
+    } catch (err) {
+      console.error('Error fetching season history:', err)
+    } finally {
+      setHistoryLoading(false)
     }
   }
 
@@ -2628,8 +2701,19 @@ export default function MemberDashboard() {
                               
                               <div className="flex items-center gap-2 mb-6">
                                 <span className="px-3.5 py-1 rounded-full bg-[#863BFF]/10 border border-[#863BFF]/20 text-[9px] font-black uppercase tracking-widest text-[#b370ff]">
-                                  Gym Arena Hall of Fame
+                                  Gym Arena Season {currentSeason}
                                 </span>
+                                <button 
+                                  onClick={() => {
+                                    setShowHistoryModal(true);
+                                    if (membership?.gym_id) {
+                                      fetchSeasonHistory(membership.gym_id);
+                                    }
+                                  }}
+                                  className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-[#b370ff] hover:bg-[#863BFF]/10 transition-all cursor-pointer shadow-md"
+                                >
+                                  Past Seasons
+                                </button>
                                 <button 
                                   onClick={() => setShowLeaderboardInfo(true)}
                                   className="w-5.5 h-5.5 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 flex items-center justify-center text-slate-400 hover:text-[#b370ff] hover:bg-[#863BFF]/10 transition-all cursor-pointer shadow-md"
@@ -2644,13 +2728,15 @@ export default function MemberDashboard() {
                                 {/* RANK 2 (SILVER) */}
                                 <div className="flex-1 flex flex-col items-center">
                                   {/* Avatar wrapper */}
-                                  <div className="w-12 h-12 rounded-full bg-slate-500/10 border-2 border-slate-400/40 flex items-center justify-center font-bold text-white text-xs shadow-lg relative mb-3 overflow-hidden">
-                                    {getPodiumMember(1).avatar_url ? (
-                                      <img src={getPodiumMember(1).avatar_url} alt="Rank 2" className="w-full h-full object-cover" />
-                                    ) : (
-                                      <span className="text-slate-400 text-sm font-black">{getPodiumMember(1).full_name.charAt(0).toUpperCase()}</span>
-                                    )}
-                                    <div className="absolute top-0.5 left-0.5 text-[10px] z-10">🥈</div>
+                                  <div className="w-12 h-12 rounded-full p-[2.5px] frame-silver-animated flex items-center justify-center shadow-lg relative mb-3">
+                                    <div className="w-full h-full rounded-full bg-[#0F1117] flex items-center justify-center overflow-hidden">
+                                      {getPodiumMember(1).avatar_url ? (
+                                        <img src={getPodiumMember(1).avatar_url} alt="Rank 2" className="w-full h-full object-cover" />
+                                      ) : (
+                                        <span className="text-slate-400 text-sm font-black">{getPodiumMember(1).full_name.charAt(0).toUpperCase()}</span>
+                                      )}
+                                    </div>
+                                    <div className="absolute -top-1 -left-1 text-[12px] z-10">🥈</div>
                                     <div className="absolute -bottom-1 -right-1 bg-slate-400 text-black font-black text-[8px] px-1.5 py-0.5 rounded-full z-10">#2</div>
                                   </div>
                                   <span className="text-[10px] font-bold text-slate-300 truncate max-w-[80px] sm:max-w-[100px] block">{getPodiumMember(1).full_name}</span>
@@ -2666,13 +2752,15 @@ export default function MemberDashboard() {
                                 <div className="flex-1 flex flex-col items-center transform -translate-y-4">
                                   {/* Floating Crown above Avatar */}
                                   <div className="relative mb-3 flex flex-col items-center">
-                                    <div className="absolute -top-4 text-[18px] z-20 filter drop-shadow-[0_2px_4px_rgba(245,158,11,0.5)]">👑</div>
-                                    <div className="w-16 h-16 rounded-full bg-amber-500/10 border-2 border-amber-400 flex items-center justify-center font-bold text-white text-sm shadow-2xl relative shadow-amber-400/15 overflow-hidden">
-                                      {getPodiumMember(0).avatar_url ? (
-                                        <img src={getPodiumMember(0).avatar_url} alt="Rank 1" className="w-full h-full object-cover" />
-                                      ) : (
-                                        <span className="text-amber-400 text-lg font-black">{getPodiumMember(0).full_name.charAt(0).toUpperCase()}</span>
-                                      )}
+                                    <div className="absolute -top-4 text-[18px] z-20 animate-float-crown filter drop-shadow-[0_2px_4px_rgba(245,158,11,0.5)]">👑</div>
+                                    <div className="w-16 h-16 rounded-full p-[3px] frame-gold-animated flex items-center justify-center shadow-2xl relative shadow-amber-400/15">
+                                      <div className="w-full h-full rounded-full bg-[#0F1117] flex items-center justify-center overflow-hidden">
+                                        {getPodiumMember(0).avatar_url ? (
+                                          <img src={getPodiumMember(0).avatar_url} alt="Rank 1" className="w-full h-full object-cover" />
+                                        ) : (
+                                          <span className="text-amber-400 text-lg font-black">{getPodiumMember(0).full_name.charAt(0).toUpperCase()}</span>
+                                        )}
+                                      </div>
                                       <div className="absolute -bottom-1 -right-1 bg-amber-400 text-black font-black text-[9px] px-2 py-0.5 rounded-full shadow-lg z-10">#1</div>
                                     </div>
                                   </div>
@@ -2688,13 +2776,15 @@ export default function MemberDashboard() {
                                 {/* RANK 3 (BRONZE) */}
                                 <div className="flex-1 flex flex-col items-center">
                                   {/* Avatar wrapper */}
-                                  <div className="w-11 h-11 rounded-full bg-amber-700/10 border-2 border-amber-700/40 flex items-center justify-center font-bold text-white text-xs shadow-lg relative mb-3 overflow-hidden">
-                                    {getPodiumMember(2).avatar_url ? (
-                                      <img src={getPodiumMember(2).avatar_url} alt="Rank 3" className="w-full h-full object-cover" />
-                                    ) : (
-                                      <span className="text-amber-700 text-xs font-black">{getPodiumMember(2).full_name.charAt(0).toUpperCase()}</span>
-                                    )}
-                                    <div className="absolute top-0.5 left-0.5 text-[10px] z-10">🥉</div>
+                                  <div className="w-11 h-11 rounded-full p-[2px] frame-bronze-animated flex items-center justify-center shadow-lg relative mb-3 overflow-hidden">
+                                    <div className="w-full h-full rounded-full bg-[#0F1117] flex items-center justify-center overflow-hidden">
+                                      {getPodiumMember(2).avatar_url ? (
+                                        <img src={getPodiumMember(2).avatar_url} alt="Rank 3" className="w-full h-full object-cover" />
+                                      ) : (
+                                        <span className="text-amber-700 text-xs font-black">{getPodiumMember(2).full_name.charAt(0).toUpperCase()}</span>
+                                      )}
+                                    </div>
+                                    <div className="absolute -top-1 -left-1 text-[12px] z-10">🥉</div>
                                     <div className="absolute -bottom-1 -right-1 bg-amber-700 text-white font-black text-[8px] px-1.5 py-0.5 rounded-full z-10">#3</div>
                                   </div>
                                   <span className="text-[10px] font-bold text-slate-400 truncate max-w-[80px] sm:max-w-[100px] block">{getPodiumMember(2).full_name}</span>
@@ -2854,6 +2944,99 @@ export default function MemberDashboard() {
                                           <span className="font-bold text-rose-300">Important Anti-Ghosting Rule:</span> Agar aap gym chodte waqt <span className="font-black text-rose-300">CHECK-OUT scan</span> karna bhool jate hain, toh us training session ka **0 XP** milega (Lekin aapki <span className="font-bold text-emerald-400">Workout Streak safe rahegi!</span>). Always scan when leaving the gym.
                                         </div>
                                       </div>
+                                    </div>
+                                  </motion.div>
+                                </motion.div>
+                              )}
+
+                              {showHistoryModal && (
+                                <motion.div 
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+                                >
+                                  <motion.div 
+                                    initial={{ scale: 0.95, y: 20 }}
+                                    animate={{ scale: 1, y: 0 }}
+                                    exit={{ scale: 0.95, y: 20 }}
+                                    className="w-full max-w-lg bg-[#0F111A]/95 border border-white/10 rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden shadow-2xl flex flex-col max-h-[85vh]"
+                                  >
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#863BFF]/5 blur-2xl rounded-full pointer-events-none" />
+                                    
+                                    <div className="flex justify-between items-start mb-6">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-2xl bg-[#863BFF]/10 border border-[#863BFF]/20 flex items-center justify-center text-[#b370ff]">
+                                          <History className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                          <h3 className="text-sm font-black text-white uppercase tracking-wider">Past Seasons History</h3>
+                                          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Arena Archives</p>
+                                        </div>
+                                      </div>
+                                      <button 
+                                        onClick={() => setShowHistoryModal(false)}
+                                        className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer"
+                                      >
+                                        <X className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+
+                                    <div className="overflow-y-auto flex-1 pr-1 space-y-5 hide-scrollbar">
+                                      {historyLoading ? (
+                                        <div className="text-center py-12 space-y-3">
+                                          <div className="w-6 h-6 border-2 border-[#863BFF] border-t-transparent rounded-full animate-spin mx-auto" />
+                                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Loading Archives...</p>
+                                        </div>
+                                      ) : Object.keys(seasonHistory).length === 0 ? (
+                                        <div className="text-center py-12 text-slate-500 text-xs font-semibold">
+                                          No completed seasons archived yet. Play hard to claim a spot in the archives!
+                                        </div>
+                                      ) : (
+                                        Object.entries(seasonHistory).map(([seasonNum, records]) => (
+                                          <div key={seasonNum} className="p-4.5 rounded-2xl bg-white/[0.01] border border-white/5 space-y-3">
+                                            <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                                              <span className="text-[10px] font-black uppercase text-[#b370ff] tracking-wider">Season {seasonNum} Standing</span>
+                                              <span className="text-[9px] text-slate-500 font-bold">
+                                                {records[0] ? new Date(records[0].date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : ''}
+                                              </span>
+                                            </div>
+                                            
+                                            <div className="space-y-2">
+                                              {records.map((rec) => {
+                                                let rankSymbol = '🥇'
+                                                let colorClass = 'text-amber-400'
+                                                if (rec.final_rank === 2) {
+                                                  rankSymbol = '🥈'
+                                                  colorClass = 'text-slate-300'
+                                                } else if (rec.final_rank === 3) {
+                                                  rankSymbol = '🥉'
+                                                  colorClass = 'text-amber-700'
+                                                } else {
+                                                  rankSymbol = `Rank #${rec.final_rank}`
+                                                  colorClass = 'text-slate-400'
+                                                }
+                                                return (
+                                                  <div key={rec.full_name + rec.final_rank} className="flex items-center justify-between text-xs">
+                                                    <div className="flex items-center gap-2.5">
+                                                      <span className="text-sm font-bold w-5 text-center">{rankSymbol}</span>
+                                                      <div className="w-6 h-6 rounded bg-white/5 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                        {rec.avatar_url ? (
+                                                          <img src={rec.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                          <span className="text-[9px] text-slate-400 font-bold">{rec.full_name.charAt(0).toUpperCase()}</span>
+                                                        )}
+                                                      </div>
+                                                      <span className="text-slate-200 font-bold">{rec.full_name}</span>
+                                                    </div>
+                                                    <span className={`text-[10px] font-black ${colorClass}`}>{rec.final_xp} XP</span>
+                                                  </div>
+                                                )
+                                              })}
+                                            </div>
+                                          </div>
+                                        ))
+                                      )}
                                     </div>
                                   </motion.div>
                                 </motion.div>
