@@ -27,6 +27,13 @@
 /* ── Base ── */
 *, *::before, *::after { box-sizing: border-box; }
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+  /* Disables double-tap to zoom globally */
+  touch-action: manipulation;
+}
+
 html, body, #root {
   height: 100%;
   margin: 0;
@@ -37,6 +44,32 @@ html, body, #root {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
+}
+
+/* mobile and tablet screen optimization */
+@media (max-width: 1024px) {
+  html, body, #root {
+    /* Prevent pinch zoom via touch interaction */
+    touch-action: pan-x pan-y;
+  }
+
+  /* Hide scrollbars globally on all elements to match native apps */
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+}
+
+/* Prevent auto-zooming on iOS when focusing text/number input fields */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
 }
 
 /* ── Form Elements ── */

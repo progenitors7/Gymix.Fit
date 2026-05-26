@@ -280,7 +280,7 @@ export default function AppLayout({ children }) {
   if (profile?.role === 'member') {
     return (
       <div className="flex h-screen bg-[#0F1117] overflow-hidden">
-        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {children}
         </div>
       </div>
