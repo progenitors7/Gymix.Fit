@@ -298,9 +298,17 @@ export default function MembersPage() {
                       >
                         <td className="px-8 py-5">
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-2xl bg-[#1E293B] border border-white/10 flex items-center justify-center text-[#F8FAFC] text-[14px] font-extrabold uppercase group-hover:border-[#3B82F6]/30 transition-colors shadow-inner">
-                              {member.full_name?.slice(0, 1)}
-                            </div>
+                            {member.avatar_url ? (
+                              <img 
+                                src={member.avatar_url} 
+                                alt={member.full_name} 
+                                className="w-10 h-10 rounded-2xl object-cover border border-white/10 group-hover:border-[#3B82F6]/30 transition-colors shadow-inner"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-2xl bg-[#1E293B] border border-white/10 flex items-center justify-center text-[#F8FAFC] text-[14px] font-extrabold uppercase group-hover:border-[#3B82F6]/30 transition-colors shadow-inner">
+                                {member.full_name?.slice(0, 1)}
+                              </div>
+                            )}
                             <div>
                               <div className="flex items-center gap-2">
                                 <p className="text-[#F8FAFC] font-bold text-[14px] group-hover:text-[#3B82F6] transition-colors">{member.full_name}</p>
@@ -384,9 +392,17 @@ export default function MembersPage() {
                   >
                     <div className="flex items-start justify-between gap-4 mb-5">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-[#1E293B] border border-white/10 flex items-center justify-center text-[#F8FAFC] text-[16px] font-extrabold uppercase shadow-inner">
-                          {member.full_name?.slice(0, 1)}
-                        </div>
+                        {member.avatar_url ? (
+                          <img 
+                            src={member.avatar_url} 
+                            alt={member.full_name} 
+                            className="w-12 h-12 rounded-2xl object-cover border border-white/10 shadow-inner"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-2xl bg-[#1E293B] border border-white/10 flex items-center justify-center text-[#F8FAFC] text-[16px] font-extrabold uppercase shadow-inner">
+                            {member.full_name?.slice(0, 1)}
+                          </div>
+                        )}
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="text-[#F8FAFC] font-extrabold text-[15px] tracking-tight">{member.full_name}</p>

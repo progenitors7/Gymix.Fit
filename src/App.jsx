@@ -80,15 +80,21 @@ function RootRoute() {
   // Check if launched as a standalone PWA
   const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-[#0F1117]">
+        <LoadingScreen />
+      </div>
+    )
+  }
+
   if (isPWA) {
-    if (loading) {
-      return (
-        <div className="h-screen flex items-center justify-center bg-[#0F1117]">
-          <LoadingScreen />
-        </div>
-      )
-    }
     return user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+  }
+
+  // If user is already logged in, automatically redirect browser users to dashboard too
+  if (user) {
+    return <Navigate to="/dashboard" replace />
   }
 
   return <LandingPage />

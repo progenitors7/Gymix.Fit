@@ -128,6 +128,7 @@ export const connectionService = {
     const memberPayload = {
       gym_id,
       profile_id,
+      avatar_url: memberData.avatar_url || profiles?.avatar_url || null,
       full_name: memberData.full_name || profiles?.full_name || 'Member',
       phone_number: memberData.phone_number || null,
       gender: memberData.gender || null,

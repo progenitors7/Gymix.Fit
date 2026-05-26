@@ -7,11 +7,12 @@
  *  - onCancel: () => void
  *  - mode: 'add' | 'edit'
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { User, Phone, Activity, Award, Calendar, FileText, CreditCard, Sparkles } from 'lucide-react'
 import DatePicker from '../UI/DatePicker'
 import { useCurrentGym } from '../../hooks/useCurrentGym'
+import { supabase } from '../../lib/supabaseClient'
 
 import { planService } from '../../services/planService';
 
@@ -24,6 +25,7 @@ const DEFAULTS = {
   expiry_date: '',
   notes: '',
   biometric_user_id: '',
+  avatar_url: '',
 }
 
 function Field({ label, required, children, error }) {
@@ -42,6 +44,36 @@ function Field({ label, required, children, error }) {
 
 const inputCls = 'w-full pl-12 pr-5 py-4 rounded-2xl bg-white/[0.03] border border-white/5 text-white placeholder-slate-600 text-sm font-medium focus:outline-none focus:bg-white/[0.05] focus:border-emerald-500/50 transition-all'
 
+const compressImage = (src, callback) => {
+  const img = new Image()
+  img.crossOrigin = 'anonymous'
+  img.onload = () => {
+    const canvas = document.createElement('canvas')
+    const size = 150
+    canvas.width = size
+    canvas.height = size
+    const ctx = canvas.getContext('2d')
+    
+    // Crop to square from center
+    const minDim = Math.min(img.width, img.height)
+    const sx = (img.width - minDim) / 2
+    const sy = (img.height - minDim) / 2
+    
+    ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size)
+    
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.6)
+    callback(dataUrl)
+  }
+  img.src = src
+}
+
+const getBase64SizeKB = (base64String) => {
+  if (!base64String) return '0.0'
+  const padding = base64String.endsWith('==') ? 2 : base64String.endsWith('=') ? 1 : 0
+  const bytes = (base64String.length * 3) / 4 - padding
+  return (bytes / 1024).toFixed(1)
+}
+
 export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mode = 'add' }) {
   const [form, setForm] = useState({ ...DEFAULTS, ...initialValues })
   const [errors, setErrors] = useState({})
@@ -51,6 +83,119 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
   const [amountPaid, setAmountPaid] = useState('')
   const [plans, setPlans] = useState([])
   const { gym } = useCurrentGym()
+
+  const [cameraStream, setCameraStream] = useState(null)
+  const [showCamera, setShowCamera] = useState(false)
+  const [fetchingGoogle, setFetchingGoogle] = useState(false)
+  const videoRef = useRef(null)
+
+  useEffect(() => {
+    let stream = null
+    const initCamera = async () => {
+      if (showCamera) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 300, height: 300, facingMode: 'user' }
+          })
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream
+          }
+          setCameraStream(stream)
+        } catch (err) {
+          console.error('Camera access failed:', err)
+          alert('Could not access camera. Make sure it is connected and you have granted permission.')
+          setShowCamera(false)
+        }
+      }
+    }
+    initCamera()
+
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop())
+      }
+    }
+  }, [showCamera])
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop())
+      setCameraStream(null)
+    }
+    setShowCamera(false)
+  }
+
+  const captureSnapshot = () => {
+    if (!videoRef.current) return
+    const canvas = document.createElement('canvas')
+    canvas.width = videoRef.current.videoWidth || 300
+    canvas.height = videoRef.current.videoHeight || 300
+    const ctx = canvas.getContext('2d')
+    
+    // mirror the context since we render the video with scale-x-[-1] for natural feel
+    ctx.translate(canvas.width, 0)
+    ctx.scale(-1, 1)
+    
+    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height)
+    
+    // reset transformation
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    
+    const dataUrl = canvas.toDataURL('image/jpeg')
+    
+    compressImage(dataUrl, (compressed) => {
+      setForm(f => ({ ...f, avatar_url: compressed }))
+      stopCamera()
+    })
+  }
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      compressImage(event.target.result, (compressed) => {
+        setForm(f => ({ ...f, avatar_url: compressed }))
+      })
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const fetchGoogleProfile = async () => {
+    if (!form.profile_id) return
+    setFetchingGoogle(true)
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', form.profile_id)
+        .single()
+      
+      if (error) throw error
+      if (data?.avatar_url) {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => {
+          compressImage(img.src, (compressed) => {
+            setForm(f => ({ ...f, avatar_url: compressed }))
+          })
+        }
+        img.onerror = () => {
+          // Fallback to direct use if canvas compression fails due to CORS
+          setForm(f => ({ ...f, avatar_url: data.avatar_url }))
+        }
+        img.src = data.avatar_url
+      } else {
+        alert("No Google profile photo found for this linked account.")
+      }
+    } catch (err) {
+      console.error(err)
+      alert("Failed to fetch Google profile photo: " + err.message)
+    } finally {
+      setFetchingGoogle(false)
+    }
+  }
 
   useEffect(() => {
     if (gym?.id) {
@@ -130,6 +275,87 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
           {globalError}
         </div>
       )}
+
+      {/* Premium Profile Photo Widget */}
+      <div className="flex flex-col items-center justify-center p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 relative overflow-hidden shadow-2xl backdrop-blur-md">
+        <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500" />
+        
+        <div className="relative group w-32 h-32 rounded-full border-[3px] border-emerald-500/30 overflow-hidden shadow-2xl flex items-center justify-center bg-slate-900 transition-all duration-300 hover:border-emerald-500/80">
+          {form.avatar_url ? (
+            <img 
+              src={form.avatar_url} 
+              alt="Avatar preview" 
+              className="w-full h-full object-cover" 
+            />
+          ) : (
+            <div className="flex flex-col items-center text-slate-500">
+              <User className="w-12 h-12 stroke-[1.5]" />
+              <span className="text-[9px] font-black uppercase tracking-wider mt-1 text-slate-600">No Photo</span>
+            </div>
+          )}
+          
+          <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 text-white rounded-full">
+            <Sparkles className="w-5 h-5 text-emerald-400 mb-1 animate-pulse" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-center px-2">Upload Photo</span>
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={handleFileChange} 
+              className="hidden" 
+            />
+          </label>
+        </div>
+
+        {form.avatar_url && (
+          <div className="mt-3 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-1.5 animate-in zoom-in-95 duration-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">
+              Compressed: {getBase64SizeKB(form.avatar_url)} KB
+            </span>
+          </div>
+        )}
+
+        <div className="mt-5 flex flex-wrap gap-3 justify-center">
+          <label className="px-4 py-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] text-white border border-white/5 text-[10px] font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-2">
+            Upload Image
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={handleFileChange} 
+              className="hidden" 
+            />
+          </label>
+          
+          <button
+            type="button"
+            onClick={() => setShowCamera(true)}
+            className="px-4 py-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] text-white border border-white/5 text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2"
+          >
+            Take Snapshot
+          </button>
+
+          {form.profile_id && (
+            <button
+              type="button"
+              onClick={fetchGoogleProfile}
+              disabled={fetchingGoogle}
+              className="px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2 disabled:opacity-50"
+            >
+              {fetchingGoogle ? 'Fetching...' : 'Fetch Google Avatar'}
+            </button>
+          )}
+
+          {form.avatar_url && (
+            <button
+              type="button"
+              onClick={() => setForm(f => ({ ...f, avatar_url: '' }))}
+              className="px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-[10px] font-black uppercase tracking-wider transition-all"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Row 1: Name + Phone */}
       <div className="grid sm:grid-cols-2 gap-5">
@@ -309,6 +535,59 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
           )}
         </button>
       </div>
+
+      {/* Webcam Snapshot Modal Overlay */}
+      {showCamera && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl relative">
+            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.01]">
+              <div>
+                <h3 className="text-sm font-black text-white uppercase tracking-wider">Live Camera Snapshot</h3>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Align the athlete's face in the frame</p>
+              </div>
+              <button 
+                type="button" 
+                onClick={stopCamera}
+                className="w-8 h-8 rounded-full bg-white/[0.03] hover:bg-white/[0.1] text-slate-400 hover:text-white flex items-center justify-center text-sm font-black transition-all"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="p-8 flex flex-col items-center justify-center bg-slate-950 relative">
+              <div className="relative w-64 h-64 rounded-full border-2 border-dashed border-emerald-500/30 overflow-hidden bg-slate-900 shadow-inner flex items-center justify-center">
+                <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  playsInline 
+                  className="w-full h-full object-cover scale-x-[-1]" 
+                />
+                
+                {/* Overlay guides */}
+                <div className="absolute inset-4 rounded-full border border-emerald-500/10 pointer-events-none" />
+                <div className="absolute inset-8 rounded-full border border-emerald-500/5 pointer-events-none" />
+              </div>
+            </div>
+
+            <div className="p-6 bg-white/[0.01] border-t border-white/5 flex gap-4 justify-end">
+              <button
+                type="button"
+                onClick={stopCamera}
+                className="px-6 py-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] text-slate-400 hover:text-white text-[10px] font-black uppercase tracking-wider transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={captureSnapshot}
+                className="px-8 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white text-[10px] font-black uppercase tracking-[0.15em] transition-all shadow-lg shadow-emerald-500/20"
+              >
+                Capture Snapshot
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

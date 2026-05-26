@@ -95,6 +95,15 @@ export function useDashboardStats() {
 
       const paymentsList = payments ?? [];
 
+      // Fetch pending connection requests count
+      const { count: pendingRequestsCount, error: requestsError } = await supabase
+        .from('connection_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('gym_id', gym.id)
+        .eq('status', 'pending');
+
+      if (requestsError) throw requestsError;
+
       // Calculate Dates in local timezone to prevent UTC timezone-shifting bugs
       const today = new Date();
       
@@ -201,7 +210,8 @@ export function useDashboardStats() {
         pendingPayments: pendingPaymentsList,
         expiringMembers: expiringMembersList,
         recentActivity: recentActivity,
-        revenueChartData: revenueChartData
+        revenueChartData: revenueChartData,
+        pendingRequestsCount: pendingRequestsCount || 0
       });
 
     } catch (err) {

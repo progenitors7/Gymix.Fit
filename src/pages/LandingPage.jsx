@@ -515,9 +515,9 @@ export default function LandingPage() {
           className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-4xl mt-16 sm:mt-24 p-6 sm:p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 backdrop-blur-md relative z-10"
         >
           {[
-            { label: 'Gym Owners Active', value: '1,240+', desc: 'Engineered across major fitness zones', glow: 'text-[#863BFF]' },
-            { label: 'Annual Revenue Monitored', value: '₹48 Crore+', desc: 'Secured via instant direct invoices', glow: 'text-white' },
-            { label: 'Active Gym Check-Ins', value: '240K+', desc: 'Logged through contactless scanning', glow: 'text-[#10B981]' },
+            { label: 'Gym Owners Active', value: '109+', desc: 'Engineered across major fitness zones', glow: 'text-[#863BFF]' },
+            { label: 'Annual Revenue Monitored', value: '₹4.2 Crore+', desc: 'Secured via instant direct invoices', glow: 'text-white' },
+            { label: 'Active Gym Check-Ins', value: '21K+', desc: 'Logged through contactless scanning', glow: 'text-[#10B981]' },
           ].map((stat, i) => (
             <div key={i} className="flex flex-col items-center sm:items-start text-center sm:text-left space-y-1 relative px-4 py-2 group">
               {i > 0 && <div className="hidden sm:block absolute left-0 top-[20%] bottom-[20%] w-[1px] bg-white/10" />}

@@ -41,7 +41,8 @@ export default function AttendancePage() {
             id,
             full_name,
             membership_plan,
-            phone_number
+            phone_number,
+            avatar_url
           )
         `)
         .eq('gym_id', gym.id)
@@ -283,13 +284,26 @@ export default function AttendancePage() {
                     <tr key={log.id} className="text-xs font-semibold text-slate-300 hover:bg-white/[0.01] transition-all group">
                       {/* Name / Phone */}
                       <td className="py-4 px-4">
-                        <div className="space-y-0.5">
-                          <span className="text-white font-black uppercase italic group-hover:text-emerald-400 transition-colors">
-                            {log.members?.full_name || 'Member'}
-                          </span>
-                          {log.members?.phone_number && (
-                            <p className="text-[10px] text-slate-500 font-medium leading-none">{log.members.phone_number}</p>
+                        <div className="flex items-center gap-3">
+                          {log.members?.avatar_url ? (
+                            <img 
+                              src={log.members.avatar_url} 
+                              alt={log.members.full_name} 
+                              className="w-8 h-8 rounded-full object-cover border border-white/10 group-hover:border-emerald-400/40 transition-colors"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-[#1E293B] border border-white/10 flex items-center justify-center text-[#F8FAFC] text-[10px] font-extrabold uppercase group-hover:border-emerald-400/40 transition-colors">
+                              {log.members?.full_name?.slice(0, 1) || 'M'}
+                            </div>
                           )}
+                          <div className="space-y-0.5">
+                            <span className="text-white font-black uppercase italic group-hover:text-emerald-400 transition-colors block">
+                              {log.members?.full_name || 'Member'}
+                            </span>
+                            {log.members?.phone_number && (
+                              <p className="text-[10px] text-slate-500 font-medium leading-none">{log.members.phone_number}</p>
+                            )}
+                          </div>
                         </div>
                       </td>
 

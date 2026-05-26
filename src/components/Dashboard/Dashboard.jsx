@@ -236,8 +236,8 @@ export default function Dashboard() {
 
   if (gymLoading || statsLoading || (!stats && !gymError && !statsError)) return <DashboardSkeleton />
 
-  // Handle completely empty state
-  if (stats && stats.membership.total === 0) {
+  // Handle completely empty state (only if there are no members and no pending connection requests)
+  if (stats && stats.membership.total === 0 && stats.pendingRequestsCount === 0) {
     return (
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
