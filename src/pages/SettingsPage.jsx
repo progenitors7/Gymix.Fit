@@ -1399,7 +1399,7 @@ export default function SettingsPage() {
                           S
                         </div>
                         <div>
-                          <span className="text-xs font-bold text-white block">Gym OS Support Agent</span>
+                           <span className="text-xs font-bold text-white block">Gymix Support Agent</span>
                           <span className="text-[10px] text-gray-500">
                             Replied on {new Date(selectedUserTicket.resolved_at || selectedUserTicket.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </span>

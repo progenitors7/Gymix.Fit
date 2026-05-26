@@ -135,7 +135,7 @@ function SidebarContent({ onClose, isMobile }) {
       <div className="flex items-center gap-3 px-6 py-6 border-b border-white/5">
         <Logo className="w-8 h-8 flex-shrink-0 drop-shadow-[0_0_8px_rgba(134,59,255,0.2)]" />
         <div className="min-w-0 flex-1">
-          <p className="font-bold text-white text-lg tracking-tight leading-none">Gym OS</p>
+          <p className="font-bold text-white text-lg tracking-tight leading-none">Gymix</p>
           <p className="text-slate-400 text-[10px] mt-1 truncate uppercase tracking-widest font-semibold">{gym?.gym_name ?? 'Loading…'}</p>
         </div>
         {onClose && (
@@ -315,7 +315,7 @@ export default function AppLayout({ children }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
+            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[105]"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -323,7 +323,7 @@ export default function AppLayout({ children }) {
 
       {/* Mobile Sidebar */}
       <aside className={cn(
-        "lg:hidden fixed top-0 bottom-0 left-0 w-[280px] z-[70] transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1)",
+        "lg:hidden fixed top-0 bottom-0 left-0 w-[280px] z-[110] transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1)",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <SidebarContent onClose={() => setSidebarOpen(false)} isMobile={true} />
@@ -342,7 +342,7 @@ export default function AppLayout({ children }) {
             </button>
             <div className="flex items-center gap-2">
               <Logo className="w-7 h-7 flex-shrink-0" />
-              <span className="font-bold text-[#F8FAFC] text-[15px] tracking-tight">Gym OS</span>
+              <span className="font-bold text-[#F8FAFC] text-[15px] tracking-tight">Gymix</span>
             </div>
           </div>
           <Link to="/settings" className="p-2 -mr-2 text-[#94A3B8] hover:text-[#F8FAFC] transition-all">
@@ -360,7 +360,7 @@ export default function AppLayout({ children }) {
                   <CreditCard className="w-4 h-4" />
                 </div>
                 <p className="text-amber-100 text-xs font-bold">
-                  Your Gym OS plan expires in {gym.billing_days_left} day{gym.billing_days_left === 1 ? '' : 's'}.
+                  Your Gymix plan expires in {gym.billing_days_left} day{gym.billing_days_left === 1 ? '' : 's'}.
                 </p>
               </div>
               <Link

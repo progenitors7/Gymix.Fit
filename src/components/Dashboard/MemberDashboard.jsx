@@ -677,7 +677,7 @@ export default function MemberDashboard() {
       {/* Mobile Menu Drawer Overlay */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <div className="fixed inset-0 z-50 md:hidden flex">
+          <div className="fixed inset-0 z-[110] md:hidden flex">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}

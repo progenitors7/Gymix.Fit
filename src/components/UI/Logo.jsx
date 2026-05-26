@@ -6,27 +6,12 @@ const Logo = ({ className = "w-12 h-12", ...props }) => {
   return (
     <svg 
       xmlns="http://www.w3.org/2000/svg" 
-      viewBox="-12 -12 72 70" /* Expanded viewBox padding to prevent SVG boundary clipping */
+      viewBox="-12 -12 72 70"
       width="48"
       height="46"
       className={className}
       {...props}
     >
-      <defs>
-        {/* Core Premium Violet-Amethyst Metallic Gradient */}
-        <linearGradient id="gymix-metallic-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#863BFF" />
-          <stop offset="50%" stopColor="#A770FF" />
-          <stop offset="100%" stopColor="#C084FC" />
-        </linearGradient>
-
-        {/* Ambient Glow Filter - coordinates expanded to 200% to prevent internal filter clipping */}
-        <filter id="gymix-premium-glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#863BFF" floodOpacity="0.4" />
-          <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#A770FF" floodOpacity="0.25" />
-        </filter>
-      </defs>
-
       {/* Subtle offset backup path for depth */}
       <path 
         d={pathD}
@@ -35,11 +20,10 @@ const Logo = ({ className = "w-12 h-12", ...props }) => {
         transform="translate(1, 1)"
       />
 
-      {/* Primary Glowing Brand Shape */}
+      {/* Primary Brand Shape filled with robust solid amethyst purple */}
       <path 
         d={pathD}
-        fill="url(#gymix-metallic-grad)"
-        filter="url(#gymix-premium-glow)"
+        fill="#A770FF"
       />
     </svg>
   );
