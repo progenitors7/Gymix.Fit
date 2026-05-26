@@ -1677,32 +1677,8 @@ export default function MemberDashboard() {
     <div className="min-h-screen bg-[#0f111a] text-slate-100 font-sans relative overflow-x-hidden flex flex-col md:flex-row">
       
       {/* Background decorations */}
-      <motion.div 
-        animate={{
-          scale: [1, 1.15, 1],
-          x: [0, 10, -10, 0],
-          y: [0, -15, 15, 0],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-        className="absolute -top-32 -right-32 w-64 h-64 bg-[#863BFF]/10 blur-[100px] rounded-full pointer-events-none z-0" 
-      />
-      <motion.div 
-        animate={{
-          scale: [1, 1.2, 1],
-          x: [0, -15, 15, 0],
-          y: [0, 20, -20, 0],
-        }}
-        transition={{
-          duration: 10,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-        className="absolute -bottom-32 -left-32 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none z-0" 
-      />
+      <div className="absolute -top-32 -right-32 w-64 h-64 bg-[#863BFF]/10 blur-[100px] rounded-full pointer-events-none z-0" />
+      <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none z-0" />
 
       {/* DESKTOP SIDEBAR NAVIGATION */}
       <div className="hidden md:flex fixed top-0 bottom-0 left-0 w-80 bg-[#0c0e14]/70 border-r border-white/10 backdrop-blur-2xl p-6 flex-col justify-between z-30">
@@ -1755,8 +1731,7 @@ export default function MemberDashboard() {
                   }`}
                 >
                   {isActive && (
-                    <motion.div
-                      layoutId="activeTabPillDesktop"
+                    <div
                       className={`absolute inset-0 rounded-2xl -z-10 border ${
                         item.id === 'streaks'
                         ? 'bg-orange-500/10 border-orange-500/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
@@ -1766,7 +1741,6 @@ export default function MemberDashboard() {
                         ? 'bg-yellow-500/10 border-yellow-500/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
                         : 'bg-[#863BFF]/10 border-[#863BFF]/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
                       }`}
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
                     />
                   )}
                   <div className="flex items-center gap-3">
@@ -3562,11 +3536,7 @@ export default function MemberDashboard() {
             }`}
           >
             {activeTab === 'pass' && (
-              <motion.div 
-                layoutId="activeTabPill"
-                className="absolute inset-0 bg-[#863BFF]/10 border border-[#863BFF]/20 rounded-2xl -z-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
-                transition={{ type: "spring", stiffness: 380, damping: 30 }}
-              />
+              <div className="absolute inset-0 bg-[#863BFF]/10 border border-[#863BFF]/20 rounded-2xl -z-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]" />
             )}
             <QrCode className="w-5 h-5 transition-transform duration-200" />
             <span className="text-[8px] uppercase tracking-wider leading-none">Pass</span>
@@ -3582,11 +3552,7 @@ export default function MemberDashboard() {
             }`}
           >
             {activeTab === 'attendance' && (
-              <motion.div 
-                layoutId="activeTabPill"
-                className="absolute inset-0 bg-[#863BFF]/10 border border-[#863BFF]/20 rounded-2xl -z-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
-                transition={{ type: "spring", stiffness: 380, damping: 30 }}
-              />
+              <div className="absolute inset-0 bg-[#863BFF]/10 border border-[#863BFF]/20 rounded-2xl -z-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]" />
             )}
             <Calendar className="w-5 h-5 transition-transform duration-200" />
             <span className="text-[8px] uppercase tracking-wider leading-none">History</span>
@@ -3602,11 +3568,7 @@ export default function MemberDashboard() {
             }`}
           >
             {activeTab === 'streaks' && (
-              <motion.div 
-                layoutId="activeTabPill"
-                className="absolute inset-0 bg-orange-500/10 border border-orange-500/20 rounded-2xl -z-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
-                transition={{ type: "spring", stiffness: 380, damping: 30 }}
-              />
+              <div className="absolute inset-0 bg-orange-500/10 border border-orange-500/20 rounded-2xl -z-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]" />
             )}
             <Flame className="w-5 h-5 transition-transform duration-200" />
             <span className="text-[8px] uppercase tracking-wider leading-none">Streak</span>
@@ -3622,11 +3584,7 @@ export default function MemberDashboard() {
             }`}
           >
             {activeTab === 'leaderboard' && (
-              <motion.div 
-                layoutId="activeTabPill"
-                className="absolute inset-0 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl -z-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
-                transition={{ type: "spring", stiffness: 380, damping: 30 }}
-              />
+              <div className="absolute inset-0 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl -z-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]" />
             )}
             <Trophy className="w-5 h-5 transition-transform duration-200" />
             <span className="text-[8px] uppercase tracking-wider leading-none">Arena</span>
@@ -3642,11 +3600,7 @@ export default function MemberDashboard() {
             }`}
           >
             {activeTab === 'profile' && (
-              <motion.div 
-                layoutId="activeTabPill"
-                className="absolute inset-0 bg-[#863BFF]/10 border border-[#863BFF]/20 rounded-2xl -z-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
-                transition={{ type: "spring", stiffness: 380, damping: 30 }}
-              />
+              <div className="absolute inset-0 bg-[#863BFF]/10 border border-[#863BFF]/20 rounded-2xl -z-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]" />
             )}
             <User className="w-5 h-5 transition-transform duration-200" />
             <span className="text-[8px] uppercase tracking-wider leading-none">Profile</span>
@@ -3901,8 +3855,7 @@ export default function MemberDashboard() {
                         }`}
                       >
                         {isActive && (
-                          <motion.div
-                            layoutId="activeTabPillMobileDrawer"
+                          <div
                             className={`absolute inset-0 rounded-xl -z-10 border ${
                               item.id === 'streaks'
                               ? 'bg-orange-500/10 border-orange-500/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
@@ -3912,7 +3865,6 @@ export default function MemberDashboard() {
                               ? 'bg-yellow-500/10 border-yellow-500/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
                               : 'bg-[#863BFF]/10 border-[#863BFF]/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
                             }`}
-                            transition={{ type: "spring", stiffness: 380, damping: 30 }}
                           />
                         )}
                         <div className="flex items-center gap-3">
