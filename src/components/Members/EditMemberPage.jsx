@@ -43,14 +43,14 @@ export default function EditMemberPage() {
   if (fetchError || !member) {
     return (
       <div className="p-12 text-center max-w-md mx-auto">
-        <div className="w-20 h-20 bg-rose-500/10 border border-rose-500/20 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl">
+        <div className="w-20 h-20 bg-rose-500/10 border border-rose-500/20 rounded-3xl flex items-center justify-center mx-auto mb-8">
           <AlertCircle className="w-10 h-10 text-rose-400" />
         </div>
         <h3 className="text-2xl font-black text-white mb-3 tracking-tight">Access Error</h3>
         <p className="text-slate-500 mb-8 font-medium leading-relaxed">{fetchError || "Athlete profile not found in our encrypted records."}</p>
         <button
           onClick={() => navigate('/members')}
-          className="w-full py-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] text-white text-xs font-black uppercase tracking-widest transition-all border border-white/5 shadow-xl"
+          className="w-full py-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] text-white text-xs font-black uppercase tracking-widest transition-all border border-white/5"
         >
           Return to Ledger
         </button>
@@ -77,7 +77,7 @@ export default function EditMemberPage() {
       <div className="flex items-center gap-6">
         <button
           onClick={() => navigate('/members')}
-          className="group w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/[0.08] transition-all duration-300 hover:scale-110 active:scale-95 shadow-xl"
+          className="group w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/[0.08] transition-all duration-300"
           aria-label="Back to members"
         >
           <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
@@ -100,7 +100,7 @@ export default function EditMemberPage() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
         
         {/* Column 1: Form card (spans 3) */}
-        <div className="lg:col-span-3 glass-card border border-white/5 rounded-[2.5rem] p-8 sm:p-12 relative overflow-hidden shadow-2xl">
+        <div className="lg:col-span-3 glass-card border border-white/5 rounded-[2.5rem] p-8 sm:p-12 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
           <div className="relative z-10">
             <MemberForm

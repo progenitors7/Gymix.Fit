@@ -29,17 +29,14 @@ export default function PendingPaymentsWidget({ payments }) {
           </div>
           Action Needed
         </h3>
-        <Link to="/payments" className="p-2 bg-white/5 border border-white/10 rounded-xl text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-white/10 transition-all active:scale-95 shadow-sm">
+        <Link to="/payments" className="p-2 bg-white/5 border border-white/10 rounded-xl text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-white/10 transition-all shadow-sm">
           <ArrowUpRight className="w-4 h-4" />
         </Link>
       </div>
       
       <div className="space-y-3 relative z-10">
         {payments.map((payment, i) => (
-          <motion.div 
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.1 }}
+          <div 
             key={payment.id} 
             className="group/item flex items-center justify-between p-3.5 bg-white/[0.02] hover:bg-white/[0.06] rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-300"
           >
@@ -60,7 +57,7 @@ export default function PendingPaymentsWidget({ payments }) {
                 Settle
               </Link>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>

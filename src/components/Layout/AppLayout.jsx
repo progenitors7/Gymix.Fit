@@ -255,7 +255,7 @@ function BottomNav() {
             >
               <div className="relative z-10">
                 <Icon 
-                  className="w-5 h-5 transition-transform duration-200 active:scale-90" 
+                  className="w-5 h-5 transition-transform duration-200" 
                   fill={isActive && !isOutlineOnly ? "currentColor" : "none"}
                   strokeWidth={isActive && isOutlineOnly ? 2.5 : 2}
                 />

@@ -1,5 +1,3 @@
-import { motion } from 'framer-motion';
-
 export default function StatCard({ title, value, subtitle, icon, colorClass, trend }) {
   const colors = {
     emerald: 'text-[#22C55E] bg-[#22C55E]/10 border-[#22C55E]/20',
@@ -14,11 +12,7 @@ export default function StatCard({ title, value, subtitle, icon, colorClass, tre
   const selectedColor = colors[colorClass] || colors.slate;
 
   return (
-    <motion.div 
-      whileHover={{ y: -2 }}
-      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      className="p-6 rounded-3xl glass-card flex flex-col h-full group relative overflow-hidden"
-    >
+    <div className="p-6 rounded-3xl glass-card flex flex-col h-full group relative overflow-hidden">
       
       <div className="flex items-start justify-between mb-6 relative z-10">
         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border shadow-inner transition-all duration-300 ${selectedColor}`}>
@@ -40,7 +34,7 @@ export default function StatCard({ title, value, subtitle, icon, colorClass, tre
         <p className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-widest">{title}</p>
         {subtitle && <p className="text-xs text-[#64748B] font-medium mt-1.5">{subtitle}</p>}
       </div>
-    </motion.div>
+    </div>
   );
 }
 

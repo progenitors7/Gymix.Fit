@@ -55,10 +55,7 @@ export default function RecentActivityFeed({ activities }) {
           }
 
           return (
-            <motion.div 
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
+            <div 
               key={`${activity.type}-${activity.id}-${index}`} 
               className="group/item flex gap-4 relative"
             >
@@ -87,7 +84,7 @@ export default function RecentActivityFeed({ activities }) {
                 </div>
                 <p className="text-[12px] text-[#94A3B8] font-medium mt-1 leading-relaxed">{activity.description}</p>
               </div>
-            </motion.div>
+            </div>
           );
         })}
       </div>
