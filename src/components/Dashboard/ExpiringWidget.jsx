@@ -17,7 +17,6 @@ export default function ExpiringWidget({ members, onRefresh }) {
   if (!members || members.length === 0) {
     return (
       <div className="glass-card rounded-3xl p-6 h-full flex flex-col relative overflow-hidden group">
-        <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-10 transition-opacity duration-500 bg-[#F59E0B]"></div>
         <h3 className="text-[#F8FAFC] font-extrabold text-lg mb-4 flex items-center gap-3 relative z-10">
           <div className="w-10 h-10 rounded-2xl bg-[#F59E0B]/10 flex items-center justify-center border border-[#F59E0B]/20 shadow-inner">
             <Hourglass className="w-5 h-5 text-[#F59E0B]" />
@@ -34,7 +33,6 @@ export default function ExpiringWidget({ members, onRefresh }) {
   return (
     <>
       <div className="glass-card rounded-3xl p-6 h-full flex flex-col relative overflow-hidden group">
-        <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-10 transition-opacity duration-500 bg-[#F59E0B]"></div>
         
         <div className="flex items-center justify-between mb-6 relative z-10">
           <h3 className="text-[#F8FAFC] font-extrabold text-lg flex items-center gap-3">

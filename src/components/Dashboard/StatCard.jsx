@@ -15,12 +15,10 @@ export default function StatCard({ title, value, subtitle, icon, colorClass, tre
 
   return (
     <motion.div 
-      whileHover={{ y: -4, scale: 1.01 }}
+      whileHover={{ y: -2 }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
       className="p-6 rounded-3xl glass-card flex flex-col h-full group relative overflow-hidden"
     >
-      {/* Subtle background glow effect on hover */}
-      <div className={`absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${selectedColor.split(' ')[1]}`}></div>
       
       <div className="flex items-start justify-between mb-6 relative z-10">
         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border shadow-inner transition-all duration-300 ${selectedColor}`}>

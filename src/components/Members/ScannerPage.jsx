@@ -192,8 +192,7 @@ export default function ScannerPage() {
       {/* Main glass frame card */}
       <div className="glass-card border border-white/5 rounded-[2.5rem] p-8 sm:p-12 relative overflow-hidden text-center min-h-[450px] flex flex-col justify-between">
         
-        {/* Glowing decor */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        {/* Elegant border only */}
 
         <div className="relative z-10 flex-1 flex flex-col justify-center items-center space-y-6">
           {scannerError && (
@@ -219,13 +218,7 @@ export default function ScannerPage() {
                     : 'bg-rose-500/5 border-rose-500/20 text-rose-400'
                 }`}
               >
-                {/* Glowing status-specific background blur effect */}
-                {scanResult.success && scanResult.action === 'checkout' && (
-                  <div className="absolute inset-0 bg-sky-500/[0.02] animate-pulse pointer-events-none" />
-                )}
-                {scanResult.success && scanResult.action === 'checkin' && (
-                  <div className="absolute inset-0 bg-emerald-500/[0.02] animate-pulse pointer-events-none" />
-                )}
+                {/* No background glow */}
 
                 <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-inner ${
                   scanResult.success 
@@ -336,12 +329,20 @@ export default function ScannerPage() {
                   {/* Neon flashing camera alignment lines */}
                   {scanning && (
                     <div className="absolute inset-0 z-10 pointer-events-none border-2 border-emerald-500/20 rounded-[2rem] overflow-hidden">
-                      {/* Laser scanner effect line */}
-                      <motion.div 
-                        className="w-full h-0.5 bg-emerald-500 shadow-[0_0_8px_#10B981] absolute top-0"
-                        animate={{ top: ['0%', '100%', '0%'] }}
-                        transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-                      />
+                      {/* Highly performant CSS-only Laser scanner effect line */}
+                      <>
+                        <style>{`
+                          @keyframes scanLaser {
+                            0% { top: 0%; }
+                            50% { top: 100%; }
+                            100% { top: 0%; }
+                          }
+                          .animate-laser {
+                            animation: scanLaser 3s linear infinite;
+                          }
+                        `}</style>
+                        <div className="w-full h-0.5 bg-emerald-500 absolute top-0 animate-laser" style={{ boxShadow: '0 0 8px #10B981' }} />
+                      </>
                     </div>
                   )}
 

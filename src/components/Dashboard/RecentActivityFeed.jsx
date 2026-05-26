@@ -16,7 +16,6 @@ export default function RecentActivityFeed({ activities }) {
   if (!activities || activities.length === 0) {
     return (
       <div className="glass-card rounded-3xl p-8 text-center h-full flex flex-col items-center justify-center relative overflow-hidden group">
-        <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-10 transition-opacity duration-500 bg-[#3B82F6]"></div>
         <div className="w-12 h-12 rounded-2xl bg-white/[0.03] flex items-center justify-center mb-4 border border-white/10 shadow-inner relative z-10">
           <History className="w-5 h-5 text-[#94A3B8]" />
         </div>
@@ -27,7 +26,6 @@ export default function RecentActivityFeed({ activities }) {
 
   return (
     <div className="glass-card rounded-3xl p-6 h-full relative overflow-hidden group">
-      <div className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full blur-3xl opacity-0 group-hover:opacity-[0.05] transition-opacity duration-500 bg-[#3B82F6]"></div>
       
       <h3 className="text-[#F8FAFC] font-extrabold text-lg mb-8 flex items-center gap-3 relative z-10">
         <div className="w-10 h-10 rounded-2xl bg-[#3B82F6]/10 flex items-center justify-center border border-[#3B82F6]/20 shadow-inner">
@@ -71,7 +69,7 @@ export default function RecentActivityFeed({ activities }) {
               
               {/* Icon Container */}
               <div className="flex-shrink-0 relative">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-xl border shadow-sm transition-all duration-300 ${iconColor} group-hover/item:scale-110`}>
+                <div className={`flex items-center justify-center w-10 h-10 rounded-xl border shadow-sm transition-all duration-300 ${iconColor}`}>
                   <Icon className="w-4 h-4" />
                 </div>
               </div>

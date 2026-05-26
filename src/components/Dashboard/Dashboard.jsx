@@ -82,7 +82,7 @@ export default function Dashboard() {
               background-color: #FFFFFF;
             }
             .poster-container {
-              border: 10px double #863BFF;
+              border: 10px double #3B82F6;
               border-radius: 30px;
               padding: 60px 40px;
               max-width: 600px;
@@ -93,7 +93,7 @@ export default function Dashboard() {
               font-size: 32px;
               font-weight: 900;
               letter-spacing: 2px;
-              color: #863BFF;
+              color: #3B82F6;
               margin-bottom: 10px;
               text-transform: uppercase;
               font-style: italic;
@@ -116,7 +116,7 @@ export default function Dashboard() {
             .gym-name {
               font-size: 30px;
               font-weight: 800;
-              color: #863BFF;
+              color: #3B82F6;
               margin-bottom: 40px;
               text-transform: uppercase;
               font-style: italic;
@@ -160,7 +160,7 @@ export default function Dashboard() {
                 padding: 0;
               }
               .poster-container {
-                border: 8px double #863BFF;
+                border: 8px double #3B82F6;
                 box-shadow: none;
                 margin-top: 50px;
               }
@@ -246,9 +246,8 @@ export default function Dashboard() {
         className="p-6 sm:p-10 lg:p-12 max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[85vh] text-center"
       >
         <div className="relative mb-10">
-          <div className="absolute inset-0 bg-[#3B82F6] blur-[60px] opacity-20 rounded-full"></div>
           <div className="relative w-24 h-24 flex items-center justify-center">
-            <Logo className="w-24 h-24 drop-shadow-[0_0_25px_rgba(134,59,255,0.4)]" />
+            <Logo className="w-24 h-24" />
           </div>
         </div>
         <h2 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 mb-6 tracking-tight">Level Up Your Gym</h2>
@@ -276,7 +275,7 @@ export default function Dashboard() {
           </p>
           <button 
             onClick={handlePrintPoster}
-            className="w-full py-3.5 bg-[#863BFF]/10 hover:bg-[#863BFF]/20 border border-[#863BFF]/20 rounded-2xl text-xs font-black uppercase tracking-wider text-[#b370ff] transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2 mt-2"
+            className="w-full py-3.5 bg-[#3B82F6]/10 hover:bg-[#3B82F6]/20 border border-[#3B82F6]/20 rounded-2xl text-xs font-black uppercase tracking-wider text-[#60A5FA] transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2 mt-2"
           >
             <Printer className="w-4 h-4" />
             Print Wall QR Poster
@@ -286,14 +285,14 @@ export default function Dashboard() {
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <Link 
             to="/members" 
-            className="group relative flex items-center gap-3 px-8 py-4 bg-white text-[#0F1117] font-bold rounded-2xl shadow-xl shadow-white/10 transition-all hover:scale-105 active:scale-95"
+            className="group relative flex items-center gap-3 px-8 py-4 bg-white text-[#0F1117] font-bold rounded-2xl border border-white hover:bg-slate-100 transition-all active:scale-95"
           >
             <span className="text-lg">Add Member Manually</span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
           <Link 
             to="/scanner" 
-            className="group relative flex items-center gap-3 px-8 py-4 bg-[#1A1F2B] border border-white/10 text-white font-bold rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95"
+            className="group relative flex items-center gap-3 px-8 py-4 bg-[#1A1F2B] border border-white/10 text-white font-bold rounded-2xl hover:bg-white/[0.03] transition-all active:scale-95"
           >
             <span className="text-lg">Open Gate Scanner</span>
           </Link>
@@ -313,7 +312,7 @@ export default function Dashboard() {
       {/* ── Top Bar (Search & Actions) ── */}
       <motion.div variants={itemVariants} className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-[#863BFF] font-bold text-xs uppercase tracking-widest">
+          <div className="flex items-center gap-2 text-[#3B82F6] font-bold text-xs uppercase tracking-widest">
             <Logo className="w-4 h-4" />
             {greeting}
           </div>
@@ -334,7 +333,7 @@ export default function Dashboard() {
             </span>
             <button 
               onClick={handlePrintPoster}
-              className="ml-2 bg-[#863BFF]/10 hover:bg-[#863BFF]/20 border border-[#863BFF]/20 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider text-[#b370ff] transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+              className="ml-2 bg-[#3B82F6]/10 hover:bg-[#3B82F6]/20 border border-[#3B82F6]/20 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider text-[#60A5FA] transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
               title="Print Wall QR Poster"
             >
               <Printer className="w-3 h-3" />
@@ -360,7 +359,7 @@ export default function Dashboard() {
             <Link to="/subscriptions/new" title="Add Subscription" className="flex-1 sm:flex-none p-3.5 bg-[#1A1F2B] border border-white/5 rounded-2xl text-[#94A3B8] hover:text-[#F8FAFC] hover:border-white/10 transition-all active:scale-95 flex items-center justify-center">
               <CalendarPlus className="h-5 w-5" />
             </Link>
-            <Link to="/payments/new" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-2xl font-bold text-sm shadow-lg shadow-[#3B82F6]/20 transition-all active:scale-95">
+            <Link to="/payments/new" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-2xl font-bold text-sm transition-all active:scale-95">
               <CircleDollarSign className="h-5 w-5" strokeWidth={2.5} />
               <span className="sm:hidden lg:inline">Collect Payment</span>
             </Link>
@@ -411,8 +410,6 @@ export default function Dashboard() {
         <div className="xl:col-span-2 space-y-6 sm:space-y-8">
           {/* Chart Widget */}
           <motion.div variants={itemVariants} className="glass-card rounded-3xl p-6 sm:p-8 relative overflow-hidden group">
-            {/* Soft background glow */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-[#3B82F6]/5 rounded-full blur-3xl -z-10 transition-all duration-500 group-hover:bg-[#3B82F6]/10"></div>
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 relative z-10 gap-4">
               <div className="flex items-center gap-4">

@@ -33,8 +33,6 @@ export default function LightweightChart({ data, height = 300 }) {
               >
                 {/* Glowing top edge */}
                 <div className="absolute top-0 left-0 right-0 h-1 bg-white/40 rounded-t-xl" />
-                {/* Ambient glow behind bar */}
-                <div className="absolute inset-0 bg-[#3B82F6] blur-md opacity-0 group-hover:opacity-40 transition-opacity" />
               </motion.div>
             </div>
             

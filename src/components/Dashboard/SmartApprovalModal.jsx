@@ -137,9 +137,6 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           className="relative w-full max-w-xl bg-[#151922] border border-white/5 rounded-[2.5rem] p-6 sm:p-8 overflow-hidden shadow-2xl max-h-[90vh] flex flex-col justify-between"
         >
-          {/* Top subtle blur decoration */}
-          <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 blur-[80px] rounded-full pointer-events-none" />
-
           {/* Close button */}
           <button 
             onClick={onClose}

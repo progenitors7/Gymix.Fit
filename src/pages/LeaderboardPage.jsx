@@ -163,8 +163,7 @@ export default function LeaderboardPage() {
           {/* Podium and Standings Card */}
           <div className="lg:col-span-2 space-y-6">
             {/* 3D GLASSMORPHIC PODIUM */}
-            <div className="p-6 rounded-[2.5rem] bg-white/[0.01] border border-white/5 shadow-2xl relative overflow-hidden flex flex-col items-center">
-              <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#863BFF]/5 to-transparent blur-xl rounded-full pointer-events-none" />
+            <div className="p-6 rounded-[2.5rem] bg-white/[0.01] border border-white/5 relative overflow-hidden flex flex-col items-center">
               
               <div className="flex items-center gap-2 mb-6">
                 <span className="px-3.5 py-1 rounded-full bg-[#863BFF]/10 border border-[#863BFF]/20 text-[9px] font-black uppercase tracking-widest text-[#b370ff]">
@@ -183,7 +182,7 @@ export default function LeaderboardPage() {
                 
                 {/* RANK 2 (SILVER) */}
                 <div className="flex-1 flex flex-col items-center">
-                  <div className="w-12 h-12 rounded-full p-[2.5px] frame-silver-animated flex items-center justify-center shadow-lg relative mb-3">
+                  <div className="w-12 h-12 rounded-full p-[2.5px] bg-[#E2E8F0] border border-slate-500/20 flex items-center justify-center relative mb-3">
                     <div className="w-full h-full rounded-full bg-[#0F1117] flex items-center justify-center overflow-hidden">
                       {getPodiumMember(1).avatar_url ? (
                         <img src={getPodiumMember(1).avatar_url} alt="Rank 2" className="w-full h-full object-cover" />
@@ -205,8 +204,8 @@ export default function LeaderboardPage() {
                 {/* RANK 1 (GOLD) */}
                 <div className="flex-1 flex flex-col items-center transform -translate-y-4">
                   <div className="relative mb-3 flex flex-col items-center">
-                    <div className="absolute -top-4 text-[18px] z-20 animate-float-crown filter drop-shadow-[0_2px_4px_rgba(245,158,11,0.5)]">👑</div>
-                    <div className="w-16 h-16 rounded-full p-[3px] frame-gold-animated flex items-center justify-center shadow-2xl relative shadow-amber-400/15">
+                    <div className="absolute -top-4 text-[18px] z-20">👑</div>
+                    <div className="w-16 h-16 rounded-full p-[3px] bg-[#F59E0B] border border-amber-500/20 flex items-center justify-center relative">
                       <div className="w-full h-full rounded-full bg-[#0F1117] flex items-center justify-center overflow-hidden">
                         {getPodiumMember(0).avatar_url ? (
                           <img src={getPodiumMember(0).avatar_url} alt="Rank 1" className="w-full h-full object-cover" />
@@ -227,7 +226,7 @@ export default function LeaderboardPage() {
 
                 {/* RANK 3 (BRONZE) */}
                 <div className="flex-1 flex flex-col items-center">
-                  <div className="w-11 h-11 rounded-full p-[2px] frame-bronze-animated flex items-center justify-center shadow-lg relative mb-3 overflow-hidden">
+                  <div className="w-11 h-11 rounded-full p-[2px] bg-[#B45309] border border-amber-800/20 flex items-center justify-center relative mb-3 overflow-hidden">
                     <div className="w-full h-full rounded-full bg-[#0F1117] flex items-center justify-center overflow-hidden">
                       {getPodiumMember(2).avatar_url ? (
                         <img src={getPodiumMember(2).avatar_url} alt="Rank 3" className="w-full h-full object-cover" />
@@ -305,7 +304,7 @@ export default function LeaderboardPage() {
               exit={{ scale: 0.95, y: 20 }}
               className="w-full max-w-md bg-[#0F111A]/95 border border-white/10 rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden shadow-2xl"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#863BFF]/5 blur-2xl rounded-full pointer-events-none" />
+              {/* No blur decoration */}
               
               <div className="flex justify-between items-start mb-6">
                 <div className="flex items-center gap-3">
@@ -385,7 +384,7 @@ export default function LeaderboardPage() {
               exit={{ scale: 0.95, y: 20 }}
               className="w-full max-w-lg bg-[#0F111A]/95 border border-white/10 rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden shadow-2xl flex flex-col max-h-[85vh]"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#863BFF]/5 blur-2xl rounded-full pointer-events-none" />
+              {/* No blur decoration */}
               
               <div className="flex justify-between items-start mb-6">
                 <div className="flex items-center gap-3">

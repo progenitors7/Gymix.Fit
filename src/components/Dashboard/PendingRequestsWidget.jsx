@@ -74,8 +74,6 @@ export default function PendingRequestsWidget({ gymId, gymCode, onRefreshStats }
   if (requests.length === 0) {
     return (
       <div className="glass-card rounded-3xl p-6 sm:p-8 relative overflow-hidden group border border-white/5">
-        {/* Glow background decoration */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/[0.01] rounded-full blur-3xl -z-10" />
 
         <div className="flex items-center gap-4 mb-5 relative z-10">
           <div className="w-12 h-12 rounded-2xl bg-white/[0.03] flex items-center justify-center border border-white/5 text-slate-400">
@@ -99,8 +97,6 @@ export default function PendingRequestsWidget({ gymId, gymCode, onRefreshStats }
 
   return (
     <div className="glass-card rounded-3xl p-6 sm:p-8 relative overflow-hidden group">
-      {/* Glow background decoration */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -z-10" />
 
       <div className="flex items-center gap-4 mb-6 relative z-10">
         <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400 shadow-inner">

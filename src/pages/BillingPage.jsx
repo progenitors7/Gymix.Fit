@@ -334,7 +334,7 @@ export default function BillingPage() {
                   key={dur.months}
                   onClick={() => !isDurationDisabled && setSelectedDuration(dur)}
                   disabled={isDurationDisabled}
-                  className={`relative p-6 rounded-3xl border-2 transition-all duration-300 text-left group hover:scale-[1.02] active:scale-[0.98] ${
+                  className={`relative p-6 rounded-3xl border-2 transition-all duration-300 text-left group active:scale-[0.98] ${
                     selectedDuration.months === dur.months
                       ? 'bg-[#3390ec]/5 border-[#3390ec] shadow-xl shadow-[#3390ec]/20'
                       : 'bg-[#1c1c1c] border-white/5 hover:border-white/10 hover:bg-white/[0.02]'

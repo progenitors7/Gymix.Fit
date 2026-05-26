@@ -180,8 +180,7 @@ export default function AttendancePage() {
       {/* KPI STATS ROW */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {/* Active inside gym */}
-        <div className="backdrop-blur-md bg-[#12141c]/60 border border-emerald-500/20 p-6 rounded-3xl relative overflow-hidden group shadow-xl">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 blur-2xl rounded-full pointer-events-none" />
+        <div className="bg-[#12141c]/60 border border-emerald-500/20 p-6 rounded-3xl relative overflow-hidden group">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
               <Flame className="w-5 h-5 animate-pulse" />
@@ -194,8 +193,7 @@ export default function AttendancePage() {
         </div>
 
         {/* Total arrivals today */}
-        <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/5 p-6 rounded-3xl relative overflow-hidden group shadow-xl">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-[#863BFF]/5 blur-2xl rounded-full pointer-events-none" />
+        <div className="bg-[#12141c]/60 border border-white/5 p-6 rounded-3xl relative overflow-hidden group">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-[#863BFF]/10 flex items-center justify-center border border-[#863BFF]/20 text-[#b370ff]">
               <Users className="w-5 h-5" />
@@ -208,8 +206,7 @@ export default function AttendancePage() {
         </div>
 
         {/* Checked outs today */}
-        <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/5 p-6 rounded-3xl relative overflow-hidden group shadow-xl">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-sky-500/5 blur-2xl rounded-full pointer-events-none" />
+        <div className="bg-[#12141c]/60 border border-white/5 p-6 rounded-3xl relative overflow-hidden group">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-sky-500/10 flex items-center justify-center border border-sky-500/20 text-sky-400">
               <CheckCircle className="w-5 h-5" />
@@ -348,7 +345,7 @@ export default function AttendancePage() {
                             </div>
                           </div>
                         ) : (
-                          <span className="text-[9px] font-black uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.1)]">
+                          <span className="text-[9px] font-black uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
                             In Gym ⚡
                           </span>
                         )}

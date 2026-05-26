@@ -1172,9 +1172,7 @@ export default function SettingsPage() {
           </div>
         </Section>
 
-        {/* Danger Zone */}
         <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500">
@@ -1396,9 +1394,8 @@ export default function SettingsPage() {
                   </h4>
                   {selectedUserTicket.admin_response?.trim() ? (
                     <div className="bg-[#3390ec]/5 border border-[#3390ec]/15 rounded-2xl p-5 space-y-4 transition-all hover:bg-[#3390ec]/[0.08] relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-[#3390ec]/10 rounded-full blur-2xl pointer-events-none" />
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#3390ec] flex items-center justify-center text-white text-xs font-bold font-mono shadow-md shadow-[#3390ec]/20 shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-[#3390ec] flex items-center justify-center text-white text-xs font-bold font-mono shrink-0">
                           S
                         </div>
                         <div>
