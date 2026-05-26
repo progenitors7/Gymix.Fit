@@ -474,9 +474,9 @@ export default function MemberDashboard() {
     }
   }
 
-  // Draw high-resolution dynamic vertical story poster on HTML5 Canvas and download
-  const handleDownloadImage = () => {
-    if (!activeShareLog) return
+  // Helper to generate high-resolution dynamic vertical story poster on HTML5 Canvas
+  const generatePosterCanvas = () => {
+    if (!activeShareLog) return null
     
     const canvas = document.createElement('canvas')
     canvas.width = 720
@@ -625,15 +625,15 @@ export default function MemberDashboard() {
     const tW = ctx.measureText(prTitle).width + 30
     const tH = 30, tX = 360 - tW / 2, tY = 410, tR = 15
     ctx.beginPath()
-    ctx.arc(tX + tR, tY + tR, tR, Math.PI, Math.PI * 1.5)
+    ctx.moveTo(tX + tR, tY)
     ctx.lineTo(tX + tW - tR, tY)
-    ctx.arc(tX + tW - tR, tY + tR, tR, Math.PI * 1.5, Math.PI * 2)
-    ctx.lineTo(tX + tW, tY + h - r) // safe baseline line height
+    ctx.quadraticCurveTo(tX + tW, tY, tX + tW, tY + tR)
+    ctx.lineTo(tX + tW, tY + tH - tR)
     ctx.quadraticCurveTo(tX + tW, tY + tH, tX + tW - tR, tY + tH)
     ctx.lineTo(tX + tR, tY + tH)
     ctx.quadraticCurveTo(tX, tY + tH, tX, tY + tH - tR)
     ctx.lineTo(tX, tY + tR)
-    ctx.quadraticCurveTo(tX, tY, tX + r, tY) // curved correctly
+    ctx.quadraticCurveTo(tX, tY, tX + tR, tY)
     ctx.closePath()
     ctx.fill()
     ctx.stroke()
@@ -769,13 +769,64 @@ export default function MemberDashboard() {
     ctx.textAlign = 'center'
     ctx.fillText('⚡ POWERED BY GYMIX.FIT • JOIN THE CLUB ⚡', 360, 1150)
     
-    // Programmatic File Download (appended to body to support all major browsers)
+    return canvas
+  }
+
+  // Draw high-resolution dynamic vertical story poster and download as file
+  const handleDownloadImage = () => {
+    const canvas = generatePosterCanvas()
+    if (!canvas) return
+    
     const link = document.createElement('a')
     link.download = `${profile?.full_name?.replace(/\s+/g, '_') || 'athlete'}_${activeShareLog.exercise_name?.replace(/\s+/g, '_')}_PR.png`
     link.href = canvas.toDataURL('image/png')
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+  }
+
+  // Use Web Share API on mobile to share actual file, falls back to direct WhatsApp link on Desktop
+  const handleNativeShare = async () => {
+    const canvas = generatePosterCanvas()
+    if (!canvas) return
+    
+    const caption = `💪 Verified Lift: I just smashed a new ${activeShareLog.exercise_name} PR of ${activeShareLog.value} kg at ${membership?.gyms?.gym_name || 'My Gym'} on Gymix! Consistency Streak: ${streakCount} Days! 🔥 #Gymix #FitnessGoal`
+    
+    try {
+      if (navigator.share && navigator.canShare) {
+        canvas.toBlob(async (blob) => {
+          if (!blob) {
+            // Direct text share fallback
+            const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(caption)}`
+            window.open(waUrl, '_blank')
+            return
+          }
+          
+          const file = new File([blob], `${profile?.full_name?.replace(/\s+/g, '_') || 'athlete'}_PR.png`, { type: 'image/png' })
+          
+          if (navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({
+                files: [file],
+                title: 'My Gymix PR Achievement!',
+                text: caption
+              })
+            } catch (shareErr) {
+              console.log('Share dismissed or failed, fallback to direct text link', shareErr)
+              const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(caption)}`
+              window.open(waUrl, '_blank')
+            }
+          } else {
+            const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(caption)}`
+            window.open(waUrl, '_blank')
+          }
+        }, 'image/png')
+      }
+    } catch (err) {
+      console.error('Error sharing achievement:', err)
+      const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(caption)}`
+      window.open(waUrl, '_blank')
+    }
   }
 
   // Get dynamic athlete rank based on streaks
@@ -3182,15 +3233,23 @@ export default function MemberDashboard() {
                 </div>
               </div>
 
-              {/* ACTION BUTTONS (DOWNLOAD PNG POSTER IN 1-CLICK) */}
+              {/* ACTION BUTTONS (DOWNLOAD/SHARE PNG POSTER) */}
               <div className="w-full space-y-2.5 text-center">
-                <div className="flex gap-3.5 justify-center">
+                <div className="flex flex-wrap gap-2.5 justify-center">
+                  <button 
+                    onClick={handleNativeShare}
+                    className="px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-xl shadow-emerald-500/10 animate-in slide-in-from-bottom duration-300"
+                  >
+                    <Send className="w-4 h-4" />
+                    Share Story
+                  </button>
+
                   <button 
                     onClick={handleDownloadImage}
-                    className="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-xl shadow-amber-500/10"
+                    className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-xl shadow-amber-500/10 animate-in slide-in-from-bottom duration-300"
                   >
                     <Sparkles className="w-4 h-4 fill-black/25" />
-                    Download PNG Poster
+                    Download PNG
                   </button>
                   
                   <button 
@@ -3199,7 +3258,7 @@ export default function MemberDashboard() {
                       navigator.clipboard.writeText(shareText);
                       alert('Share text copied! Feel free to paste it into your caption or post.');
                     }}
-                    className="px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-lg animate-in slide-in-from-bottom duration-300"
+                    className="px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-lg animate-in slide-in-from-bottom duration-300"
                   >
                     <Copy className="w-4 h-4" />
                     Copy Caption
@@ -3210,7 +3269,7 @@ export default function MemberDashboard() {
                       setShareModalOpen(false);
                       setActiveShareLog(null);
                     }}
-                    className="px-5 py-3 rounded-xl bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/10 text-rose-400 text-xs font-black uppercase tracking-widest transition-all cursor-pointer active:scale-95 shadow-lg animate-in slide-in-from-bottom duration-300"
+                    className="px-4 py-3 rounded-xl bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/10 text-rose-400 text-xs font-black uppercase tracking-widest transition-all cursor-pointer active:scale-95 shadow-lg animate-in slide-in-from-bottom duration-300"
                   >
                     Close
                   </button>
