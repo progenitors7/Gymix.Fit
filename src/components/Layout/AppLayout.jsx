@@ -224,18 +224,17 @@ function BottomNav() {
   const { gym } = useGym()
   const { unreadCount } = useNotifications()
 
-  const hasAdminAccess = isSuperAdmin(user?.email)
   const isPaywalled = gym?.status === 'pending' || gym?.billing_status === 'expired'
 
+  // Core workflows for the Gym Owner's mobile bottom navigation bar
+  const ownerBottomNavPaths = ['/dashboard', '/scanner', '/members', '/subscriptions', '/payments']
+
   const visibleItems = NAV_ITEMS.filter(item => {
-    if (item.path === '/settings') return false
-    if (item.path === '/super-admin') return hasAdminAccess
-    // When paywalled, only show Billing in bottom nav
     if (isPaywalled) {
       return item.path === '/billing'
     }
-    return true
-  }).slice(0, 5) // Keep bottom nav to max 5 items for mobile
+    return ownerBottomNavPaths.includes(item.path)
+  })
 
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#1A1F2B]/90 backdrop-blur-xl border-t border-white/5 z-[100] pb-safe">
