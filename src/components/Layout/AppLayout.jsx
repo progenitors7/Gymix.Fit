@@ -237,11 +237,13 @@ function BottomNav() {
   })
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#1A1F2B]/90 backdrop-blur-xl border-t border-white/5 z-[100] pb-safe">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#1A1F2B] border-t border-white/5 z-[100] pb-safe shadow-lg">
       <div className="flex items-center justify-around h-full px-2">
         {visibleItems.map((item) => {
           const isActive = location.pathname === item.path
           const Icon = item.icon
+          const isOutlineOnly = item.path === '/scanner' || item.path === '/subscriptions'
+          
           return (
             <Link
               key={item.path}
@@ -251,20 +253,15 @@ function BottomNav() {
                 isActive ? "text-[#3B82F6]" : "text-[#94A3B8]"
               )}
             >
-              <motion.div 
-                animate={{ scale: isActive ? 1.1 : 1 }}
-                className="relative z-10"
-              >
-                <Icon className="w-5 h-5" />
-                {isActive && (
-                  <motion.div 
-                    layoutId="bottom-nav-indicator"
-                    className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#3B82F6]" 
-                  />
-                )}
-              </motion.div>
+              <div className="relative z-10">
+                <Icon 
+                  className="w-5 h-5 transition-transform duration-200 active:scale-90" 
+                  fill={isActive && !isOutlineOnly ? "currentColor" : "none"}
+                  strokeWidth={isActive && isOutlineOnly ? 2.5 : 2}
+                />
+              </div>
               {item.id === 'nav-notifications' && unreadCount > 0 && (
-                <span className="absolute top-1 right-1 flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-[#3B82F6] text-white text-[8px] font-bold z-20 shadow-lg">
+                <span className="absolute top-1.5 right-1.5 flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-[#3B82F6] text-white text-[8px] font-bold z-20 shadow-lg">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
