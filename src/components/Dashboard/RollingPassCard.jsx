@@ -67,13 +67,16 @@ export default function RollingPassCard({ membership }) {
       <div className="space-y-6 pt-2 w-full flex-1 flex flex-col justify-center items-center">
         {(!membership.gyms?.biometric_enabled || passMode === 'qr') ? (
           <div className="space-y-6 w-full flex flex-col items-center">
-            {/* QR Container (Flat border styling) */}
             <div className="relative w-48 h-48 sm:w-52 sm:h-52 mx-auto border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center bg-white shadow-md">
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrToken)}`}
-                alt="Gate Access Pass"
-                className="w-full h-full object-contain rounded-lg select-none"
-              />
+              {qrToken ? (
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrToken)}`}
+                  alt="Gate Access Pass"
+                  className="w-full h-full object-contain rounded-lg select-none"
+                />
+              ) : (
+                <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-500 rounded-full animate-spin" />
+              )}
             </div>
 
             <div className="space-y-1 pt-1">
