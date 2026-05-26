@@ -48,11 +48,6 @@ html, body, #root {
 
 /* mobile and tablet screen optimization */
 @media (max-width: 1024px) {
-  html, body, #root {
-    /* Prevent pinch zoom via touch interaction */
-    touch-action: pan-x pan-y;
-  }
-
   /* Hide scrollbars globally on all elements to match native apps */
   *::-webkit-scrollbar {
     display: none !important;

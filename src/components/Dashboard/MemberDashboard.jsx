@@ -660,7 +660,7 @@ export default function MemberDashboard() {
   const activeRank = getAthleteRank(streakCount)
 
   return (
-    <div className="h-full w-full bg-[#0F1117] text-slate-100 font-sans flex flex-col md:flex-row relative overflow-hidden">
+    <div className="min-h-screen bg-[#0F1117] text-slate-100 font-sans flex flex-col md:flex-row relative">
       {/* Sidebar Navigation */}
       <aside className="hidden md:block w-80 flex-shrink-0">
         <MemberSidebar
