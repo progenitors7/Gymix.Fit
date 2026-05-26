@@ -68,6 +68,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Automatic Recovery for Chunk Load / MIME Type Errors -->
+    <script>
+      window.addEventListener('error', function(e) {
+        var target = e.target;
+        if (target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
+          var reloadedKey = 'reload-attempts';
+          var attempts = parseInt(sessionStorage.getItem(reloadedKey) || '0', 10);
+          if (attempts < 2) {
+            sessionStorage.setItem(reloadedKey, (attempts + 1).toString());
+            window.location.reload();
+          }
+        }
+      }, true);
+    </script>
   </head>
   <body>
     <div id="root"></div>

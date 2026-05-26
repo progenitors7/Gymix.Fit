@@ -5,6 +5,7 @@ import App from './App.jsx'
 
 // Prevent Safari/Chrome mobile pinch-to-zoom gestures
 if (typeof window !== 'undefined') {
+  sessionStorage.removeItem('reload-attempts')
   document.addEventListener('gesturestart', (e) => {
     e.preventDefault()
   })
