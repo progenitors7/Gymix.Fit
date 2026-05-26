@@ -96,7 +96,7 @@ export default function PendingRequestsWidget({ gymId, gymCode, onRefreshStats }
   }
 
   return (
-    <div className="glass-card rounded-3xl p-6 sm:p-8 relative overflow-hidden group">
+    <div className="glass-card rounded-3xl p-6 sm:p-8 relative overflow-hidden group border-2 border-emerald-500/30">
 
       <div className="flex items-center gap-4 mb-6 relative z-10">
         <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400 shadow-inner">

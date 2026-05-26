@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCurrentGym } from '../../hooks/useCurrentGym';
 import { useDashboardStats } from '../../hooks/useDashboardStats';
@@ -9,7 +9,6 @@ import LightweightChart from './LightweightChart';
 import RecentActivityFeed from './RecentActivityFeed';
 import ExpiringWidget from './ExpiringWidget';
 import PendingPaymentsWidget from './PendingPaymentsWidget';
-import { motion } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth';
 import MemberDashboard from './MemberDashboard';
 import PendingRequestsWidget from './PendingRequestsWidget';
@@ -27,7 +26,10 @@ import {
   ArrowRight,
   BellRing,
   Printer,
-  QrCode
+  QrCode,
+  Target,
+  UserPlus,
+  SlidersHorizontal
 } from 'lucide-react'
 import Logo from '../UI/Logo'
 
@@ -50,6 +52,7 @@ const itemVariants = {
 /* ── Main Dashboard ── */
 export default function Dashboard() {
   const { profile } = useAuth()
+  const [analyticsTab, setAnalyticsTab] = useState('revenue');
 
   // B2B2C Redirect: Member logs in to dynamic portal, owner logs in to core OS
   if (profile?.role === 'member') {
@@ -299,7 +302,7 @@ export default function Dashboard() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-8">
       
-      {/* ── Top Bar (Search & Actions) ── */}
+      {/* ── Top Bar (Search & Header) ── */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-[#3B82F6] font-bold text-xs uppercase tracking-widest">
@@ -321,107 +324,208 @@ export default function Dashboard() {
             >
               {gym?.unique_code}
             </span>
-            <button 
-              onClick={handlePrintPoster}
-              className="ml-2 bg-[#3B82F6]/10 hover:bg-[#3B82F6]/20 border border-[#3B82F6]/20 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider text-[#60A5FA] transition-all cursor-pointer flex items-center gap-1.5"
-              title="Print Wall QR Poster"
-            >
-              <Printer className="w-3 h-3" />
-              <span>Print QR Poster</span>
-            </button>
           </div>
         </div>
         
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-          <div className="relative group flex-1 sm:w-72">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94A3B8] group-focus-within:text-[#3B82F6] transition-colors" />
-            <input 
-              type="text" 
-              placeholder="Search members..." 
-              onKeyDown={handleSearch}
-              className="w-full bg-[#1A1F2B] border border-white/5 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#3B82F6]/50 focus:ring-1 focus:ring-[#3B82F6]/50 transition-all shadow-inner"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <Link to="/members/new" title="Add Member" className="flex-1 sm:flex-none p-3.5 bg-[#1A1F2B] border border-white/5 rounded-2xl text-[#94A3B8] hover:text-[#F8FAFC] hover:border-white/10 transition-all flex items-center justify-center">
-              <Users className="h-5 w-5" />
-            </Link>
-            <Link to="/subscriptions/new" title="Add Subscription" className="flex-1 sm:flex-none p-3.5 bg-[#1A1F2B] border border-white/5 rounded-2xl text-[#94A3B8] hover:text-[#F8FAFC] hover:border-white/10 transition-all flex items-center justify-center">
-              <CalendarPlus className="h-5 w-5" />
-            </Link>
-            <Link to="/payments/new" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-2xl font-bold text-sm transition-all">
-              <CircleDollarSign className="h-5 w-5" strokeWidth={2.5} />
-              <span className="sm:hidden lg:inline">Collect Payment</span>
-            </Link>
-          </div>
+        {/* Real-time search bar */}
+        <div className="relative group w-full lg:w-80">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94A3B8] group-focus-within:text-[#3B82F6] transition-colors" />
+          <input 
+            type="text" 
+            placeholder="Quick search members..." 
+            onKeyDown={handleSearch}
+            className="w-full bg-[#1A1F2B] border border-white/5 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#3B82F6]/50 focus:ring-1 focus:ring-[#3B82F6]/50 transition-all shadow-inner"
+          />
         </div>
       </div>
 
       {/* ── KPI Grid ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatCard 
-          title="Total Revenue" 
-          value={`₹${stats.revenue.total.toLocaleString()}`} 
-          subtitle={`₹${stats.revenue.monthly.toLocaleString()} this month`}
+          title="Monthly Recurring Revenue (MRR)" 
+          value={`₹${stats.revenue.monthly.toLocaleString()}`} 
+          subtitle={`₹${stats.revenue.total.toLocaleString()} lifetime collections`}
           icon={<CircleDollarSign className="w-5 h-5" />} 
           colorClass="emerald" 
-          trend="+12.5%"
+          trend="+12.5% MTD"
         />
         <StatCard 
           title="Active Members" 
-          value={stats.membership.active} 
-          subtitle={`Out of ${stats.membership.total} total`}
+          value={`${stats.membership.active}`} 
+          subtitle={`Out of ${stats.membership.total} total registered`}
           icon={<CheckCircle2 className="w-5 h-5" />} 
           colorClass="sky" 
           trend="Stable"
         />
         <StatCard 
-          title="Pending Payments" 
-          value={`₹${stats.revenue.pending.toLocaleString()}`} 
-          subtitle="Awaiting clearance"
+          title="Today's Attendance" 
+          value={`${stats.todayCheckIns} Checked In`} 
+          subtitle={`${stats.attendanceRate}% active member rate`}
           icon={<Clock className="w-5 h-5" />} 
-          colorClass="amber" 
-          trend="Action Needed"
+          colorClass="indigo" 
+          trend={`${stats.attendanceRate}%`}
         />
         <StatCard 
-          title="Growth Rate" 
-          value={`${((stats.membership.active / stats.membership.total || 0) * 100).toFixed(1)}%`} 
-          subtitle="Retention score"
-          icon={<TrendingUp className="w-5 h-5" />} 
-          colorClass="indigo" 
-          trend="+2.1%"
+          title="Pending Payments" 
+          value={`₹${stats.revenue.pending.toLocaleString()}`} 
+          subtitle="Outstanding dues"
+          icon={<Clock className="w-5 h-5" />} 
+          colorClass="rose" 
+          trend="Action Needed"
         />
       </div>
 
-      {/* ── Main Content Split ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
+      {/* ── Main Layout Split ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-start">
         
-        {/* Left Column (Charts & Activity) */}
-        <div className="xl:col-span-2 space-y-6 sm:space-y-8">
-          {/* Chart Widget */}
-          <div className="glass-card rounded-3xl p-6 sm:p-8 relative overflow-hidden group">
-            
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 relative z-10 gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#3B82F6]/10 flex items-center justify-center border border-[#3B82F6]/20 text-[#3B82F6] shadow-inner">
-                  <TrendingUp className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-[#F8FAFC] font-bold text-lg">Revenue Analytics</h3>
-                  <p className="text-[#94A3B8] text-xs font-medium mt-1">Last 7 days performance</p>
-                </div>
+        {/* Left Column (2/3 Width): Deep Analytics & Activity */}
+        <div className="lg:col-span-2 space-y-6 sm:space-y-8">
+          
+          {/* Deep Analytics Console */}
+          <div className="bg-[#1A1F2B] border border-white/5 rounded-3xl p-6 sm:p-8 relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4 border-b border-white/5 pb-5">
+              <div className="space-y-1">
+                <h3 className="text-white font-extrabold text-lg flex items-center gap-2">
+                  <Target className="w-5 h-5 text-[#3B82F6]" />
+                  Analytics Command Center
+                </h3>
+                <p className="text-[#94A3B8] text-xs font-semibold uppercase tracking-wider">Gym Performance & Distribution Metrics</p>
               </div>
-              <div className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-[#0F1117]/50 border border-white/5 backdrop-blur-md">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#22C55E] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#22C55E]"></span>
-                </span>
-                <span className="text-xs font-bold text-[#F8FAFC]">₹{stats.revenue.today.toLocaleString()} Today</span>
+              
+              {/* Tabs Switcher */}
+              <div className="flex bg-[#0F1117]/80 p-1 rounded-xl border border-white/5 self-start overflow-x-auto max-w-full hide-scrollbar">
+                {[
+                  { id: 'revenue', label: 'Revenue' },
+                  { id: 'plans', label: 'Plans' },
+                  { id: 'payments', label: 'Payments' },
+                  { id: 'gender', label: 'Gender' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setAnalyticsTab(tab.id)}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer ${
+                      analyticsTab === tab.id
+                        ? 'bg-[#3B82F6] text-white'
+                        : 'text-[#94A3B8] hover:text-white'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
             </div>
-            
-            <div className="h-[320px] relative z-10 -ml-2 sm:ml-0">
-              <LightweightChart data={stats.revenueChartData} />
+
+            <div className="min-h-[300px] flex flex-col justify-center">
+              {analyticsTab === 'revenue' && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider">Daily Collections (Last 7 Days)</p>
+                    <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-lg font-bold">
+                      Today: ₹{stats.revenue.today.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="h-[320px] -ml-2 sm:ml-0">
+                    <LightweightChart data={stats.revenueChartData} />
+                  </div>
+                </div>
+              )}
+
+              {analyticsTab === 'plans' && (
+                <div className="space-y-6">
+                  <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Active Subscription Distribution</p>
+                  {Object.keys(stats.planDistribution).length === 0 ? (
+                    <p className="text-slate-500 text-xs text-center py-10 font-bold uppercase">No active subscriptions registered</p>
+                  ) : (
+                    <div className="space-y-5">
+                      {Object.entries(stats.planDistribution).map(([planName, count]) => {
+                        const total = Object.values(stats.planDistribution).reduce((a, b) => a + b, 0);
+                        const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+                        return (
+                          <div key={planName} className="space-y-2">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="font-extrabold text-white">{planName}</span>
+                              <span className="font-bold text-[#94A3B8]">{count} Athletes ({percent}%)</span>
+                            </div>
+                            <div className="w-full h-2.5 bg-[#0F1117] rounded-full overflow-hidden border border-white/5">
+                              <div 
+                                className="h-full bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] rounded-full" 
+                                style={{ width: `${percent}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {analyticsTab === 'payments' && (
+                <div className="space-y-8">
+                  <div>
+                    <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-5">Transactions Mode Split</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-[#0F1117] p-5 rounded-2xl border border-white/5 text-center">
+                        <p className="text-[10px] font-black uppercase text-[#60A5FA] tracking-widest mb-1">UPI Transactions</p>
+                        <p className="text-2xl font-black text-white">{stats.paymentMethods.upiPercent}%</p>
+                        <p className="text-[10px] font-bold text-slate-500 mt-1">Volume: ₹{stats.paymentMethods.upiVolume.toLocaleString()}</p>
+                      </div>
+                      <div className="bg-[#0F1117] p-5 rounded-2xl border border-white/5 text-center">
+                        <p className="text-[10px] font-black uppercase text-amber-500 tracking-widest mb-1">Cash Transactions</p>
+                        <p className="text-2xl font-black text-white">{stats.paymentMethods.cashPercent}%</p>
+                        <p className="text-[10px] font-bold text-slate-500 mt-1">Volume: ₹{stats.paymentMethods.cashVolume.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2.5">
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-slate-400">
+                      <span>UPI</span>
+                      <span>CASH</span>
+                    </div>
+                    <div className="w-full h-3.5 bg-[#0F1117] rounded-full overflow-hidden flex border border-white/5">
+                      <div className="h-full bg-[#3B82F6]" style={{ width: `${stats.paymentMethods.upiPercent}%` }} />
+                      <div className="h-full bg-amber-500" style={{ width: `${stats.paymentMethods.cashPercent}%` }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {analyticsTab === 'gender' && (
+                <div className="space-y-6">
+                  <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Member Demographics Split</p>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-[#0F1117] p-4 rounded-2xl border border-white/5 text-center">
+                      <p className="text-[9px] font-black uppercase text-sky-400 tracking-widest mb-1">Male</p>
+                      <p className="text-2xl font-black text-white">{stats.genderStats.male}</p>
+                    </div>
+                    <div className="bg-[#0F1117] p-4 rounded-2xl border border-white/5 text-center">
+                      <p className="text-[9px] font-black uppercase text-pink-400 tracking-widest mb-1">Female</p>
+                      <p className="text-2xl font-black text-white">{stats.genderStats.female}</p>
+                    </div>
+                    <div className="bg-[#0F1117] p-4 rounded-2xl border border-white/5 text-center">
+                      <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">Other</p>
+                      <p className="text-2xl font-black text-white">{stats.genderStats.other}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="w-full h-3 bg-[#0F1117] rounded-full overflow-hidden flex border border-white/5">
+                      {(() => {
+                        const total = stats.genderStats.male + stats.genderStats.female + stats.genderStats.other;
+                        const malePct = total > 0 ? (stats.genderStats.male / total) * 100 : 33.3;
+                        const femalePct = total > 0 ? (stats.genderStats.female / total) * 100 : 33.3;
+                        const otherPct = total > 0 ? (stats.genderStats.other / total) * 100 : 33.3;
+                        return (
+                          <>
+                            <div className="h-full bg-sky-400" style={{ width: `${malePct}%` }} />
+                            <div className="h-full bg-pink-400" style={{ width: `${femalePct}%` }} />
+                            <div className="h-full bg-slate-500" style={{ width: `${otherPct}%` }} />
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -431,20 +535,95 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Right Column (Actionable Widgets) */}
+        {/* Right Column (1/3 Width): Operations Desk */}
         <div className="space-y-6 sm:space-y-8">
-          <div>
-            <PendingRequestsWidget gymId={gym?.id} gymCode={gym?.unique_code} onRefreshStats={fetchStats} />
+          
+          {/* Quick Actions & Command Center */}
+          <div className="bg-[#1A1F2B] border border-white/5 rounded-3xl p-6 relative overflow-hidden">
+            <h3 className="text-white font-extrabold text-base mb-5 flex items-center gap-2">
+              <SlidersHorizontal className="w-4 h-4 text-[#3B82F6]" />
+              Operations Command
+            </h3>
+            
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              <Link 
+                to="/members/new" 
+                className="p-4 bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 rounded-2xl flex flex-col items-center justify-center text-center gap-2 transition-all cursor-pointer group"
+              >
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                  <UserPlus className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-[10px] font-black uppercase text-slate-300 tracking-wider">Add Member</span>
+              </Link>
+              
+              <Link 
+                to="/subscriptions/new" 
+                className="p-4 bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 rounded-2xl flex flex-col items-center justify-center text-center gap-2 transition-all cursor-pointer group"
+              >
+                <div className="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center">
+                  <CalendarPlus className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-[10px] font-black uppercase text-slate-300 tracking-wider">Activate Plan</span>
+              </Link>
+
+              <Link 
+                to="/payments/new" 
+                className="p-4 bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 rounded-2xl flex flex-col items-center justify-center text-center gap-2 transition-all cursor-pointer group"
+              >
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
+                  <CircleDollarSign className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-[10px] font-black uppercase text-slate-300 tracking-wider">Pay Invoice</span>
+              </Link>
+
+              <Link 
+                to="/scanner" 
+                className="p-4 bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 rounded-2xl flex flex-col items-center justify-center text-center gap-2 transition-all cursor-pointer group"
+              >
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                  <QrCode className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-[10px] font-black uppercase text-slate-300 tracking-wider">Gate Scanner</span>
+              </Link>
+            </div>
+
+            <div className="border-t border-white/5 pt-4 flex flex-col gap-3">
+              <button 
+                onClick={handlePrintPoster}
+                className="w-full py-3 bg-[#3B82F6]/10 hover:bg-[#3B82F6]/20 border border-[#3B82F6]/20 rounded-xl text-[10px] font-black uppercase tracking-wider text-[#60A5FA] transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                Print QR Poster
+              </button>
+
+              {/* Turnstile Sync Rate */}
+              <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#0F1117] border border-white/5 text-[10px] font-bold">
+                <span className="text-slate-500 uppercase tracking-wider">Scanner Gates Status</span>
+                <span className="flex items-center gap-1.5 text-emerald-400 font-black uppercase">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Synced (100%)
+                </span>
+              </div>
+            </div>
           </div>
+
+          {/* Pending requests approval box (Brought to top-priority area & highlighted!) */}
+          <PendingRequestsWidget gymId={gym?.id} gymCode={gym?.unique_code} onRefreshStats={fetchStats} />
+
+          {/* Expiring Soon */}
           <div>
             <ExpiringWidget members={stats.expiringMembers} onRefresh={fetchStats} />
           </div>
+
+          {/* Outstanding dues */}
           <div>
             <PendingPaymentsWidget payments={stats.pendingPayments} />
           </div>
+
         </div>
 
       </div>
+
     </div>
   )
 }

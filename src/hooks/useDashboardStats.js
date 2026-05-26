@@ -121,6 +121,19 @@ export function useDashboardStats() {
       next3Days.setDate(today.getDate() + 3);
       const next3DaysStr = getLocalDateString(next3Days);
 
+      // --- Fetch Today's Check-ins ---
+      const todayStartISO = `${todayStr}T00:00:00.000Z`;
+      const todayEndISO = `${todayStr}T23:59:59.999Z`;
+      const { data: attendanceToday, error: attendanceError } = await supabase
+        .from('attendance')
+        .select('id')
+        .eq('gym_id', gym.id)
+        .gte('check_in_time', todayStartISO)
+        .lte('check_in_time', todayEndISO);
+
+      if (attendanceError) console.error('Error fetching today attendance:', attendanceError);
+      const todayCheckIns = (attendanceToday ?? []).length;
+
       // --- Membership Metrics ---
       const membershipStats = {
         total: members.length,
@@ -129,11 +142,20 @@ export function useDashboardStats() {
         expired: members.filter(m => m.status === 'expired').length,
       };
 
+      const activeMembersCount = membershipStats.active;
+      const attendanceRate = activeMembersCount > 0 ? Number(((todayCheckIns / activeMembersCount) * 100).toFixed(1)) : 0;
+
       // --- Revenue Metrics ---
       let totalRevenue = 0;
       let monthlyRevenue = 0;
       let todayRevenue = 0;
       let pendingAmount = 0;
+
+      // UPI vs Cash split
+      let upiVolume = 0;
+      let cashVolume = 0;
+      let upiCount = 0;
+      let cashCount = 0;
 
       paymentsList.forEach(p => {
         const amount = Number(p.amount_paid);
@@ -141,16 +163,62 @@ export function useDashboardStats() {
           totalRevenue += amount;
           if (p.payment_date >= startOfMonth) monthlyRevenue += amount;
           if (p.payment_date === todayStr) todayRevenue += amount;
+
+          // Compute payment method splits
+          const method = (p.payment_method || 'cash').toLowerCase();
+          if (method.includes('upi') || method.includes('gpay') || method.includes('phonepe') || method.includes('online')) {
+            upiVolume += amount;
+            upiCount++;
+          } else {
+            cashVolume += amount;
+            cashCount++;
+          }
         } else if (p.payment_status === 'pending' || p.payment_status === 'overdue') {
           pendingAmount += amount;
         }
       });
+
+      const totalPaidCount = upiCount + cashCount;
+      const paymentMethods = {
+        upiPercent: totalPaidCount > 0 ? Math.round((upiCount / totalPaidCount) * 100) : 0,
+        cashPercent: totalPaidCount > 0 ? Math.round((cashCount / totalPaidCount) * 100) : 0,
+        upiVolume,
+        cashVolume
+      };
 
       const revenueStats = {
         total: totalRevenue,
         monthly: monthlyRevenue,
         today: todayRevenue,
         pending: pendingAmount,
+      };
+
+      // --- Membership Tier Distribution ---
+      const planDistribution = {};
+      members.forEach(m => {
+        if (m.status === 'active') {
+          const planName = m.membership_plan || 'General Access';
+          planDistribution[planName] = (planDistribution[planName] || 0) + 1;
+        }
+      });
+
+      // --- Gender Demographic Splits ---
+      let maleCount = 0;
+      let femaleCount = 0;
+      let otherGenderCount = 0;
+      members.forEach(m => {
+        if (m.status === 'active') {
+          const gender = (m.gender || 'male').toLowerCase();
+          if (gender === 'male') maleCount++;
+          else if (gender === 'female') femaleCount++;
+          else otherGenderCount++;
+        }
+      });
+
+      const genderStats = {
+        male: maleCount,
+        female: femaleCount,
+        other: otherGenderCount
       };
 
       // --- Widgets Data ---
@@ -186,7 +254,6 @@ export function useDashboardStats() {
       .slice(0, 8); // top 8 activities
 
       // --- Lightweight Chart Data (Revenue Trend last 7 days) ---
-      // Build a map of the last 7 days
       const chartDataMap = {};
       for (let i = 6; i >= 0; i--) {
         const d = new Date(today);
@@ -211,7 +278,12 @@ export function useDashboardStats() {
         expiringMembers: expiringMembersList,
         recentActivity: recentActivity,
         revenueChartData: revenueChartData,
-        pendingRequestsCount: pendingRequestsCount || 0
+        pendingRequestsCount: pendingRequestsCount || 0,
+        todayCheckIns,
+        attendanceRate,
+        planDistribution,
+        paymentMethods,
+        genderStats
       });
 
     } catch (err) {
