@@ -470,7 +470,6 @@ export default function MemberDashboard() {
           shadow: 'shadow-purple-500/20 shadow-[0_0_40px_rgba(134,59,255,0.15)]',
           titleColor: 'text-purple-400',
           statColor: 'text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-300 to-indigo-400',
-          gymColor: 'text-emerald-400'
         }
     }
   }
@@ -487,42 +486,62 @@ export default function MemberDashboard() {
     // Draw background gradient
     const grad = ctx.createLinearGradient(0, 0, 720, 1280)
     if (shareTheme === 'volcano') {
-      grad.addColorStop(0, '#140b08')
-      grad.addColorStop(0.5, '#22100d')
-      grad.addColorStop(1, '#1c0c1e')
+      grad.addColorStop(0, '#120705')
+      grad.addColorStop(0.5, '#1e0a07')
+      grad.addColorStop(1, '#140616')
     } else if (shareTheme === 'emerald') {
-      grad.addColorStop(0, '#07130e')
-      grad.addColorStop(0.5, '#0d2217')
-      grad.addColorStop(1, '#1a0f24')
+      grad.addColorStop(0, '#040d0a')
+      grad.addColorStop(0.5, '#081a11')
+      grad.addColorStop(1, '#12091a')
     } else {
-      grad.addColorStop(0, '#0c0e17')
-      grad.addColorStop(0.5, '#121424')
-      grad.addColorStop(1, '#1c111e')
+      grad.addColorStop(0, '#07080f')
+      grad.addColorStop(0.5, '#0c0d1b')
+      grad.addColorStop(1, '#150a18')
     }
     ctx.fillStyle = grad
     ctx.fillRect(0, 0, 720, 1280)
+
+    // Draw a premium cyber background grid
+    ctx.save()
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.012)'
+    ctx.lineWidth = 1
+    // Vertical grid lines
+    for (let gx = 0; gx < 720; gx += 40) {
+      ctx.beginPath()
+      ctx.moveTo(gx, 0)
+      ctx.lineTo(gx, 1280)
+      ctx.stroke()
+    }
+    // Horizontal grid lines
+    for (let gy = 0; gy < 1280; gy += 40) {
+      ctx.beginPath()
+      ctx.moveTo(0, gy)
+      ctx.lineTo(720, gy)
+      ctx.stroke()
+    }
+    ctx.restore()
     
     // Draw radial glowing backgrounds
     const themeStyle = getThemeStyles(shareTheme)
     
-    const radial1 = ctx.createRadialGradient(100, 200, 0, 100, 200, 400)
-    radial1.addColorStop(0, themeStyle.glow1.replace('0.1', '0.25'))
+    const radial1 = ctx.createRadialGradient(100, 200, 0, 100, 200, 500)
+    radial1.addColorStop(0, themeStyle.glow1.replace('0.1', '0.35'))
     radial1.addColorStop(1, 'rgba(0,0,0,0)')
     ctx.fillStyle = radial1
     ctx.fillRect(0, 0, 720, 1280)
 
-    const radial2 = ctx.createRadialGradient(620, 1080, 0, 620, 1080, 400)
-    radial2.addColorStop(0, themeStyle.glow2.replace('0.1', '0.25'))
+    const radial2 = ctx.createRadialGradient(620, 1080, 0, 620, 1080, 500)
+    radial2.addColorStop(0, themeStyle.glow2.replace('0.1', '0.35'))
     radial2.addColorStop(1, 'rgba(0,0,0,0)')
     ctx.fillStyle = radial2
     ctx.fillRect(0, 0, 720, 1280)
     
     // Central Glass Panel
     ctx.save()
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'
-    ctx.shadowBlur = 50
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.02)'
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)'
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.7)'
+    ctx.shadowBlur = 60
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.025)'
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.09)'
     ctx.lineWidth = 2
     
     const x = 70, y = 140, w = 580, h = 960, r = 48
@@ -541,21 +560,42 @@ export default function MemberDashboard() {
     ctx.stroke()
     ctx.restore()
     
-    // Draw Header: Logo & Branding
+    // Draw Gymix SVG Logo Symbol
+    ctx.save()
+    ctx.translate(110, 175)
+    ctx.scale(0.7, 0.7)
+    const logoGrad = ctx.createLinearGradient(0, 0, 48, 46)
+    if (shareTheme === 'volcano') {
+      logoGrad.addColorStop(0, '#EF4444')
+      logoGrad.addColorStop(1, '#F59E0B')
+    } else if (shareTheme === 'emerald') {
+      logoGrad.addColorStop(0, '#10B981')
+      logoGrad.addColorStop(1, '#34D399')
+    } else {
+      logoGrad.addColorStop(0, '#863BFF')
+      logoGrad.addColorStop(1, '#C084FC')
+    }
+    ctx.fillStyle = logoGrad
+    ctx.shadowColor = shareTheme === 'volcano' ? 'rgba(239,68,68,0.45)' : (shareTheme === 'emerald' ? 'rgba(16,185,129,0.45)' : 'rgba(134,59,255,0.45)')
+    ctx.shadowBlur = 12
+    ctx.fill(new Path2D("M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z"))
+    ctx.restore()
+
+    // Branding text (offset right of logo)
     ctx.fillStyle = '#FFFFFF'
-    ctx.font = 'bold 24px sans-serif'
+    ctx.font = '900 italic 26px sans-serif'
     ctx.textAlign = 'left'
-    ctx.fillText('AthletOS', 110, 205)
+    ctx.fillText('Gymix', 155, 202)
     
     ctx.fillStyle = '#64748B'
-    ctx.font = '900 12px sans-serif'
-    ctx.fillText('MEMBER TERMINAL', 110, 228)
+    ctx.font = '900 11px sans-serif'
+    ctx.fillText('ATHLETE TERMINAL', 155, 222)
     
-    // Draw Verified Stamp
+    // Draw Verified Stamp Capsule
     ctx.fillStyle = 'rgba(16, 185, 129, 0.08)'
     ctx.strokeStyle = 'rgba(16, 185, 129, 0.25)'
     ctx.lineWidth = 1.5
-    const bX = 430, bY = 175, bW = 180, bH = 46, bR = 23
+    const bX = 440, bY = 178, bW = 170, bH = 40, bR = 20
     ctx.beginPath()
     ctx.moveTo(bX + bR, bY)
     ctx.lineTo(bX + bW - bR, bY)
@@ -571,84 +611,171 @@ export default function MemberDashboard() {
     ctx.stroke()
     
     ctx.fillStyle = '#10B981'
-    ctx.font = 'black 14px sans-serif'
+    ctx.font = '900 13px sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText('✓ GymOS Verified', 520, 203)
+    ctx.fillText('✓ Gymix Verified', bX + bW / 2, bY + 25)
     
-    // Draw PR Content
-    ctx.fillStyle = '#64748B'
-    ctx.font = '900 15px sans-serif'
-    ctx.fillText(activeShareLog.log_type === 'PR' ? 'NEW PERSONAL RECORD' : 'BODY WEIGHT UPDATE', 360, 440)
+    // Draw PR Content Type Capsule
+    const prTitle = activeShareLog.log_type === 'PR' ? 'NEW PERSONAL RECORD' : 'BODY WEIGHT UPDATE'
+    ctx.font = '900 13px sans-serif'
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.04)'
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
+    ctx.lineWidth = 1
+    ctx.textAlign = 'center'
+    const tW = ctx.measureText(prTitle).width + 30
+    const tH = 30, tX = 360 - tW / 2, tY = 410, tR = 15
+    ctx.beginPath()
+    ctx.arc(tX + tR, tY + tR, tR, Math.PI, Math.PI * 1.5)
+    ctx.lineTo(tX + tW - tR, tY)
+    ctx.arc(tX + tW - tR, tY + tR, tR, Math.PI * 1.5, Math.PI * 2)
+    ctx.lineTo(tX + tW, tY + h - r) // safe baseline line height
+    ctx.quadraticCurveTo(tX + tW, tY + tH, tX + tW - tR, tY + tH)
+    ctx.lineTo(tX + tR, tY + tH)
+    ctx.quadraticCurveTo(tX, tY + tH, tX, tY + tH - tR)
+    ctx.lineTo(tX, tY + tR)
+    ctx.quadraticCurveTo(tX, tY, tX + r, tY) // curved correctly
+    ctx.closePath()
+    ctx.fill()
+    ctx.stroke()
     
+    ctx.fillStyle = '#94A3B8'
+    ctx.fillText(prTitle, 360, 429)
+    
+    // Exercise Name with high contrast neon drop-shadow
+    ctx.save()
     ctx.fillStyle = '#FFFFFF'
-    ctx.font = '900 italic 38px sans-serif'
+    ctx.font = '900 italic 42px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.shadowColor = shareTheme === 'volcano' ? 'rgba(244,63,94,0.3)' : (shareTheme === 'emerald' ? 'rgba(16,185,129,0.3)' : 'rgba(134,59,255,0.3)')
+    ctx.shadowBlur = 15
     ctx.fillText(activeShareLog.exercise_name.toUpperCase(), 360, 495)
+    ctx.restore()
     
-    // Main PR weight value
-    ctx.font = '900 italic 124px sans-serif'
-    if (shareTheme === 'volcano') ctx.fillStyle = '#F43F5E'
-    else if (shareTheme === 'emerald') ctx.fillStyle = '#10B981'
-    else ctx.fillStyle = '#A855F7'
-    ctx.fillText(`${activeShareLog.value}`, 360, 640)
+    // Main PR value centered baseline layout
+    const valStr = `${activeShareLog.value}`
+    ctx.save()
+    ctx.font = '900 italic 136px sans-serif'
+    const valWidth = ctx.measureText(valStr).width
     
+    ctx.font = '900 italic 36px sans-serif'
+    const unitWidth = ctx.measureText(' kg').width
+    
+    const totalWidth = valWidth + unitWidth
+    const startX = 360 - totalWidth / 2
+    
+    ctx.textAlign = 'left'
+    ctx.font = '900 italic 136px sans-serif'
+    
+    // Value text metallic gradient
+    const valGrad = ctx.createLinearGradient(startX, 0, startX + valWidth, 0)
+    if (shareTheme === 'volcano') {
+      valGrad.addColorStop(0, '#FFFFFF')
+      valGrad.addColorStop(1, '#EF4444')
+    } else if (shareTheme === 'emerald') {
+      valGrad.addColorStop(0, '#FFFFFF')
+      valGrad.addColorStop(1, '#10B981')
+    } else {
+      valGrad.addColorStop(0, '#FFFFFF')
+      valGrad.addColorStop(1, '#863BFF')
+    }
+    ctx.fillStyle = valGrad
+    
+    ctx.shadowColor = shareTheme === 'volcano' ? 'rgba(239,68,68,0.45)' : (shareTheme === 'emerald' ? 'rgba(16,185,129,0.45)' : 'rgba(134,59,255,0.45)')
+    ctx.shadowBlur = 25
+    ctx.fillText(valStr, startX, 640)
+    ctx.restore()
+    
+    // kg unit
     ctx.fillStyle = '#64748B'
-    ctx.font = 'bold italic 28px sans-serif'
-    ctx.fillText('kg', 360, 690)
+    ctx.font = '900 italic 36px sans-serif'
+    ctx.textAlign = 'left'
+    ctx.fillText(' kg', startX + valWidth, 640)
 
     if (activeShareLog.notes) {
-      ctx.fillStyle = '#94A3B8'
+      // Notes background quote box
+      ctx.save()
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.015)'
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'
+      ctx.lineWidth = 1
+      const qW = 440, qH = 50, qX = 360 - qW/2, qY = 705, qR = 12
+      ctx.beginPath()
+      ctx.moveTo(qX + qR, qY)
+      ctx.lineTo(qX + qW - qR, qY)
+      ctx.quadraticCurveTo(qX + qW, qY, qX + qW, qY + qR)
+      ctx.lineTo(qX + qW, qY + qH - qR)
+      ctx.quadraticCurveTo(qX + qW, qY + qH, qX + qW - qR, qY + qH)
+      ctx.lineTo(qX + qR, qY + qH)
+      ctx.quadraticCurveTo(qX, qY + qH, qX, qY + qH - qR)
+      ctx.lineTo(qX, qY + qR)
+      ctx.quadraticCurveTo(qX, qY, qX + qR, qY)
+      ctx.closePath()
+      ctx.fill()
+      ctx.stroke()
+      ctx.restore()
+
+      ctx.fillStyle = '#E2E8F0'
       ctx.font = 'italic bold 20px sans-serif'
-      ctx.fillText(`“${activeShareLog.notes}”`, 360, 750)
+      ctx.textAlign = 'center'
+      ctx.fillText(`“${activeShareLog.notes}”`, 360, 737)
     }
     
-    // Divider line
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)'
+    // Fading Gradient Divider Line
+    const divGrad = ctx.createLinearGradient(110, 0, 610, 0)
+    divGrad.addColorStop(0, 'rgba(255,255,255,0)')
+    divGrad.addColorStop(0.2, 'rgba(255,255,255,0.06)')
+    divGrad.addColorStop(0.5, 'rgba(255,255,255,0.15)')
+    divGrad.addColorStop(0.8, 'rgba(255,255,255,0.06)')
+    divGrad.addColorStop(1, 'rgba(255,255,255,0)')
+    ctx.strokeStyle = divGrad
+    ctx.lineWidth = 2
     ctx.beginPath()
-    ctx.moveTo(110, 840)
-    ctx.lineTo(610, 840)
+    ctx.moveTo(110, 830)
+    ctx.lineTo(610, 830)
     ctx.stroke()
     
     // Draw Footer Statistics
     ctx.fillStyle = '#64748B'
     ctx.font = '900 13px sans-serif'
     ctx.textAlign = 'left'
-    ctx.fillText('ATHLETE IDENTITY', 110, 885)
+    ctx.fillText('ATHLETE IDENTITY', 110, 880)
     ctx.textAlign = 'right'
     ctx.fillStyle = '#FFFFFF'
-    ctx.font = 'bold 16px sans-serif'
-    ctx.fillText(profile?.full_name || 'Athlete', 610, 885)
+    ctx.font = 'bold 18px sans-serif'
+    ctx.fillText(profile?.full_name || 'Athlete', 610, 880)
     
     ctx.fillStyle = '#64748B'
     ctx.font = '900 13px sans-serif'
     ctx.textAlign = 'left'
-    ctx.fillText('CONSISTENCY STREAK', 110, 940)
+    ctx.fillText('CONSISTENCY STREAK', 110, 935)
     ctx.textAlign = 'right'
     ctx.fillStyle = '#F97316'
-    ctx.font = 'black 16px sans-serif'
-    ctx.fillText(`🔥 ${streakCount} Days Active`, 610, 940)
+    ctx.font = '900 18px sans-serif'
+    ctx.fillText(`🔥 ${streakCount} Days Active`, 610, 935)
     
     ctx.fillStyle = '#64748B'
     ctx.font = '900 13px sans-serif'
     ctx.textAlign = 'left'
-    ctx.fillText('TRAINING HUB', 110, 995)
+    ctx.fillText('TRAINING HUB', 110, 990)
     ctx.textAlign = 'right'
-    if (shareTheme === 'volcano') ctx.fillStyle = '#F97316'
+    ctx.font = '900 18px sans-serif'
+    if (shareTheme === 'volcano') ctx.fillStyle = '#EF4444'
     else if (shareTheme === 'emerald') ctx.fillStyle = '#10B981'
-    else ctx.fillStyle = '#10B981'
-    ctx.font = 'black 16px sans-serif'
-    ctx.fillText(membership?.gyms?.gym_name || 'Training Gym', 610, 995)
+    else ctx.fillStyle = '#863BFF'
+    ctx.fillText(membership?.gyms?.gym_name?.toUpperCase() || 'TRAINING GYM', 610, 990)
     
-    // Neon Marketing Watermark
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'
+    // Premium Gymix branding watermark
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)'
     ctx.font = '900 13px sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText('⚡ POWERED BY ATHLETOS • RETENTION RETIRED ✨', 360, 1160)
+    ctx.fillText('⚡ POWERED BY GYMIX.FIT • JOIN THE CLUB ⚡', 360, 1150)
     
-    // Download File Action
+    // Programmatic File Download (appended to body to support all major browsers)
     const link = document.createElement('a')
     link.download = `${profile?.full_name?.replace(/\s+/g, '_') || 'athlete'}_${activeShareLog.exercise_name?.replace(/\s+/g, '_')}_PR.png`
     link.href = canvas.toDataURL('image/png')
+    document.body.appendChild(link)
     link.click()
+    document.body.removeChild(link)
   }
 
   // Get dynamic athlete rank based on streaks
@@ -1307,7 +1434,7 @@ export default function MemberDashboard() {
           <div className="flex items-center gap-3 pb-6 border-b border-white/5">
             <Logo className="w-9 h-9 drop-shadow-[0_0_12px_rgba(134,59,255,0.4)]" />
             <div className="space-y-0.5">
-              <h1 className="text-base font-black text-white uppercase tracking-wider italic">AthletOS</h1>
+              <h1 className="text-base font-black text-white uppercase tracking-wider italic">Gymix</h1>
               <p className="text-[10px] font-bold text-[#b370ff] uppercase tracking-widest leading-none">Member Terminal</p>
             </div>
           </div>
@@ -2106,7 +2233,7 @@ export default function MemberDashboard() {
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                                 {[
                                   { name: 'Free Protein Shake', cost: 100, desc: 'Fresh post-workout whey shake from gym juice bar.' },
-                                  { name: 'Custom Shaker Bottle', cost: 200, desc: 'High-quality leak-proof GymOS branded shaker.' },
+                                  { name: 'Custom Shaker Bottle', cost: 200, desc: 'High-quality leak-proof Gymix branded shaker.' },
                                   { name: 'Premium Gym T-Shirt', cost: 500, desc: 'High-performance athletic tee.' }
                                 ].map((reward, i) => {
                                   const canAfford = (membership.gym_coins_balance || 0) >= reward.cost;
@@ -2973,52 +3100,59 @@ export default function MemberDashboard() {
                 <div className="flex justify-between items-center relative z-10">
                   <div className="flex items-center gap-2">
                     <Logo className="w-6.5 h-6.5 drop-shadow-[0_0_8px_rgba(134,59,255,0.4)]" />
-                    <span className="text-[9px] font-black uppercase text-white tracking-[0.2em] italic">GymOS</span>
+                    <span className="text-[9px] font-black uppercase text-white tracking-[0.2em] italic">Gymix</span>
                   </div>
                   
                   {/* Verified Badge */}
                   <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[7px] font-black uppercase tracking-wider text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)] animate-pulse">
                     <Check className="w-2.5 h-2.5" />
-                    <span>GymOS Verified</span>
+                    <span>Gymix Verified</span>
                   </div>
                 </div>
 
                 {/* CARD BODY (CENTER DETAILS) */}
-                <div className="my-auto text-center space-y-4 relative z-10 pt-4">
-                  <span className="px-3 py-0.5 rounded-full bg-white/5 border border-white/10 text-[8px] font-black uppercase tracking-[0.25em] text-slate-400">
-                    {activeShareLog.log_type === 'PR' ? 'New Personal Record' : 'Body Weight Log'}
+                <div className="my-auto text-center space-y-5 relative z-10 pt-4">
+                  <span className="px-3.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-[8px] font-black uppercase tracking-[0.25em] text-slate-400">
+                    {activeShareLog.log_type === 'PR' ? '💪 New Personal Record' : '⚖️ Body Weight Log'}
                   </span>
                   
-                  <div className="space-y-1">
-                    <h2 className={`text-xs font-black uppercase tracking-widest transition-colors duration-500 ${getThemeStyles(shareTheme).titleColor}`}>{activeShareLog.exercise_name}</h2>
-                    <h1 className={`text-4.5xl font-black italic tracking-tighter transition-all duration-500 ${getThemeStyles(shareTheme).statColor} drop-shadow-[0_2px_15px_rgba(255,255,255,0.05)]`}>
-                      {activeShareLog.value} <span className="text-lg font-medium text-slate-400 not-italic">kg</span>
-                    </h1>
+                  <div className="space-y-2">
+                    <h2 className={`text-xs font-black uppercase tracking-widest transition-colors duration-500 ${getThemeStyles(shareTheme).titleColor} drop-shadow-[0_0_10px_rgba(255,255,255,0.05)]`}>
+                      {activeShareLog.exercise_name}
+                    </h2>
+                    <div className="flex items-baseline justify-center gap-1.5">
+                      <h1 className={`text-5xl font-black italic tracking-tighter transition-all duration-500 ${getThemeStyles(shareTheme).statColor} drop-shadow-[0_0_20px_rgba(255,255,255,0.08)]`}>
+                        {activeShareLog.value}
+                      </h1>
+                      <span className="text-xl font-black italic text-slate-500 uppercase tracking-wide">kg</span>
+                    </div>
                   </div>
 
                   {activeShareLog.notes && (
-                    <p className="text-[11px] font-semibold text-slate-300 italic max-w-[220px] mx-auto leading-relaxed">
+                    <p className="text-[11px] font-semibold text-slate-300 italic max-w-[220px] mx-auto leading-relaxed px-4 py-1.5 rounded-xl bg-white/[0.01] border border-white/5">
                       “{activeShareLog.notes}”
                     </p>
                   )}
                 </div>
 
                 {/* CARD FOOTER */}
-                <div className="pt-3 border-t border-white/5 relative z-10 flex flex-col gap-2">
-                  <div className="flex justify-between items-center text-[9px] font-semibold text-slate-500 uppercase">
+                <div className="pt-4 border-t border-dashed border-white/10 relative z-10 flex flex-col gap-2.5 bg-black/20 p-3.5 rounded-2xl">
+                  <div className="flex justify-between items-center text-[9px] font-bold text-slate-500 uppercase tracking-wider">
                     <span>Athlete</span>
-                    <span className="text-white font-black">{profile?.full_name || 'Athlete'}</span>
+                    <span className="text-white font-black truncate max-w-[120px]">{profile?.full_name || 'Athlete'}</span>
                   </div>
-                  <div className="flex justify-between items-center text-[9px] font-semibold text-slate-500 uppercase">
+                  <div className="flex justify-between items-center text-[9px] font-bold text-slate-500 uppercase tracking-wider">
                     <span>Consistency Streak</span>
                     <span className="text-orange-400 font-black flex items-center gap-1">
-                      <span>{streakCount} Days</span>
+                      <span>{streakCount} Days Active</span>
                       <span>🔥</span>
                     </span>
                   </div>
-                  <div className="flex justify-between items-center text-[9px] font-semibold text-slate-500 uppercase">
+                  <div className="flex justify-between items-center text-[9px] font-bold text-slate-500 uppercase tracking-wider">
                     <span>Training Hub</span>
-                    <span className={`font-black transition-colors duration-500 ${getThemeStyles(shareTheme).gymColor}`}>{membership?.gyms?.gym_name || 'My Gym'}</span>
+                    <span className={`font-black uppercase italic truncate max-w-[120px] transition-colors duration-500 ${getThemeStyles(shareTheme).gymColor}`}>
+                      {membership?.gyms?.gym_name || 'My Gym'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -3048,7 +3182,7 @@ export default function MemberDashboard() {
                 </div>
               </div>
 
-              {/* ACTION BUTTONS (DOWLOAD PNG POSTER IN 1-CLICK) */}
+              {/* ACTION BUTTONS (DOWNLOAD PNG POSTER IN 1-CLICK) */}
               <div className="w-full space-y-2.5 text-center">
                 <div className="flex gap-3.5 justify-center">
                   <button 
@@ -3061,7 +3195,7 @@ export default function MemberDashboard() {
                   
                   <button 
                     onClick={() => {
-                      const shareText = `💪 Verified Lift: I just smashed a new ${activeShareLog.exercise_name} PR of ${activeShareLog.value} kg at ${membership?.gyms?.gym_name || 'My Gym'} on GymOS! Consistency Streak: ${streakCount} Days! 🔥 #GymOS #FitnessGoal`;
+                      const shareText = `💪 Verified Lift: I just smashed a new ${activeShareLog.exercise_name} PR of ${activeShareLog.value} kg at ${membership?.gyms?.gym_name || 'My Gym'} on Gymix! Consistency Streak: ${streakCount} Days! 🔥 #Gymix #FitnessGoal`;
                       navigator.clipboard.writeText(shareText);
                       alert('Share text copied! Feel free to paste it into your caption or post.');
                     }}
@@ -3114,7 +3248,7 @@ export default function MemberDashboard() {
                   <div className="flex items-center gap-3">
                     <Logo className="w-8 h-8 drop-shadow-[0_0_10px_rgba(134,59,255,0.4)]" />
                     <div className="space-y-0.5">
-                      <h1 className="text-sm font-black text-white uppercase tracking-wider italic">AthletOS</h1>
+                      <h1 className="text-sm font-black text-white uppercase tracking-wider italic">Gymix</h1>
                       <p className="text-[9px] font-bold text-[#b370ff] uppercase tracking-widest leading-none">Drawer</p>
                     </div>
                   </div>
