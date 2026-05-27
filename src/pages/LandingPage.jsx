@@ -6,7 +6,7 @@ import {
   Sparkles, ShieldCheck, Zap, ArrowRight, Download, Share, 
   Plus, Check, X, Smartphone, ArrowUpRight, BarChart3, QrCode,
   Menu, ChevronDown, Award, Star, Search, Calendar, Lock, Info, CheckCircle2,
-  Fingerprint, ShoppingBag, ExternalLink
+  Fingerprint, ShoppingBag, ExternalLink, Cpu
 } from 'lucide-react'
 import Logo from '../components/UI/Logo'
 
