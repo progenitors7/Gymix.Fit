@@ -30,6 +30,7 @@ const SuperAdminPage = React.lazy(() => import('./pages/SuperAdminPage'))
 const BillingPage = React.lazy(() => import('./pages/BillingPage'))
 const AttendancePage = React.lazy(() => import('./pages/AttendancePage'))
 const LeaderboardPage = React.lazy(() => import('./pages/LeaderboardPage'))
+const HardwareStorePage = React.lazy(() => import('./pages/HardwareStorePage'))
 
 function LoadingScreen() {
   return (
@@ -113,6 +114,7 @@ export default function App() {
               <Route path="/login" element={<AuthPage />} />
               <Route path="/signup" element={<AuthPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/hardware" element={<HardwareStorePage />} />
 
             {/* ── Protected ── */}
             <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />

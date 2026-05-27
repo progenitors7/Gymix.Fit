@@ -1359,7 +1359,7 @@ export default function LandingPage() {
           </div>
 
           {/* Hardware Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6.5 mt-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6.5 mt-12 max-w-5xl mx-auto">
             {[
               {
                 name: "eSSL Identix K30 Pro",
@@ -1374,7 +1374,9 @@ export default function LandingPage() {
                 link: "https://amzn.to/49qHIBE",
                 color: "from-[#10B981]/20 to-transparent",
                 borderColor: "group-hover:border-[#10B981]/40",
-                badgeColor: "text-[#10B981] bg-[#10B981]/10 border-[#10B981]/20"
+                badgeColor: "text-[#10B981] bg-[#10B981]/10 border-[#10B981]/20",
+                icon: Fingerprint,
+                category: "Fingerprint"
               },
               {
                 name: "eSSL K90 Pro ADMS",
@@ -1389,7 +1391,9 @@ export default function LandingPage() {
                 link: "https://www.amazon.in/s?k=essl+k90+pro+adms",
                 color: "from-blue-500/10 to-transparent",
                 borderColor: "group-hover:border-blue-500/30",
-                badgeColor: "text-blue-400 bg-blue-500/10 border-blue-500/20"
+                badgeColor: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+                icon: Fingerprint,
+                category: "Fingerprint"
               },
               {
                 name: "BioMax N-Col 700",
@@ -1404,72 +1408,85 @@ export default function LandingPage() {
                 link: "https://www.amazon.in/s?k=biomax+n-col+700",
                 color: "from-[#863BFF]/10 to-transparent",
                 borderColor: "group-hover:border-[#863BFF]/30",
-                badgeColor: "text-[#863BFF] bg-[#863BFF]/10 border-[#863BFF]/20"
-              },
-              {
-                name: "Realtime T302 ADMS",
-                badge: "Heavy Duty Capacity",
-                desc: "Designed for high-traffic gym chains. Sturdy build with large verification capacity.",
-                specs: [
-                  "3,000 User Capacity",
-                  "3,000 Card & Fingerprint",
-                  "High-Speed ARM Processor",
-                  "Native ADMS Push Support"
-                ],
-                link: "https://www.amazon.in/s?k=realtime+t302+adms",
-                color: "from-pink-500/10 to-transparent",
-                borderColor: "group-hover:border-pink-500/30",
-                badgeColor: "text-pink-400 bg-pink-500/10 border-pink-500/20"
+                badgeColor: "text-[#863BFF] bg-[#863BFF]/10 border-[#863BFF]/20",
+                icon: Cpu,
+                category: "Face Recognition"
               }
-            ].map((prod, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.08 }}
-                className={`glass-card border border-white/5 rounded-[2.5rem] p-6.5 flex flex-col justify-between hover:-translate-y-2 transition-all duration-300 relative group overflow-hidden bg-white/[0.01]`}
-              >
-                {/* Neon glow effect */}
-                <div className={`absolute inset-0 bg-gradient-to-tr ${prod.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`} />
+            ].map((prod, index) => {
+              const IconComp = prod.icon;
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.08 }}
+                  className={`glass-card border border-white/5 rounded-[2.5rem] p-6.5 flex flex-col justify-between hover:-translate-y-2 transition-all duration-300 relative group overflow-hidden bg-white/[0.01]`}
+                >
+                  {/* Neon glow effect */}
+                  <div className={`absolute inset-0 bg-gradient-to-tr ${prod.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`} />
 
-                <div className="space-y-4 relative z-10">
-                  <div className="flex justify-between items-start">
-                    <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border ${prod.badgeColor}`}>
-                      {prod.badge}
-                    </span>
-                    <Fingerprint className="w-5 h-5 text-slate-500 group-hover:text-white transition-colors" />
+                  <div className="space-y-4 relative z-10">
+                    <div className="flex justify-between items-start">
+                      <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border ${prod.badgeColor}`}>
+                        {prod.badge}
+                      </span>
+                      <Fingerprint className="w-5 h-5 text-slate-500 group-hover:text-white transition-colors" />
+                    </div>
+
+                    {/* Schematic Visual Blueprint Placeholder */}
+                    <div className="w-full h-32 rounded-2xl border-2 border-dashed border-white/5 bg-black/40 flex flex-col items-center justify-center relative group-hover:border-white/10 transition-all mb-4">
+                      {/* Schematic lines */}
+                      <div className="absolute inset-x-4 top-1/2 h-[1px] bg-white/5 pointer-events-none" />
+                      <div className="absolute inset-y-4 left-1/2 w-[1px] bg-white/5 pointer-events-none" />
+                      
+                      <IconComp className="w-10 h-10 text-slate-600 group-hover:text-white transition-colors duration-500 relative z-10" />
+                      <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest pt-2.5 relative z-10">
+                        {prod.category} hardware module
+                      </span>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-base sm:text-lg font-black text-white uppercase italic tracking-tight">{prod.name}</h3>
+                      <p className="text-slate-400 text-[11px] leading-relaxed pt-1.5 font-medium">{prod.desc}</p>
+                    </div>
+
+                    {/* Specs List */}
+                    <ul className="space-y-1.5 pt-2">
+                      {prod.specs.map((spec, sIdx) => (
+                        <li key={sIdx} className="text-[10px] text-slate-400 font-semibold flex items-center gap-1.5">
+                          <span className="w-1 h-1 rounded-full bg-[#10B981]" />
+                          {spec}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  
-                  <div>
-                    <h3 className="text-base sm:text-lg font-black text-white uppercase italic tracking-tight">{prod.name}</h3>
-                    <p className="text-slate-400 text-[11px] leading-relaxed pt-1.5 font-medium">{prod.desc}</p>
+
+                  <div className="pt-6 relative z-10 flex flex-col gap-3 border-t border-white/5 mt-5">
+                    <a
+                      href={prod.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2.5 bg-white/5 hover:bg-[#10B981] hover:text-black text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 text-center flex items-center justify-center gap-1.5 border border-white/10 hover:border-[#10B981] cursor-pointer"
+                    >
+                      View on Amazon
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
                   </div>
+                </motion.div>
+              );
+            })}
+          </div>
 
-                  {/* Specs List */}
-                  <ul className="space-y-1.5 pt-2">
-                    {prod.specs.map((spec, sIdx) => (
-                      <li key={sIdx} className="text-[10px] text-slate-400 font-semibold flex items-center gap-1.5">
-                        <span className="w-1 h-1 rounded-full bg-[#10B981]" />
-                        {spec}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="pt-6 relative z-10 flex flex-col gap-3 border-t border-white/5 mt-5">
-                  <a
-                    href={prod.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-2.5 bg-white/5 hover:bg-[#10B981] hover:text-black text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 text-center flex items-center justify-center gap-1.5 border border-white/10 hover:border-[#10B981] cursor-pointer"
-                  >
-                    View on Amazon
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              </motion.div>
-            ))}
+          {/* CTA Link to Dedicated page */}
+          <div className="flex justify-center mt-12">
+            <button
+              onClick={() => navigate('/hardware')}
+              className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white text-xs font-black uppercase tracking-widest rounded-2xl border border-white/10 hover:border-white/20 transition-all duration-300 flex items-center gap-2.5 cursor-pointer hover:scale-[1.02] active:scale-95 shadow-xl shadow-black/30"
+            >
+              View All Compatible Hardware
+              <ArrowRight className="w-4 h-4 text-white" />
+            </button>
           </div>
 
           {/* Affiliate Disclaimer Banner */}
