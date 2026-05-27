@@ -13,131 +13,63 @@ const HARDWARE_PRODUCTS = [
     name: "eSSL Identix K30 Pro",
     brand: "eSSL",
     category: "Fingerprint",
-    badge: "Best Seller & Entry-Level",
-    desc: "The most cost-effective and popular biometric attendance machine in India. Highly recommended for small and mid-sized gyms due to its robust build and simplicity.",
-    price: "₹5,850",
-    rating: 5,
+    badge: "Standard Fingerprint",
+    desc: "Extremely popular biometric machine featuring inbuilt battery backup, cloud push data technology, and access control support.",
+    price: "₹5,800",
+    rating: 4.5,
     specs: [
-      "1,000 Fingerprint Capacity",
-      "1,000 RFID Card Storage",
-      "Inbuilt Battery Backup (Up to 2-3 hours)",
-      "ADMS Cloud Webhook Ready",
-      "TCP/IP Ethernet & USB Host ports"
+      "2,000 Fingerprint Templates",
+      "2,000 RFID Card Storage",
+      "Inbuilt Battery Backup",
+      "Cloud Supported Push Data",
+      "1x Free Access Card included"
     ],
-    link: "https://amzn.to/49qHIBE",
+    link: "https://amzn.to/4nUxQ9p",
     color: "from-[#10B981]/15 to-transparent",
     borderColor: "hover:border-[#10B981]/30",
     badgeColor: "text-[#10B981] bg-[#10B981]/10 border-[#10B981]/20",
     icon: Fingerprint
   },
   {
-    id: "essl-k90-pro",
-    name: "eSSL K90 Pro ADMS",
-    brand: "eSSL",
+    id: "zkteco-k40-pro",
+    name: "ZKTeco K40 Pro ADMS",
+    brand: "ZKTeco",
     category: "Fingerprint",
-    badge: "Reliable Classic",
-    desc: "An upgraded classic terminal featuring native cloud ADMS integration. Comes with advanced access control features and a rugged layout built to last.",
-    price: "₹6,400",
-    rating: 4.8,
+    badge: "Mid-Range Fingerprint",
+    desc: "Reliable biometric time attendance and access control terminal with built-in backup battery and cloud push protocol.",
+    price: "₹6,200",
+    rating: 4.4,
     specs: [
-      "800 Fingerprint Capacity",
-      "800 Card & Password Storage",
-      "SSR Excel Report Engine built-in",
-      "ADMS Cloud Push Protocol Enabled",
-      "Optional Backup Battery Support"
+      "1,000 Fingerprint Capacity",
+      "Inbuilt Backup Battery",
+      "Free Cloud & Mobile App support",
+      "Easy Office/Factory setup"
     ],
-    link: "https://www.amazon.in/s?k=essl+k90+pro+adms",
+    link: "https://amzn.to/4nXcsAm",
     color: "from-blue-500/10 to-transparent",
     borderColor: "hover:border-blue-500/30",
     badgeColor: "text-blue-400 bg-blue-500/10 border-blue-500/20",
     icon: Fingerprint
   },
   {
-    id: "biomax-ncol-700",
-    name: "BioMax N-Col 700",
-    brand: "BioMax",
-    category: "Face Recognition",
-    badge: "Face + Fingerprint",
-    desc: "High-speed face recognition and fingerprint attendance terminal, perfect for contact-free entry. Solves fingerprint read issues for members with worn-out prints.",
-    price: "₹12,500",
-    rating: 4.9,
-    specs: [
-      "1,500 Face Templates",
-      "2,000 Fingerprint Capacity",
-      "High Speed Dual Camera Recognition",
-      "TCP/IP & USB Host connectivity",
-      "Cloud Push ADMS Webhook Protocol"
-    ],
-    link: "https://www.amazon.in/s?k=biomax+n-col+700",
-    color: "from-[#863BFF]/10 to-transparent",
-    borderColor: "hover:border-[#863BFF]/30",
-    badgeColor: "text-[#863BFF] bg-[#863BFF]/10 border-[#863BFF]/20",
-    icon: Cpu
-  },
-  {
-    id: "realtime-t302",
-    name: "Realtime T302 ADMS",
-    brand: "Realtime",
-    category: "Fingerprint",
-    badge: "Heavy Duty Capacity",
-    desc: "Designed for high-traffic gym chains. Sturdy casing with large user capacity and ultra-responsive verification scanner.",
-    price: "₹5,200",
-    rating: 4.7,
-    specs: [
-      "3,000 Fingerprint Capacity",
-      "3,000 RFID Card Storage",
-      "High-Speed ARM Processor",
-      "Native ADMS Push Support",
-      "TCP/IP Ethernet & USB Host"
-    ],
-    link: "https://www.amazon.in/s?k=realtime+t302+adms",
-    color: "from-pink-500/10 to-transparent",
-    borderColor: "hover:border-pink-500/30",
-    badgeColor: "text-pink-400 bg-pink-500/10 border-pink-500/20",
-    icon: Fingerprint
-  },
-  {
-    id: "zkteco-mb160",
-    name: "ZKTeco MB160 Multi-Biometric",
+    id: "zkteco-touchless-face",
+    name: "ZKTeco Touchless Face & Fingerprint",
     brand: "ZKTeco",
     category: "Face Recognition",
-    badge: "Advanced Multi-Biometric",
-    desc: "Premium touchless face recognition, fingerprint, card, and password biometric terminal. Features high verification speed and inbuilt battery backup.",
+    badge: "Premium Face + Fingerprint",
+    desc: "Premium touchless multi-biometric attendance and access control terminal featuring face, fingerprint, card, and password verification.",
     price: "₹8,095",
     rating: 4.3,
     specs: [
-      "1,500 Face Templates",
-      "2,000 Fingerprint Capacity",
-      "Inbuilt Battery Backup included",
-      "ADMS Cloud Webhook pre-installed",
-      "TCP/IP Ethernet & USB Host ports"
+      "Face, Fingerprint, Card & PIN",
+      "Inbuilt Battery Backup",
+      "Free Cloud-Based Webhook Ready",
+      "Contactless Touchless Verification"
     ],
-    link: "https://amzn.to/4e7Cqxu",
-    color: "from-amber-500/10 to-transparent",
-    borderColor: "hover:border-amber-500/30",
-    badgeColor: "text-amber-400 bg-amber-500/10 border-amber-500/20",
-    icon: Cpu
-  },
-  {
-    id: "zkteco-mb20",
-    name: "ZKTeco MB20 Face & Fingerprint",
-    brand: "ZKTeco",
-    category: "Face Recognition",
-    badge: "Compact Face & Finger",
-    desc: "Compact facial and fingerprint terminal, featuring advanced algorithm technology. Great for budget-conscious gyms requiring face scan.",
-    price: "₹7,200",
-    rating: 4.6,
-    specs: [
-      "200 Face Templates",
-      "500 Fingerprint Capacity",
-      "Sleek and compact footprint",
-      "TCP/IP Network communication",
-      "ADMS Cloud Push Ready"
-    ],
-    link: "https://www.amazon.in/s?k=zkteco+mb20",
-    color: "from-indigo-500/10 to-transparent",
-    borderColor: "hover:border-indigo-500/30",
-    badgeColor: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
+    link: "https://amzn.to/4nUlAp9",
+    color: "from-[#863BFF]/10 to-transparent",
+    borderColor: "hover:border-[#863BFF]/30",
+    badgeColor: "text-[#863BFF] bg-[#863BFF]/10 border-[#863BFF]/20",
     icon: Cpu
   }
 ];
@@ -260,7 +192,7 @@ export default function HardwareStorePage() {
 
             {/* Brand Filter */}
             <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-              {['All', 'eSSL', 'ZKTeco', 'BioMax', 'Realtime'].map(brand => (
+              {['All', 'eSSL', 'ZKTeco'].map(brand => (
                 <button
                   key={brand}
                   onClick={() => setSelectedBrand(brand)}

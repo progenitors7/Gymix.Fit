@@ -1363,15 +1363,16 @@ export default function LandingPage() {
             {[
               {
                 name: "eSSL Identix K30 Pro",
-                badge: "Best Seller & Entry-Level",
-                desc: "Extremely popular, cost-effective biometric scanner. Perfect for small to mid-sized gyms.",
+                badge: "Standard Fingerprint",
+                desc: "Extremely popular biometric machine featuring inbuilt battery backup, cloud push data technology, and access control support.",
                 specs: [
-                  "1,000 Fingerprint Capacity",
-                  "1,000 RFID Card Storage",
-                  "ADMS Cloud Webhook Ready",
-                  "TCP/IP Network Interface"
+                  "2,000 Fingerprint Templates",
+                  "2,000 RFID Card Storage",
+                  "Inbuilt Battery Backup",
+                  "Cloud Supported Push Data",
+                  "1x Free Access Card included"
                 ],
-                link: "https://amzn.to/49qHIBE",
+                link: "https://amzn.to/4nUxQ9p",
                 color: "from-[#10B981]/20 to-transparent",
                 borderColor: "group-hover:border-[#10B981]/40",
                 badgeColor: "text-[#10B981] bg-[#10B981]/10 border-[#10B981]/20",
@@ -1379,16 +1380,16 @@ export default function LandingPage() {
                 category: "Fingerprint"
               },
               {
-                name: "eSSL K90 Pro ADMS",
-                badge: "Reliable Classic",
-                desc: "Upgraded version of K90 with native cloud ADMS integration. Standard for Indian gyms.",
+                name: "ZKTeco K40 Pro",
+                badge: "Mid-Range Fingerprint",
+                desc: "Reliable biometric time attendance and access control terminal with built-in backup battery and cloud push protocol.",
                 specs: [
-                  "800 Fingerprint Capacity",
-                  "800 Card & Password Capacity",
-                  "SSR Excel Report Engine",
-                  "Optional Backup Battery Support"
+                  "1,000 Fingerprint Capacity",
+                  "Inbuilt Backup Battery",
+                  "Free Cloud & Mobile App support",
+                  "Easy Office/Factory setup"
                 ],
-                link: "https://www.amazon.in/s?k=essl+k90+pro+adms",
+                link: "https://amzn.to/4nXcsAm",
                 color: "from-blue-500/10 to-transparent",
                 borderColor: "group-hover:border-blue-500/30",
                 badgeColor: "text-blue-400 bg-blue-500/10 border-blue-500/20",
@@ -1396,16 +1397,16 @@ export default function LandingPage() {
                 category: "Fingerprint"
               },
               {
-                name: "BioMax N-Col 700",
-                badge: "Face + Fingerprint",
-                desc: "High-speed face recognition and fingerprint attendance terminal, ideal for contact-free entry.",
+                name: "ZKTeco Touchless Face & Fingerprint",
+                badge: "Premium Face + Fingerprint",
+                desc: "Premium touchless multi-biometric attendance and access control terminal featuring face, fingerprint, card, and password verification.",
                 specs: [
-                  "1,500 Face Templates",
-                  "2,000 Fingerprint Capacity",
-                  "TCP/IP & USB Host",
-                  "Cloud Push Webhook Active"
+                  "Face, Fingerprint, Card & PIN",
+                  "Inbuilt Battery Backup",
+                  "Free Cloud-Based Webhook Ready",
+                  "Contactless Touchless Verification"
                 ],
-                link: "https://www.amazon.in/s?k=biomax+n-col+700",
+                link: "https://amzn.to/4nUlAp9",
                 color: "from-[#863BFF]/10 to-transparent",
                 borderColor: "group-hover:border-[#863BFF]/30",
                 badgeColor: "text-[#863BFF] bg-[#863BFF]/10 border-[#863BFF]/20",
