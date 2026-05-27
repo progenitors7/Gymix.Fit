@@ -102,17 +102,17 @@ const HARDWARE_PRODUCTS = [
     brand: "ZKTeco",
     category: "Face Recognition",
     badge: "Advanced Multi-Biometric",
-    desc: "Premium multi-biometric face, fingerprint, and card reader. Offers high verification speed and advanced configuration parameters.",
-    price: "₹8,900",
-    rating: 4.8,
+    desc: "Premium touchless face recognition, fingerprint, card, and password biometric terminal. Features high verification speed and inbuilt battery backup.",
+    price: "₹8,095",
+    rating: 4.3,
     specs: [
       "1,500 Face Templates",
       "2,000 Fingerprint Capacity",
-      "Multi-Biometric verification options",
+      "Inbuilt Battery Backup included",
       "ADMS Cloud Webhook pre-installed",
-      "TCP/IP, Wi-Fi Option, and USB Host"
+      "TCP/IP Ethernet & USB Host ports"
     ],
-    link: "https://www.amazon.in/s?k=zkteco+mb160",
+    link: "https://amzn.to/4e7Cqxu",
     color: "from-amber-500/10 to-transparent",
     borderColor: "hover:border-amber-500/30",
     badgeColor: "text-amber-400 bg-amber-500/10 border-amber-500/20",
