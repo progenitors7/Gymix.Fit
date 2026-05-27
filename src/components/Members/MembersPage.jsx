@@ -392,38 +392,38 @@ export default function MembersPage() {
                     className="glass-card border border-white/5 rounded-3xl p-6 active:scale-[0.98] transition-all relative overflow-hidden"
                   >
                     <div className="flex items-start justify-between gap-4 mb-5">
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
                         {member.avatar_url ? (
                           <img 
                             src={member.avatar_url} 
                             alt={member.full_name} 
-                            className="w-12 h-12 rounded-2xl object-cover border border-white/10 shadow-inner"
+                            className="w-12 h-12 rounded-2xl object-cover border border-white/10 shadow-inner flex-shrink-0"
                           />
                         ) : (
-                          <div className="w-12 h-12 rounded-2xl bg-[#1E293B] border border-white/10 flex items-center justify-center text-[#F8FAFC] text-[16px] font-extrabold uppercase shadow-inner">
+                          <div className="w-12 h-12 rounded-2xl bg-[#1E293B] border border-white/10 flex items-center justify-center text-[#F8FAFC] text-[16px] font-extrabold uppercase shadow-inner flex-shrink-0">
                             {member.full_name?.slice(0, 1)}
                           </div>
                         )}
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="text-[#F8FAFC] font-extrabold text-[15px] tracking-tight">{member.full_name}</p>
+                        <div className="flex-1 min-w-0 text-left">
+                          <p className="text-[#F8FAFC] font-extrabold text-[15px] tracking-tight">{member.full_name}</p>
+                          <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                            <div className="flex items-center gap-1 text-[#64748B]">
+                              <Phone className="w-3.5 h-3.5 flex-shrink-0" />
+                              <span className="text-[12px] font-bold">{member.phone_number || '—'}</span>
+                            </div>
                             {gym?.biometric_enabled && (
                               member.biometric_user_id ? (
-                                <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[#10B981] text-[8px] font-black uppercase tracking-wider">
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[#10B981] text-[8px] font-black uppercase tracking-wider">
                                   <Fingerprint className="w-2.5 h-2.5" />
                                   Linked
                                 </span>
                               ) : (
-                                <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[8px] font-black uppercase tracking-wider">
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[8px] font-black uppercase tracking-wider">
                                   <Fingerprint className="w-2.5 h-2.5" />
                                   No Sync
                                 </span>
                               )
                             )}
-                          </div>
-                          <div className="flex items-center gap-1.5 mt-1 text-[#64748B]">
-                            <Phone className="w-3.5 h-3.5" />
-                            <p className="text-[12px] font-bold">{member.phone_number || 'No Phone'}</p>
                           </div>
                         </div>
                       </div>
