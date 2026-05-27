@@ -13,8 +13,8 @@ import { User, Phone, Activity, Award, Calendar, FileText, CreditCard, Sparkles 
 import DatePicker from '../UI/DatePicker'
 import { useCurrentGym } from '../../hooks/useCurrentGym'
 import { supabase } from '../../lib/supabaseClient'
-
 import { planService } from '../../services/planService';
+import { toast } from 'react-hot-toast'
 
 const DEFAULTS = {
   full_name: '',
@@ -103,7 +103,7 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
           setCameraStream(stream)
         } catch (err) {
           console.error('Camera access failed:', err)
-          alert('Could not access camera. Make sure it is connected and you have granted permission.')
+          toast.error('Could not access camera. Make sure it is connected and you have granted permission.')
           setShowCamera(false)
         }
       }
@@ -187,11 +187,11 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
         }
         img.src = data.avatar_url
       } else {
-        alert("No Google profile photo found for this linked account.")
+        toast.error("No Google profile photo found for this linked account.")
       }
     } catch (err) {
       console.error(err)
-      alert("Failed to fetch Google profile photo: " + err.message)
+      toast.error("Failed to fetch Google profile photo: " + err.message)
     } finally {
       setFetchingGoogle(false)
     }

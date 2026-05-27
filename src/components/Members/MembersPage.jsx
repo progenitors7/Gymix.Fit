@@ -74,6 +74,7 @@ function EmptyState({ hasSearch }) {
 
 export default function MembersPage() {
   const navigate = useNavigate();
+  const { gym } = useCurrentGym();
   const {
     filteredMembers,
     loading,
@@ -103,8 +104,6 @@ export default function MembersPage() {
       setDeleting(false);
     }
   };
-
-  const { gym } = useCurrentGym();
 
   const handleWhatsApp = (member) => {
     if (!member.phone_number) return;

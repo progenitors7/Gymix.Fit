@@ -61,16 +61,13 @@ const syncMemberFromLatestSubscription = (member) => {
  * @returns {Promise<Array>}
  */
 export async function getMembers(gymId) {
-  let query = supabase
+  if (!gymId) throw new Error('Gym ID is required to fetch members')
+
+  const { data, error } = await supabase
     .from('members')
     .select(MEMBER_WITH_SUBSCRIPTIONS)
+    .eq('gym_id', gymId)
     .order('created_at', { ascending: false })
-
-  if (gymId) {
-    query = query.eq('gym_id', gymId)
-  }
-
-  const { data, error } = await query
 
   if (error) throw error
   return (data ?? []).map(syncMemberFromLatestSubscription)
@@ -141,6 +138,15 @@ export async function updateMember(id, payload) {
  * Delete a member by id.
  */
 export async function deleteMember(id) {
+  // Delete all dependent records to prevent foreign key constraint violations
+  await supabase.from('member_coins_transactions').delete().eq('member_id', id);
+  await supabase.from('member_progress_logs').delete().eq('member_id', id);
+  await supabase.from('member_xp_transactions').delete().eq('member_id', id);
+  await supabase.from('leaderboard_season_history').delete().eq('member_id', id);
+  await supabase.from('payments').delete().eq('member_id', id);
+  await supabase.from('subscriptions').delete().eq('member_id', id);
+  await supabase.from('attendance').delete().eq('member_id', id);
+
   const { error } = await supabase
     .from('members')
     .delete()

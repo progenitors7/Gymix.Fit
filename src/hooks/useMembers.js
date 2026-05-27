@@ -13,6 +13,7 @@ export function useMembers() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [hasFetched, setHasFetched] = useState(false)
 
   const fetchMembers = useCallback(async () => {
     if (!isReady) {
@@ -23,17 +24,18 @@ export function useMembers() {
     setError(null)
     try {
       const data = await getMembers(gymId)
-      setMembers(data)
+      setMembers(data || [])
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
+      setHasFetched(true)
     }
   }, [isReady, gymId])
 
   useEffect(() => {
     let mounted = true;
-    if (isReady && members.length === 0 && !error) {
+    if (isReady && !hasFetched) {
       setTimeout(() => {
         if (mounted) fetchMembers()
       }, 0);
@@ -41,7 +43,7 @@ export function useMembers() {
     return () => {
       mounted = false;
     };
-  }, [fetchMembers, isReady, members.length, error])
+  }, [fetchMembers, isReady, hasFetched])
 
   const addMember = useCallback(async (formData) => {
     if (!gymId) throw new Error('Gym not loaded')

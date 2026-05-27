@@ -52,7 +52,6 @@ export function GymProvider({ children }) {
     }, 8000)
 
     try {
-      console.log('[GymContext] Fetching gym for user:', targetUser.id)
       let gymData
       try {
         gymData = await getMyGym(targetUser.id)
@@ -61,7 +60,6 @@ export function GymProvider({ children }) {
           console.warn('[GymContext] Stale session (401/PGRST301). Refreshing token...')
           const { data: { session }, error: refreshError } = await supabase.auth.refreshSession()
           if (!refreshError && session) {
-            console.log('[GymContext] Token refreshed. Retrying fetch...')
             gymData = await getMyGym(targetUser.id)
           } else {
             throw err
@@ -72,7 +70,6 @@ export function GymProvider({ children }) {
       }
 
       if (!gymData) {
-        console.log('[GymContext] No gym found, creating fallback for:', targetUser.email)
         const emailPrefix = targetUser.email?.split('@')[0] || 'My'
         const initialGymName = targetUser.user_metadata?.gym_name || `${emailPrefix}'s Gym`
         try {
@@ -136,8 +133,11 @@ export function GymProvider({ children }) {
   const updateGymName = useCallback(async (newName) => {
     const updated = await updateGymNameService(newName)
     setGym(updated)
+    if (user?.id) {
+      localStorage.setItem(`gym_cache_${user.id}`, JSON.stringify(updated))
+    }
     return updated
-  }, [])
+  }, [user?.id])
 
   const value = {
     gym,

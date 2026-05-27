@@ -3,7 +3,9 @@ import { supabase } from '../lib/supabaseClient';
 export const paymentService = {
   // Get all payments for a specific gym (protects against Super Admin leakage in dashboard)
   async getAllPayments(gymId) {
-    let query = supabase
+    if (!gymId) throw new Error('Gym ID is required to fetch payments');
+
+    const { data, error } = await supabase
       .from('payments')
       .select(`
         *,
@@ -14,13 +16,8 @@ export const paymentService = {
         subscriptions (
           plan_name
         )
-      `);
-
-    if (gymId) {
-      query = query.eq('gym_id', gymId);
-    }
-
-    const { data, error } = await query
+      `)
+      .eq('gym_id', gymId)
       .order('payment_date', { ascending: false })
       .order('created_at', { ascending: false });
 
@@ -75,12 +72,15 @@ export const paymentService = {
     return true;
   },
 
-  // Calculate total revenue
-  async getTotalRevenue() {
+  // Calculate total revenue for a specific gym
+  async getTotalRevenue(gymId) {
+    if (!gymId) throw new Error('Gym ID is required to calculate revenue');
+
     const { data, error } = await supabase
       .from('payments')
       .select('amount_paid')
-      .eq('payment_status', 'paid');
+      .eq('payment_status', 'paid')
+      .eq('gym_id', gymId);
 
     if (error) throw error;
     

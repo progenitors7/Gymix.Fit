@@ -10,7 +10,9 @@ const AUTO_DURATION_TYPES = new Set(['monthly', 'quarterly', 'yearly']);
 export const subscriptionService = {
   // Get all subscriptions for a specific gym (protects against Super Admin leakage in dashboard)
   async getAllSubscriptions(gymId) {
-    let query = supabase
+    if (!gymId) throw new Error('Gym ID is required to fetch subscriptions');
+
+    const { data, error } = await supabase
       .from('subscriptions')
       .select(`
         *,
@@ -20,13 +22,8 @@ export const subscriptionService = {
           phone_number,
           join_date
         )
-      `);
-
-    if (gymId) {
-      query = query.eq('gym_id', gymId);
-    }
-
-    const { data, error } = await query
+      `)
+      .eq('gym_id', gymId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -34,11 +31,17 @@ export const subscriptionService = {
   },
 
   // Get all subscriptions for a specific member (full plan history)
-  async getSubscriptionsByMember(memberId) {
-    const { data, error } = await supabase
+  async getSubscriptionsByMember(memberId, gymId = null) {
+    let query = supabase
       .from('subscriptions')
       .select('*')
-      .eq('member_id', memberId)
+      .eq('member_id', memberId);
+
+    if (gymId) {
+      query = query.eq('gym_id', gymId);
+    }
+
+    const { data, error } = await query
       .order('start_date', { ascending: false });
 
     if (error) throw error;
@@ -47,16 +50,13 @@ export const subscriptionService = {
 
   // Get active subscriptions count
   async getActiveSubscriptionsCount(gymId) {
-    let query = supabase
+    if (!gymId) throw new Error('Gym ID is required to get active subscriptions count');
+
+    const { count, error } = await supabase
       .from('subscriptions')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'active');
-
-    if (gymId) {
-      query = query.eq('gym_id', gymId);
-    }
-
-    const { count, error } = await query;
+      .eq('status', 'active')
+      .eq('gym_id', gymId);
 
     if (error) throw error;
     return count;

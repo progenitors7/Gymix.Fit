@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Sparkles, Send, Copy, X, Check, Trash2, Camera, Upload, Building, Clock, Activity, ArrowRight } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
 import Logo from '../UI/Logo'
+import { toast } from 'react-hot-toast'
 
 export default function MemberProgressTab({
   profile,
@@ -71,10 +72,10 @@ export default function MemberProgressTab({
       setNewValue('')
       setNewNotes('')
       await fetchProgressLogs(membership.id)
-      alert('Progress logged successfully! 💪')
+      toast.success('Progress logged successfully! 💪')
     } catch (err) {
       console.error('Error adding progress log:', err)
-      alert(err.message || 'Failed to save progress entry.')
+      toast.error(err.message || 'Failed to save progress entry.')
     } finally {
       setLoggingProgress(false)
     }
@@ -776,7 +777,7 @@ export default function MemberProgressTab({
                   onClick={() => {
                     const shareText = `💪 Verified Lift: I just smashed a new ${activeShareLog.exercise_name} PR of ${activeShareLog.value} kg at ${membership?.gyms?.gym_name || 'My Gym'} on Gymix! Consistency Streak: ${streakCount} Days! 🔥 #Gymix #FitnessGoal`
                     navigator.clipboard.writeText(shareText)
-                    alert('Share text copied! Feel free to paste it into your caption.')
+                    toast.success('Share text copied! Feel free to paste it into your caption.')
                   }}
                   className="px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 active:scale-95"
                 >

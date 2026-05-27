@@ -81,7 +81,7 @@ export async function getMyGym(userId) {
     .maybeSingle()
 
   if (subscriptionError) {
-    console.warn('DEBUG: latest SaaS subscription unavailable:', subscriptionError.message)
+    console.warn('Latest SaaS subscription details unavailable:', subscriptionError.message)
   }
 
   return enrichBillingState(data, latestSubscription)

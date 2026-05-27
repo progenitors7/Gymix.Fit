@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import DatePicker from '../UI/DatePicker';
+import { toast } from 'react-hot-toast';
 
 const isCodeUsable = (code) => {
   const usageLeft = Number(code.used_count || 0) < Number(code.max_uses || 0);
@@ -79,7 +80,7 @@ export default function PromoCodeManager() {
       });
       fetchCodes();
     } catch (err) {
-      alert(err.message || 'Failed to create code');
+      toast.error(err.message || 'Failed to create code');
     }
   };
 
@@ -94,7 +95,7 @@ export default function PromoCodeManager() {
       if (error) throw error;
       fetchCodes();
     } catch (err) {
-      alert(err.message || 'Failed to delete code');
+      toast.error(err.message || 'Failed to delete code');
     }
   };
 
@@ -178,7 +179,7 @@ export default function PromoCodeManager() {
                 <button 
                   onClick={() => {
                     navigator.clipboard.writeText(code.code);
-                    alert('Code copied!');
+                    toast.success('Code copied!');
                   }}
                   className="flex-1 flex items-center justify-center gap-2 py-2 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
                 >

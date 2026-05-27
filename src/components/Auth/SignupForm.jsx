@@ -44,7 +44,6 @@ export default function SignupForm({ onSwitch }) {
   useEffect(() => {
     if (paramGym) {
       localStorage.setItem('scanned_gym_code', paramGym.trim().toUpperCase())
-      console.log('[SignupForm] Persisted scanned gym code in localStorage:', paramGym)
     }
   }, [paramGym])
 

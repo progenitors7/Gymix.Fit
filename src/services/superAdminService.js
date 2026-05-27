@@ -365,7 +365,25 @@ export const superAdminService = {
       .eq('id', gymId)
       .maybeSingle();
 
-    // 2. Manually delete dependent records to avoid foreign key constraints
+    // 2. Fetch members of this gym to delete their individual logs
+    const { data: gymMembers } = await supabase
+      .from('members')
+      .select('id')
+      .eq('gym_id', gymId);
+    
+    const memberIds = gymMembers?.map(m => m.id) || [];
+
+    if (memberIds.length > 0) {
+      await supabase.from('member_coins_transactions').delete().in('member_id', memberIds);
+      await supabase.from('member_progress_logs').delete().in('member_id', memberIds);
+      await supabase.from('member_xp_transactions').delete().in('member_id', memberIds);
+    }
+
+    // 3. Manually delete dependent records to avoid foreign key constraints
+    await supabase.from('leaderboard_season_history').delete().eq('gym_id', gymId);
+    await supabase.from('leaderboard_seasons').delete().eq('gym_id', gymId);
+    await supabase.from('attendance').delete().eq('gym_id', gymId);
+    await supabase.from('connection_requests').delete().eq('gym_id', gymId);
     await supabase.from('payments').delete().eq('gym_id', gymId);
     await supabase.from('subscriptions').delete().eq('gym_id', gymId);
     await supabase.from('notifications').delete().eq('gym_id', gymId);
@@ -374,7 +392,7 @@ export const superAdminService = {
     await supabase.from('saas_subscriptions').delete().eq('gym_id', gymId);
     await supabase.from('support_tickets').delete().eq('gym_id', gymId);
     
-    // 3. Delete gym
+    // 4. Delete gym
     const { error: gymError } = await supabase
       .from('gyms')
       .delete()
@@ -382,7 +400,7 @@ export const superAdminService = {
     
     if (gymError) throw gymError;
 
-    // 4. Delete the owner profile and auth.users entry completely to strip owner login capabilities
+    // 5. Delete the owner profile and auth.users entry completely to strip owner login capabilities
     if (gym?.owner_user_id) {
       const { error: rpcError } = await supabase.rpc('delete_user_by_admin', { target_user_id: gym.owner_user_id });
       if (rpcError) {
@@ -456,6 +474,10 @@ export const superAdminService = {
       .maybeSingle();
 
     // 2. Cascade delete dependent logs to avoid constraint failures
+    await supabase.from('member_coins_transactions').delete().eq('member_id', memberId);
+    await supabase.from('member_progress_logs').delete().eq('member_id', memberId);
+    await supabase.from('member_xp_transactions').delete().eq('member_id', memberId);
+    await supabase.from('leaderboard_season_history').delete().eq('member_id', memberId);
     await supabase.from('payments').delete().eq('member_id', memberId);
     await supabase.from('subscriptions').delete().eq('member_id', memberId);
     await supabase.from('attendance').delete().eq('member_id', memberId);

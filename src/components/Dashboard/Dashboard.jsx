@@ -12,6 +12,7 @@ import PendingPaymentsWidget from './PendingPaymentsWidget';
 import { useAuth } from '../../hooks/useAuth';
 import MemberDashboard from './MemberDashboard';
 import PendingRequestsWidget from './PendingRequestsWidget';
+import { toast } from 'react-hot-toast';
 
 import { 
   Users, 
@@ -53,12 +54,6 @@ const itemVariants = {
 export default function Dashboard() {
   const { profile } = useAuth()
   const [analyticsTab, setAnalyticsTab] = useState('revenue');
-
-  // B2B2C Redirect: Member logs in to dynamic portal, owner logs in to core OS
-  if (profile?.role === 'member') {
-    return <MemberDashboard />
-  }
-
   const { gym, gymLoading, gymError, gymName, updateGymName } = useCurrentGym()
   const { stats, loading: statsLoading, error: statsError, fetchStats } = useDashboardStats();
   const navigate = useNavigate();
@@ -66,6 +61,11 @@ export default function Dashboard() {
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
+
+  // B2B2C Redirect: Member logs in to dynamic portal, owner logs in to core OS
+  if (profile?.role === 'member') {
+    return <MemberDashboard />
+  }
 
   const handlePrintPoster = () => {
     const printWindow = window.open('', '_blank', 'width=800,height=1000')
@@ -261,7 +261,7 @@ export default function Dashboard() {
             <button 
               onClick={() => {
                 navigator.clipboard.writeText(gym?.unique_code);
-                alert('Copied Gym Code to clipboard!');
+                toast.success('Copied Gym Code to clipboard!');
               }}
               className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold text-white transition-all cursor-pointer"
             >
@@ -317,7 +317,7 @@ export default function Dashboard() {
             <span 
               onClick={() => {
                 navigator.clipboard.writeText(gym?.unique_code);
-                alert("Gym code copied to clipboard!");
+                toast.success("Gym code copied to clipboard!");
               }} 
               className="bg-[#1A1F2B] border border-white/10 hover:border-white/20 px-2.5 py-1 rounded-lg text-emerald-400 font-mono font-black tracking-widest cursor-pointer select-all select-none hover:bg-white/[0.03] transition-all"
               title="Click to copy gym code"
@@ -347,7 +347,7 @@ export default function Dashboard() {
           subtitle={`₹${stats.revenue.total.toLocaleString()} lifetime collections`}
           icon={<CircleDollarSign className="w-5 h-5" />} 
           colorClass="emerald" 
-          trend="+12.5% MTD"
+          trend={stats.trends?.revenue || "+0.0% MoM"}
         />
         <StatCard 
           title="Active Members" 
@@ -355,7 +355,7 @@ export default function Dashboard() {
           subtitle={`Out of ${stats.membership.total} total registered`}
           icon={<CheckCircle2 className="w-5 h-5" />} 
           colorClass="sky" 
-          trend="Stable"
+          trend={stats.trends?.membership || "Stable"}
         />
         <StatCard 
           title="Today's Attendance" 
@@ -371,7 +371,7 @@ export default function Dashboard() {
           subtitle="Outstanding dues"
           icon={<Clock className="w-5 h-5" />} 
           colorClass="rose" 
-          trend="Action Needed"
+          trend={stats.trends?.pending || "No dues"}
         />
       </div>
 
@@ -601,7 +601,7 @@ export default function Dashboard() {
                 <span className="text-slate-500 uppercase tracking-wider">Scanner Gates Status</span>
                 <span className="flex items-center gap-1.5 text-emerald-400 font-black uppercase">
                   <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                  Synced (100%)
+                  {stats?.todayCheckIns > 0 ? "Synced (100%)" : "Online (Idle)"}
                 </span>
               </div>
             </div>

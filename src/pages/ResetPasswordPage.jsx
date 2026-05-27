@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import Logo from '../components/UI/Logo'
+import { toast } from 'react-hot-toast'
 
 export default function ResetPasswordPage() {
   const { updatePassword, user } = useAuth()
@@ -41,7 +42,7 @@ export default function ResetPasswordPage() {
     setLoading(true)
     try {
       await updatePassword(password)
-      alert('Password updated successfully! Please sign in with your new password.')
+      toast.success('Password updated successfully! Please sign in with your new password.')
       navigate('/login')
     } catch (err) {
       setError(err.message || 'Failed to update password. Link might be expired.')

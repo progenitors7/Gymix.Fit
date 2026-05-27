@@ -35,7 +35,7 @@ function MemberDetailModal({ sub, allSubs, onClose, onEdit }) {
     if (!memberId) return;
     try {
       setLoadingHistory(true);
-      const data = await subscriptionService.getSubscriptionsByMember(memberId);
+      const data = await subscriptionService.getSubscriptionsByMember(memberId, sub.gym_id);
       setHistory(data);
     } catch (e) {
       console.error(e);

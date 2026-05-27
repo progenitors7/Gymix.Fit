@@ -107,7 +107,7 @@ export default function ProtectedRoute({ children }) {
           </p>
           <div className="space-y-3">
             <a
-              href="mailto:support@gymrevenueos.com"
+              href="mailto:support@gymix.fit"
               className="block w-full py-4 bg-red-500 hover:bg-red-400 text-white font-bold rounded-2xl transition-all uppercase text-xs tracking-wider shadow-lg shadow-red-500/10"
             >
               Contact Administration

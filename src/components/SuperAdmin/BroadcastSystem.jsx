@@ -85,15 +85,11 @@ export default function BroadcastSystem() {
   }
 
   async function handleDelete(id) {
-    console.log('handleDelete triggered for broadcast ID:', id);
     if (!window.confirm('Are you sure you want to delete this broadcast?')) {
-      console.log('Deletion cancelled by user in confirm dialog');
       return;
     }
     try {
-      console.log('Initiating deleteBroadcast API call in superAdminService...');
       await superAdminService.deleteBroadcast(id);
-      console.log('Broadcast successfully deleted from database.');
       setBroadcasts(prev => prev.filter(b => b.id !== id));
       showToast('Broadcast deleted');
     } catch (err) {

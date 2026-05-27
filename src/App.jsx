@@ -10,6 +10,7 @@ import SuperAdminRoute from './components/Layout/SuperAdminRoute'
 import Logo from './components/UI/Logo'
 import { motion } from 'framer-motion'
 import { useAuth } from './hooks/useAuth'
+import { Toaster } from 'react-hot-toast'
 
 
 const LandingPage = React.lazy(() => import('./pages/LandingPage'))
@@ -105,6 +106,31 @@ function RootRoute() {
 export default function App() {
   return (
     <BrowserRouter>
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: '#1A1F2B',
+            color: '#fff',
+            border: '1px solid rgba(255,255,255,0.05)',
+            borderRadius: '16px',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '13px',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10B981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#EF4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
       <AuthProvider>
         <GymProvider>
           <Suspense fallback={<div className="h-screen flex items-center justify-center bg-[#1c1c1c]"><LoadingScreen /></div>}>
@@ -113,6 +139,7 @@ export default function App() {
               <Route path="/" element={<RootRoute />} />
               <Route path="/login" element={<AuthPage />} />
               <Route path="/signup" element={<AuthPage />} />
+              <Route path="/forgot-password" element={<AuthPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/hardware" element={<HardwareStorePage />} />
 

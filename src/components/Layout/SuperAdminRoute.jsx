@@ -16,7 +16,7 @@ export default function SuperAdminRoute({ children }) {
   const hasAdminAccess = isSuperAdmin(user?.email)
 
   if (!hasAdminAccess) {
-    console.warn('Unauthorized access attempt to Super Admin panel by:', user?.email)
+    console.warn('Unauthorized access attempt to Super Admin panel.')
     return <Navigate to="/dashboard" replace />
   }
 

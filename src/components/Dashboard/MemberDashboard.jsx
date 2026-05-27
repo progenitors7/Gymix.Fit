@@ -568,7 +568,6 @@ export default function MemberDashboard() {
           console.warn('[MemberDashboard] Stale session (401/PGRST301). Refreshing token...')
           const { data: { session }, error: refreshError } = await supabase.auth.refreshSession()
           if (!refreshError && session) {
-            console.log('[MemberDashboard] Token refreshed. Retrying fetch...')
             await executeFetch()
           } else {
             throw err

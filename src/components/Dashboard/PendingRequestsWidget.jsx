@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { connectionService } from '../../services/connectionService'
 import SmartApprovalModal from './SmartApprovalModal'
+import { toast } from 'react-hot-toast'
 
 export default function PendingRequestsWidget({ gymId, gymCode, onRefreshStats }) {
   const [requests, setRequests] = useState([])
@@ -42,7 +43,7 @@ export default function PendingRequestsWidget({ gymId, gymCode, onRefreshStats }
       // Remove from local list
       setRequests(prev => prev.filter(r => r.id !== requestId))
     } catch (err) {
-      alert(err.message || 'Failed to reject request')
+      toast.error(err.message || 'Failed to reject request')
     } finally {
       setProcessingId(null)
     }

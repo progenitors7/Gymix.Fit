@@ -7,6 +7,7 @@ import Logo from '../UI/Logo'
 import LoginForm from './LoginForm'
 import SignupForm from './SignupForm'
 import ForgotPasswordForm from './ForgotPasswordForm'
+import { supabase } from '../../lib/supabaseClient'
 
 export default function AuthPage() {
   const { user, loading } = useAuth()
@@ -15,11 +16,59 @@ export default function AuthPage() {
   const [searchParams] = useSearchParams()
   const paramGym = searchParams.get('gym')
 
+  const [platformStats, setPlatformStats] = useState({
+    gymsCount: '1.2K+',
+    revenueText: '₹48Cr+',
+    membersCount: '2.4L+'
+  })
+
+  // Fetch real platform stats from the database dynamically
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const { data, error } = await supabase.rpc('get_public_platform_stats')
+        if (!error && data && data.length > 0) {
+          const stats = data[0]
+          
+          const rawGyms = Number(stats.total_gyms) || 0
+          const rawMembers = Number(stats.total_members) || 0
+          const rawRevenue = Number(stats.total_revenue) || 0
+          
+          const formatGyms = (val) => {
+            if (val > 1000) return `${(val / 1000).toFixed(1)}K+`
+            return `${val}+`
+          }
+          
+          const formatMembers = (val) => {
+            if (val > 100000) return `${(val / 100000).toFixed(1)}L+`
+            if (val > 1000) return `${(val / 1000).toFixed(1)}K+`
+            return `${val}+`
+          }
+          
+          const formatRevenue = (val) => {
+            if (val > 10000000) return `₹${(val / 10000000).toFixed(1)}Cr+`
+            if (val > 100000) return `₹${(val / 100000).toFixed(1)}L+`
+            if (val > 1000) return `₹${(val / 1000).toFixed(1)}K+`
+            return `₹${val}+`
+          }
+
+          setPlatformStats({
+            gymsCount: formatGyms(rawGyms),
+            membersCount: formatMembers(rawMembers),
+            revenueText: formatRevenue(rawRevenue)
+          })
+        }
+      } catch (err) {
+        console.error('Error fetching platform stats:', err)
+      }
+    }
+    fetchStats()
+  }, [])
+
   // Capture scanned gym code from URL parameter securely
   useEffect(() => {
     if (paramGym) {
       localStorage.setItem('scanned_gym_code', paramGym.trim().toUpperCase())
-      console.log('[AuthPage] Saved scanned gym code into localStorage:', paramGym)
     }
   }, [paramGym])
 
@@ -130,9 +179,9 @@ export default function AuthPage() {
             className="grid grid-cols-3 gap-8 p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 backdrop-blur-sm"
           >
             {[
-              { label: 'Gym Owners', value: '1.2K+', color: 'text-emerald-400' },
-              { label: 'Revenue', value: '₹48Cr+', color: 'text-white' },
-              { label: 'Members', value: '2.4L+', color: 'text-emerald-400' },
+              { label: 'Gym Owners', value: platformStats.gymsCount, color: 'text-emerald-400' },
+              { label: 'Revenue', value: platformStats.revenueText, color: 'text-white' },
+              { label: 'Members', value: platformStats.membersCount, color: 'text-emerald-400' },
             ].map((stat) => (
               <div key={stat.label} className="space-y-1">
                 <p className={`text-2xl font-black tracking-tighter ${stat.color}`}>{stat.value}</p>

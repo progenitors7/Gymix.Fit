@@ -85,6 +85,7 @@ export function useDashboardStats() {
           amount_paid, 
           payment_date, 
           payment_status, 
+          payment_method,
           created_at,
           members (full_name)
         `)
@@ -271,6 +272,50 @@ export function useDashboardStats() {
 
       const revenueChartData = Object.values(chartDataMap);
 
+      // --- Calculate previous month dates for trends ---
+      const startOfPrevMonth = getLocalDateString(new Date(today.getFullYear(), today.getMonth() - 1, 1));
+
+      // --- Revenue Trends & Growth ---
+      let prevMonthRevenue = 0;
+      paymentsList.forEach(p => {
+        const amount = Number(p.amount_paid);
+        if (p.payment_status === 'paid') {
+          if (p.payment_date >= startOfPrevMonth && p.payment_date < startOfMonth) {
+            prevMonthRevenue += amount;
+          }
+        }
+      });
+      
+      let revenueTrendVal = 0;
+      if (prevMonthRevenue > 0) {
+        revenueTrendVal = ((monthlyRevenue - prevMonthRevenue) / prevMonthRevenue) * 100;
+      } else if (monthlyRevenue > 0) {
+        revenueTrendVal = 100;
+      }
+      const revenueTrend = revenueTrendVal >= 0 
+        ? `+${revenueTrendVal.toFixed(1)}% MoM` 
+        : `${revenueTrendVal.toFixed(1)}% MoM`;
+
+      // --- Member Trends & Growth ---
+      const thisMonthSignups = members.filter(m => m.join_date >= startOfMonth).length;
+      const prevMonthSignups = members.filter(m => m.join_date >= startOfPrevMonth && m.join_date < startOfMonth).length;
+      
+      let memberTrendVal = 0;
+      if (prevMonthSignups > 0) {
+        memberTrendVal = ((thisMonthSignups - prevMonthSignups) / prevMonthSignups) * 100;
+      } else if (thisMonthSignups > 0) {
+        memberTrendVal = 100;
+      }
+      const memberTrend = memberTrendVal > 0 
+        ? `+${memberTrendVal.toFixed(1)}% MoM` 
+        : memberTrendVal < 0 
+          ? `${memberTrendVal.toFixed(1)}% MoM`
+          : "Stable";
+
+      // --- Pending Payments Trend ---
+      const pendingCount = paymentsList.filter(p => p.payment_status === 'pending' || p.payment_status === 'overdue').length;
+      const pendingTrend = pendingAmount > 0 ? `${pendingCount} invoices` : "No dues";
+
       setStats({
         membership: membershipStats,
         revenue: revenueStats,
@@ -283,7 +328,12 @@ export function useDashboardStats() {
         attendanceRate,
         planDistribution,
         paymentMethods,
-        genderStats
+        genderStats,
+        trends: {
+          revenue: revenueTrend,
+          membership: memberTrend,
+          pending: pendingTrend
+        }
       });
 
     } catch (err) {

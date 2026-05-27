@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DatePicker from './DatePicker';
 import { unifiedService } from '../../services/unifiedService';
 import { useCurrentGym } from '../../hooks/useCurrentGym';
-
 import { planService } from '../../services/planService';
+import { toast } from 'react-hot-toast';
 
 export default function QuickRenewModal({ isOpen, onClose, member, onSuccess }) {
   const { gym } = useCurrentGym();
@@ -66,7 +66,7 @@ export default function QuickRenewModal({ isOpen, onClose, member, onSuccess }) 
       onSuccess?.();
       onClose();
     } catch (error) {
-      alert('Error renewing membership: ' + error.message);
+      toast.error('Error renewing membership: ' + error.message);
     } finally {
       setLoading(false);
     }

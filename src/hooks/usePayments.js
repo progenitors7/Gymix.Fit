@@ -5,7 +5,7 @@ import { useCurrentGym } from './useCurrentGym';
 export function usePayments() {
   const { gym, isReady } = useCurrentGym();
   const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchPayments = useCallback(async () => {

@@ -63,7 +63,6 @@ export function AuthProvider({ children }) {
         const savedRole = localStorage.getItem('oauth_signup_role')
 
         if (!p) {
-          console.log('[AuthProvider] Profile not found, upserting fallback...')
           const finalRole = savedRole || currUser.user_metadata?.role || 'member'
           const { data, error } = await supabase
             .from('profiles')
@@ -87,7 +86,6 @@ export function AuthProvider({ children }) {
           // If a specific role was requested via Google Signup and it differs from the database (which defaults to 'member'),
           // we update the database record to match the explicitly requested signup role.
           if (savedRole && p.role !== savedRole) {
-            console.log(`[AuthProvider] Syncing Google signup role. Updating DB from '${p.role}' to '${savedRole}'...`)
             const { data: updatedData, error: updateError } = await supabase
               .from('profiles')
               .update({ role: savedRole })

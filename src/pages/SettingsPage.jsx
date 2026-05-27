@@ -526,10 +526,29 @@ export default function SettingsPage() {
     if (!gym) return;
     setDeleting(true);
     try {
+      // 1. Fetch member ids for this gym to clean up member-specific sub-logs
+      const { data: gymMembers } = await supabase
+        .from('members')
+        .select('id')
+        .eq('gym_id', gym.id);
+      const memberIds = gymMembers?.map(m => m.id) || [];
+
+      if (memberIds.length > 0) {
+        await supabase.from('member_coins_transactions').delete().in('member_id', memberIds);
+        await supabase.from('member_progress_logs').delete().in('member_id', memberIds);
+        await supabase.from('member_xp_transactions').delete().in('member_id', memberIds);
+      }
+
+      // 2. Cascade delete other gym-level dependent records to avoid FK constraints
+      await supabase.from('leaderboard_season_history').delete().eq('gym_id', gym.id);
+      await supabase.from('leaderboard_seasons').delete().eq('gym_id', gym.id);
+      await supabase.from('attendance').delete().eq('gym_id', gym.id);
+      await supabase.from('connection_requests').delete().eq('gym_id', gym.id);
       await supabase.from('payments').delete().eq('gym_id', gym.id);
       await supabase.from('subscriptions').delete().eq('gym_id', gym.id);
       await supabase.from('notifications').delete().eq('gym_id', gym.id);
       await supabase.from('members').delete().eq('gym_id', gym.id);
+
       setDeleteConfirm('');
       setShowDangerModal(false);
       showToast('All gym data has been deleted.');

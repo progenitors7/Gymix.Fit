@@ -309,6 +309,7 @@ export const connectionService = {
             .from('attendance')
             .select('check_in_time')
             .eq('member_id', memberId)
+            .eq('gym_id', gymId)
             .order('check_in_time', { ascending: false });
 
           const allLogs = [{ check_in_time: attendance.check_in_time }, ...(logs || [])];
@@ -365,20 +366,14 @@ export const connectionService = {
 
           const totalAwarded = rewardCoins + bonusCoins;
 
-          // Fetch current balance
-          const { data: currentMember } = await supabase
-            .from('members')
-            .select('gym_coins_balance')
-            .eq('id', memberId)
-            .maybeSingle();
+          // Update member balance atomically to prevent race conditions
+          const { error: rpcError } = await supabase
+            .rpc('increment_member_coins', { 
+              member_id: memberId, 
+              coins_to_add: totalAwarded 
+            });
 
-          const newBalance = (currentMember?.gym_coins_balance || 0) + totalAwarded;
-
-          // Update member balance
-          await supabase
-            .from('members')
-            .update({ gym_coins_balance: newBalance })
-            .eq('id', memberId);
+          if (rpcError) throw rpcError;
 
           // Log transaction for Check-In
           await supabase
