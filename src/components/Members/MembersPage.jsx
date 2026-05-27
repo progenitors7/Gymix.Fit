@@ -32,6 +32,7 @@ const STATUS_TABS = [
   { key: 'active', label: 'Active' },
   { key: 'expiring_soon', label: 'Expiring Soon' },
   { key: 'expired', label: 'Expired' },
+  { key: 'left', label: 'Left' },
 ];
 
 function formatDate(dateStr) {
@@ -89,7 +90,7 @@ export default function MembersPage() {
   const [deleting, setDeleting] = useState(false);
 
   const displayed = statusFilter === 'all'
-    ? filteredMembers
+    ? filteredMembers.filter((m) => m.status !== 'left')
     : filteredMembers.filter((m) => m.status === statusFilter);
 
   const handleDeleteConfirm = async () => {
@@ -146,10 +147,11 @@ export default function MembersPage() {
   };
 
   const counts = {
-    all: filteredMembers.length,
+    all: filteredMembers.filter((m) => m.status !== 'left').length,
     active: filteredMembers.filter((m) => m.status === 'active').length,
     expiring_soon: filteredMembers.filter((m) => m.status === 'expiring_soon').length,
     expired: filteredMembers.filter((m) => m.status === 'expired').length,
+    left: filteredMembers.filter((m) => m.status === 'left').length,
   };
 
   const containerVariants = {

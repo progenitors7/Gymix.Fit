@@ -126,6 +126,16 @@ export const connectionService = {
     const { gym_id, profile_id, profiles } = request
     if (!gym_id || !profile_id) throw new Error('Request must contain gym_id and profile_id')
 
+    const getStatusFromExpiry = (expiryDate) => {
+      if (!expiryDate) return 'active'
+      const today = new Date(new Date().toISOString().split('T')[0])
+      const expiry = new Date(expiryDate)
+      const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24))
+      if (daysLeft < 0) return 'expired'
+      if (daysLeft <= 7) return 'expiring_soon'
+      return 'active'
+    }
+
     // Create the member payload
     const memberPayload = {
       gym_id,
@@ -137,11 +147,71 @@ export const connectionService = {
       membership_plan: memberData.membership_plan,
       join_date: memberData.join_date || new Date().toISOString().split('T')[0],
       expiry_date: memberData.expiry_date,
+      status: getStatusFromExpiry(memberData.expiry_date),
       notes: memberData.notes || 'Self-onboarded via connection code'
     }
 
-    // 1. Create the member in DB
-    const newMember = await createMember(memberPayload)
+    // Check if an existing member record exists in this gym to prevent duplicates
+    let existingMember = null
+    const targetPhone = memberPayload.phone_number?.trim()
+    const targetName = memberPayload.full_name?.trim()
+
+    if (targetPhone) {
+      const { data: matchPhone, error: phoneErr } = await supabase
+        .from('members')
+        .select('*')
+        .eq('gym_id', gym_id)
+        .eq('phone_number', targetPhone)
+        .maybeSingle()
+
+      if (!phoneErr && matchPhone) {
+        existingMember = matchPhone
+      }
+    }
+
+    if (!existingMember && targetName) {
+      const { data: matchName, error: nameErr } = await supabase
+        .from('members')
+        .select('*')
+        .eq('gym_id', gym_id)
+        .eq('full_name', targetName)
+        .is('profile_id', null)
+        .maybeSingle()
+
+      if (!nameErr && matchName) {
+        existingMember = matchName
+      }
+    }
+
+    let newMember
+    if (existingMember) {
+      // Reactivate/update existing member
+      const { data, error: updateErr } = await supabase
+        .from('members')
+        .update({
+          profile_id,
+          avatar_url: memberPayload.avatar_url || existingMember.avatar_url,
+          full_name: memberPayload.full_name || existingMember.full_name,
+          phone_number: memberPayload.phone_number || existingMember.phone_number,
+          gender: memberPayload.gender || existingMember.gender,
+          membership_plan: memberPayload.membership_plan,
+          expiry_date: memberPayload.expiry_date,
+          status: memberPayload.status,
+          notes: memberPayload.notes || existingMember.notes || 'Reconnected profile'
+        })
+        .eq('id', existingMember.id)
+        .select(`
+          id, gym_id, profile_id, avatar_url, full_name, phone_number, gender,
+          join_date, membership_plan, expiry_date, status, notes, biometric_user_id, created_at
+        `)
+        .single()
+
+      if (updateErr) throw updateErr
+      newMember = data
+    } else {
+      // 1. Create new member in DB
+      newMember = await createMember(memberPayload)
+    }
 
     // 2. Setup subscription & payments using smartRenew
     if (newMember) {
@@ -238,6 +308,9 @@ export const connectionService = {
 
     // 5. Membership status checks
     const todayStr = new Date().toISOString().split('T')[0]
+    if (member.status === 'left') {
+      throw new Error(`Athlete has disconnected/left the gym! (${member.full_name}) ❌`)
+    }
     if (member.status === 'expired' || (member.expiry_date && member.expiry_date < todayStr)) {
       throw new Error(`Membership is Expired! (${member.full_name}) ❌`)
     }

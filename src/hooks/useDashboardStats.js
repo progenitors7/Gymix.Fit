@@ -137,10 +137,11 @@ export function useDashboardStats() {
 
       // --- Membership Metrics ---
       const membershipStats = {
-        total: members.length,
+        total: members.filter(m => m.status !== 'left').length,
         active: members.filter(m => m.status === 'active').length,
         expiringSoon: members.filter(m => m.status === 'expiring_soon').length,
         expired: members.filter(m => m.status === 'expired').length,
+        left: members.filter(m => m.status === 'left').length,
       };
 
       const activeMembersCount = membershipStats.active;

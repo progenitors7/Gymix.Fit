@@ -299,7 +299,10 @@ export function MemberProfileTab({
     try {
       const { error } = await supabase
         .from('members')
-        .update({ profile_id: null })
+        .update({ 
+          profile_id: null,
+          status: 'left'
+        })
         .eq('id', membership.id)
 
       if (error) throw error
