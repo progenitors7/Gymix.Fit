@@ -5,7 +5,8 @@ import {
   Activity, Users, CreditCard, TrendingUp, MessageSquare, 
   Sparkles, ShieldCheck, Zap, ArrowRight, Download, Share, 
   Plus, Check, X, Smartphone, ArrowUpRight, BarChart3, QrCode,
-  Menu, ChevronDown, Award, Star, Search, Calendar, Lock, Info, CheckCircle2
+  Menu, ChevronDown, Award, Star, Search, Calendar, Lock, Info, CheckCircle2,
+  Fingerprint, ShoppingBag, ExternalLink
 } from 'lucide-react'
 import Logo from '../components/UI/Logo'
 
@@ -307,6 +308,7 @@ export default function LandingPage() {
             <button onClick={() => scrollToId('features')} className="hover:text-white transition-colors">Core Features</button>
             <button onClick={() => scrollToId('simulator')} className="hover:text-white transition-colors">Interactive Demo</button>
             <button onClick={() => scrollToId('pwa-installer')} className="hover:text-white transition-colors">PWA Mobile</button>
+            <button onClick={() => scrollToId('hardware-store')} className="hover:text-white transition-colors">Hardware Store</button>
             <button onClick={() => scrollToId('roadmap')} className="hover:text-white transition-colors">Technological Roadmap</button>
             <button onClick={() => scrollToId('pricing')} className="hover:text-white transition-colors">Pricing Calculator</button>
             <button onClick={() => scrollToId('faq')} className="hover:text-slate-200 transition-colors">FAQ</button>
@@ -397,6 +399,7 @@ export default function LandingPage() {
                     { label: 'Core Features', target: 'features' },
                     { label: 'Interactive Demo', target: 'simulator' },
                     { label: 'PWA Mobile App', target: 'pwa-installer' },
+                    { label: 'Hardware Store', target: 'hardware-store' },
                     { label: 'Technological Roadmap', target: 'roadmap' },
                     { label: 'Pricing Calculator', target: 'pricing' },
                     { label: 'Frequently Asked Questions', target: 'faq' }
@@ -1334,6 +1337,149 @@ export default function LandingPage() {
             ))}
 
           </div>
+        </div>
+      </section>
+
+      {/* ── COMPATIBLE BIOMETRIC HARDWARE STORE ── */}
+      <section id="hardware-store" className="py-20 md:py-28 border-t border-white/5 bg-[#090C10] relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          {/* Section Headers */}
+          <div className="text-center space-y-4 max-w-3xl mx-auto mb-16">
+            <span className="text-[#10B981] text-[10px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-1.5">
+              <ShoppingBag className="w-3.5 h-3.5 text-[#10B981]" />
+              Official Hardware Partners
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tighter uppercase italic leading-[1.1]">
+              COMPATIBLE HARDWARE STORE
+            </h2>
+            <p className="text-slate-400 text-xs sm:text-sm font-semibold max-w-2xl mx-auto leading-relaxed">
+              Skip complex API setups. The biometric devices below are verified to run out of the box with Gymix's ADMS cloud push webhook integration. Click to buy directly on Amazon.
+            </p>
+          </div>
+
+          {/* Hardware Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6.5 mt-12">
+            {[
+              {
+                name: "eSSL Identix K30 Pro",
+                badge: "Best Seller & Entry-Level",
+                desc: "Extremely popular, cost-effective biometric scanner. Perfect for small to mid-sized gyms.",
+                specs: [
+                  "1,000 Fingerprint Capacity",
+                  "1,000 RFID Card Storage",
+                  "ADMS Cloud Webhook Ready",
+                  "TCP/IP Network Interface"
+                ],
+                link: "https://amzn.to/49qHIBE",
+                color: "from-[#10B981]/20 to-transparent",
+                borderColor: "group-hover:border-[#10B981]/40",
+                badgeColor: "text-[#10B981] bg-[#10B981]/10 border-[#10B981]/20"
+              },
+              {
+                name: "eSSL K90 Pro ADMS",
+                badge: "Reliable Classic",
+                desc: "Upgraded version of K90 with native cloud ADMS integration. Standard for Indian gyms.",
+                specs: [
+                  "800 Fingerprint Capacity",
+                  "800 Card & Password Capacity",
+                  "SSR Excel Report Engine",
+                  "Optional Backup Battery Support"
+                ],
+                link: "https://www.amazon.in/s?k=essl+k90+pro+adms",
+                color: "from-blue-500/10 to-transparent",
+                borderColor: "group-hover:border-blue-500/30",
+                badgeColor: "text-blue-400 bg-blue-500/10 border-blue-500/20"
+              },
+              {
+                name: "BioMax N-Col 700",
+                badge: "Face + Fingerprint",
+                desc: "High-speed face recognition and fingerprint attendance terminal, ideal for contact-free entry.",
+                specs: [
+                  "1,500 Face Templates",
+                  "2,000 Fingerprint Capacity",
+                  "TCP/IP & USB Host",
+                  "Cloud Push Webhook Active"
+                ],
+                link: "https://www.amazon.in/s?k=biomax+n-col+700",
+                color: "from-[#863BFF]/10 to-transparent",
+                borderColor: "group-hover:border-[#863BFF]/30",
+                badgeColor: "text-[#863BFF] bg-[#863BFF]/10 border-[#863BFF]/20"
+              },
+              {
+                name: "Realtime T302 ADMS",
+                badge: "Heavy Duty Capacity",
+                desc: "Designed for high-traffic gym chains. Sturdy build with large verification capacity.",
+                specs: [
+                  "3,000 User Capacity",
+                  "3,000 Card & Fingerprint",
+                  "High-Speed ARM Processor",
+                  "Native ADMS Push Support"
+                ],
+                link: "https://www.amazon.in/s?k=realtime+t302+adms",
+                color: "from-pink-500/10 to-transparent",
+                borderColor: "group-hover:border-pink-500/30",
+                badgeColor: "text-pink-400 bg-pink-500/10 border-pink-500/20"
+              }
+            ].map((prod, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.08 }}
+                className={`glass-card border border-white/5 rounded-[2.5rem] p-6.5 flex flex-col justify-between hover:-translate-y-2 transition-all duration-300 relative group overflow-hidden bg-white/[0.01]`}
+              >
+                {/* Neon glow effect */}
+                <div className={`absolute inset-0 bg-gradient-to-tr ${prod.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`} />
+
+                <div className="space-y-4 relative z-10">
+                  <div className="flex justify-between items-start">
+                    <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border ${prod.badgeColor}`}>
+                      {prod.badge}
+                    </span>
+                    <Fingerprint className="w-5 h-5 text-slate-500 group-hover:text-white transition-colors" />
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-base sm:text-lg font-black text-white uppercase italic tracking-tight">{prod.name}</h3>
+                    <p className="text-slate-400 text-[11px] leading-relaxed pt-1.5 font-medium">{prod.desc}</p>
+                  </div>
+
+                  {/* Specs List */}
+                  <ul className="space-y-1.5 pt-2">
+                    {prod.specs.map((spec, sIdx) => (
+                      <li key={sIdx} className="text-[10px] text-slate-400 font-semibold flex items-center gap-1.5">
+                        <span className="w-1 h-1 rounded-full bg-[#10B981]" />
+                        {spec}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="pt-6 relative z-10 flex flex-col gap-3 border-t border-white/5 mt-5">
+                  <a
+                    href={prod.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 bg-white/5 hover:bg-[#10B981] hover:text-black text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 text-center flex items-center justify-center gap-1.5 border border-white/10 hover:border-[#10B981] cursor-pointer"
+                  >
+                    View on Amazon
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Affiliate Disclaimer Banner */}
+          <div className="mt-12 p-5 rounded-2xl bg-white/[0.01] border border-white/5 flex items-start gap-4 max-w-4xl mx-auto">
+            <Info className="w-5 h-5 text-[#10B981] shrink-0 mt-0.5" />
+            <div className="text-xs text-slate-400 font-semibold leading-relaxed">
+              <span className="text-white font-bold">Affiliate Disclosure:</span> As an Amazon Associate, we earn a small commission from qualifying purchases made through these links. This has <span className="text-[#10B981] font-bold">zero extra cost</span> for you, and it directly helps us fund, maintain, and upgrade our cloud biometric integration servers. Thank you for your support! 💚
+            </div>
+          </div>
+
         </div>
       </section>
 

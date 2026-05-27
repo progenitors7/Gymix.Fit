@@ -20,7 +20,9 @@ import {
   MessageSquare,
   Clock,
   CornerDownRight,
-  Copy
+  Copy,
+  ShoppingBag,
+  ExternalLink
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -855,6 +857,34 @@ export default function SettingsPage() {
                       <p>5. Apni machine ka actual Serial Number copy karke upar **Device Serial Number** field mein update karein.</p>
                     </div>
                   )}
+                </div>
+
+                {/* Amazon Affiliate Buy Card */}
+                <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 to-amber-500/5 border border-amber-500/20 space-y-3.5">
+                  <div className="flex items-center gap-2">
+                    <ShoppingBag className="w-5 h-5 text-amber-400" />
+                    <p className="text-xs font-black uppercase tracking-wider text-amber-400">Need a Compatible Biometric Machine?</p>
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="space-y-1">
+                      <p className="text-[11px] text-slate-300 font-bold leading-normal">
+                        Get the recommended <span className="text-white font-black">eSSL Identix K30 Pro</span> biometric scanner. It is fully pre-configured for Gymix's ADMS cloud push server.
+                      </p>
+                      <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">
+                        Tested & Approved • 1,000 Fingerprints/Cards • Plug & Play via Ethernet (LAN)
+                      </p>
+                    </div>
+
+                    <a 
+                      href="https://amzn.to/49qHIBE"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-black text-[9px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/15 whitespace-nowrap self-stretch sm:self-auto text-center"
+                    >
+                      Buy on Amazon 🛒
+                    </a>
+                  </div>
                 </div>
 
                 {/* Real-time Hardware Device Simulator Card */}
