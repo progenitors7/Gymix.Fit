@@ -29,6 +29,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useCurrentGym } from '../hooks/useCurrentGym';
 import { supabase } from '../lib/supabaseClient';
 import { planService } from '../services/planService';
+import ConfirmModal from '../components/UI/ConfirmModal';
 // ... imports
 import { Plus, X as CloseIcon, Edit2, Sparkles } from 'lucide-react';
 
@@ -245,6 +246,8 @@ export default function SettingsPage() {
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState(null);
   const [planForm, setPlanForm] = useState({ name: '', duration_days: 30, price: 0 });
+  const [deletePlanId, setDeletePlanId] = useState(null);
+  const [deletingPlan, setDeletingPlan] = useState(false);
 
   const openAddPlanModal = () => {
     setEditingPlan(null);
@@ -405,14 +408,22 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDeletePlan = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this plan?')) return;
+  const handleDeletePlanClick = (id) => {
+    setDeletePlanId(id);
+  };
+
+  const executeDeletePlan = async () => {
+    if (!deletePlanId) return;
+    setDeletingPlan(true);
     try {
-      await planService.deletePlan(id);
+      await planService.deletePlan(deletePlanId);
       showToast('Plan deleted successfully!');
       fetchPlans();
+      setDeletePlanId(null);
     } catch (err) {
       showToast(err.message, 'error');
+    } finally {
+      setDeletingPlan(false);
     }
   };
 
@@ -656,7 +667,7 @@ export default function SettingsPage() {
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button 
-                              onClick={() => handleDeletePlan(plan.id)}
+                              onClick={() => handleDeletePlanClick(plan.id)}
                               title="Delete Plan"
                               className="p-2 rounded-xl bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-all transform active:scale-95"
                             >
@@ -1506,6 +1517,16 @@ export default function SettingsPage() {
       </div>
       </>
       )}
+
+      <ConfirmModal
+        open={!!deletePlanId}
+        title="Delete Membership Plan"
+        message="Are you sure you want to delete this plan?"
+        confirmLabel="Delete"
+        loading={deletingPlan}
+        onConfirm={executeDeletePlan}
+        onCancel={() => setDeletePlanId(null)}
+      />
     </div>
   );
 }

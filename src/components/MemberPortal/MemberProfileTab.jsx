@@ -5,6 +5,7 @@ import {
   Lock, Building, Copy, Check, CheckCircle2, ShieldAlert, X, ChevronRight
 } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
+import ConfirmModal from '../UI/ConfirmModal'
 
 export function MemberProfileTab({
   profile,
@@ -32,6 +33,7 @@ export function MemberProfileTab({
 
   const [copiedGymCode, setCopiedGymCode] = useState(false)
   const [copiedAthleteId, setCopiedAthleteId] = useState(false)
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
 
   useEffect(() => {
     if (profile) {
@@ -287,13 +289,12 @@ export function MemberProfileTab({
     }
   }
 
-  const handleLeaveGym = async () => {
-    if (!membership) return
-    const confirm = window.confirm(
-      'Are you sure you want to disconnect from this gym? All check-in history and access keys associated with this profile will be disconnected.'
-    )
-    if (!confirm) return
+  const handleLeaveGym = () => {
+    setShowLeaveConfirm(true)
+  }
 
+  const executeLeaveGym = async () => {
+    if (!membership) return
     setSavingProfile(true)
     try {
       const { error } = await supabase
@@ -703,6 +704,19 @@ export function MemberProfileTab({
         )}
 
       </div>
+
+      <ConfirmModal
+        open={showLeaveConfirm}
+        title="Disconnect Gym"
+        message="Are you sure you want to disconnect from this gym? All check-in history and access keys associated with this profile will be disconnected."
+        confirmLabel="Disconnect"
+        loading={savingProfile}
+        onConfirm={async () => {
+          await executeLeaveGym()
+          setShowLeaveConfirm(false)
+        }}
+        onCancel={() => setShowLeaveConfirm(false)}
+      />
 
       {/* ── WEBCAM SNAPSHOT MODAL OVERLAY ── */}
       <AnimatePresence>

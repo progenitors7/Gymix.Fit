@@ -13,6 +13,7 @@ import {
 import { superAdminService } from '../../services/superAdminService';
 import { useAuth } from '../../hooks/useAuth';
 import Toast from '../UI/Toast';
+import ConfirmModal from '../UI/ConfirmModal';
 
 export default function BroadcastSystem() {
   const { user } = useAuth();
@@ -20,6 +21,8 @@ export default function BroadcastSystem() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState({ message: '', type: 'success' });
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     message: '',
@@ -84,17 +87,23 @@ export default function BroadcastSystem() {
     }
   }
 
-  async function handleDelete(id) {
-    if (!window.confirm('Are you sure you want to delete this broadcast?')) {
-      return;
-    }
+  function handleDeleteClick(id) {
+    setDeleteTargetId(id);
+  }
+
+  async function executeDelete() {
+    if (!deleteTargetId) return;
+    setDeletingId(deleteTargetId);
     try {
-      await superAdminService.deleteBroadcast(id);
-      setBroadcasts(prev => prev.filter(b => b.id !== id));
+      await superAdminService.deleteBroadcast(deleteTargetId);
+      setBroadcasts(prev => prev.filter(b => b.id !== deleteTargetId));
       showToast('Broadcast deleted');
+      setDeleteTargetId(null);
     } catch (err) {
       console.error('Failed to delete broadcast:', err);
       showToast(err.message || 'Failed to delete broadcast', 'error');
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -226,7 +235,7 @@ export default function BroadcastSystem() {
                     </div>
                   </div>
                   <button 
-                    onClick={() => handleDelete(b.id)}
+                    onClick={() => handleDeleteClick(b.id)}
                     className="relative z-10 opacity-50 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-all cursor-pointer flex-shrink-0"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -244,6 +253,16 @@ export default function BroadcastSystem() {
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        open={!!deleteTargetId}
+        title="Delete Broadcast"
+        message="Are you sure you want to delete this broadcast?"
+        confirmLabel="Delete"
+        loading={deletingId === deleteTargetId}
+        onConfirm={executeDelete}
+        onCancel={() => setDeleteTargetId(null)}
+      />
     </div>
   );
 }

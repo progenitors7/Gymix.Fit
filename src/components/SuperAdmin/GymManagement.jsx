@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { superAdminService } from '../../services/superAdminService';
 import Toast from '../UI/Toast';
+import ConfirmModal from '../UI/ConfirmModal';
 
 export default function GymManagement() {
   // Navigation: 'owners' | 'members'
@@ -47,6 +48,11 @@ export default function GymManagement() {
   const [saasPlans, setSaasPlans] = useState([]);
   const [activationModal, setActivationModal] = useState({ isOpen: false, gymId: null, gymName: '' });
   const [selectedPlan, setSelectedPlan] = useState('');
+  const [confirmState, setConfirmState] = useState({ isOpen: false, title: '', message: '', confirmLabel: '', onConfirm: () => {} });
+
+  const triggerConfirm = (title, message, confirmLabel, onConfirm) => {
+    setConfirmState({ isOpen: true, title, message, confirmLabel, onConfirm });
+  };
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -110,17 +116,23 @@ export default function GymManagement() {
   }
 
   async function handleDeleteMember(memberId) {
-    if (!confirm('Are you sure you want to permanently delete this athlete? All attendance logs and profiles will be erased. This cannot be undone.')) return;
-    try {
-      setUpdatingId(memberId);
-      await superAdminService.deleteMember(memberId);
-      setMembers(prev => prev.filter(m => m.id !== memberId));
-      showToast('Athlete record and profile permanently deleted');
-    } catch (err) {
-      showToast('Failed to delete athlete', 'error');
-    } finally {
-      setUpdatingId(null);
-    }
+    triggerConfirm(
+      'Delete Athlete',
+      'Are you sure you want to permanently delete this athlete? All attendance logs and profiles will be erased. This cannot be undone.',
+      'Delete',
+      async () => {
+        try {
+          setUpdatingId(memberId);
+          await superAdminService.deleteMember(memberId);
+          setMembers(prev => prev.filter(m => m.id !== memberId));
+          showToast('Athlete record and profile permanently deleted');
+        } catch (err) {
+          showToast('Failed to delete athlete', 'error');
+        } finally {
+          setUpdatingId(null);
+        }
+      }
+    );
   }
 
   async function handleStatusChange(gymId, newStatus) {
@@ -372,9 +384,12 @@ export default function GymManagement() {
                                   ) : (
                                     <button 
                                       onClick={() => {
-                                        if (confirm(`Are you sure you want to block ${gym.gym_name}? This will instantly suspend and delete their active authentication account.`)) {
-                                          handleStatusChange(gym.id, 'blocked');
-                                        }
+                                        triggerConfirm(
+                                          'Block Gym',
+                                          `Are you sure you want to block ${gym.gym_name}? This will instantly suspend and delete their active authentication account.`,
+                                          'Block',
+                                          () => handleStatusChange(gym.id, 'blocked')
+                                        );
                                         setOpenMenuId(null);
                                       }}
                                       className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-amber-400 hover:bg-amber-400/10 transition-all text-left"
@@ -386,9 +401,12 @@ export default function GymManagement() {
 
                                   <button 
                                     onClick={() => {
-                                      if (confirm(`Are you sure you want to PERMANENTLY delete ${gym.gym_name}? This will completely erase all gyms, attendance sheets, payments, AND the owner's authentication profile.`)) {
-                                        handleDeleteGym(gym.id);
-                                      }
+                                      triggerConfirm(
+                                        'Delete Gym Account',
+                                        `Are you sure you want to PERMANENTLY delete ${gym.gym_name}? This will completely erase all gyms, attendance sheets, payments, AND the owner's authentication profile.`,
+                                        'Delete',
+                                        () => handleDeleteGym(gym.id)
+                                      );
                                       setOpenMenuId(null);
                                     }}
                                     className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 transition-all text-left border-t border-white/5"
@@ -608,6 +626,18 @@ export default function GymManagement() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmLabel={confirmState.confirmLabel}
+        onConfirm={async () => {
+          await confirmState.onConfirm();
+          setConfirmState(prev => ({ ...prev, isOpen: false }));
+        }}
+        onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

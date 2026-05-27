@@ -6,6 +6,7 @@ import {
 import { connectionService } from '../../services/connectionService'
 import SmartApprovalModal from './SmartApprovalModal'
 import { toast } from 'react-hot-toast'
+import ConfirmModal from '../UI/ConfirmModal'
 
 export default function PendingRequestsWidget({ gymId, gymCode, onRefreshStats }) {
   const [requests, setRequests] = useState([])
@@ -13,6 +14,7 @@ export default function PendingRequestsWidget({ gymId, gymCode, onRefreshStats }
   const [selectedReq, setSelectedReq] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [processingId, setProcessingId] = useState(null)
+  const [rejectTargetId, setRejectTargetId] = useState(null)
 
   // Fetch pending connection requests
   const fetchRequests = useCallback(async () => {
@@ -33,15 +35,19 @@ export default function PendingRequestsWidget({ gymId, gymCode, onRefreshStats }
   }, [fetchRequests])
 
   // Handle request rejection
-  const handleReject = async (requestId) => {
-    const confirm = window.confirm('Are you sure you want to reject and delete this request?')
-    if (!confirm) return
+  const handleReject = (requestId) => {
+    setRejectTargetId(requestId)
+  }
+
+  const executeReject = async () => {
+    if (!rejectTargetId) return
     
-    setProcessingId(requestId)
+    setProcessingId(rejectTargetId)
     try {
-      await connectionService.rejectConnectionRequest(requestId)
+      await connectionService.rejectConnectionRequest(rejectTargetId)
       // Remove from local list
-      setRequests(prev => prev.filter(r => r.id !== requestId))
+      setRequests(prev => prev.filter(r => r.id !== rejectTargetId))
+      setRejectTargetId(null)
     } catch (err) {
       toast.error(err.message || 'Failed to reject request')
     } finally {
@@ -166,6 +172,16 @@ export default function PendingRequestsWidget({ gymId, gymCode, onRefreshStats }
           setSelectedReq(null)
         }}
         onApproved={handleApproveSubmit}
+      />
+
+      <ConfirmModal
+        open={!!rejectTargetId}
+        title="Reject Connection"
+        message="Are you sure you want to reject and delete this request?"
+        confirmLabel="Reject"
+        loading={processingId === rejectTargetId}
+        onConfirm={executeReject}
+        onCancel={() => setRejectTargetId(null)}
       />
     </div>
   )

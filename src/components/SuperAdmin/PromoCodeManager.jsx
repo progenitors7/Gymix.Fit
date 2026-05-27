@@ -11,6 +11,7 @@ import {
 import { supabase } from '../../lib/supabaseClient';
 import DatePicker from '../UI/DatePicker';
 import { toast } from 'react-hot-toast';
+import ConfirmModal from '../UI/ConfirmModal';
 
 const isCodeUsable = (code) => {
   const usageLeft = Number(code.used_count || 0) < Number(code.max_uses || 0);
@@ -24,6 +25,8 @@ export default function PromoCodeManager() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [deleteCodeId, setDeleteCodeId] = useState(null);
+  const [deletingCode, setDeletingCode] = useState(false);
   
   // New Code Form
   const [newCode, setNewCode] = useState({
@@ -84,18 +87,26 @@ export default function PromoCodeManager() {
     }
   };
 
-  const handleDeleteCode = async (id) => {
-    if (!confirm('Are you sure you want to delete this code?')) return;
+  const handleDeleteCodeClick = (id) => {
+    setDeleteCodeId(id);
+  };
+
+  const executeDeleteCode = async () => {
+    if (!deleteCodeId) return;
+    setDeletingCode(true);
     try {
       const { error } = await supabase
         .from('promo_codes')
         .delete()
-        .eq('id', id);
+        .eq('id', deleteCodeId);
       
       if (error) throw error;
       fetchCodes();
+      setDeleteCodeId(null);
     } catch (err) {
       toast.error(err.message || 'Failed to delete code');
+    } finally {
+      setDeletingCode(false);
     }
   };
 
@@ -187,7 +198,7 @@ export default function PromoCodeManager() {
                   Copy
                 </button>
                 <button 
-                  onClick={() => handleDeleteCode(code.id)}
+                  onClick={() => handleDeleteCodeClick(code.id)}
                   className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -281,6 +292,16 @@ export default function PromoCodeManager() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={!!deleteCodeId}
+        title="Delete Promo Code"
+        message="Are you sure you want to delete this promo code?"
+        confirmLabel="Delete"
+        loading={deletingCode}
+        onConfirm={executeDeleteCode}
+        onCancel={() => setDeleteCodeId(null)}
+      />
     </div>
   );
 }

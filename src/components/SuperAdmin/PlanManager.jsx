@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { superAdminService } from '../../services/superAdminService';
 import Toast from '../UI/Toast';
+import ConfirmModal from '../UI/ConfirmModal';
 
 export default function PlanManager() {
   const [plans, setPlans] = useState([]);
@@ -33,6 +34,8 @@ export default function PlanManager() {
   });
   const [featureInput, setFeatureInput] = useState('');
   const [toast, setToast] = useState({ message: '', type: 'success' });
+  const [deletePlanId, setDeletePlanId] = useState(null);
+  const [deletingPlan, setDeletingPlan] = useState(false);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -103,15 +106,23 @@ export default function PlanManager() {
     setNewPlan({ name: '', price: 0, max_members: 100, features: [] });
   }
 
-  async function handleDeletePlan(id) {
-    if (!confirm('Are you sure you want to delete this plan? Gyms using this plan might be affected.')) return;
+  function handleDeletePlanClick(id) {
+    setDeletePlanId(id);
+  }
+
+  async function executeDeletePlan() {
+    if (!deletePlanId) return;
+    setDeletingPlan(true);
     try {
-      await superAdminService.deleteSaaSPlan(id);
+      await superAdminService.deleteSaaSPlan(deletePlanId);
       showToast('Plan deleted successfully');
       fetchPlans();
+      setDeletePlanId(null);
     } catch (err) {
       console.error(err);
       showToast('Failed to delete plan. It might be in use.', 'error');
+    } finally {
+      setDeletingPlan(false);
     }
   }
 
@@ -280,7 +291,7 @@ export default function PlanManager() {
 
                         <button 
                           onClick={() => {
-                            handleDeletePlan(plan.id);
+                            handleDeletePlanClick(plan.id);
                             setOpenMenuId(null);
                           }}
                           className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-rose-500 hover:bg-rose-500/10 transition-all"
@@ -459,6 +470,16 @@ export default function PlanManager() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={!!deletePlanId}
+        title="Delete Plan"
+        message="Are you sure you want to delete this plan? Gyms using this plan might be affected."
+        confirmLabel="Delete"
+        loading={deletingPlan}
+        onConfirm={executeDeletePlan}
+        onCancel={() => setDeletePlanId(null)}
+      />
     </div>
   );
 }
