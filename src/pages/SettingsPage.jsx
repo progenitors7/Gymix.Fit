@@ -731,7 +731,7 @@ export default function SettingsPage() {
         <Section 
           icon={<Fingerprint className="w-5.5 h-5.5 text-[#10B981] fill-[#10B981]/10" />}
           title="Universal Biometric Integration" 
-          description="Direct Cloud Plug-and-Play biometric face & fingerprint scanner dashboard sync"
+          description="Direct Cloud Plug-and-Play sync for ZKTeco, eSSL, BioMax, Realtime & Hikvision terminals"
         >
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4.5 rounded-2xl bg-white/[0.01] border border-white/5">
@@ -827,7 +827,7 @@ export default function SettingsPage() {
                       onClick={() => setPwaGuideTab('zkteco')}
                       className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all border cursor-pointer ${pwaGuideTab === 'zkteco' ? 'bg-white/5 border-white/10 text-[#10B981]' : 'bg-transparent border-transparent text-slate-400'}`}
                     >
-                      eSSL / ZKTeco Setup
+                      eSSL / ZKTeco / BioMax / Realtime Setup
                     </button>
                     <button 
                       type="button"
@@ -844,7 +844,7 @@ export default function SettingsPage() {
                       <p>2. Go to <span className="text-white font-bold">Comm. (Communication) Settings</span> -&gt; <span className="text-white font-bold">ADMS / Cloud Server</span>.</p>
                       <p>3. <span className="text-[#10B981] font-bold">Enable Server Settings</span> toggle karein aur select <span className="text-white font-bold">Domain Name</span>.</p>
                       <p>4. Server Address mein <span className="text-white font-mono font-bold select-all">api.gymix.fit</span> aur Port mein <span className="text-white font-bold">80</span> daalein.</p>
-                      <p>5. Save karke restart karein, machine Gymix panel par automatic **ONLINE** aa jayegi! 🟢</p>
+                      <p>5. Save karke restart karein, machine Gymix panel par automatic **ONLINE** aa jayegi! 🟢 (Note: eSSL, ZKTeco, BioMax, Realtime and other ADMS push terminals use this exact same setup).</p>
                     </div>
                   ) : (
                     <div className="text-[10px] text-slate-400 space-y-1.5 leading-normal">
