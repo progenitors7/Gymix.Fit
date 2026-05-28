@@ -12,10 +12,10 @@ const corsHeaders = {
 const ALLOWED_DURATIONS = new Set([1, 3, 6, 12])
 const DEFAULT_PLAN_ID = '770f855a-535c-44f1-9604-0ba7a74c6f59'
 const DURATION_PRICES = new Map([
-  [1, 299],
-  [3, 699],
-  [6, 1399],
-  [12, 2499],
+  [1, 999],
+  [3, 2499],
+  [6, 5499],
+  [12, 9990],
 ])
 
 function calculateDiscountedAmount(baseAmount: number, promo: Record<string, unknown> | null) {
@@ -249,7 +249,8 @@ serve(async (req: Request) => {
           promoEnd = new Date(currentEnd.getTime())
         }
       }
-      promoEnd.setMonth(promoEnd.getMonth() + selectedDuration)
+      const extensionMonths = selectedDuration === 12 ? 13 : selectedDuration
+      promoEnd.setMonth(promoEnd.getMonth() + extensionMonths)
 
       const { error: insertError } = await supabaseClient
         .from('saas_subscriptions')
@@ -411,7 +412,8 @@ serve(async (req: Request) => {
           periodEnd = new Date(currentEnd.getTime())
         }
       }
-      periodEnd.setMonth(periodEnd.getMonth() + orderDuration)
+      const extensionMonths = orderDuration === 12 ? 13 : orderDuration
+      periodEnd.setMonth(periodEnd.getMonth() + extensionMonths)
 
       const { error: insertError } = await supabaseClient
         .from('saas_subscriptions')

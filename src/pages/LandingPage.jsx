@@ -33,9 +33,9 @@ export default function LandingPage() {
   
   // Simulated payments state
   const [mockInvoices, setMockInvoices] = useState([
-    { id: 'INV-2026-004', name: 'Pooja Patil', amount: '₹2,499', method: 'UPI', date: 'May 25', status: 'Paid' },
-    { id: 'INV-2026-003', name: 'Amit Sharma', amount: '₹699', method: 'UPI', date: 'May 24', status: 'Paid' },
-    { id: 'INV-2026-002', name: 'Rahul Sen', amount: '₹299', method: 'Cash', date: 'May 10', status: 'Unpaid' }
+    { id: 'INV-2026-004', name: 'Pooja Patil', amount: '₹9,990', method: 'UPI', date: 'May 25', status: 'Paid' },
+    { id: 'INV-2026-003', name: 'Amit Sharma', amount: '₹2,499', method: 'UPI', date: 'May 24', status: 'Paid' },
+    { id: 'INV-2026-002', name: 'Rahul Sen', amount: '₹999', method: 'Cash', date: 'May 10', status: 'Unpaid' }
   ])
   
   // PWA states
@@ -153,9 +153,9 @@ export default function LandingPage() {
 
   // Pricing calculations
   const planData = {
-    '1': { name: 'Growth Trial Plan', price: 299, desc: 'Ideal for small gyms starting out' },
-    '3': { name: 'Growth Elite Plan', price: 699, desc: 'Best value for active gyms' },
-    '12': { name: 'Growth Premium Plan', price: 2499, desc: 'Unlimited scaling for empires' }
+    '1': { name: 'Growth Trial Plan', price: 999, desc: 'Ideal for small gyms starting out' },
+    '3': { name: 'Growth Elite Plan', price: 2499, desc: 'Best value for active gyms' },
+    '12': { name: 'Growth Premium Plan (12+1 Free)', price: 9990, desc: 'Unlimited scaling for empires' }
   };
   const activePlan = planData[selectedDuration];
   const originalPrice = activePlan.price;
@@ -214,7 +214,7 @@ export default function LandingPage() {
   const addSimulatedInvoice = () => {
     const names = ['Rahul Sen', 'Karan Johar', 'Neha Gupta', 'Vikram Malhotra'];
     const selectedName = names[Math.floor(Math.random() * names.length)];
-    const prices = ['₹299', '₹699', '₹2,499'];
+    const prices = ['₹999', '₹2,499', '₹9,990'];
     const chosenPrice = prices[Math.floor(Math.random() * prices.length)];
     const isPaid = Math.random() > 0.35;
     
@@ -1575,7 +1575,7 @@ export default function LandingPage() {
                     <p className="text-[10px] text-[#10B981] font-bold uppercase tracking-wider">Eligible for voucher GYMIX1FREE</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-2xl sm:text-3xl font-black text-white">₹299</p>
+                    <p className="text-2xl sm:text-3xl font-black text-white">₹999</p>
                     <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none pt-1">Charged Monthly</p>
                   </div>
                 </div>
@@ -1604,7 +1604,7 @@ export default function LandingPage() {
                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Frictionless operational value</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-2xl sm:text-3xl font-black text-white">₹699</p>
+                    <p className="text-2xl sm:text-3xl font-black text-white">₹2499</p>
                     <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none pt-1">Frictionless Value</p>
                   </div>
                 </div>
@@ -1628,12 +1628,12 @@ export default function LandingPage() {
 
                   <div className="space-y-1">
                     <span className="text-[8px] font-black uppercase text-slate-500 tracking-widest">Gym Empire Pack</span>
-                    <h4 className="text-lg sm:text-xl font-black text-white italic uppercase">12 Months Access</h4>
-                    <p className="text-[10px] text-[#10B981] font-bold uppercase tracking-wider">Massive 40% long-term discount rate</p>
+                    <h4 className="text-lg sm:text-xl font-black text-white italic uppercase">12 Months + 1 Month Free</h4>
+                    <p className="text-[10px] text-[#10B981] font-bold uppercase tracking-wider">Best value (13 months total)</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-2xl sm:text-3xl font-black text-white">₹2,499</p>
-                    <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none pt-1">Charged Annually</p>
+                    <p className="text-2xl sm:text-3xl font-black text-white">₹9,990</p>
+                    <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none pt-1">Charged Annually (13 Months)</p>
                   </div>
                 </div>
 

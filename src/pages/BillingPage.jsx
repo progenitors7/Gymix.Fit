@@ -19,9 +19,9 @@ const BILLING_FUNCTION = 'razorpay-subscription-v2';
 const FREE_PROMO_DURATION_MONTHS = 1;
 
 const DURATIONS = [
-  { months: 1, label: '1 Month', price: 299, dailyText: 'Less than ₹10/day', discount: 0 },
-  { months: 3, label: '3 Months', price: 699, dailyText: 'Only ₹7/day', discount: 10, badge: 'MOST POPULAR', badgeColor: 'bg-amber-400 text-black' },
-  { months: 12, label: '12 Months', price: 2499, dailyText: 'Best long-term value', discount: 30, badge: 'BEST VALUE', badgeColor: 'bg-[#3390ec] text-white' },
+  { months: 1, label: '1 Month', price: 999, dailyText: 'Only ₹33/day', discount: 0 },
+  { months: 3, label: '3 Months', price: 2499, dailyText: 'Only ₹27/day', discount: 16, badge: 'MOST POPULAR', badgeColor: 'bg-amber-400 text-black' },
+  { months: 12, label: '12 Months + 1 Month Free', price: 9990, dailyText: 'Best value (13 months total)', discount: 23, badge: 'BEST VALUE', badgeColor: 'bg-[#3390ec] text-white' },
 ];
 
 export default function BillingPage() {
