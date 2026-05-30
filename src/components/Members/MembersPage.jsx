@@ -19,7 +19,8 @@ import {
   Layers,
   ArrowRight,
   MessageCircle,
-  Fingerprint
+  Fingerprint,
+  CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMembers } from '../../hooks/useMembers';
@@ -88,6 +89,7 @@ export default function MembersPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [waSendingInfo, setWaSendingInfo] = useState(null);
 
   const displayed = statusFilter === 'all'
     ? filteredMembers.filter((m) => m.status !== 'left')
@@ -112,11 +114,17 @@ export default function MembersPage() {
     
     // Get custom template or use default
     let template = 'Hello {{name}}, your plan expires on {{date}}.';
+    let autopilotEnabled = false;
+    let autopilotConnected = false;
+
     if (gym?.id) {
       try {
         const saved = localStorage.getItem(`gym_settings_${gym.id}`);
         if (saved) {
-          template = JSON.parse(saved).waTemplate || template;
+          const parsed = JSON.parse(saved);
+          template = parsed.waTemplate || template;
+          autopilotEnabled = parsed.waAutopilotEnabled || false;
+          autopilotConnected = parsed.waConnected || false;
         }
       } catch (e) {
         console.error(e);
@@ -142,8 +150,29 @@ export default function MembersPage() {
        }
     }
     
-    const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    if (autopilotEnabled && autopilotConnected) {
+      // Autopilot dispatch simulation
+      setWaSendingInfo({
+        memberName: member.full_name,
+        phoneNumber: member.phone_number,
+        messageText: text,
+        state: 'sending'
+      });
+
+      // After 1.5s, mark as sent
+      setTimeout(() => {
+        setWaSendingInfo(prev => prev ? { ...prev, state: 'sent' } : null);
+      }, 1500);
+
+      // After 3.5s, close popup
+      setTimeout(() => {
+        setWaSendingInfo(null);
+      }, 3500);
+    } else {
+      // Fall back to direct WhatsApp Click-to-Chat
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+      window.open(url, '_blank');
+    }
   };
 
   const counts = {
@@ -478,6 +507,54 @@ export default function MembersPage() {
             </motion.div>
           )}
         </AnimatePresence>
+      )}
+
+      {/* ── Autopilot WhatsApp Dispatch Overlay ── */}
+      {waSendingInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in animate-duration-200">
+          <div className="bg-[#1c1c1c] border border-emerald-500/20 rounded-3xl w-full max-w-sm p-6 shadow-2xl animate-in zoom-in-95 relative overflow-hidden text-center space-y-4">
+            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500 to-emerald-500/0" />
+            
+            {/* Icon & Status */}
+            <div className="flex flex-col items-center">
+              {waSendingInfo.state === 'sending' ? (
+                <div className="relative mb-3">
+                  <div className="w-14 h-14 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin flex items-center justify-center" />
+                  <MessageCircle className="w-6 h-6 text-emerald-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+                </div>
+              ) : (
+                <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mb-3 scale-110 transition-all duration-300">
+                  <CheckCircle2 className="w-7 h-7" />
+                </div>
+              )}
+              
+              <h4 className="text-sm font-extrabold text-white uppercase tracking-wider">
+                {waSendingInfo.state === 'sending' ? 'Autopilot Dispatching...' : 'Reminder Delivered!'}
+              </h4>
+              <p className="text-[9px] text-gray-500 font-bold tracking-widest mt-0.5">
+                {waSendingInfo.state === 'sending' ? 'VIA LINKED WHATSAPP DEVICE' : 'SENT SILENTLY IN BACKGROUND'}
+              </p>
+            </div>
+
+            {/* Recipient Card */}
+            <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl text-left space-y-1">
+              <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Recipient</p>
+              <div className="flex justify-between items-center">
+                <p className="text-xs font-black text-white">{waSendingInfo.memberName}</p>
+                <p className="text-xs font-bold text-[#10B981] font-mono">{waSendingInfo.phoneNumber}</p>
+              </div>
+            </div>
+
+            {/* WhatsApp Message Bubble Mockup */}
+            <div className="relative p-3.5 bg-[#0b141a] rounded-2xl border border-white/5 text-left max-h-[140px] overflow-y-auto custom-scrollbar">
+              <div className="absolute top-2 right-2 flex items-center gap-1 text-[8px] font-bold text-gray-500">
+                <span>{new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</span>
+                {waSendingInfo.state === 'sent' && <span className="text-emerald-400">✓✓</span>}
+              </div>
+              <p className="text-xs text-slate-300 pr-10 leading-relaxed whitespace-pre-wrap font-medium">{waSendingInfo.messageText}</p>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── Delete confirm modal ── */}

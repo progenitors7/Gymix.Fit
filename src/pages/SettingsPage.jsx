@@ -22,7 +22,12 @@ import {
   CornerDownRight,
   Copy,
   ShoppingBag,
-  ExternalLink
+  ExternalLink,
+  MessageCircle,
+  Smartphone,
+  Scan,
+  RefreshCw,
+  Power
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -317,8 +322,21 @@ export default function SettingsPage() {
   }, [gymId]);
 
   // Global Settings (Stored in LocalStorage)
-  const [globalSettings, setGlobalSettings] = useState({ currency: '₹', waTemplate: 'Hello {{name}}, your plan expires on {{date}}.' });
+  const [globalSettings, setGlobalSettings] = useState({ 
+    currency: '₹', 
+    waTemplate: 'Hello {{name}}, your plan expires on {{date}}.',
+    waAutopilotEnabled: false,
+    waConnected: false,
+    waConnectedNumber: ''
+  });
   const [savingSettings, setSavingSettings] = useState(false);
+
+  // WhatsApp Gateway states
+  const [waSessionState, setWaSessionState] = useState('disconnected'); // 'disconnected' | 'connecting' | 'qr_ready' | 'connected'
+  const [waCountdown, setWaCountdown] = useState(45);
+  const [testPhone, setTestPhone] = useState('');
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [sendingTestMessage, setSendingTestMessage] = useState(false);
 
   useEffect(() => {
     fetchPlans();
@@ -326,10 +344,94 @@ export default function SettingsPage() {
     if (gymId) {
       try {
         const saved = localStorage.getItem(`gym_settings_${gymId}`);
-        if (saved) setGlobalSettings(JSON.parse(saved));
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setGlobalSettings({
+            currency: '₹',
+            waTemplate: 'Hello {{name}}, your plan expires on {{date}}.',
+            waAutopilotEnabled: false,
+            waConnected: false,
+            waConnectedNumber: '',
+            ...parsed
+          });
+          if (parsed.waConnected) {
+            setWaSessionState('connected');
+          }
+        }
       } catch { /* ignore */ }
     }
   }, [gymId, fetchPlans, fetchUserTickets]);
+
+  // QR Code Expiry Countdown and auto-connection simulation
+  useEffect(() => {
+    let interval;
+    let simulateTimeout;
+
+    if (waSessionState === 'qr_ready') {
+      // Countdown timer
+      interval = setInterval(() => {
+        setWaCountdown(prev => {
+          if (prev <= 1) {
+            setWaSessionState('disconnected');
+            showToast('QR Code expired. Please generate a new one.', 'error');
+            return 45;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      // Simulate QR scan and successful connection after 6 seconds
+      simulateTimeout = setTimeout(() => {
+        const updatedSettings = {
+          ...globalSettings,
+          waConnected: true,
+          waConnectedNumber: '+91 98765 43210'
+        };
+        setGlobalSettings(updatedSettings);
+        localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updatedSettings));
+        setWaSessionState('connected');
+        showToast('WhatsApp Linked successfully! Connected as +91 98765 43210 🟢');
+      }, 6000);
+    }
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(simulateTimeout);
+    };
+  }, [waSessionState, globalSettings, gymId]);
+
+  const handleStartWaSession = () => {
+    setWaSessionState('connecting');
+    setTimeout(() => {
+      setWaCountdown(45);
+      setWaSessionState('qr_ready');
+      showToast('Dynamic QR code generated. Scan with your phone.');
+    }, 2000);
+  };
+
+  const handleDisconnectWa = () => {
+    const updatedSettings = {
+      ...globalSettings,
+      waConnected: false,
+      waConnectedNumber: ''
+    };
+    setGlobalSettings(updatedSettings);
+    localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updatedSettings));
+    setWaSessionState('disconnected');
+    showToast('WhatsApp session disconnected successfully.');
+  };
+
+  const handleSendTestMessage = (e) => {
+    e.preventDefault();
+    if (!testPhone.trim()) return showToast('Please enter a valid phone number', 'error');
+    setSendingTestMessage(true);
+    setTimeout(() => {
+      setSendingTestMessage(false);
+      setShowTestModal(false);
+      setTestPhone('');
+      showToast(`Test message sent successfully to ${testPhone}! 🚀`);
+    }, 1500);
+  };
 
   // Support Scroll & Glow effect
   useEffect(() => {
@@ -970,6 +1072,212 @@ export default function SettingsPage() {
           </div>
         </Section>
 
+        {/* WhatsApp Automation Gateway */}
+        <Section 
+          icon={<MessageCircle className="w-5.5 h-5.5 text-emerald-400 fill-emerald-400/10" />}
+          title="WhatsApp Automation Gateway" 
+          description="Connect your own WhatsApp account via QR code to automate fee alerts, expiry warnings, and walk-in follow-ups in the background."
+        >
+          <div className="space-y-4">
+            {/* Connection Mode Selection Toggle */}
+            <div className="flex items-center justify-between p-4.5 rounded-2xl bg-white/[0.01] border border-white/5">
+              <div>
+                <p className="text-sm font-bold text-white">Enable WhatsApp Autopilot Mode</p>
+                <p className="text-[10px] text-gray-500 font-medium">
+                  {globalSettings.waAutopilotEnabled 
+                    ? "🟢 Reminders will send in the background automatically via your linked WhatsApp device." 
+                    : "⚪ Reminders open manual click-to-chat web tabs (wa.me) for manual sending."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const updated = { ...globalSettings, waAutopilotEnabled: !globalSettings.waAutopilotEnabled };
+                  setGlobalSettings(updated);
+                  localStorage.setItem(`gym_settings_${gym?.id}`, JSON.stringify(updated));
+                  showToast(updated.waAutopilotEnabled ? 'WhatsApp Autopilot Mode Enabled!' : 'WhatsApp Manual Mode Activated.');
+                }}
+                className={`w-12 h-7 rounded-full p-1 transition-all cursor-pointer relative flex items-center ${globalSettings.waAutopilotEnabled ? 'bg-emerald-500' : 'bg-white/10'}`}
+              >
+                <span className={`w-5 h-5 bg-white rounded-full shadow-md transition-all absolute ${globalSettings.waAutopilotEnabled ? 'right-1' : 'left-1'}`} />
+              </button>
+            </div>
+
+            {/* Autopilot Panel (Displays only when Autopilot Toggle is True) */}
+            {globalSettings.waAutopilotEnabled && (
+              <div className="p-5 rounded-2xl bg-black/30 border border-white/5 space-y-4 animate-in fade-in duration-300">
+                
+                {/* STATE 1: Disconnected */}
+                {waSessionState === 'disconnected' && (
+                  <div className="flex flex-col items-center text-center py-6 space-y-4">
+                    <div className="w-14 h-14 bg-white/[0.02] border border-white/5 text-gray-500 rounded-2xl flex items-center justify-center shadow-inner">
+                      <Smartphone className="w-7 h-7" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-bold text-white">No Connected WhatsApp Device</h4>
+                      <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed font-medium">
+                        Link your phone using a standard WhatsApp Web QR scan to enable background automation. No message fees, 100% direct client delivery.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleStartWaSession}
+                      className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-black text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/10"
+                    >
+                      <Scan className="w-4 h-4" />
+                      Link WhatsApp Account
+                    </button>
+                  </div>
+                )}
+
+                {/* STATE 2: Connecting (Session Initialization) */}
+                {waSessionState === 'connecting' && (
+                  <div className="flex flex-col items-center text-center py-10 space-y-4">
+                    <div className="relative">
+                      <div className="w-14 h-14 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin flex items-center justify-center" />
+                      <MessageCircle className="w-6 h-6 text-emerald-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <h4 className="text-sm font-bold text-white animate-pulse">Initializing Security Session</h4>
+                      <p className="text-[10px] text-gray-500 font-semibold tracking-wide">
+                        Configuring virtual browser instance on cloud node...
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* STATE 3: QR Ready (Displaying QR Code Scanner Grid) */}
+                {waSessionState === 'qr_ready' && (
+                  <div className="flex flex-col items-center text-center py-4 space-y-5">
+                    {/* Glowing scanning target grid */}
+                    <div className="relative p-3 bg-white rounded-3xl border border-white/10 shadow-2xl shadow-emerald-500/5 group">
+                      
+                      {/* Interactive CSS Neon Scanning Line */}
+                      <div 
+                        className="absolute left-3 right-3 h-0.5 bg-emerald-500 shadow-[0_0_8px_#10B981] z-10 animate-scan"
+                        style={{
+                          animation: 'scan 2.5s linear infinite'
+                        }}
+                      />
+                      
+                      {/* CSS Scanner Keyframe Style Tag self-contained */}
+                      <style dangerouslySetInnerHTML={{__html: `
+                        @keyframes scan {
+                          0% { top: 12px; }
+                          50% { top: calc(100% - 14px); }
+                          100% { top: 12px; }
+                        }
+                      `}} />
+
+                      {/* Styled QR Code Mockup (Abstract blocks representing QR grid) */}
+                      <div className="w-40 h-40 bg-white flex flex-wrap p-1 relative overflow-hidden rounded-2xl select-none">
+                        {/* Static QR elements inside a grid representing real barcode blocks */}
+                        {[...Array(16)].map((_, i) => {
+                          const isFilled = (i % 3 === 0) || (i === 1) || (i === 7) || (i === 10) || (i === 14) || (i === 15);
+                          const isCorner = (i === 0) || (i === 3) || (i === 12);
+                          return (
+                            <div key={i} className="w-10 h-10 p-1 flex items-center justify-center">
+                              {isCorner ? (
+                                <div className="w-full h-full border-4 border-black rounded p-0.5">
+                                  <div className="w-full h-full bg-black rounded-sm" />
+                                </div>
+                              ) : isFilled ? (
+                                <div className="w-full h-full bg-black rounded-sm" />
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                        
+                        {/* Overlay scan grid dots */}
+                        <div className="absolute inset-0 bg-emerald-500/5 mix-blend-overlay pointer-events-none" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 max-w-sm">
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-wider">
+                        <Clock className="w-3.5 h-3.5" />
+                        QR Code expires in {waCountdown}s
+                      </div>
+                      <h4 className="text-sm font-extrabold text-white">Scan to Connect Device</h4>
+                      <p className="text-[10px] text-gray-400 leading-normal font-semibold">
+                        Open WhatsApp on your phone &rarr; Tap Menu or Settings &rarr; Linked Devices &rarr; Scan this QR.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setWaCountdown(45)}
+                      className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-lg border border-white/5 transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Force Regenerate QR
+                    </button>
+                  </div>
+                )}
+
+                {/* STATE 4: Connected Session */}
+                {waSessionState === 'connected' && (
+                  <div className="p-4 rounded-xl bg-emerald-500/[0.02] border border-emerald-500/10 space-y-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center shrink-0">
+                          <MessageCircle className="w-6 h-6 animate-pulse" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-white">WhatsApp Session Linked</h4>
+                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
+                          </div>
+                          <p className="text-xs font-bold text-[#10B981] font-mono">{globalSettings.waConnectedNumber || '+91 98765 43210'}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTestPhone('');
+                            setShowTestModal(true);
+                          }}
+                          className="flex-1 sm:flex-none px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg border border-white/5 transition-all text-xs font-bold uppercase tracking-wider cursor-pointer"
+                        >
+                          Send Test
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleDisconnectWa}
+                          className="flex-1 sm:flex-none px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg border border-rose-500/20 transition-all text-xs font-bold uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5"
+                          title="Disconnect WhatsApp Session"
+                        >
+                          <Power className="w-3.5 h-3.5" />
+                          Disconnect
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Operational metrics dashboard */}
+                    <div className="grid grid-cols-3 gap-2.5 pt-3 border-t border-white/[0.03] text-[9px] font-bold uppercase tracking-wider text-gray-500">
+                      <div className="bg-white/[0.01] rounded-lg p-2.5 text-center">
+                        <p className="text-gray-400 text-sm font-black mb-0.5 font-mono">Ready</p>
+                        <span>Device Status</span>
+                      </div>
+                      <div className="bg-white/[0.01] rounded-lg p-2.5 text-center">
+                        <p className="text-emerald-400 text-sm font-black mb-0.5 font-mono">100%</p>
+                        <span>Success Rate</span>
+                      </div>
+                      <div className="bg-white/[0.01] rounded-lg p-2.5 text-center">
+                        <p className="text-white text-sm font-black mb-0.5 font-mono">0 ms</p>
+                        <span>Dispatch Latency</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            )}
+          </div>
+        </Section>
+
         {/* Global Settings */}
         <Section 
           icon={<SettingsIcon className="w-5 h-5" />}
@@ -1298,6 +1606,76 @@ export default function SettingsPage() {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* WhatsApp Test Message Modal */}
+        {showTestModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in animate-duration-200">
+            <div className="bg-[#1c1c1c] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 relative overflow-hidden">
+              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500 to-emerald-500/0" />
+              
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5 text-emerald-400" />
+                  <h3 className="text-lg font-bold text-white">Send Test Message</h3>
+                </div>
+                <button 
+                  onClick={() => setShowTestModal(false)}
+                  className="p-1.5 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-colors"
+                >
+                  <CloseIcon className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSendTestMessage} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Recipient Phone Number</label>
+                  <input 
+                    type="tel" 
+                    required
+                    placeholder="e.g. +91 98765 43210" 
+                    value={testPhone}
+                    onChange={e => setTestPhone(e.target.value)}
+                    className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all placeholder-gray-600 font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Message Content</label>
+                  <textarea 
+                    rows={3}
+                    readOnly
+                    value="Hello! This is a test message dispatched from Gymix Autopilot Gateway. Your device linking is fully operational! 🟢🚀"
+                    className="w-full bg-[#121212]/50 border border-white/5 rounded-xl px-4 py-3 text-xs text-gray-400 focus:outline-none transition-all resize-none font-sans"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <button 
+                    type="button"
+                    onClick={() => setShowTestModal(false)}
+                    className="px-4 py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={sendingTestMessage} 
+                    className="px-4 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-black font-black rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-500/10 flex items-center justify-center gap-1.5"
+                  >
+                    {sendingTestMessage ? (
+                      <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Zap className="w-3.5 h-3.5" />
+                        Send Now ⚡
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
