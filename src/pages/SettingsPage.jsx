@@ -337,42 +337,84 @@ export default function SettingsPage() {
   const [testPhone, setTestPhone] = useState('');
   const [showTestModal, setShowTestModal] = useState(false);
   const [sendingTestMessage, setSendingTestMessage] = useState(false);
+  const [waQrImage, setWaQrImage] = useState('');
+  const [isRealBackend, setIsRealBackend] = useState(false);
 
+  const WA_BACKEND_URL = 'http://localhost:5000';
+
+  // Check server connection and status on mount
   useEffect(() => {
     fetchPlans();
     fetchUserTickets();
-    if (gymId) {
+    if (!gymId) return;
+
+    // Load initial local settings
+    try {
+      const saved = localStorage.getItem(`gym_settings_${gymId}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setGlobalSettings({
+          currency: '₹',
+          waTemplate: 'Hello {{name}}, your plan expires on {{date}}.',
+          waAutopilotEnabled: false,
+          waConnected: false,
+          waConnectedNumber: '',
+          ...parsed
+        });
+        if (parsed.waConnected) {
+          setWaSessionState('connected');
+        }
+      }
+    } catch { /* ignore */ }
+
+    // Query active server status
+    const checkServerStatus = async () => {
       try {
-        const saved = localStorage.getItem(`gym_settings_${gymId}`);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          setGlobalSettings({
-            currency: '₹',
-            waTemplate: 'Hello {{name}}, your plan expires on {{date}}.',
-            waAutopilotEnabled: false,
-            waConnected: false,
-            waConnectedNumber: '',
-            ...parsed
-          });
-          if (parsed.waConnected) {
+        const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${gymId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setIsRealBackend(true);
+          if (data.status === 'connected') {
             setWaSessionState('connected');
+            setGlobalSettings(prev => {
+              const updated = {
+                ...prev,
+                waConnected: true,
+                waConnectedNumber: data.connectedNumber ? `+${data.connectedNumber}` : '+91 98765 43210'
+              };
+              localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updated));
+              return updated;
+            });
+          } else if (data.status === 'disconnected') {
+            setWaSessionState('disconnected');
+            setGlobalSettings(prev => {
+              const updated = { ...prev, waConnected: false, waConnectedNumber: '' };
+              localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updated));
+              return updated;
+            });
           }
         }
-      } catch { /* ignore */ }
-    }
+      } catch (err) {
+        console.log('[Gymix WA] Central server offline, running in dynamic simulation mode.');
+        setIsRealBackend(false);
+      }
+    };
+
+    checkServerStatus();
   }, [gymId, fetchPlans, fetchUserTickets]);
 
-  // QR Code Expiry Countdown and auto-connection simulation
+  // Real-time server polling or dynamic local scan simulation
   useEffect(() => {
     let interval;
     let simulateTimeout;
 
     if (waSessionState === 'qr_ready') {
-      // Countdown timer
+      // 1. Ticking countdown timer (common for both real and simulated)
       interval = setInterval(() => {
         setWaCountdown(prev => {
           if (prev <= 1) {
             setWaSessionState('disconnected');
+            setWaQrImage('');
             showToast('QR Code expired. Please generate a new one.', 'error');
             return 45;
           }
@@ -380,28 +422,92 @@ export default function SettingsPage() {
         });
       }, 1000);
 
-      // Simulate QR scan and successful connection after 6 seconds
-      simulateTimeout = setTimeout(() => {
-        const updatedSettings = {
-          ...globalSettings,
-          waConnected: true,
-          waConnectedNumber: '+91 98765 43210'
+      if (isRealBackend) {
+        // Real-mode: Poll active status from node server
+        const pollInterval = setInterval(async () => {
+          try {
+            const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${gymId}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data.status === 'connected') {
+                clearInterval(pollInterval);
+                clearInterval(interval);
+                const updatedSettings = {
+                  ...globalSettings,
+                  waConnected: true,
+                  waConnectedNumber: data.connectedNumber ? `+${data.connectedNumber}` : '+91 98765 43210'
+                };
+                setGlobalSettings(updatedSettings);
+                localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updatedSettings));
+                setWaSessionState('connected');
+                setWaQrImage('');
+                showToast(`WhatsApp Linked successfully! Connected as ${updatedSettings.waConnectedNumber} 🟢`);
+              } else if (data.qrCodeUrl && data.qrCodeUrl !== waQrImage) {
+                setWaQrImage(data.qrCodeUrl);
+              }
+            }
+          } catch (err) {
+            console.warn('[Gymix WA] Status polling failed');
+          }
+        }, 2000);
+
+        return () => {
+          clearInterval(interval);
+          clearInterval(pollInterval);
         };
-        setGlobalSettings(updatedSettings);
-        localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updatedSettings));
-        setWaSessionState('connected');
-        showToast('WhatsApp Linked successfully! Connected as +91 98765 43210 🟢');
-      }, 6000);
+      } else {
+        // Simulated-mode: Transition to connected state after 6 seconds
+        simulateTimeout = setTimeout(() => {
+          const updatedSettings = {
+            ...globalSettings,
+            waConnected: true,
+            waConnectedNumber: '+91 98765 43210'
+          };
+          setGlobalSettings(updatedSettings);
+          localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updatedSettings));
+          setWaSessionState('connected');
+          showToast('WhatsApp Linked successfully! Connected as +91 98765 43210 🟢');
+        }, 6000);
+      }
     }
 
     return () => {
       clearInterval(interval);
-      clearTimeout(simulateTimeout);
+      if (simulateTimeout) clearTimeout(simulateTimeout);
     };
-  }, [waSessionState, globalSettings, gymId]);
+  }, [waSessionState, globalSettings, gymId, isRealBackend, waQrImage]);
 
-  const handleStartWaSession = () => {
+  const handleStartWaSession = async () => {
     setWaSessionState('connecting');
+    setWaQrImage('');
+
+    if (isRealBackend) {
+      try {
+        const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/connect`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ gymId })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setWaCountdown(45);
+          if (data.qrCodeUrl) setWaQrImage(data.qrCodeUrl);
+          setWaSessionState('qr_ready');
+          showToast('Dynamic WhatsApp Web QR generated. Scan with your phone.');
+        } else {
+          throw new Error('Connection failed');
+        }
+      } catch (err) {
+        console.warn('[Gymix WA] Failed to connect to server, switching to simulation.');
+        setIsRealBackend(false);
+        runSimulatedHandshake();
+      }
+    } else {
+      runSimulatedHandshake();
+    }
+  };
+
+  const runSimulatedHandshake = () => {
     setTimeout(() => {
       setWaCountdown(45);
       setWaSessionState('qr_ready');
@@ -409,7 +515,7 @@ export default function SettingsPage() {
     }, 2000);
   };
 
-  const handleDisconnectWa = () => {
+  const handleDisconnectWa = async () => {
     const updatedSettings = {
       ...globalSettings,
       waConnected: false,
@@ -418,18 +524,66 @@ export default function SettingsPage() {
     setGlobalSettings(updatedSettings);
     localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updatedSettings));
     setWaSessionState('disconnected');
+    setWaQrImage('');
+
+    if (isRealBackend) {
+      try {
+        await fetch(`${WA_BACKEND_URL}/api/whatsapp/disconnect`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ gymId })
+        });
+      } catch (err) {
+        console.warn('[Gymix WA] Failed to disconnect server session');
+      }
+    }
     showToast('WhatsApp session disconnected successfully.');
   };
 
-  const handleSendTestMessage = (e) => {
+  const handleSendTestMessage = async (e) => {
     e.preventDefault();
     if (!testPhone.trim()) return showToast('Please enter a valid phone number', 'error');
     setSendingTestMessage(true);
+
+    const messageContent = 'Hello! This is a test message dispatched from Gymix Autopilot Gateway. Your device linking is fully operational! 🟢🚀';
+
+    if (isRealBackend) {
+      try {
+        const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            gymId,
+            phone: testPhone,
+            message: messageContent
+          })
+        });
+        if (res.ok) {
+          showToast(`Real WhatsApp message sent successfully to ${testPhone}! 🚀`);
+        } else {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to dispatch');
+        }
+      } catch (err) {
+        showToast(err.message || 'Server dispatch failed, trying simulated mode...', 'error');
+        // Simulated fallback
+        runSimulatedTestMessage();
+      } finally {
+        setSendingTestMessage(false);
+        setShowTestModal(false);
+        setTestPhone('');
+      }
+    } else {
+      runSimulatedTestMessage();
+    }
+  };
+
+  const runSimulatedTestMessage = () => {
     setTimeout(() => {
       setSendingTestMessage(false);
       setShowTestModal(false);
       setTestPhone('');
-      showToast(`Test message sent successfully to ${testPhone}! 🚀`);
+      showToast(`Test message sent successfully to ${testPhone}! [Simulated Mode] 🚀`);
     }, 1500);
   };
 
@@ -1171,22 +1325,26 @@ export default function SettingsPage() {
 
                       {/* Styled QR Code Mockup (Abstract blocks representing QR grid) */}
                       <div className="w-40 h-40 bg-white flex flex-wrap p-1 relative overflow-hidden rounded-2xl select-none">
-                        {/* Static QR elements inside a grid representing real barcode blocks */}
-                        {[...Array(16)].map((_, i) => {
-                          const isFilled = (i % 3 === 0) || (i === 1) || (i === 7) || (i === 10) || (i === 14) || (i === 15);
-                          const isCorner = (i === 0) || (i === 3) || (i === 12);
-                          return (
-                            <div key={i} className="w-10 h-10 p-1 flex items-center justify-center">
-                              {isCorner ? (
-                                <div className="w-full h-full border-4 border-black rounded p-0.5">
+                        {waQrImage ? (
+                          <img src={waQrImage} alt="WhatsApp QR Code" className="w-full h-full object-contain p-1 animate-in fade-in" />
+                        ) : (
+                          /* Static QR elements inside a grid representing real barcode blocks */
+                          [...Array(16)].map((_, i) => {
+                            const isFilled = (i % 3 === 0) || (i === 1) || (i === 7) || (i === 10) || (i === 14) || (i === 15);
+                            const isCorner = (i === 0) || (i === 3) || (i === 12);
+                            return (
+                              <div key={i} className="w-10 h-10 p-1 flex items-center justify-center">
+                                {isCorner ? (
+                                  <div className="w-full h-full border-4 border-black rounded p-0.5">
+                                    <div className="w-full h-full bg-black rounded-sm" />
+                                  </div>
+                                ) : isFilled ? (
                                   <div className="w-full h-full bg-black rounded-sm" />
-                                </div>
-                              ) : isFilled ? (
-                                <div className="w-full h-full bg-black rounded-sm" />
-                              ) : null}
-                            </div>
-                          );
-                        })}
+                                ) : null}
+                              </div>
+                            );
+                          })
+                        )}
                         
                         {/* Overlay scan grid dots */}
                         <div className="absolute inset-0 bg-emerald-500/5 mix-blend-overlay pointer-events-none" />

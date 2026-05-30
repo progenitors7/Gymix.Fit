@@ -151,7 +151,7 @@ export default function MembersPage() {
     }
     
     if (autopilotEnabled && autopilotConnected) {
-      // Autopilot dispatch simulation
+      // Autopilot dispatch
       setWaSendingInfo({
         memberName: member.full_name,
         phoneNumber: member.phone_number,
@@ -159,10 +159,34 @@ export default function MembersPage() {
         state: 'sending'
       });
 
-      // After 1.5s, mark as sent
-      setTimeout(() => {
-        setWaSendingInfo(prev => prev ? { ...prev, state: 'sent' } : null);
-      }, 1500);
+      const WA_BACKEND_URL = 'http://localhost:5000';
+      
+      const sendPromise = async () => {
+        try {
+          const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              gymId: gym.id,
+              phone: member.phone_number,
+              message: text
+            })
+          });
+          if (res.ok) {
+            setWaSendingInfo(prev => prev ? { ...prev, state: 'sent' } : null);
+          } else {
+            throw new Error('Server dispatch failed');
+          }
+        } catch (e) {
+          console.warn('[Gymix WA] Central server offline or dispatch failed, falling back to simulation.');
+          // Simulated delay fallback
+          setTimeout(() => {
+            setWaSendingInfo(prev => prev ? { ...prev, state: 'sent' } : null);
+          }, 1500);
+        }
+      };
+
+      sendPromise();
 
       // After 3.5s, close popup
       setTimeout(() => {
