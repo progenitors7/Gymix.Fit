@@ -144,12 +144,33 @@ app.post('/api/whatsapp/send', async (req, res) => {
   }
 
   try {
-    // Sanitize phone number to WhatsApp format (e.g. +91 9876543210 -> 919876543210@c.us)
-    const cleanPhone = phone.replace(/\D/g, '');
-    const targetJid = cleanPhone.includes('@') ? cleanPhone : `${cleanPhone}@c.us`;
+    // 1. Sanitize phone number (strip leading 0 and prepend 91 for Indian 10-digit formats)
+    let cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = cleanPhone.substring(1);
+    }
+    if (cleanPhone.length === 10) {
+      cleanPhone = '91' + cleanPhone;
+    }
 
+    // 2. Fetch official registered JID from WhatsApp servers
+    console.log(`[Gymix WA] Formatting target JID for number: ${cleanPhone}`);
+    let targetJid = `${cleanPhone}@c.us`;
+    try {
+      const numberId = await session.client.getNumberId(cleanPhone);
+      if (numberId && numberId._serialized) {
+        targetJid = numberId._serialized;
+        console.log(`[Gymix WA] Registered JID retrieved: ${targetJid}`);
+      } else {
+        console.log(`[Gymix WA] No direct registered JID found for ${cleanPhone}, falling back to ${targetJid}`);
+      }
+    } catch (e) {
+      console.warn('[Gymix WA] Failed to query getNumberId, using standard format fallback:', e.message);
+    }
+
+    // 3. Send message via WhatsApp API
     await session.client.sendMessage(targetJid, message);
-    console.log(`[Gymix WA] Message dispatched successfully to ${cleanPhone}`);
+    console.log(`[Gymix WA] Message dispatched successfully to ${targetJid}`);
     res.json({ success: true });
   } catch (err) {
     console.error('[Gymix WA] Message sending failed:', err);

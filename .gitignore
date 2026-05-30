@@ -22,3 +22,7 @@ dist-ssr/
 # PWA
 sw.js
 workbox-*.js
+
+# WhatsApp Web Session Cache
+.wwebjs_auth/
+.wwebjs_cache/
