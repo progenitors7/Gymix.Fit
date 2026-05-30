@@ -20,7 +20,9 @@ import {
   ArrowRight,
   MessageCircle,
   Fingerprint,
-  CheckCircle2
+  CheckCircle2,
+  AlertTriangle,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMembers } from '../../hooks/useMembers';
@@ -174,24 +176,20 @@ export default function MembersPage() {
           });
           if (res.ok) {
             setWaSendingInfo(prev => prev ? { ...prev, state: 'sent' } : null);
+            // After 3.5s, close successful popup
+            setTimeout(() => {
+              setWaSendingInfo(null);
+            }, 3500);
           } else {
             throw new Error('Server dispatch failed');
           }
         } catch (e) {
-          console.warn('[Gymix WA] Central server offline or dispatch failed, falling back to simulation.');
-          // Simulated delay fallback
-          setTimeout(() => {
-            setWaSendingInfo(prev => prev ? { ...prev, state: 'sent' } : null);
-          }, 1500);
+          console.warn('[Gymix WA] Central server offline or dispatch failed:', e.message);
+          setWaSendingInfo(prev => prev ? { ...prev, state: 'failed' } : null);
         }
       };
 
       sendPromise();
-
-      // After 3.5s, close popup
-      setTimeout(() => {
-        setWaSendingInfo(null);
-      }, 3500);
     } else {
       // Fall back to direct WhatsApp Click-to-Chat
       const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
@@ -536,8 +534,19 @@ export default function MembersPage() {
       {/* ── Autopilot WhatsApp Dispatch Overlay ── */}
       {waSendingInfo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in animate-duration-200">
-          <div className="bg-[#1c1c1c] border border-emerald-500/20 rounded-3xl w-full max-w-sm p-6 shadow-2xl animate-in zoom-in-95 relative overflow-hidden text-center space-y-4">
-            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500 to-emerald-500/0" />
+          <div className={`bg-[#1c1c1c] border ${waSendingInfo.state === 'failed' ? 'border-rose-500/20' : 'border-emerald-500/20'} rounded-3xl w-full max-w-sm p-6 shadow-2xl animate-in zoom-in-95 relative overflow-hidden text-center space-y-4`}>
+            
+            {/* Top glowing strip */}
+            <div className={`absolute top-0 inset-x-0 h-1 bg-gradient-to-r ${waSendingInfo.state === 'failed' ? 'from-rose-500/0 via-rose-500 to-rose-500/0' : 'from-emerald-500/0 via-emerald-500 to-emerald-500/0'}`} />
+            
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => setWaSendingInfo(null)}
+              className="absolute top-4.5 right-4.5 text-gray-500 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
             
             {/* Icon & Status */}
             <div className="flex flex-col items-center">
@@ -546,17 +555,21 @@ export default function MembersPage() {
                   <div className="w-14 h-14 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin flex items-center justify-center" />
                   <MessageCircle className="w-6 h-6 text-emerald-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
                 </div>
+              ) : waSendingInfo.state === 'failed' ? (
+                <div className="w-14 h-14 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-full flex items-center justify-center mb-3 scale-110 transition-all duration-300">
+                  <AlertTriangle className="w-7 h-7" />
+                </div>
               ) : (
                 <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mb-3 scale-110 transition-all duration-300">
                   <CheckCircle2 className="w-7 h-7" />
                 </div>
               )}
               
-              <h4 className="text-sm font-extrabold text-white uppercase tracking-wider">
-                {waSendingInfo.state === 'sending' ? 'Autopilot Dispatching...' : 'Reminder Delivered!'}
+              <h4 className={`text-sm font-extrabold ${waSendingInfo.state === 'failed' ? 'text-rose-400' : 'text-white'} uppercase tracking-wider`}>
+                {waSendingInfo.state === 'sending' ? 'Autopilot Dispatching...' : waSendingInfo.state === 'failed' ? 'Autopilot Failed' : 'Reminder Delivered!'}
               </h4>
               <p className="text-[9px] text-gray-500 font-bold tracking-widest mt-0.5">
-                {waSendingInfo.state === 'sending' ? 'VIA LINKED WHATSAPP DEVICE' : 'SENT SILENTLY IN BACKGROUND'}
+                {waSendingInfo.state === 'sending' ? 'VIA LINKED WHATSAPP DEVICE' : waSendingInfo.state === 'failed' ? 'GATEWAY OFFLINE OR DISCONNECTED' : 'SENT SILENTLY IN BACKGROUND'}
               </p>
             </div>
 
@@ -569,14 +582,50 @@ export default function MembersPage() {
               </div>
             </div>
 
-            {/* WhatsApp Message Bubble Mockup */}
-            <div className="relative p-3.5 bg-[#0b141a] rounded-2xl border border-white/5 text-left max-h-[140px] overflow-y-auto custom-scrollbar">
-              <div className="absolute top-2 right-2 flex items-center gap-1 text-[8px] font-bold text-gray-500">
-                <span>{new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</span>
-                {waSendingInfo.state === 'sent' && <span className="text-emerald-400">✓✓</span>}
+            {/* WhatsApp Message Bubble Mockup / Error Explanation */}
+            {waSendingInfo.state === 'failed' ? (
+              <div className="p-3.5 bg-rose-500/[0.02] rounded-2xl border border-rose-500/10 text-left space-y-1.5">
+                <p className="text-xs text-rose-300 leading-relaxed font-semibold">
+                  Failed to deliver autopilot message.
+                </p>
+                <p className="text-[10px] text-gray-400 font-medium">
+                  Ensure your WhatsApp server is online and your device remains linked in settings, or use manual fallback.
+                </p>
               </div>
-              <p className="text-xs text-slate-300 pr-10 leading-relaxed whitespace-pre-wrap font-medium">{waSendingInfo.messageText}</p>
-            </div>
+            ) : (
+              <div className="relative p-3.5 bg-[#0b141a] rounded-2xl border border-white/5 text-left max-h-[140px] overflow-y-auto custom-scrollbar">
+                <div className="absolute top-2 right-2 flex items-center gap-1 text-[8px] font-bold text-gray-500">
+                  <span>{new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</span>
+                  {waSendingInfo.state === 'sent' && <span className="text-emerald-400">✓✓</span>}
+                </div>
+                <p className="text-xs text-slate-300 pr-10 leading-relaxed whitespace-pre-wrap font-medium">{waSendingInfo.messageText}</p>
+              </div>
+            )}
+
+            {/* Actions for Failed state */}
+            {waSendingInfo.state === 'failed' && (
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const phone = waSendingInfo.phoneNumber.replace(/\D/g, '');
+                    const url = `https://wa.me/${phone}?text=${encodeURIComponent(waSendingInfo.messageText)}`;
+                    window.open(url, '_blank');
+                    setWaSendingInfo(null);
+                  }}
+                  className="flex-1 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-black text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer shadow-lg shadow-emerald-500/10 text-center"
+                >
+                  Send Manually
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWaSendingInfo(null)}
+                  className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-bold uppercase tracking-wider rounded-xl border border-white/5 transition-all cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -382,7 +382,7 @@ export default function SettingsPage() {
               const updated = {
                 ...prev,
                 waConnected: true,
-                waConnectedNumber: data.connectedNumber ? `+${data.connectedNumber}` : '+91 98765 43210'
+                waConnectedNumber: data.connectedNumber ? `+${data.connectedNumber}` : 'Linked Device'
               };
               localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updated));
               return updated;
@@ -397,7 +397,7 @@ export default function SettingsPage() {
           }
         }
       } catch (err) {
-        console.log('[Gymix WA] Central server offline, running in dynamic simulation mode.');
+        console.log('[Gymix WA] Central server offline.');
         setIsRealBackend(false);
       }
     };
@@ -405,13 +405,13 @@ export default function SettingsPage() {
     checkServerStatus();
   }, [gymId, fetchPlans, fetchUserTickets]);
 
-  // Real-time server polling or dynamic local scan simulation
+  // Real-time server polling
   useEffect(() => {
     let interval;
-    let simulateTimeout;
+    let pollInterval;
 
     if (waSessionState === 'qr_ready') {
-      // 1. Ticking countdown timer (common for both real and simulated)
+      // 1. Ticking countdown timer
       interval = setInterval(() => {
         setWaCountdown(prev => {
           if (prev <= 1) {
@@ -426,7 +426,7 @@ export default function SettingsPage() {
 
       if (isRealBackend) {
         // Real-mode: Poll active status from node server
-        const pollInterval = setInterval(async () => {
+        pollInterval = setInterval(async () => {
           try {
             const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${gymId}`);
             if (res.ok) {
@@ -437,7 +437,7 @@ export default function SettingsPage() {
                 const updatedSettings = {
                   ...globalSettings,
                   waConnected: true,
-                  waConnectedNumber: data.connectedNumber ? `+${data.connectedNumber}` : '+91 98765 43210'
+                  waConnectedNumber: data.connectedNumber ? `+${data.connectedNumber}` : 'Linked Device'
                 };
                 setGlobalSettings(updatedSettings);
                 localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updatedSettings));
@@ -452,69 +452,42 @@ export default function SettingsPage() {
             console.warn('[Gymix WA] Status polling failed');
           }
         }, 2000);
-
-        return () => {
-          clearInterval(interval);
-          clearInterval(pollInterval);
-        };
-      } else {
-        // Simulated-mode: Transition to connected state after 6 seconds
-        simulateTimeout = setTimeout(() => {
-          const updatedSettings = {
-            ...globalSettings,
-            waConnected: true,
-            waConnectedNumber: '+91 98765 43210'
-          };
-          setGlobalSettings(updatedSettings);
-          localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updatedSettings));
-          setWaSessionState('connected');
-          showToast('WhatsApp Linked successfully! Connected as +91 98765 43210 🟢');
-        }, 6000);
       }
     }
 
     return () => {
       clearInterval(interval);
-      if (simulateTimeout) clearTimeout(simulateTimeout);
+      if (pollInterval) clearInterval(pollInterval);
     };
   }, [waSessionState, globalSettings, gymId, isRealBackend, waQrImage]);
 
   const handleStartWaSession = async () => {
+    if (!isRealBackend) {
+      return showToast('WhatsApp Server Gateway is currently offline. Please start the server.', 'error');
+    }
+
     setWaSessionState('connecting');
     setWaQrImage('');
 
-    if (isRealBackend) {
-      try {
-        const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/connect`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ gymId })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setWaCountdown(45);
-          if (data.qrCodeUrl) setWaQrImage(data.qrCodeUrl);
-          setWaSessionState('qr_ready');
-          showToast('Dynamic WhatsApp Web QR generated. Scan with your phone.');
-        } else {
-          throw new Error('Connection failed');
-        }
-      } catch (err) {
-        console.warn('[Gymix WA] Failed to connect to server, switching to simulation.');
-        setIsRealBackend(false);
-        runSimulatedHandshake();
+    try {
+      const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gymId })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWaCountdown(45);
+        if (data.qrCodeUrl) setWaQrImage(data.qrCodeUrl);
+        setWaSessionState('qr_ready');
+        showToast('Dynamic WhatsApp Web QR generated. Scan with your phone.');
+      } else {
+        throw new Error('Connection failed');
       }
-    } else {
-      runSimulatedHandshake();
+    } catch (err) {
+      setWaSessionState('disconnected');
+      showToast('Failed to connect to WhatsApp Gateway Server.', 'error');
     }
-  };
-
-  const runSimulatedHandshake = () => {
-    setTimeout(() => {
-      setWaCountdown(45);
-      setWaSessionState('qr_ready');
-      showToast('Dynamic QR code generated. Scan with your phone.');
-    }, 2000);
   };
 
   const handleDisconnectWa = async () => {
@@ -1327,31 +1300,18 @@ export default function SettingsPage() {
                         }
                       `}} />
 
-                      {/* Styled QR Code Mockup (Abstract blocks representing QR grid) */}
-                      <div className="w-40 h-40 bg-white flex flex-wrap p-1 relative overflow-hidden rounded-2xl select-none">
+                      {/* Styled QR Code Frame */}
+                      <div className="w-40 h-40 bg-[#0f0f0f] flex items-center justify-center p-1 relative overflow-hidden rounded-2xl border border-white/10 select-none">
                         {waQrImage ? (
-                          <img src={waQrImage} alt="WhatsApp QR Code" className="w-full h-full object-contain p-1 animate-in fade-in" />
+                          <img src={waQrImage} alt="WhatsApp QR Code" className="w-full h-full object-contain bg-white rounded-xl p-1.5 animate-in fade-in duration-300" />
                         ) : (
-                          /* Static QR elements inside a grid representing real barcode blocks */
-                          [...Array(16)].map((_, i) => {
-                            const isFilled = (i % 3 === 0) || (i === 1) || (i === 7) || (i === 10) || (i === 14) || (i === 15);
-                            const isCorner = (i === 0) || (i === 3) || (i === 12);
-                            return (
-                              <div key={i} className="w-10 h-10 p-1 flex items-center justify-center">
-                                {isCorner ? (
-                                  <div className="w-full h-full border-4 border-black rounded p-0.5">
-                                    <div className="w-full h-full bg-black rounded-sm" />
-                                  </div>
-                                ) : isFilled ? (
-                                  <div className="w-full h-full bg-black rounded-sm" />
-                                ) : null}
-                              </div>
-                            );
-                          })
+                          /* Glowing status loader */
+                          <div className="flex flex-col items-center justify-center space-y-2.5 p-4 text-center">
+                            <div className="w-9 h-9 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
+                            <p className="text-[9px] font-black text-emerald-400 tracking-widest animate-pulse">GENERATING FRESH QR...</p>
+                            <p className="text-[8px] text-gray-500 leading-relaxed font-semibold">Please wait, retrieving secure barcode from gateway...</p>
+                          </div>
                         )}
-                        
-                        {/* Overlay scan grid dots */}
-                        <div className="absolute inset-0 bg-emerald-500/5 mix-blend-overlay pointer-events-none" />
                       </div>
                     </div>
 
@@ -1390,7 +1350,7 @@ export default function SettingsPage() {
                             <h4 className="text-sm font-bold text-white">WhatsApp Session Linked</h4>
                             <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
                           </div>
-                          <p className="text-xs font-bold text-[#10B981] font-mono">{globalSettings.waConnectedNumber || '+91 98765 43210'}</p>
+                          <p className="text-xs font-bold text-[#10B981] font-mono">{globalSettings.waConnectedNumber || 'Linked Device'}</p>
                         </div>
                       </div>
 

@@ -12,10 +12,23 @@ const express = require('express');
 const cors = require('cors');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// 1. Root route for friendly service discovery on Render (resolves 'Cannot GET /')
+app.get('/', (req, res) => {
+  res.json({
+    status: 'online',
+    service: 'Gymix WhatsApp Central Gateway',
+    version: '1.0.0',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
+});
 
 const PORT = process.env.PORT || 5000;
 
@@ -187,15 +200,40 @@ app.post('/api/whatsapp/disconnect', async (req, res) => {
   if (!gymId) return res.status(400).json({ error: 'Missing gymId parameter' });
 
   const session = sessions[gymId];
-  if (!session) return res.json({ success: true });
 
   try {
-    await session.client.destroy();
-    delete sessions[gymId];
+    if (session && session.client) {
+      console.log(`[Gymix WA] Unlinking and destroying active WhatsApp session for Gym ID: ${gymId}`);
+      try {
+        // Attempt clean logout (de-authorizes session with WhatsApp servers)
+        await session.client.logout();
+        console.log(`[Gymix WA] Successfully logged out session from WhatsApp for Gym: ${gymId}`);
+      } catch (logoutErr) {
+        console.warn(`[Gymix WA] client.logout() failed (device may be already offline). Destroying client...:`, logoutErr.message);
+        try {
+          await session.client.destroy();
+        } catch (destroyErr) {
+          console.error(`[Gymix WA] Failed to destroy client:`, destroyErr.message);
+        }
+      }
+    }
+
+    // Clean up session in active server cache
+    if (session) {
+      delete sessions[gymId];
+    }
+
+    // Forcefully delete session auth credentials directory from disk to prevent automatic reconnects
+    const sessionDir = path.join(__dirname, '.wwebjs_auth', `session-gymix_session_${gymId}`);
+    if (fs.existsSync(sessionDir)) {
+      console.log(`[Gymix WA] Wiping session credentials directory from disk: ${sessionDir}`);
+      fs.rmSync(sessionDir, { recursive: true, force: true });
+    }
+
     console.log(`[Gymix WA] Cleaned up and disconnected session for Gym ID: ${gymId}`);
     res.json({ success: true });
   } catch (err) {
-    console.error('[Gymix WA] Logout failed:', err);
+    console.error('[Gymix WA] Logout / Disconnect failed:', err);
     res.status(500).json({ error: 'Failed to destroy session', details: err.message });
   }
 });
