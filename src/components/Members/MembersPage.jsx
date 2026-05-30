@@ -159,7 +159,7 @@ export default function MembersPage() {
         state: 'sending'
       });
 
-      const WA_BACKEND_URL = 'http://localhost:5000';
+      const WA_BACKEND_URL = import.meta.env.VITE_WA_BACKEND_URL || 'http://localhost:5000';
       
       const sendPromise = async () => {
         try {

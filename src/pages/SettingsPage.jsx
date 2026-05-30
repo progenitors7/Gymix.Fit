@@ -341,7 +341,7 @@ export default function SettingsPage() {
   const [waQrImage, setWaQrImage] = useState('');
   const [isRealBackend, setIsRealBackend] = useState(false);
 
-  const WA_BACKEND_URL = globalSettings.waGatewayUrl || 'http://localhost:5000';
+  const WA_BACKEND_URL = import.meta.env.VITE_WA_BACKEND_URL || 'http://localhost:5000';
 
   // Check server connection and status on mount
   useEffect(() => {
