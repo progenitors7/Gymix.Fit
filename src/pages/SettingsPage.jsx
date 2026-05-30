@@ -327,7 +327,8 @@ export default function SettingsPage() {
     waTemplate: 'Hello {{name}}, your plan expires on {{date}}.',
     waAutopilotEnabled: false,
     waConnected: false,
-    waConnectedNumber: ''
+    waConnectedNumber: '',
+    waGatewayUrl: 'http://localhost:5000'
   });
   const [savingSettings, setSavingSettings] = useState(false);
 
@@ -340,7 +341,7 @@ export default function SettingsPage() {
   const [waQrImage, setWaQrImage] = useState('');
   const [isRealBackend, setIsRealBackend] = useState(false);
 
-  const WA_BACKEND_URL = 'http://localhost:5000';
+  const WA_BACKEND_URL = globalSettings.waGatewayUrl || 'http://localhost:5000';
 
   // Check server connection and status on mount
   useEffect(() => {
@@ -359,6 +360,7 @@ export default function SettingsPage() {
           waAutopilotEnabled: false,
           waConnected: false,
           waConnectedNumber: '',
+          waGatewayUrl: 'http://localhost:5000',
           ...parsed
         });
         if (parsed.waConnected) {
@@ -1248,13 +1250,52 @@ export default function SettingsPage() {
                 onClick={() => {
                   const updated = { ...globalSettings, waAutopilotEnabled: !globalSettings.waAutopilotEnabled };
                   setGlobalSettings(updated);
-                  localStorage.setItem(`gym_settings_${gym?.id}`, JSON.stringify(updated));
+                  localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updated));
                   showToast(updated.waAutopilotEnabled ? 'WhatsApp Autopilot Mode Enabled!' : 'WhatsApp Manual Mode Activated.');
                 }}
                 className={`w-12 h-7 rounded-full p-1 transition-all cursor-pointer relative flex items-center ${globalSettings.waAutopilotEnabled ? 'bg-emerald-500' : 'bg-white/10'}`}
               >
                 <span className={`w-5 h-5 bg-white rounded-full shadow-md transition-all absolute ${globalSettings.waAutopilotEnabled ? 'right-1' : 'left-1'}`} />
               </button>
+            </div>
+
+            {/* WhatsApp API Gateway URL Field */}
+            <div className="p-4.5 rounded-2xl bg-white/[0.01] border border-white/5 space-y-3">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                  <p className="text-xs font-bold text-white uppercase tracking-wider">WhatsApp Gateway API URL</p>
+                  <p className="text-[10px] text-gray-500 font-medium mt-0.5">
+                    For localhost testing, use <span className="text-[#3390ec] font-mono">http://localhost:5000</span>. For HTTPS websites, provide your secure gateway URL.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="e.g. http://localhost:5000"
+                  value={globalSettings.waGatewayUrl || ''}
+                  onChange={e => {
+                    const updated = { ...globalSettings, waGatewayUrl: e.target.value };
+                    setGlobalSettings(updated);
+                    localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updated));
+                  }}
+                  className="flex-1 bg-black/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all font-mono"
+                />
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = { ...globalSettings, waGatewayUrl: 'http://localhost:5000' };
+                    setGlobalSettings(updated);
+                    localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updated));
+                    showToast('Gateway URL reset to localhost:5000');
+                  }}
+                  className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-xl border border-white/5 transition-all cursor-pointer"
+                >
+                  Reset Default
+                </button>
+              </div>
             </div>
 
             {/* Autopilot Panel (Displays only when Autopilot Toggle is True) */}
