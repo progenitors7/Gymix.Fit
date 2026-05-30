@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "wa-server": "node whatsapp-backend-service.js"
+    "wa-server": "node whatsapp-backend-service.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",

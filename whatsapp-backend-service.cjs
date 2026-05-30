@@ -1,5 +1,5 @@
 /**
- * Gymix Central WhatsApp Session Gateway
+ * Gymix Central WhatsApp Session Gateway (CommonJS Version)
  * --------------------------------------
  * Hosted once by the SaaS developer (on VPS, Render, or local machine).
  * Handles multiple concurrent gym sessions cleanly.
