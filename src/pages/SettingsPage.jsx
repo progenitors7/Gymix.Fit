@@ -407,12 +407,12 @@ export default function SettingsPage() {
 
   // Real-time server polling
   useEffect(() => {
-    let interval;
+    let countdownInterval;
     let pollInterval;
 
+    // 1. Ticking countdown timer (only active during qr_ready)
     if (waSessionState === 'qr_ready') {
-      // 1. Ticking countdown timer
-      interval = setInterval(() => {
+      countdownInterval = setInterval(() => {
         setWaCountdown(prev => {
           if (prev <= 1) {
             setWaSessionState('disconnected');
@@ -423,40 +423,52 @@ export default function SettingsPage() {
           return prev - 1;
         });
       }, 1000);
+    }
 
-      if (isRealBackend) {
-        // Real-mode: Poll active status from node server
-        pollInterval = setInterval(async () => {
-          try {
-            const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${gymId}`);
-            if (res.ok) {
-              const data = await res.json();
-              if (data.status === 'connected') {
-                clearInterval(pollInterval);
-                clearInterval(interval);
-                const updatedSettings = {
-                  ...globalSettings,
-                  waConnected: true,
-                  waConnectedNumber: data.connectedNumber ? `+${data.connectedNumber}` : 'Linked Device'
-                };
-                setGlobalSettings(updatedSettings);
-                localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updatedSettings));
-                setWaSessionState('connected');
-                setWaQrImage('');
-                showToast(`WhatsApp Linked successfully! Connected as ${updatedSettings.waConnectedNumber} 🟢`);
-              } else if (data.qrCodeUrl && data.qrCodeUrl !== waQrImage) {
+    // 2. Active status polling from the backend (runs in connecting or qr_ready)
+    if ((waSessionState === 'connecting' || waSessionState === 'qr_ready') && isRealBackend) {
+      pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${gymId}`);
+          if (res.ok) {
+            const data = await res.json();
+            
+            if (data.status === 'connected') {
+              clearInterval(pollInterval);
+              if (countdownInterval) clearInterval(countdownInterval);
+              const updatedSettings = {
+                ...globalSettings,
+                waConnected: true,
+                waConnectedNumber: data.connectedNumber ? `+${data.connectedNumber}` : 'Linked Device'
+              };
+              setGlobalSettings(updatedSettings);
+              localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updatedSettings));
+              setWaSessionState('connected');
+              setWaQrImage('');
+              showToast(`WhatsApp Linked successfully! Connected as ${updatedSettings.waConnectedNumber} 🟢`);
+            } 
+            else if (data.status === 'qr_ready' && data.qrCodeUrl) {
+              setWaSessionState('qr_ready');
+              if (data.qrCodeUrl !== waQrImage) {
                 setWaQrImage(data.qrCodeUrl);
               }
+            } 
+            else if (data.status === 'disconnected') {
+              clearInterval(pollInterval);
+              if (countdownInterval) clearInterval(countdownInterval);
+              setWaSessionState('disconnected');
+              setWaQrImage('');
+              showToast('WhatsApp initialization failed. Check server logs.', 'error');
             }
-          } catch (err) {
-            console.warn('[Gymix WA] Status polling failed');
           }
-        }, 2000);
-      }
+        } catch (err) {
+          console.warn('[Gymix WA] Status polling failed');
+        }
+      }, 2000);
     }
 
     return () => {
-      clearInterval(interval);
+      if (countdownInterval) clearInterval(countdownInterval);
       if (pollInterval) clearInterval(pollInterval);
     };
   }, [waSessionState, globalSettings, gymId, isRealBackend, waQrImage]);
@@ -478,9 +490,15 @@ export default function SettingsPage() {
       if (res.ok) {
         const data = await res.json();
         setWaCountdown(45);
-        if (data.qrCodeUrl) setWaQrImage(data.qrCodeUrl);
-        setWaSessionState('qr_ready');
-        showToast('Dynamic WhatsApp Web QR generated. Scan with your phone.');
+        if (data.qrCodeUrl) {
+          setWaQrImage(data.qrCodeUrl);
+          setWaSessionState('qr_ready');
+          showToast('Dynamic WhatsApp Web QR generated. Scan with your phone.');
+        } else {
+          // If the backend has just started the launch process, stay in connecting state
+          setWaSessionState('connecting');
+          showToast('Initializing security session... Please wait.');
+        }
       } else {
         throw new Error('Connection failed');
       }
