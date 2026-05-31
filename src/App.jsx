@@ -32,6 +32,7 @@ const BillingPage = React.lazy(() => import('./pages/BillingPage'))
 const AttendancePage = React.lazy(() => import('./pages/AttendancePage'))
 const LeaderboardPage = React.lazy(() => import('./pages/LeaderboardPage'))
 const HardwareStorePage = React.lazy(() => import('./pages/HardwareStorePage'))
+const PrivacyPolicyPage = React.lazy(() => import('./pages/PrivacyPolicyPage'))
 
 function LoadingScreen() {
   return (
@@ -80,8 +81,10 @@ function Protected({ children }) {
 function RootRoute() {
   const { user, loading } = useAuth()
   
-  // Check if launched as a standalone PWA
-  const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  // Check if launched as a standalone PWA or native app
+  const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                window.navigator.standalone === true || 
+                window.Capacitor !== undefined;
 
   if (loading) {
     return (
@@ -142,6 +145,7 @@ export default function App() {
               <Route path="/forgot-password" element={<AuthPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/hardware" element={<HardwareStorePage />} />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
 
             {/* ── Protected ── */}
             <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />

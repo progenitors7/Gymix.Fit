@@ -129,6 +129,37 @@ export default function ProtectedRoute({ children }) {
 
   // ── Step 8: Owner billing redirect — no gym, pending, or expired ──
   if (isOwner && !isAdminPage && (!gym || gym?.status === 'pending' || gym?.billing_status === 'expired')) {
+    const isNative = window.Capacitor !== undefined;
+    if (isNative) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-[#0F1117] p-6 text-center">
+          <div className="max-w-md w-full bg-[#1c1c1c] border border-[#3390ec]/20 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#3390ec]/5 blur-[50px] rounded-full pointer-events-none" />
+            <div className="w-16 h-16 bg-[#3390ec]/10 rounded-2xl flex items-center justify-center text-[#3390ec] text-3xl mx-auto mb-6 border border-[#3390ec]/20">
+              ⚡
+            </div>
+            <h2 className="text-2xl font-black text-white uppercase italic tracking-tight mb-2">Reactivation Required</h2>
+            <p className="text-slate-400 text-sm mb-8 leading-relaxed font-semibold">
+              To keep managing your gym, please visit our official web portal to activate or renew your subscription. 
+              <br/><br/>
+              Log in to your account at <strong className="text-white">gymix.fit</strong> in a web browser. Once updated, your mobile app will automatically unlock!
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={async () => {
+                  await signOut();
+                  window.location.href = '/login';
+                }}
+                className="w-full py-4 bg-white/5 hover:bg-white/10 text-slate-300 font-bold rounded-2xl transition-all border border-white/5 uppercase text-xs tracking-wider"
+              >
+                Sign Out / Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return <Navigate to="/billing" replace />
   }
 

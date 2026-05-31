@@ -25,6 +25,7 @@ const DURATIONS = [
 ];
 
 export default function BillingPage() {
+  const isNative = window.Capacitor !== undefined;
   const { gym, gymName, ownerEmail, isReady, refreshGym } = useCurrentGym();
   const [processing, setProcessing] = useState(false);
   const [toastState, setToastState] = useState({ message: '', type: 'success' });
@@ -137,6 +138,17 @@ export default function BillingPage() {
     const finalAmount = calculateFinalAmount();
     
     try {
+      if (window.Capacitor !== undefined) {
+        setToastState({ 
+          message: 'Opening secure payment gateway in browser...', 
+          type: 'success' 
+        });
+        setTimeout(() => {
+          window.open('https://gymix.fit/billing', '_system');
+        }, 800);
+        return;
+      }
+
       setProcessing(true);
 
       // Handle 100% Discount / Offline Payment logic
@@ -304,6 +316,19 @@ export default function BillingPage() {
         )}
       </div>
 
+      {isNative && (
+        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-3xl p-6 text-xs font-semibold leading-relaxed space-y-2 max-w-5xl mx-auto shadow-lg shadow-amber-500/5 animate-in slide-in-from-top duration-500">
+          <p className="uppercase tracking-widest text-[10px] font-black text-amber-500 flex items-center gap-1.5">
+            <CreditCard className="w-3.5 h-3.5" />
+            Google Play Policy Notice
+          </p>
+          <p>
+            To comply with Google Play Developer Guidelines, subscription billing updates cannot be completed directly inside the app. 
+            Please click the button below to securely open **gymix.fit** on your phone's browser, complete the subscription payment, and return to find your mobile dashboard instantly active!
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left: Duration Selection & Pricing */}
         <div className="lg:col-span-2 space-y-6">
@@ -460,7 +485,12 @@ export default function BillingPage() {
               ) : finalAmount === 0 ? (
                 <>
                   <Gift className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  Redeem Now
+                  Redeem on Web
+                </>
+              ) : isNative ? (
+                <>
+                  <CreditCard className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  Open Payment on Web
                 </>
               ) : (
                 <>

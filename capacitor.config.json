@@ -1,0 +1,6 @@
+{
+  "appId": "com.gymix.fit",
+  "appName": "Gymix.Fit",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

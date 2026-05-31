@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { AuthContext } from './AuthContext'
+import { App } from '@capacitor/app'
 
 /**
  * Deduplication cache: prevents parallel syncProfile calls for the same user
@@ -177,11 +178,42 @@ export function AuthProvider({ children }) {
       }
     })
 
-    return () => {
-      clearTimeout(timer)
-      subscription.unsubscribe()
-    }
-  }, [])
+      // Listen for native deep link events (com.gymix.fit://) to capture Supabase OAuth tokens
+      if (window.Capacitor) {
+        App.addListener('appUrlOpen', async (event) => {
+          console.log('[Capacitor Auth] App opened with URL:', event.url);
+          try {
+            const urlStr = event.url;
+            const hashIndex = urlStr.indexOf('#');
+            if (hashIndex !== -1) {
+              const hash = urlStr.substring(hashIndex + 1);
+              const params = new URLSearchParams(hash);
+              const accessToken = params.get('access_token');
+              const refreshToken = params.get('refresh_token');
+
+              if (accessToken && refreshToken) {
+                setLoading(true);
+                const { data, error } = await supabase.auth.setSession({
+                  access_token: accessToken,
+                  refresh_token: refreshToken
+                });
+                if (error) throw error;
+                console.log('[Capacitor Auth] Session set successfully!', data);
+              }
+            }
+          } catch (err) {
+            console.error('[Capacitor Auth] Failed to handle deep link login:', err.message || err);
+          } finally {
+            setLoading(false);
+          }
+        });
+      }
+
+      return () => {
+        clearTimeout(timer)
+        subscription.unsubscribe()
+      }
+    }, [])
 
   const signUp = async (email, password, role = 'member', fullName = '', gymName = '') => {
     const { data, error } = await supabase.auth.signUp({
@@ -252,10 +284,14 @@ export function AuthProvider({ children }) {
     } else {
       localStorage.removeItem('oauth_signup_role')
     }
+
+    const isNative = window.Capacitor !== undefined;
+    const redirectUrl = isNative ? 'com.gymix.fit://' : `${window.location.origin}`;
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}`,
+        redirectTo: redirectUrl,
         queryParams: {
           prompt: 'select_account',
           access_type: 'offline',
