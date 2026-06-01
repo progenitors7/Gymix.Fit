@@ -92,7 +92,7 @@ export default function ProfilePage() {
       const base64 = await compressImage(file)
       setProfileAvatar(base64)
       setAvatarSize(getBase64SizeKB(base64))
-      toast.success('Photo compressed & loaded! 📸')
+      toast.success('Profile photo uploaded! 📸')
     } catch (err) {
       console.error('[Avatar] Compression error:', err)
       toast.error('Failed to compress profile image.')
@@ -153,7 +153,7 @@ export default function ProfilePage() {
         <div className="space-y-1">
           <div className="flex items-center gap-2 mb-1">
             <Sparkles className="w-4 h-4 text-blue-400" />
-            <p className="text-blue-400 font-black text-[10px] uppercase tracking-[0.2em]">Command Console</p>
+            <p className="text-blue-400 font-black text-[10px] uppercase tracking-[0.2em]">Owner Account</p>
           </div>
           <h1 className="text-3xl font-black text-white tracking-tighter text-left">Gym Owner Profile</h1>
         </div>
@@ -215,11 +215,7 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {avatarSize && (
-              <p className="text-[9px] font-mono font-bold text-slate-600 uppercase tracking-widest">
-                Compressed Footprint: {avatarSize} KB
-              </p>
-            )}
+
           </div>
         </div>
 

@@ -57,7 +57,7 @@ export default function AddSubscriptionPage() {
         <div className="space-y-1">
           <div className="flex items-center gap-2 mb-1">
             <Zap className="w-4 h-4 text-emerald-400" />
-            <p className="text-emerald-400 font-black text-[10px] uppercase tracking-[0.2em]">Deployment</p>
+            <p className="text-emerald-400 font-black text-[10px] uppercase tracking-[0.2em]">Membership Cycle</p>
           </div>
           <h1 className="text-3xl font-black text-white tracking-tighter">Activate Plan</h1>
         </div>
@@ -77,11 +77,7 @@ export default function AddSubscriptionPage() {
         </div>
       </div>
 
-      {/* Tip */}
-      <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 max-w-sm mx-auto sm:mx-0">
-        <Sparkles className="w-4 h-4 text-amber-400" />
-        <p className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">Subscription syncs across all devices</p>
-      </div>
+
     </div>
   );
 }

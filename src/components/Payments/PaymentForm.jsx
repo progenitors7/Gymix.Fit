@@ -161,7 +161,7 @@ export default function PaymentForm({ onSubmit, initialData = null, isSubmitting
 
         {/* Payment Method */}
         <div className="space-y-3">
-          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Transfer Gateway</label>
+          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Payment Mode</label>
           <div className="relative group">
             <CreditCard className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
             <select
@@ -181,7 +181,7 @@ export default function PaymentForm({ onSubmit, initialData = null, isSubmitting
 
         {/* Payment Status */}
         <div className="space-y-3">
-          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Ledger Status</label>
+          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Payment Status</label>
           <div className="relative group">
             <select
               name="payment_status"
