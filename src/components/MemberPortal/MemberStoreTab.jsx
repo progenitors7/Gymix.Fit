@@ -2,26 +2,34 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   ShoppingBag, Trash2, Plus, Minus, ArrowRight, 
-  Check, Copy, AlertCircle, ShoppingCart, X, MessageSquare 
+  Check, Copy, AlertCircle, ShoppingCart, X, MessageSquare, Clock, PackageOpen
 } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
+import { toast } from 'react-hot-toast'
 
 export default function MemberStoreTab({ profile, membership, setActiveTab }) {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  
+  // Navigation inside store: 'shop' | 'orders'
+  const [storeTab, setStoreTab] = useState('shop')
 
   // Shopping Cart state
   const [cart, setCart] = useState([])
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [orderNotes, setOrderNotes] = useState('')
   
-  // Checkout & Modal state
+  // Member Orders log state
+  const [myOrders, setMyOrders] = useState([])
+  const [ordersLoading, setOrdersLoading] = useState(false)
+
+  // Checkout & Success state
   const [placingOrder, setPlacingOrder] = useState(false)
   const [orderSuccess, setOrderSuccess] = useState(null)
   const [copiedText, setCopiedText] = useState(false)
 
-  // Fetch active products for connected gym
+  // Fetch active products
   const fetchProducts = async () => {
     setLoading(true)
     setError('')
@@ -37,9 +45,28 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
       setProducts(data || [])
     } catch (err) {
       console.error('Error fetching gym products:', err)
-      setError('Failed to load store products. Please try again.')
+      setError('Failed to load store products.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Fetch member's past orders
+  const fetchMyOrders = async () => {
+    setOrdersLoading(true)
+    try {
+      const { data, error: dbError } = await supabase
+        .from('store_orders')
+        .select('*')
+        .eq('member_id', membership.id)
+        .order('created_at', { ascending: false })
+
+      if (dbError) throw dbError
+      setMyOrders(data || [])
+    } catch (err) {
+      console.error('Error fetching past orders:', err)
+    } finally {
+      setOrdersLoading(false)
     }
   }
 
@@ -47,7 +74,10 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
     if (membership?.gym_id) {
       fetchProducts()
     }
-  }, [membership?.gym_id])
+    if (membership?.id) {
+      fetchMyOrders()
+    }
+  }, [membership?.gym_id, membership?.id])
 
   // Cart operations
   const addToCart = (product) => {
@@ -86,14 +116,13 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
   const totalItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0)
 
-  // Handle checkout and place order
+  // Place order
   const handleCheckout = async () => {
     if (cart.length === 0 || placingOrder) return
     setPlacingOrder(true)
     setError('')
 
     try {
-      // 1. Save the order in Supabase store_orders
       const orderItems = cart.map(item => ({
         product_id: item.id,
         name: item.name,
@@ -116,7 +145,7 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
 
       if (orderError) throw orderError
 
-      // 2. Fetch the Gym Owner's profile to retrieve their phone number
+      // Fetch owner contact
       const { data: gymData, error: gymError } = await supabase
         .from('gyms')
         .select('owner_user_id, gym_name')
@@ -136,42 +165,86 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
         ownerPhone = ownerProfile?.phone_number || ''
       }
 
-      // 3. Format prefilled order message
+      // Format WhatsApp order message
       const itemsListText = cart.map(item => `- ${item.quantity}x ${item.name} (Rs. ${item.price} each)`).join('\n')
       const messageText = `Hello! I am ${profile.full_name || 'Member'} from ${gymData.gym_name || 'Gym'}.\n\n` +
-                          `I would like to order the following products:\n${itemsListText}\n\n` +
-                          `*Total Amount:* Rs. ${cartTotal}\n` +
+                          `I would like to order:\n${itemsListText}\n\n` +
+                          `*Total:* Rs. ${cartTotal}\n` +
                           (orderNotes.trim() ? `*Notes:* ${orderNotes.trim()}\n` : '') +
                           `*Order ID:* ${newOrder.id.slice(0, 8)}\n\n` +
-                          `Please keep my order ready. Thank you! ✨`;
+                          `Please keep my order ready. Thanks!`;
 
-      // Clean owner phone number
       let formattedPhone = ownerPhone.replace(/[^\d]/g, '')
       if (formattedPhone.length === 10) {
-        formattedPhone = '91' + formattedPhone // Add India country code fallback
+        formattedPhone = '91' + formattedPhone
       }
 
-      // 4. Record order success
       setOrderSuccess({
         orderId: newOrder.id,
         phone: formattedPhone,
         message: messageText
       })
 
-      // 5. Open WhatsApp if phone is configured
       if (formattedPhone) {
         const waUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(messageText)}`
         window.open(waUrl, '_blank')
       }
 
-      // Clear local cart
+      toast.success('Order placed successfully! 📦')
       clearCart()
       setIsCartOpen(false)
+      fetchMyOrders() // Refresh orders history
     } catch (err) {
       console.error('Error placing order:', err)
-      setError(err.message || 'Failed to place order. Please try again.')
+      setError('Failed to place order. Please try again.')
     } finally {
       setPlacingOrder(false)
+    }
+  }
+
+  // Trigger WhatsApp for previous orders
+  const handleReorderWhatsApp = async (order) => {
+    try {
+      const { data: gymData } = await supabase
+        .from('gyms')
+        .select('owner_user_id, gym_name')
+        .eq('id', membership.gym_id)
+        .single()
+
+      let ownerPhone = ''
+      if (gymData?.owner_user_id) {
+        const { data: ownerProfile } = await supabase
+          .from('profiles')
+          .select('phone_number')
+          .eq('id', gymData.owner_user_id)
+          .single()
+
+        ownerPhone = ownerProfile?.phone_number || ''
+      }
+
+      const itemsListText = order.items.map(item => `- ${item.quantity}x ${item.name} (Rs. ${item.price} each)`).join('\n')
+      const messageText = `Hello! I am ${profile.full_name || 'Member'} from ${gymData?.gym_name || 'Gym'}.\n\n` +
+                          `Re-sending details for my order:\n${itemsListText}\n\n` +
+                          `*Total:* Rs. ${order.total_amount}\n` +
+                          (order.notes ? `*Notes:* ${order.notes}\n` : '') +
+                          `*Order ID:* ${order.id.slice(0, 8)}\n\n` +
+                          `Please let me know when it's ready. Thanks!`;
+
+      let formattedPhone = ownerPhone.replace(/[^\d]/g, '')
+      if (formattedPhone.length === 10) {
+        formattedPhone = '91' + formattedPhone
+      }
+
+      if (formattedPhone) {
+        const waUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(messageText)}`
+        window.open(waUrl, '_blank')
+      } else {
+        navigator.clipboard.writeText(messageText)
+        toast.success('Order details copied to clipboard!')
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to open WhatsApp redirection.')
     }
   }
 
@@ -187,154 +260,266 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
       key="store-tab"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="space-y-6"
+      className="space-y-5 pb-10 text-slate-100"
     >
-      {/* Header Info */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-blue-900/10 to-indigo-900/10 border border-blue-500/15">
-        <div className="flex items-center gap-3 text-left">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/25 text-blue-400">
-            <ShoppingBag className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-[8px] font-black uppercase text-blue-400 tracking-widest leading-none">Gym Store</span>
-            <h3 className="text-sm font-bold text-white uppercase mt-0.5">White-Label Product Shop</h3>
-          </div>
+      {/* Sleek Minimal Header */}
+      <div className="flex items-center justify-between border-b border-white/5 pb-4">
+        {/* Toggle Pills: Shop Catalog vs Orders Log */}
+        <div className="flex bg-[#1A1F2B] p-1 rounded-xl border border-white/5">
+          <button
+            onClick={() => setStoreTab('shop')}
+            className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+              storeTab === 'shop' 
+                ? 'bg-blue-500 text-white shadow-md' 
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Shop
+          </button>
+          <button
+            onClick={() => {
+              setStoreTab('orders');
+              fetchMyOrders();
+            }}
+            className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
+              storeTab === 'orders' 
+                ? 'bg-blue-500 text-white shadow-md' 
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <span>My Orders</span>
+            {myOrders.filter(o => ['pending', 'ready'].includes(o.status)).length > 0 && (
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+            )}
+          </button>
         </div>
-        
-        {/* Floating Cart Trigger inside header for easy reach */}
-        <button
-          onClick={() => setIsCartOpen(true)}
-          className="relative px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 active:scale-95 shadow-md self-start sm:self-center cursor-pointer"
-        >
-          <ShoppingCart className="w-4 h-4" />
-          <span>Cart</span>
-          {totalItemsCount > 0 && (
-            <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-white text-blue-600 text-[9px] font-black leading-none">
-              {totalItemsCount}
-            </span>
-          )}
-        </button>
+
+        {/* Small Minimal Cart Icon Button on Top-Right */}
+        {storeTab === 'shop' && (
+          <button
+            onClick={() => setIsCartOpen(true)}
+            className="relative p-2.5 bg-[#1A1F2B] hover:bg-white/5 border border-white/5 rounded-xl text-slate-300 hover:text-white transition-all active:scale-90 cursor-pointer flex items-center justify-center"
+            title="Open Shopping Cart"
+          >
+            <ShoppingCart className="w-4.5 h-4.5" />
+            {totalItemsCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-blue-500 text-white text-[8px] font-black leading-none">
+                {totalItemsCount}
+              </span>
+            )}
+          </button>
+        )}
       </div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-400 text-xs font-bold flex items-center gap-2">
+        <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-400 text-[11px] font-bold flex items-center gap-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      {/* Loading state */}
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="bg-[#1A1F2B] border border-white/5 rounded-2xl h-72 animate-pulse" />
-          ))}
-        </div>
-      ) : products.length === 0 ? (
-        <div className="p-12 text-center bg-[#1A1F2B] border border-white/5 rounded-2xl space-y-3">
-          <ShoppingBag className="w-12 h-12 text-slate-600 mx-auto" />
-          <h4 className="text-white text-sm font-bold uppercase tracking-wider">No Products Available</h4>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Your gym owner has not added any products to the store yet. Please check back later!
-          </p>
-        </div>
-      ) : (
-        /* Products Grid */
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {products.map((product) => {
-            const inCart = cart.find(item => item.id === product.id)
-            
-            return (
-              <div 
-                key={product.id} 
-                className="bg-[#1A1F2B] border border-white/5 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-white/10 transition-all duration-200 group text-left"
-              >
-                {/* Product Image Frame */}
-                <div className="relative aspect-square w-full bg-slate-950/40 border-b border-white/5 flex items-center justify-center overflow-hidden">
-                  {product.image_url ? (
-                    <img 
-                      src={product.image_url} 
-                      alt={product.name} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <ShoppingBag className="w-12 h-12 text-slate-700" />
-                  )}
-                  {product.stock_quantity === 0 && (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <span className="px-3.5 py-1.5 rounded-xl bg-rose-500/20 border border-rose-500/30 text-rose-400 text-[10px] font-black uppercase tracking-wider">
-                        Out of Stock
-                      </span>
-                    </div>
-                  )}
-                </div>
+      {/* Main Switcher Panels */}
+      {storeTab === 'shop' ? (
+        /* SHOP CATALOG PANEL */
+        loading ? (
+          /* Amazon-style 2-column grid skeletons on mobile */
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="bg-[#1A1F2B] border border-white/5 rounded-2xl aspect-[4/5] animate-pulse" />
+            ))}
+          </div>
+        ) : products.length === 0 ? (
+          <div className="p-12 text-center bg-[#1A1F2B] border border-white/5 rounded-2xl space-y-2">
+            <ShoppingBag className="w-10 h-10 text-slate-700 mx-auto" />
+            <h4 className="text-white text-xs font-bold uppercase tracking-wider">No Products Found</h4>
+            <p className="text-[10px] text-slate-500 max-w-xs mx-auto">
+              Supplement catalog is empty. Please check back later!
+            </p>
+          </div>
+        ) : (
+          /* Amazon App Style: Compact 2-column grid on mobile! */
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+            {products.map((product) => {
+              const inCart = cart.find(item => item.id === product.id)
+              
+              return (
+                <div 
+                  key={product.id} 
+                  className="bg-[#1A1F2B] border border-white/5 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-white/10 transition-all text-left relative"
+                >
+                  {/* Image Frame with Aspect-[4/3] for ultra compactness */}
+                  <div className="relative aspect-[4/3] w-full bg-slate-950/40 border-b border-white/5 flex items-center justify-center overflow-hidden">
+                    {product.image_url ? (
+                      <img 
+                        src={product.image_url} 
+                        alt={product.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <ShoppingBag className="w-8 h-8 text-slate-700" />
+                    )}
+                    
+                    {/* Out of stock label */}
+                    {product.stock_quantity === 0 && (
+                      <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                        <span className="px-2 py-1 rounded bg-rose-500/20 border border-rose-500/30 text-rose-400 text-[8px] font-black uppercase tracking-wider scale-90">
+                          Sold Out
+                        </span>
+                      </div>
+                    )}
 
-                {/* Details */}
-                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between items-start gap-2">
-                      <h4 className="text-sm font-black text-white uppercase group-hover:text-blue-400 transition-colors leading-tight">
+                    {/* Amazon-style Floating Action Button in the bottom-right of image frame! */}
+                    {product.stock_quantity > 0 && (
+                      <div className="absolute bottom-2 right-2 z-10">
+                        {inCart ? (
+                          /* Floating Quantity Selector pill */
+                          <div className="flex items-center gap-1.5 bg-blue-500 text-white rounded-full p-0.5 shadow-lg border border-blue-400/25">
+                            <button
+                              onClick={() => updateQuantity(product.id, -1)}
+                              className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all cursor-pointer"
+                            >
+                              <Minus className="w-3 h-3 text-white" />
+                            </button>
+                            <span className="text-[10px] font-black w-4 text-center">{inCart.quantity}</span>
+                            <button
+                              onClick={() => addToCart(product)}
+                              className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all cursor-pointer"
+                            >
+                              <Plus className="w-3 h-3 text-white" />
+                            </button>
+                          </div>
+                        ) : (
+                          /* Simple elegant Floating Plus Button */
+                          <button
+                            onClick={() => addToCart(product)}
+                            className="w-7.5 h-7.5 rounded-full bg-blue-500 hover:bg-blue-600 border border-blue-400/20 flex items-center justify-center text-white shadow-lg active:scale-90 transition-all cursor-pointer"
+                            title="Add to Cart"
+                          >
+                            <Plus className="w-4 h-4 text-white" strokeWidth={3} />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Info details under image */}
+                  <div className="p-3 flex-1 flex flex-col justify-between gap-2.5">
+                    <div className="space-y-0.5">
+                      <h4 className="text-[11px] font-black text-white uppercase leading-tight line-clamp-1">
                         {product.name}
                       </h4>
-                      <span className="text-xs font-black text-blue-400 tracking-tight whitespace-nowrap">
-                        Rs. {product.price}
+                      {product.description ? (
+                        <p className="text-[9px] text-slate-500 line-clamp-1">
+                          {product.description}
+                        </p>
+                      ) : (
+                        <p className="text-[9px] text-slate-500 italic">In Stock</p>
+                      )}
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-black text-blue-400 font-mono">
+                        ₹ {product.price}
                       </span>
                     </div>
-                    {product.description && (
-                      <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
-                        {product.description}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div>
-                    {product.stock_quantity === 0 ? (
-                      <button
-                        disabled
-                        className="w-full py-2.5 bg-white/5 border border-white/5 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-not-allowed"
-                      >
-                        Unavailable
-                      </button>
-                    ) : inCart ? (
-                      <div className="flex items-center gap-1 bg-blue-500/10 border border-blue-500/20 rounded-xl p-0.5">
-                        <button
-                          onClick={() => updateQuantity(product.id, -1)}
-                          className="w-9 h-9 rounded-lg flex items-center justify-center text-blue-400 hover:bg-blue-500/10 transition-all cursor-pointer"
-                        >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <span className="flex-1 text-center font-bold text-xs text-white">
-                          {inCart.quantity}
-                        </span>
-                        <button
-                          onClick={() => addToCart(product)}
-                          className="w-9 h-9 rounded-lg flex items-center justify-center text-blue-400 hover:bg-blue-500/10 transition-all cursor-pointer"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => addToCart(product)}
-                        className="w-full py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-[0.98] cursor-pointer"
-                      >
-                        Add to Cart
-                      </button>
-                    )}
                   </div>
                 </div>
+              )
+            })}
+          </div>
+        )
+      ) : (
+        /* MY ORDERS HISTORY LOG PANEL */
+        ordersLoading ? (
+          <div className="space-y-4">
+            {[1, 2].map(i => (
+              <div key={i} className="bg-[#1A1F2B] border border-white/5 rounded-2xl h-24 animate-pulse" />
+            ))}
+          </div>
+        ) : myOrders.length === 0 ? (
+          <div className="p-12 text-center bg-[#1A1F2B] border border-white/5 rounded-2xl space-y-2">
+            <Clock className="w-10 h-10 text-slate-700 mx-auto" />
+            <h4 className="text-white text-xs font-bold uppercase tracking-wider">No Orders Logged</h4>
+            <p className="text-[10px] text-slate-500 max-w-xs mx-auto">
+              Any products you order from the store will be permanently tracked here.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3.5">
+            {myOrders.map((order) => (
+              <div 
+                key={order.id} 
+                className="bg-[#1A1F2B] border border-white/5 rounded-2xl p-4 text-left flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center hover:border-white/10 transition-colors"
+              >
+                {/* Product details */}
+                <div className="space-y-2 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">
+                      ID: #{order.id.slice(0, 8)}
+                    </span>
+                    <span className="text-slate-800 text-[10px]">•</span>
+                    <span className="text-[9px] text-slate-500 font-bold uppercase">
+                      {new Date(order.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </span>
+                    <span className="text-slate-800 text-[10px]">•</span>
+                    
+                    {/* Status Badge */}
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border ${
+                      order.status === 'pending' ? 'bg-[#3B82F6]/10 border-[#3B82F6]/25 text-[#3B82F6]' :
+                      order.status === 'ready' ? 'bg-yellow-500/10 border-yellow-500/25 text-yellow-400' :
+                      order.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400' :
+                      'bg-rose-500/10 border-rose-500/25 text-rose-400'
+                    }`}>
+                      <span className={`w-1 h-1 rounded-full ${
+                        order.status === 'pending' ? 'bg-[#3B82F6]' :
+                        order.status === 'ready' ? 'bg-yellow-400' :
+                        order.status === 'completed' ? 'bg-emerald-400' :
+                        'bg-rose-400'
+                      }`} />
+                      <span>{order.status}</span>
+                    </span>
+                  </div>
+
+                  {/* Items brief */}
+                  <div className="text-[11px] text-slate-300 font-semibold space-y-0.5">
+                    {order.items.map((item, idx) => (
+                      <div key={idx}>
+                        <span className="text-blue-400 font-bold font-mono">{item.quantity}x</span> {item.name}
+                      </div>
+                    ))}
+                  </div>
+
+                  {order.notes && (
+                    <p className="text-[9px] text-slate-500 italic font-medium">Note: "{order.notes}"</p>
+                  )}
+                </div>
+
+                {/* Amount and WhatsApp sync button */}
+                <div className="flex sm:flex-col justify-between sm:items-end w-full sm:w-auto border-t sm:border-t-0 border-white/5 pt-2.5 sm:pt-0 gap-3.5">
+                  <div className="text-left sm:text-right">
+                    <span className="text-[8px] font-black text-slate-500 uppercase block tracking-wider">Total Amount</span>
+                    <span className="text-xs font-mono font-black text-blue-400 block">Rs. {order.total_amount}</span>
+                  </div>
+                  
+                  <button
+                    onClick={() => handleReorderWhatsApp(order)}
+                    className="px-3.5 py-1.5 bg-[#1F2937]/50 border border-white/10 hover:bg-white/5 hover:border-white/20 text-slate-300 hover:text-white text-[9px] font-black uppercase tracking-wider rounded-lg transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
+                    title="Send details on WhatsApp again"
+                  >
+                    <MessageSquare className="w-3 h-3 text-emerald-400" />
+                    <span>WhatsApp</span>
+                  </button>
+                </div>
               </div>
-            )
-          })}
-        </div>
+            ))}
+          </div>
+        )
       )}
 
       {/* Cart Drawer / Slide-Over Modal */}
       <AnimatePresence>
         {isCartOpen && (
           <div className="fixed inset-0 z-[150] flex justify-end">
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.6 }}
@@ -343,7 +528,6 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
               className="fixed inset-0 bg-black cursor-pointer"
             />
             
-            {/* Panel */}
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
@@ -352,122 +536,115 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
               className="relative w-full max-w-md h-full bg-[#151922] shadow-2xl flex flex-col justify-between"
             >
               {/* Drawer Header */}
-              <div className="p-5 border-b border-white/5 flex items-center justify-between">
+              <div className="p-4 border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <ShoppingCart className="w-5 h-5 text-blue-400" />
-                  <h3 className="text-sm font-black text-white uppercase tracking-wider">Your Shopping Cart</h3>
+                  <ShoppingCart className="w-4.5 h-4.5 text-blue-400" />
+                  <h3 className="text-xs font-black text-white uppercase tracking-wider">Your Cart</h3>
                 </div>
                 <button
                   onClick={() => setIsCartOpen(false)}
-                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer"
+                  className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-              {/* Drawer Body / Items List */}
-              <div className="flex-1 overflow-y-auto p-5 space-y-5 hide-scrollbar">
+              {/* Drawer Body */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 hide-scrollbar">
                 {cart.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center space-y-2">
-                    <ShoppingCart className="w-10 h-10 text-slate-700 animate-bounce" />
+                    <ShoppingCart className="w-8 h-8 text-slate-700" />
                     <h5 className="text-white text-xs font-bold uppercase tracking-wider">Cart is Empty</h5>
-                    <p className="text-[10px] text-slate-500 max-w-xs">
-                      Browse your gym store products and add items to your cart to checkout.
-                    </p>
                   </div>
                 ) : (
                   <>
-                    <div className="space-y-3">
+                    <div className="space-y-2.5">
                       {cart.map((item) => (
                         <div 
                           key={item.id}
-                          className="flex items-center gap-3.5 p-3 rounded-xl bg-white/[0.02] border border-white/5 text-left"
+                          className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-left"
                         >
-                          <div className="w-12 h-12 rounded-lg bg-slate-950 flex-shrink-0 overflow-hidden flex items-center justify-center border border-white/5">
+                          <div className="w-10 h-10 rounded-lg bg-slate-950 flex-shrink-0 overflow-hidden flex items-center justify-center border border-white/5">
                             {item.image_url ? (
                               <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
                             ) : (
-                              <ShoppingBag className="w-5 h-5 text-slate-700" />
+                              <ShoppingBag className="w-4 h-4 text-slate-700" />
                             )}
                           </div>
 
                           <div className="flex-1 min-w-0">
                             <h5 className="text-xs font-bold text-white uppercase truncate">{item.name}</h5>
-                            <span className="text-[10px] font-bold text-slate-500">Rs. {item.price} each</span>
+                            <span className="text-[9px] font-bold text-slate-500">Rs. {item.price}</span>
                           </div>
 
-                          {/* Cart Quantity Editor */}
                           <div className="flex items-center gap-1 border border-white/5 rounded-lg p-0.5">
                             <button
                               onClick={() => updateQuantity(item.id, -1)}
-                              className="w-7 h-7 rounded flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer"
+                              className="w-6.5 h-6.5 rounded flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer"
                             >
-                              <Minus className="w-3 h-3" />
+                              <Minus className="w-2.5 h-2.5" />
                             </button>
-                            <span className="w-6 text-center text-xs font-bold text-white">{item.quantity}</span>
+                            <span className="w-5 text-center text-xs font-bold text-white">{item.quantity}</span>
                             <button
                               onClick={() => addToCart(item)}
-                              className="w-7 h-7 rounded flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer"
+                              className="w-6.5 h-6.5 rounded flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer"
                             >
-                              <Plus className="w-3 h-3" />
+                              <Plus className="w-2.5 h-2.5" />
                             </button>
                           </div>
 
-                          {/* Remove button */}
                           <button
                             onClick={() => removeFromCart(item.id)}
                             className="text-slate-500 hover:text-rose-400 p-1 transition-all cursor-pointer"
-                            title="Remove item"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ))}
                     </div>
 
-                    {/* Order Notes Field */}
-                    <div className="space-y-2 text-left">
+                    <div className="space-y-1.5 text-left">
                       <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">
-                        Add Order Pickup Notes (Optional)
+                        Add Pickup Notes (Optional)
                       </label>
                       <textarea
                         value={orderNotes}
                         onChange={(e) => setOrderNotes(e.target.value)}
-                        rows={3}
+                        rows={2}
                         className="w-full p-3 rounded-xl bg-slate-950/40 border border-white/5 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:border-blue-500/50 transition-all resize-none"
-                        placeholder="E.g., Please keep it ready by 6 PM, or cold temperature..."
+                        placeholder="E.g., Keep it ready by 6 PM..."
                       />
                     </div>
                   </>
                 )}
               </div>
 
-              {/* Drawer Footer / Subtotal Panel */}
+              {/* Drawer Footer */}
               {cart.length > 0 && (
-                <div className="p-5 border-t border-white/5 bg-[#1A1F2B] space-y-4">
-                  <div className="flex justify-between items-center text-sm font-bold text-white">
-                    <span className="uppercase text-xs tracking-wider text-slate-400">Total Amount:</span>
-                    <span className="text-blue-400 font-mono text-base">Rs. {cartTotal}</span>
+                <div className="p-4 border-t border-white/5 bg-[#1A1F2B] space-y-3">
+                  <div className="flex justify-between items-center text-xs font-bold text-white">
+                    <span className="uppercase tracking-wider text-slate-400">Total:</span>
+                    <span className="text-blue-400 font-mono text-sm">Rs. {cartTotal}</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={clearCart}
-                      className="py-3 bg-white/5 hover:bg-white/10 text-slate-300 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer active:scale-95 text-center"
+                      className="py-2.5 bg-white/5 hover:bg-white/10 text-slate-300 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer active:scale-95"
                     >
-                      Clear All
+                      Clear
                     </button>
                     <button
                       onClick={handleCheckout}
                       disabled={placingOrder}
-                      className="py-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+                      className="py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95 disabled:opacity-50"
                     >
                       {placingOrder ? (
-                        <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <>
                           <span>Checkout</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
+                          <ArrowRight className="w-3 h-3" />
                         </>
                       )}
                     </button>
@@ -479,7 +656,7 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
         )}
       </AnimatePresence>
 
-      {/* Success Order Integration Modal */}
+      {/* Success Modal */}
       <AnimatePresence>
         {orderSuccess && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
@@ -487,7 +664,7 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md bg-[#151922] border border-white/10 rounded-2xl p-6 space-y-6 shadow-2xl relative"
+              className="w-full max-w-sm bg-[#151922] border border-white/10 rounded-2xl p-5 space-y-5 shadow-2xl relative"
             >
               <div className="absolute top-4 right-4">
                 <button
@@ -499,64 +676,46 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
               </div>
 
               <div className="text-center space-y-4">
-                <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center mx-auto text-emerald-400">
-                  <Check className="w-6 h-6" />
+                <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center mx-auto text-emerald-400">
+                  <Check className="w-5 h-5" />
                 </div>
 
                 <div className="space-y-1">
-                  <h4 className="text-sm font-black text-white uppercase tracking-wider">Order Saved & Logged!</h4>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                    Order ID: #{orderSuccess.orderId.slice(0, 8)}
+                  <h4 className="text-xs font-black text-white uppercase tracking-wider">Order Recorded!</h4>
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                    ID: #{orderSuccess.orderId.slice(0, 8)}
                   </p>
                 </div>
 
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Your white-label order has been successfully recorded in the gym server database!
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Your order has been logged in the gym system!
                 </p>
 
                 {orderSuccess.phone ? (
-                  <div className="p-4.5 rounded-xl bg-blue-500/5 border border-blue-500/15 text-left space-y-3.5">
-                    <span className="text-[9px] font-black uppercase text-blue-400 tracking-wider flex items-center gap-1.5">
-                      <MessageSquare className="w-4 h-4" />
-                      <span>WhatsApp Redirection</span>
-                    </span>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      We have redirected you to WhatsApp to send the order details straight to the Gym Owner's phone. If the chat window did not open automatically, click the button below:
+                  <div className="p-3.5 rounded-xl bg-blue-500/5 border border-blue-500/15 text-left space-y-2.5">
+                    <p className="text-[10px] text-slate-400 leading-relaxed">
+                      We have prefilled your order details for WhatsApp. Click below to notify the reception desk:
                     </p>
                     <button
                       onClick={() => {
                         const waUrl = `https://wa.me/${orderSuccess.phone}?text=${encodeURIComponent(orderSuccess.message)}`
                         window.open(waUrl, '_blank')
                       }}
-                      className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                      className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white text-[9px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95"
                     >
                       Open WhatsApp Chat
                     </button>
                   </div>
                 ) : (
-                  <div className="p-4.5 rounded-xl bg-amber-500/5 border border-amber-500/15 text-left space-y-3.5">
-                    <span className="text-[9px] font-black uppercase text-amber-400 tracking-wider flex items-center gap-1.5">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>Owner Contact Number Missing</span>
-                    </span>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Your gym owner has not linked their WhatsApp phone number inside Gymix. We have copied the complete order details text to your clipboard. Please paste and send it to them manually, or share it at the reception counter!
+                  <div className="p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/15 text-left space-y-2.5">
+                    <p className="text-[10px] text-slate-400 leading-relaxed">
+                      WhatsApp phone number is not linked. We have copied the complete order details to your clipboard:
                     </p>
                     <button
                       onClick={handleCopyOrderText}
-                      className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-black text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                      className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-black text-[9px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95"
                     >
-                      {copiedText ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          Copied to Clipboard
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5" />
-                          Copy Order Text
-                        </>
-                      )}
+                      {copiedText ? 'Copied!' : 'Copy Order Text'}
                     </button>
                   </div>
                 )}
