@@ -266,7 +266,7 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
       className="space-y-5 pb-10 text-slate-100"
     >
       {/* Sleek Minimal Header */}
-      <div className="flex items-center justify-between border-b border-white/5 pb-4">
+      <div className="sticky -top-6 md:-top-8 z-30 bg-[#0F1117] -mx-6 md:-mx-8 px-6 md:px-8 -mt-6 md:-mt-8 pt-6 md:pt-8 pb-4 flex items-center justify-between border-b border-white/5 flex-shrink-0">
         {/* Toggle Pills: Shop Catalog vs Orders Log */}
         <div className="flex bg-[#1A1F2B] p-1 rounded-xl border border-white/5">
           <button

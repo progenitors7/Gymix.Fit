@@ -660,7 +660,7 @@ export default function MemberDashboard() {
   const activeRank = getAthleteRank(streakCount)
 
   return (
-    <div className="min-h-screen bg-[#0F1117] text-slate-100 font-sans flex flex-col md:flex-row relative">
+    <div className="h-screen bg-[#0F1117] text-slate-100 font-sans flex flex-col md:flex-row relative overflow-hidden">
       {/* Sidebar Navigation */}
       <aside className="hidden md:block w-80 flex-shrink-0">
         <MemberSidebar
@@ -722,7 +722,7 @@ export default function MemberDashboard() {
       </AnimatePresence>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 pb-20 md:pb-0">
+      <div className="flex-1 flex flex-col min-w-0 pb-20 md:pb-0 overflow-hidden">
         <MemberMobileHeader
           profile={profile}
           membership={membership}
