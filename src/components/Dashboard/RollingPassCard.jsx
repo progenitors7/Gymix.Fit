@@ -32,7 +32,7 @@ export default function RollingPassCard({ membership }) {
   }, [membership])
 
   return (
-    <div className="bg-[#1A1F2B] border border-white/5 rounded-3xl p-6 sm:p-8 text-center relative overflow-hidden shadow-xl flex-1 flex flex-col justify-center items-center min-h-[360px]">
+    <div className="bg-[#1A1F2B] border border-white/5 rounded-3xl p-5 sm:p-8 text-center relative overflow-hidden shadow-xl flex-1 flex flex-col justify-center items-center min-h-[290px] sm:min-h-[340px]">
       
       {/* Rotating ring spinner indicator (Only show if QR is active) */}
       {(!membership.gyms?.biometric_enabled || passMode === 'qr') && (
@@ -67,7 +67,7 @@ export default function RollingPassCard({ membership }) {
       <div className="space-y-6 pt-2 w-full flex-1 flex flex-col justify-center items-center">
         {(!membership.gyms?.biometric_enabled || passMode === 'qr') ? (
           <div className="space-y-6 w-full flex flex-col items-center">
-            <div className="relative w-48 h-48 sm:w-52 sm:h-52 mx-auto border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center bg-white shadow-md">
+            <div className="relative w-40 h-40 sm:w-48 sm:h-48 mx-auto border border-white/10 rounded-2xl p-3 flex flex-col items-center justify-center bg-white shadow-md">
               {qrToken ? (
                 <img 
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrToken)}`}
@@ -75,26 +75,26 @@ export default function RollingPassCard({ membership }) {
                   className="w-full h-full object-contain rounded-lg select-none"
                 />
               ) : (
-                <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-500 rounded-full animate-spin" />
+                <div className="w-6 h-6 border-2 border-slate-200 border-t-slate-500 rounded-full animate-spin" />
               )}
             </div>
 
-            <div className="space-y-1 pt-1">
-              <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center justify-center gap-1.5">
+            <div className="space-y-0.5 pt-0.5">
+              <h3 className="text-[11px] font-black text-white uppercase tracking-wider flex items-center justify-center gap-1.5">
                 <Shield className="w-3.5 h-3.5 text-emerald-400" />
                 ACTIVE PASS KEY
               </h3>
-              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">
+              <p className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">
                 SCAN PASS QR AT FRONT DESK ON ENTRY
               </p>
             </div>
           </div>
         ) : (
-          <div className="space-y-6 w-full flex flex-col items-center py-4">
+          <div className="space-y-4 w-full flex flex-col items-center py-2">
             {/* Biometric linked display with dynamic colors */}
-            <div className="relative w-40 h-40 sm:w-44 sm:h-44 mx-auto flex items-center justify-center">
+            <div className="relative w-32 h-32 sm:w-40 sm:h-40 mx-auto flex items-center justify-center">
               <div className={`relative w-full h-full rounded-full flex flex-col items-center justify-center border ${membership.biometric_user_id ? 'bg-emerald-500/10 border-emerald-500/20 text-[#10B981]' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'} shadow-lg`}>
-                <Fingerprint className="w-16 h-16" />
+                <Fingerprint className="w-12 h-12" />
               </div>
             </div>
 
