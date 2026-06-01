@@ -23,7 +23,8 @@ import {
   QrCode,
   Clock,
   Trophy,
-  Store
+  Store,
+  User
 } from 'lucide-react'
 import Logo from '../UI/Logo'
 
@@ -78,6 +79,11 @@ const NAV_ITEMS = [
     label: 'Store Manager',
     path: '/store-manager',
     icon: Store,
+  },
+  {
+    label: 'Profile',
+    path: '/profile',
+    icon: User,
   },
   {
     label: 'Settings',
@@ -197,17 +203,19 @@ function SidebarContent({ onClose, isMobile }) {
       {/* User Footer Profile */}
       <div className="p-4 border-t border-white/5 bg-[#151922]">
         <div className="group flex items-center gap-3 px-3 py-3 rounded-2xl bg-[#1A1F2B] border border-white/5 transition-all hover:border-[#3B82F6]/30">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#1A1F2B] to-[#2D3748] border border-white/10 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-inner overflow-hidden">
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              initials
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[#F8FAFC] text-[13px] font-semibold truncate leading-tight">{gym?.gym_name || 'Admin'}</p>
-            <p className="text-[#94A3B8] text-[11px] truncate mt-0.5">{emailDisplay}</p>
-          </div>
+          <Link to="/profile" className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#1A1F2B] to-[#2D3748] border border-white/10 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-inner overflow-hidden">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                initials
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[#F8FAFC] text-[13px] font-semibold truncate leading-tight group-hover:text-blue-400 transition-colors">{profile?.full_name || 'Gym Owner'}</p>
+              <p className="text-[#94A3B8] text-[11px] truncate mt-0.5">{emailDisplay}</p>
+            </div>
+          </Link>
           <button
             onClick={handleSignOut}
             disabled={signingOut}
@@ -357,9 +365,22 @@ export default function AppLayout({ children }) {
               <span className="font-bold text-[#F8FAFC] text-[15px] tracking-tight">Gymix</span>
             </div>
           </div>
-          <Link to="/settings" className="p-2 -mr-2 text-[#94A3B8] hover:text-[#F8FAFC] transition-all">
-            <Settings className="w-5 h-5" />
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link 
+              to="/profile" 
+              className="w-8 h-8 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-white text-[9px] font-black overflow-hidden cursor-pointer hover:border-blue-500/50 transition-all shadow-inner"
+              title="View Profile"
+            >
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                profile?.full_name?.slice(0, 2).toUpperCase() || 'O'
+              )}
+            </Link>
+            <Link to="/settings" className="p-2 -mr-2 text-[#94A3B8] hover:text-[#F8FAFC] transition-all">
+              <Settings className="w-5 h-5" />
+            </Link>
+          </div>
         </header>
 
         {/* Page content with smooth route transition wrapper */}
