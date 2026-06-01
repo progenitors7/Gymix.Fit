@@ -22,7 +22,8 @@ import {
   ChevronRight,
   QrCode,
   Clock,
-  Trophy
+  Trophy,
+  Store
 } from 'lucide-react'
 import Logo from '../UI/Logo'
 
@@ -72,6 +73,11 @@ const NAV_ITEMS = [
     path: '/notifications',
     id: 'nav-notifications',
     icon: Bell,
+  },
+  {
+    label: 'Store Manager',
+    path: '/store-manager',
+    icon: Store,
   },
   {
     label: 'Settings',

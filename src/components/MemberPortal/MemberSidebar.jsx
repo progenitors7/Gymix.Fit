@@ -1,4 +1,4 @@
-import { QrCode, Bell, Calendar, Flame, Trophy, Sparkles, User, LogOut } from 'lucide-react'
+import { QrCode, Bell, Calendar, Flame, Trophy, Sparkles, User, LogOut, ShoppingBag } from 'lucide-react'
 import Logo from '../UI/Logo'
 
 export default function MemberSidebar({ 
@@ -23,6 +23,7 @@ export default function MemberSidebar({
     { id: 'attendance', label: 'Attendance Logs', icon: Calendar },
     { id: 'streaks', label: 'Workout Streaks', icon: Flame, badge: streakCount > 0 ? `${streakCount} Days` : null },
     { id: 'leaderboard', label: 'Gym Leaderboard', icon: Trophy },
+    { id: 'store', label: 'Gym Store', icon: ShoppingBag },
     { id: 'progress', label: 'PR & Progress', icon: Sparkles },
     { id: 'profile', label: 'Profile Settings', icon: User }
   ]

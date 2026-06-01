@@ -18,6 +18,7 @@ import MemberStreaksTab from '../MemberPortal/MemberStreaksTab'
 import MemberLeaderboardTab from '../MemberPortal/MemberLeaderboardTab'
 import MemberProgressTab from '../MemberPortal/MemberProgressTab'
 import { MemberProfileTab, MemberOnboarding } from '../MemberPortal/MemberProfileTab'
+import MemberStoreTab from '../MemberPortal/MemberStoreTab'
 
 export default function MemberDashboard() {
   const { profile, signOut, refreshProfile } = useAuth()
@@ -795,6 +796,13 @@ export default function MemberDashboard() {
                   progressLogs={progressLogs}
                   progressLoading={progressLoading}
                   fetchProgressLogs={fetchProgressLogs}
+                />
+              )}
+              {activeTab === 'store' && (
+                <MemberStoreTab
+                  profile={profile}
+                  membership={membership}
+                  setActiveTab={setActiveTab}
                 />
               )}
               {activeTab === 'profile' && (

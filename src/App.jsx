@@ -27,6 +27,7 @@ const AddPaymentPage = React.lazy(() => import('./components/Payments/AddPayment
 const NotificationsPage = React.lazy(() => import('./pages/NotificationsPage'))
 const ResetPasswordPage = React.lazy(() => import('./pages/ResetPasswordPage'))
 const SettingsPage = React.lazy(() => import('./pages/SettingsPage'))
+const StoreManagerPage = React.lazy(() => import('./pages/StoreManagerPage'))
 const SuperAdminPage = React.lazy(() => import('./pages/SuperAdminPage'))
 const BillingPage = React.lazy(() => import('./pages/BillingPage'))
 const AttendancePage = React.lazy(() => import('./pages/AttendancePage'))
@@ -162,6 +163,7 @@ export default function App() {
             <Route path="/payments/new"      element={<Protected><AddPaymentPage /></Protected>} />
 
             <Route path="/notifications"     element={<Protected><NotificationsPage /></Protected>} />
+            <Route path="/store-manager"     element={<Protected><StoreManagerPage /></Protected>} />
             <Route path="/settings"          element={<Protected><SettingsPage /></Protected>} />
             <Route path="/billing"           element={<Protected><BillingPage /></Protected>} />
             <Route path="/attendance"        element={<Protected><AttendancePage /></Protected>} />

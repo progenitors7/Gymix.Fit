@@ -1,11 +1,11 @@
-import { QrCode, Flame, Trophy, Sparkles, User } from 'lucide-react'
+import { QrCode, Flame, Trophy, ShoppingBag, User } from 'lucide-react'
 
 export default function MemberBottomNav({ activeTab, setActiveTab, streakCount }) {
   const visibleItems = [
     { id: 'pass', icon: QrCode, label: 'Pass' },
     { id: 'streaks', icon: Flame, label: 'Streaks', badge: streakCount > 0 ? streakCount : null },
     { id: 'leaderboard', icon: Trophy, label: 'Leaderboard' },
-    { id: 'progress', icon: Sparkles, label: 'PR' },
+    { id: 'store', icon: ShoppingBag, label: 'Store' },
     { id: 'profile', icon: User, label: 'Settings' }
   ]
 
