@@ -278,12 +278,7 @@ export default function SettingsPage() {
     return `${local[0]}***${local[local.length - 1]}@${domain}`;
   };
 
-  // Update gymName field when prop changes
-  useEffect(() => {
-    if (gymName !== undefined) {
-      setNewGymName(gymName || '');
-    }
-  }, [gymName]);
+
 
   // Load plans
   const fetchPlans = useCallback(async () => {
