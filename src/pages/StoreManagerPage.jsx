@@ -134,7 +134,7 @@ export default function StoreManagerPage() {
         const sizeInBytes = 4 * Math.ceil(stringLength / 3) * 0.562489633
         setCompressedSizeKB((sizeInBytes / 1024).toFixed(1))
         
-        toast.success('Product image compressed successfully! ⚡')
+        toast.success('Product image uploaded! 📸')
       }
       img.src = event.target.result
     }

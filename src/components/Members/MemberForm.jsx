@@ -308,9 +308,9 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
 
         {form.avatar_url && (
           <div className="mt-3 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-1.5 animate-in zoom-in-95 duration-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">
-              Compressed: {getBase64SizeKB(form.avatar_url)} KB
+              Photo Uploaded
             </span>
           </div>
         )}
@@ -498,7 +498,7 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
               </Field>
               <div className="flex items-end pb-1">
                 <p className="text-[10px] font-bold text-emerald-500/60 uppercase tracking-widest leading-tight">
-                  Recording this will automatically mark the athlete as <span className="text-emerald-400">Active</span> and create a ledger entry.
+                  Recording this will automatically mark the athlete as <span className="text-emerald-400">Active</span> and record the payment.
                 </p>
               </div>
             </motion.div>
@@ -526,11 +526,11 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
           {submitting ? (
             <span className="flex items-center justify-center gap-3">
               <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              {mode === 'add' ? 'Processing…' : 'Syncing…'}
+              {mode === 'add' ? 'Processing…' : 'Saving…'}
             </span>
           ) : (
             <span className="flex items-center justify-center gap-2">
-              {mode === 'add' ? 'Initialize Athlete' : 'Commit Changes'}
+              {mode === 'add' ? 'Add Member' : 'Save Changes'}
             </span>
           )}
         </button>

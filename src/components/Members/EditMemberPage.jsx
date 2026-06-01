@@ -52,7 +52,7 @@ export default function EditMemberPage() {
           onClick={() => navigate('/members')}
           className="w-full py-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] text-white text-xs font-black uppercase tracking-widest transition-all border border-white/5"
         >
-          Return to Ledger
+          Return to Members
         </button>
       </div>
     )

@@ -92,7 +92,7 @@ export default function PaymentsPage() {
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Revenue History</h1>
           <p className="text-slate-500 text-[11px] font-bold uppercase tracking-wider">
-            {loading ? 'Auditing ledger…' : `${payments.length} Transactions Logged`}
+            {loading ? 'Updating transactions…' : `${payments.length} Transactions Logged`}
           </p>
         </div>
         <button
@@ -189,7 +189,7 @@ export default function PaymentsPage() {
                     : 'bg-white/[0.02] border border-white/5 text-slate-500 hover:text-slate-200 hover:bg-white/5'
                 }`}
               >
-                {status === 'all' ? 'All Ledger' : status}
+                {status === 'all' ? 'All Payments' : status}
               </button>
             )
           })}
@@ -229,7 +229,7 @@ export default function PaymentsPage() {
           <p className="text-slate-500 text-xs max-w-sm mx-auto mb-6 font-medium leading-relaxed">
             {searchTerm || statusFilter !== 'all' 
               ? "We couldn't find any transactions matching your filters."
-              : "The ledger is empty. Start by recording a payment."}
+              : "No transaction history found. Start by recording a payment."}
           </p>
           {(searchTerm || statusFilter !== 'all') && (
             <button

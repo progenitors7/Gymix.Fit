@@ -296,7 +296,7 @@ export default function PaymentForm({ onSubmit, initialData = null, isSubmitting
               Processing…
             </span>
           ) : (
-            <span>{initialData ? 'Update Ledger' : 'Authorize Payment'}</span>
+            <span>{initialData ? 'Update Payment' : 'Record Payment'}</span>
           )}
         </button>
       </div>

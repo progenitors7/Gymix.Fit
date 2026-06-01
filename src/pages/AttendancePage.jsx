@@ -137,7 +137,7 @@ export default function AttendancePage() {
     return (
       <div className="p-8 flex flex-col items-center justify-center min-h-[400px] gap-3 text-center">
         <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-2" />
-        <p className="text-slate-500 text-xs font-black uppercase tracking-widest">Parsing Attendance Ledger...</p>
+        <p className="text-slate-500 text-xs font-black uppercase tracking-widest">Loading attendance records...</p>
       </div>
     )
   }
@@ -150,7 +150,7 @@ export default function AttendancePage() {
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-widest">
             <Clock className="w-4 h-4" />
-            Live Access Ledger
+            Live Access Log
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight flex items-center gap-3">
             Attendance Logs
@@ -167,7 +167,7 @@ export default function AttendancePage() {
           className="flex items-center gap-2 px-5 py-3 bg-[#1A1F2B] border border-white/5 hover:border-white/10 text-white rounded-2xl font-bold text-xs shadow-lg active:scale-95 transition-all cursor-pointer disabled:opacity-50"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-          Sync Ledger
+          Refresh Logs
         </button>
       </div>
 
