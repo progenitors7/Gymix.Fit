@@ -339,8 +339,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── KPI Grid ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      {/* ── KPI Grid (2-column grid on mobile, 4-column grid on desktop) ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         <StatCard 
           title="Monthly Recurring Revenue (MRR)" 
           value={`₹${stats.revenue.monthly.toLocaleString()}`} 
