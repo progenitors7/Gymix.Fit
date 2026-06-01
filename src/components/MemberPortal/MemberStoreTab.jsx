@@ -672,11 +672,12 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
       {/* Success Modal */}
       <AnimatePresence>
         {orderSuccess && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: 'tween', duration: 0.15, ease: 'easeOut' }}
               className="w-full max-w-sm bg-[#151922] border border-white/10 rounded-2xl p-5 space-y-5 shadow-2xl relative"
             >
               <div className="absolute top-4 right-4">
@@ -741,19 +742,19 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
       {/* Product Details Popup Modal */}
       <AnimatePresence>
         {selectedProduct && (
-          <div className="fixed inset-0 z-[180] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[180] flex items-center justify-center p-4 bg-black/80">
             <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              transition={{ type: 'tween', duration: 0.18, ease: 'easeOut' }}
               className="w-full max-w-md bg-[#151922] border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh]"
             >
               {/* Close Button */}
               <div className="absolute top-4 right-4 z-20">
                 <button
                   onClick={() => setSelectedProduct(null)}
-                  className="w-8 h-8 rounded-xl bg-black/40 hover:bg-black/60 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-all cursor-pointer backdrop-blur-md"
+                  className="w-8 h-8 rounded-xl bg-black/50 hover:bg-black/75 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-all cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
