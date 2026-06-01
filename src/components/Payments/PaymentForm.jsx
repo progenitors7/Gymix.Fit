@@ -97,11 +97,14 @@ export default function PaymentForm({ onSubmit, initialData = null, isSubmitting
               className="w-full bg-white/[0.03] border border-white/5 rounded-2xl pl-12 pr-4 py-4 text-white text-sm font-medium appearance-none focus:outline-none focus:bg-white/[0.05] focus:border-emerald-500/50 transition-all disabled:opacity-50"
             >
               <option value="" disabled>Choose an athlete...</option>
-              {members.map(member => (
-                <option key={member.id} value={member.id}>
-                  {member.full_name} ({member.phone_number})
-                </option>
-              ))}
+              {[...members]
+                .sort((a, b) => (a.full_name || '').trim().localeCompare((b.full_name || '').trim(), undefined, { sensitivity: 'base' }))
+                .map(member => (
+                  <option key={member.id} value={member.id}>
+                    {member.full_name} ({member.phone_number})
+                  </option>
+                ))
+              }
             </select>
           </div>
         </div>
