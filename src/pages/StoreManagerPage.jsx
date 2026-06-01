@@ -331,7 +331,7 @@ export default function StoreManagerPage() {
         <div className="flex-1 space-y-1">
           <h5 className="text-xs font-black text-white uppercase tracking-wider">Gymix Store White-Label Beta</h5>
           <p className="text-[11px] text-slate-400 leading-relaxed">
-            Your store is currently running in <strong>Free Beta Mode</strong>. In this tier, active catalog listings are capped at <strong>{PRODUCT_LIMIT} items max</strong>. Uploaded product photos are automatically compressed on-device to under 50KB to keep your storage footprint minimal. Future updates may introduce premium billing options.
+            Your store is currently running in <strong>Free Beta Mode</strong>. In this tier, active catalog listings are capped at <strong>{PRODUCT_LIMIT} items max</strong>. Future updates may introduce premium billing options.
           </p>
         </div>
       </div>
@@ -737,9 +737,9 @@ export default function StoreManagerPage() {
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
-                            {compressedSizeKB && (
-                              <span className="text-[8px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 absolute bottom-2 left-2">
-                                JPEG {compressedSizeKB} KB
+                            {prodImage && (
+                              <span className="text-[8px] font-black uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 absolute bottom-2 left-2">
+                                Optimized Photo ✨
                               </span>
                             )}
                           </>
@@ -748,7 +748,7 @@ export default function StoreManagerPage() {
                             <ImageIcon className="w-7 h-7 text-slate-700" />
                             <div className="space-y-0.5">
                               <span className="text-[10px] font-bold text-slate-400 block">Select Image File</span>
-                              <span className="text-[8px] font-semibold text-slate-500 block uppercase tracking-wider">Resizes to &lt;50KB Automatically</span>
+                              <span className="text-[8px] font-semibold text-slate-500 block uppercase tracking-wider">Auto-optimized for Mobile Speed</span>
                             </div>
                             <input 
                               type="file" 
