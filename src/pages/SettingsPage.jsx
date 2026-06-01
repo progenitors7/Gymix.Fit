@@ -102,10 +102,6 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const gymId = gym?.id ?? null;
 
-  // Gym profile state
-  const [newGymName, setNewGymName] = useState(gymName || '');
-  const [savingProfile, setSavingProfile] = useState(false);
-
   // Gym Coins Loyalty settings states
   const [enableGymCoins, setEnableGymCoins] = useState(gym?.enable_gym_coins || false);
   const [coinRewardPerCheckin, setCoinRewardPerCheckin] = useState(gym?.coin_reward_per_checkin || 10);
@@ -676,19 +672,7 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveProfile = async () => {
-    if (!newGymName.trim()) return showToast('Gym name cannot be empty', 'error');
-    if (newGymName.trim() === gymName) return showToast('No changes to save', 'error');
-    setSavingProfile(true);
-    try {
-      await updateGymName(newGymName.trim());
-      showToast('Gym profile updated successfully!');
-    } catch (err) {
-      showToast(err.message || 'Failed to update profile', 'error');
-    } finally {
-      setSavingProfile(false);
-    }
-  };
+
 
   const handleChangePassword = async () => {
     if (!currentPw || !newPw || !confirmPw) return showToast('Please fill all password fields', 'error');
@@ -866,24 +850,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid gap-6">
-        {/* Gym Identity */}
-        <Section 
-          icon={<Zap className="w-5 h-5" />}
-          title="Gym Identity" 
-          description="Operational parameters & branding"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Gym Name" id="settings-gym-name" type="text" value={newGymName} onChange={e => setNewGymName(e.target.value)} placeholder="Enter gym name" />
-            <Field label="Owner Email" id="settings-owner-email" type="email" value={getObfuscatedEmail(ownerEmail)} disabled readOnly />
-            <Field label="Gym ID" id="settings-gym-id" type="text" value={gym?.id || ''} disabled readOnly />
-            <Field label="Registry Date" id="settings-created-at" type="text" value={gym?.created_at ? new Date(gym.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) : ''} disabled readOnly />
-          </div>
-          <div className="pt-2">
-            <button onClick={handleSaveProfile} disabled={savingProfile} className="px-6 py-2 bg-[#3390ec] hover:bg-[#2b7ad2] disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-all">
-              {savingProfile ? 'Saving...' : 'Update Profile'}
-            </button>
-          </div>
-        </Section>
+
 
         {/* Membership Plans */}
         <Section 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { 
   User, Phone, Sparkles, Upload, Camera, Trash2, 
-  Lock, Building, Copy, Check, CheckCircle2, X, ArrowLeft
+  Lock, Building, Copy, Check, CheckCircle2, X, ArrowLeft, Calendar
 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../hooks/useAuth'
@@ -13,7 +13,7 @@ import { toast } from 'react-hot-toast'
 export default function ProfilePage() {
   const navigate = useNavigate()
   const { profile, refreshProfile } = useAuth()
-  const { gym } = useGym()
+  const { gym, updateGymName } = useGym()
 
   const [profileName, setProfileName] = useState(profile?.full_name || '')
   const [profilePhone, setProfilePhone] = useState(profile?.phone_number || '')
@@ -23,6 +23,9 @@ export default function ProfilePage() {
   const [savingProfile, setSavingProfile] = useState(false)
   const [copiedGymCode, setCopiedGymCode] = useState(false)
   const [avatarSize, setAvatarSize] = useState(null)
+
+  const [newGymName, setNewGymName] = useState(gym?.gym_name || '')
+  const [savingGymName, setSavingGymName] = useState(false)
 
   useEffect(() => {
     if (profile) {
@@ -36,6 +39,12 @@ export default function ProfilePage() {
       }
     }
   }, [profile])
+
+  useEffect(() => {
+    if (gym) {
+      setNewGymName(gym.gym_name || '')
+    }
+  }, [gym])
 
   const getBase64SizeKB = (base64Str) => {
     if (!base64Str) return null
@@ -138,6 +147,29 @@ export default function ProfilePage() {
     setCopiedGymCode(true)
     toast.success('Copied Gym Connection Code!')
     setTimeout(() => setCopiedGymCode(false), 2000)
+  }
+
+  const handleUpdateGymName = async (e) => {
+    e.preventDefault()
+    if (!newGymName.trim()) {
+      toast.error('Gym name cannot be empty')
+      return
+    }
+    if (newGymName.trim() === gym?.gym_name) {
+      toast.error('No changes to save')
+      return
+    }
+
+    setSavingGymName(true)
+    try {
+      await updateGymName(newGymName.trim())
+      toast.success('Gym name updated successfully! 🏢')
+    } catch (err) {
+      console.error('[GymName] Update failed:', err)
+      toast.error(err.message || 'Failed to update gym name.')
+    } finally {
+      setSavingGymName(false)
+    }
   }
 
   return (
@@ -318,37 +350,99 @@ export default function ProfilePage() {
           {/* Associated Gym details */}
           {gym && (
             <div className="glass-card border border-white/5 rounded-[2.5rem] p-8 text-left space-y-6 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full -translate-y-1/2 -translate-x-1/2" />
+              <div className="absolute top-0 left-0 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full -translate-y-1/2 -translate-x-1/2 pointer-events-none" />
               
-              <div className="relative z-10 space-y-4">
+              <div className="relative z-10 space-y-6">
                 <div className="space-y-1">
                   <h4 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
                     <Building className="w-4 h-4 text-emerald-400" />
                     Associated Gym Details
                   </h4>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Linked Terminal gateway metadata</p>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Linked Terminal gateway metadata & Identity</p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-[#1A1F2B] border border-white/5 p-5 rounded-2xl">
-                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-1">Gym Name</span>
-                    <span className="text-sm font-extrabold text-white uppercase">{gym.gym_name}</span>
-                  </div>
-
-                  <div className="bg-[#1A1F2B] border border-white/5 p-5 rounded-2xl flex items-center justify-between group">
-                    <div>
-                      <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-1">Gym Connections Code</span>
-                      <span className="text-sm font-mono font-black text-emerald-400 tracking-wider select-all">{gym.unique_code}</span>
+                <form onSubmit={handleUpdateGymName} className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {/* Gym Name (Editable) */}
+                    <div className="space-y-2 sm:col-span-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Gym Name</label>
+                      <div className="relative group">
+                        <Building className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
+                        <input
+                          type="text"
+                          required
+                          value={newGymName}
+                          onChange={(e) => setNewGymName(e.target.value)}
+                          placeholder="Enter gym name..."
+                          className="w-full bg-white/[0.03] border border-white/5 rounded-2xl pl-12 pr-4 py-4 text-white placeholder-slate-600 text-sm font-medium focus:outline-none focus:bg-white/[0.05] focus:border-emerald-500/50 transition-all"
+                        />
+                      </div>
                     </div>
-                    <button
-                      onClick={handleCopyGymCode}
-                      className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 hover:text-white transition-all active:scale-90 cursor-pointer"
-                      title="Copy gym connection code"
-                    >
-                      {copiedGymCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                    </button>
+
+                    {/* Gym Connections Code */}
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Gym Connections Code</label>
+                      <div className="relative group flex items-center bg-[#1A1F2B] border border-white/5 rounded-2xl px-5 py-4">
+                        <div className="flex-1">
+                          <span className="text-sm font-mono font-black text-emerald-400 tracking-wider select-all">{gym.unique_code}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleCopyGymCode}
+                          className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 hover:text-white transition-all active:scale-90 cursor-pointer"
+                          title="Copy gym connection code"
+                        >
+                          {copiedGymCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Registry Date */}
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Registry Date</label>
+                      <div className="relative group flex items-center bg-[#1A1F2B] border border-white/5 rounded-2xl px-5 py-4">
+                        <Calendar className="w-4 h-4 text-slate-500 mr-3" />
+                        <span className="text-sm font-semibold text-slate-300">
+                          {gym?.created_at ? new Date(gym.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Gym ID (Read Only Lock) */}
+                    <div className="space-y-2 sm:col-span-2">
+                      <div className="flex items-center justify-between px-1">
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Gym ID</label>
+                        <span className="flex items-center gap-1 text-[#EF4444] text-[8px] font-black uppercase tracking-wider">
+                          <Lock className="w-2.5 h-2.5" /> Locked
+                        </span>
+                      </div>
+                      <div className="relative group opacity-60">
+                        <div className="w-full bg-[#1A1F2B] border border-white/5 rounded-2xl px-5 py-4 text-slate-500 font-mono text-xs select-all">
+                          {gym?.id || 'No ID associated'}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+
+                  {newGymName.trim() !== gym?.gym_name && (
+                    <div className="pt-4 border-t border-white/5 text-right">
+                      <button
+                        type="submit"
+                        disabled={savingGymName}
+                        className="w-full sm:w-auto px-8 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-50"
+                      >
+                        {savingGymName ? (
+                          <span className="flex items-center justify-center gap-3">
+                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            Updating…
+                          </span>
+                        ) : (
+                          <span>Update Gym Name</span>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </form>
               </div>
             </div>
           )}

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, UserPlus, Sparkles } from 'lucide-react'
+import { ArrowLeft, UserPlus } from 'lucide-react'
 import { useMembers } from '../../hooks/useMembers'
 import MemberForm from './MemberForm'
 
@@ -34,7 +34,7 @@ export default function AddMemberPage() {
 
       {/* Form card */}
       <div className="glass-card border border-white/5 rounded-[2.5rem] p-8 sm:p-12 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         <div className="relative z-10">
           <MemberForm
             mode="add"
@@ -42,12 +42,6 @@ export default function AddMemberPage() {
             onCancel={() => navigate('/members')}
           />
         </div>
-      </div>
-
-      {/* Tip */}
-      <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 max-w-sm mx-auto sm:mx-0">
-        <Sparkles className="w-4 h-4 text-amber-400" />
-        <p className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">Verification required for access</p>
       </div>
     </div>
   )
