@@ -29,6 +29,9 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
   const [orderSuccess, setOrderSuccess] = useState(null)
   const [copiedText, setCopiedText] = useState(false)
 
+  // Selected product for detailed modal popup
+  const [selectedProduct, setSelectedProduct] = useState(null)
+
   // Fetch active products
   const fetchProducts = async () => {
     setLoading(true)
@@ -345,7 +348,8 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
               return (
                 <div 
                   key={product.id} 
-                  className="bg-[#1A1F2B] border border-white/5 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-white/10 transition-all text-left relative"
+                  className="bg-[#1A1F2B] border border-white/5 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-white/10 transition-all text-left relative cursor-pointer group"
+                  onClick={() => setSelectedProduct(product)}
                 >
                   {/* Image Frame with Aspect-[4/3] for ultra compactness */}
                   <div className="relative aspect-[4/3] w-full bg-slate-950/40 border-b border-white/5 flex items-center justify-center overflow-hidden">
@@ -353,7 +357,7 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
                       <img 
                         src={product.image_url} 
                         alt={product.name} 
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
                       <ShoppingBag className="w-8 h-8 text-slate-700" />
@@ -375,14 +379,20 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
                           /* Floating Quantity Selector pill */
                           <div className="flex items-center gap-1.5 bg-blue-500 text-white rounded-full p-0.5 shadow-lg border border-blue-400/25">
                             <button
-                              onClick={() => updateQuantity(product.id, -1)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateQuantity(product.id, -1);
+                              }}
                               className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all cursor-pointer"
                             >
                               <Minus className="w-3 h-3 text-white" />
                             </button>
                             <span className="text-[10px] font-black w-4 text-center">{inCart.quantity}</span>
                             <button
-                              onClick={() => addToCart(product)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                addToCart(product);
+                              }}
                               className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all cursor-pointer"
                             >
                               <Plus className="w-3 h-3 text-white" />
@@ -391,7 +401,10 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
                         ) : (
                           /* Simple elegant Floating Plus Button */
                           <button
-                            onClick={() => addToCart(product)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCart(product);
+                            }}
                             className="w-7.5 h-7.5 rounded-full bg-blue-500 hover:bg-blue-600 border border-blue-400/20 flex items-center justify-center text-white shadow-lg active:scale-90 transition-all cursor-pointer"
                             title="Add to Cart"
                           >
@@ -718,6 +731,145 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
                       {copiedText ? 'Copied!' : 'Copy Order Text'}
                     </button>
                   </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Product Details Popup Modal */}
+      <AnimatePresence>
+        {selectedProduct && (
+          <div className="fixed inset-0 z-[180] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+              className="w-full max-w-md bg-[#151922] border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh]"
+            >
+              {/* Close Button */}
+              <div className="absolute top-4 right-4 z-20">
+                <button
+                  onClick={() => setSelectedProduct(null)}
+                  className="w-8 h-8 rounded-xl bg-black/40 hover:bg-black/60 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-all cursor-pointer backdrop-blur-md"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Large Product Image Frame */}
+              <div className="relative h-64 sm:h-72 w-full bg-slate-950/60 border-b border-white/5 flex items-center justify-center overflow-hidden flex-shrink-0">
+                {selectedProduct.image_url ? (
+                  <img 
+                    src={selectedProduct.image_url} 
+                    alt={selectedProduct.name} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <ShoppingBag className="w-16 h-16 text-slate-700" />
+                )}
+                
+                {/* Out of stock tag */}
+                {selectedProduct.stock_quantity === 0 && (
+                  <div className="absolute inset-0 bg-black/75 flex items-center justify-center">
+                    <span className="px-4 py-2 rounded-xl bg-rose-500/20 border border-rose-500/35 text-rose-400 text-xs font-black uppercase tracking-widest">
+                      Sold Out
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Content body */}
+              <div className="p-6 flex-1 overflow-y-auto space-y-4 text-left hide-scrollbar">
+                <div className="space-y-1">
+                  <span className="text-[9px] font-bold text-blue-400 uppercase tracking-[0.2em]">Supplement Store</span>
+                  <h3 className="text-xl font-black text-white uppercase leading-tight tracking-tight">
+                    {selectedProduct.name}
+                  </h3>
+                </div>
+
+                <div className="flex items-baseline gap-3">
+                  <span className="text-2xl font-black text-blue-400 font-mono">
+                    ₹ {selectedProduct.price}
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                    {selectedProduct.stock_quantity > 0 ? (
+                      selectedProduct.stock_quantity <= 5 ? (
+                        <span className="text-amber-400 font-bold uppercase tracking-wider">Only {selectedProduct.stock_quantity} left in stock!</span>
+                      ) : (
+                        <span className="text-emerald-400 font-bold uppercase tracking-wider">In Stock</span>
+                      )
+                    ) : (
+                      <span className="text-rose-500 font-bold uppercase tracking-wider">Out of Stock</span>
+                    )}
+                  </span>
+                </div>
+
+                <div className="border-t border-white/5 pt-4 space-y-2">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Product Description</h4>
+                  <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line font-medium">
+                    {selectedProduct.description || "No detailed description provided for this supplement. Rest assured, this is a verified gym product of pristine quality."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Action footer */}
+              <div className="p-6 border-t border-white/5 bg-[#1A1F2B] flex-shrink-0">
+                {selectedProduct.stock_quantity > 0 ? (
+                  (() => {
+                    const inCart = cart.find(item => item.id === selectedProduct.id)
+                    return (
+                      <div className="flex items-center gap-4">
+                        {inCart ? (
+                          <>
+                            {/* Quantity Controls inside popup */}
+                            <div className="flex items-center gap-3 bg-[#151922] border border-white/10 rounded-2xl p-1.5 shadow-inner">
+                              <button
+                                onClick={() => updateQuantity(selectedProduct.id, -1)}
+                                className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/[0.02] hover:bg-white/[0.06] text-white transition-all cursor-pointer active:scale-90"
+                              >
+                                <Minus className="w-3.5 h-3.5" />
+                              </button>
+                              <span className="text-xs font-black w-6 text-center text-white font-mono">{inCart.quantity}</span>
+                              <button
+                                onClick={() => addToCart(selectedProduct)}
+                                className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/[0.02] hover:bg-white/[0.06] text-white transition-all cursor-pointer active:scale-90"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+
+                            <button
+                              onClick={() => {
+                                setSelectedProduct(null)
+                                setIsCartOpen(true)
+                              }}
+                              className="flex-1 py-3.5 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-blue-500/10 cursor-pointer active:scale-95 flex items-center justify-center gap-2"
+                            >
+                              <span>View Cart</span>
+                              <ShoppingCart className="w-4 h-4" />
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => addToCart(selectedProduct)}
+                            className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-blue-500/20 cursor-pointer active:scale-95"
+                          >
+                            Add to Cart
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })()
+                ) : (
+                  <button
+                    disabled
+                    className="w-full py-4 bg-rose-500/10 border border-rose-500/20 text-rose-500/50 text-[11px] font-black uppercase tracking-widest rounded-2xl cursor-not-allowed"
+                  >
+                    Sold Out
+                  </button>
                 )}
               </div>
             </motion.div>
