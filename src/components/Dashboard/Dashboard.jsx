@@ -30,7 +30,8 @@ import {
   QrCode,
   Target,
   UserPlus,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Store
 } from 'lucide-react'
 import Logo from '../UI/Logo'
 
@@ -339,12 +340,12 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── KPI Grid (2-column grid on mobile, 4-column grid on desktop) ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+      {/* ── KPI Grid (2-column grid on mobile, 3-column grid on md, 6-column grid on desktop) ── */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-6">
         <StatCard 
           title="Monthly Recurring Revenue (MRR)" 
           value={`₹${stats.revenue.monthly.toLocaleString()}`} 
-          subtitle={`₹${stats.revenue.total.toLocaleString()} lifetime collections`}
+          subtitle={`₹${stats.revenue.total.toLocaleString()} lifetime`}
           icon={<CircleDollarSign className="w-5 h-5" />} 
           colorClass="emerald" 
           trend={stats.trends?.revenue || "+0.0% MoM"}
@@ -352,15 +353,15 @@ export default function Dashboard() {
         <StatCard 
           title="Active Members" 
           value={`${stats.membership.active}`} 
-          subtitle={`Out of ${stats.membership.total} total registered`}
+          subtitle={`Out of ${stats.membership.total} total`}
           icon={<CheckCircle2 className="w-5 h-5" />} 
           colorClass="sky" 
           trend={stats.trends?.membership || "Stable"}
         />
         <StatCard 
           title="Today's Attendance" 
-          value={`${stats.todayCheckIns} Checked In`} 
-          subtitle={`${stats.attendanceRate}% active member rate`}
+          value={`${stats.todayCheckIns} In`} 
+          subtitle={`${stats.attendanceRate}% active rate`}
           icon={<Clock className="w-5 h-5" />} 
           colorClass="indigo" 
           trend={`${stats.attendanceRate}%`}
@@ -372,6 +373,22 @@ export default function Dashboard() {
           icon={<Clock className="w-5 h-5" />} 
           colorClass="rose" 
           trend={stats.trends?.pending || "No dues"}
+        />
+        <StatCard 
+          title="Yearly Collections" 
+          value={`₹${(stats.revenue.yearly || 0).toLocaleString()}`} 
+          subtitle="Last 365 days"
+          icon={<TrendingUp className="w-5 h-5" />} 
+          colorClass="primary" 
+          trend={null}
+        />
+        <StatCard 
+          title="Gym Store Sales" 
+          value={`₹${(stats.revenue.store || 0).toLocaleString()}`} 
+          subtitle="Supplement & shop sales"
+          icon={<Store className="w-5 h-5" />} 
+          colorClass="amber" 
+          trend={null}
         />
       </div>
 

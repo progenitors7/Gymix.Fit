@@ -135,6 +135,25 @@ export function useDashboardStats() {
       if (attendanceError) console.error('Error fetching today attendance:', attendanceError);
       const todayCheckIns = (attendanceToday ?? []).length;
 
+      // --- Fetch Shop/Store Completed Revenue ---
+      let storeRevenue = 0;
+      try {
+        const { data: storeOrders, error: storeOrdersError } = await supabase
+          .from('store_orders')
+          .select('total_amount, status')
+          .eq('gym_id', gym.id);
+        
+        if (!storeOrdersError && storeOrders) {
+          storeOrders.forEach(o => {
+            if (o.status === 'completed') {
+              storeRevenue += Number(o.total_amount);
+            }
+          });
+        }
+      } catch (storeErr) {
+        console.error('Error computing store stats:', storeErr);
+      }
+
       // --- Membership Metrics ---
       const membershipStats = {
         total: members.filter(m => m.status !== 'left').length,
@@ -153,6 +172,11 @@ export function useDashboardStats() {
       let todayRevenue = 0;
       let pendingAmount = 0;
 
+      const oneYearAgo = new Date(today);
+      oneYearAgo.setFullYear(today.getFullYear() - 1);
+      const oneYearAgoStr = getLocalDateString(oneYearAgo);
+      let yearlyRevenue = 0;
+
       // UPI vs Cash split
       let upiVolume = 0;
       let cashVolume = 0;
@@ -165,6 +189,7 @@ export function useDashboardStats() {
           totalRevenue += amount;
           if (p.payment_date >= startOfMonth) monthlyRevenue += amount;
           if (p.payment_date === todayStr) todayRevenue += amount;
+          if (p.payment_date >= oneYearAgoStr) yearlyRevenue += amount;
 
           // Compute payment method splits
           const method = (p.payment_method || 'cash').toLowerCase();
@@ -193,6 +218,8 @@ export function useDashboardStats() {
         monthly: monthlyRevenue,
         today: todayRevenue,
         pending: pendingAmount,
+        yearly: yearlyRevenue,
+        store: storeRevenue
       };
 
       // --- Membership Tier Distribution ---
