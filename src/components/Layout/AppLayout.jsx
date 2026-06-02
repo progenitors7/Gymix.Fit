@@ -111,14 +111,14 @@ function SidebarContent({ onClose, isMobile }) {
 
   const hasAdminAccess = isSuperAdmin(user?.email)
   const isPaywalled = gym?.status === 'pending' || gym?.billing_status === 'expired'
-  const isNative = window.Capacitor !== undefined
+  const isPlaystoreApp = localStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined
 
   const filteredNavItems = NAV_ITEMS.filter(item => {
-    if (isNative && item.path === '/billing') return false
+    if (isPlaystoreApp && item.path === '/billing') return false
     if (item.path === '/super-admin') return hasAdminAccess
     // When paywalled, only show Billing and Settings nav items
     if (isPaywalled) {
-      return (isNative ? false : item.path === '/billing') || item.path === '/settings'
+      return (isPlaystoreApp ? false : item.path === '/billing') || item.path === '/settings'
     }
     return true
   })
@@ -242,14 +242,12 @@ function BottomNav() {
 
   const isPaywalled = gym?.status === 'pending' || gym?.billing_status === 'expired'
 
-  // Core workflows for the Gym Owner's mobile bottom navigation bar
   const ownerBottomNavPaths = ['/dashboard', '/scanner', '/members', '/subscriptions', '/payments']
-
-  const isNative = window.Capacitor !== undefined
+  const isPlaystoreApp = localStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined
   const visibleItems = NAV_ITEMS.filter(item => {
-    if (isNative && item.path === '/billing') return false
+    if (isPlaystoreApp && item.path === '/billing') return false
     if (isPaywalled) {
-      return isNative ? false : item.path === '/billing'
+      return isPlaystoreApp ? false : item.path === '/billing'
     }
     return ownerBottomNavPaths.includes(item.path)
   })
@@ -308,9 +306,9 @@ export default function AppLayout({ children }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
   const { gym } = useGym()
-  const isNative = window.Capacitor !== undefined
+  const isPlaystoreApp = localStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined
   const showBillingReminder =
-    !isNative &&
+    !isPlaystoreApp &&
     location.pathname !== '/billing' &&
     Number.isFinite(gym?.billing_days_left) &&
     gym.billing_days_left >= 0 &&

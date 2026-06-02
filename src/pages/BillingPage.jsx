@@ -25,7 +25,7 @@ const DURATIONS = [
 ];
 
 export default function BillingPage() {
-  const isNative = window.Capacitor !== undefined;
+  const isPlaystoreApp = localStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined;
   const { gym, gymName, ownerEmail, isReady, refreshGym } = useCurrentGym();
   const [processing, setProcessing] = useState(false);
   const [toastState, setToastState] = useState({ message: '', type: 'success' });
@@ -138,9 +138,9 @@ export default function BillingPage() {
     const finalAmount = calculateFinalAmount();
     
     try {
-      if (window.Capacitor !== undefined) {
+      if (isPlaystoreApp) {
         setToastState({ 
-          message: 'Opening secure payment gateway in browser...', 
+          message: 'Opening secure payment gateway...', 
           type: 'success' 
         });
         setTimeout(() => {
@@ -246,6 +246,25 @@ export default function BillingPage() {
     }
   };
 
+  if (isPlaystoreApp) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center p-6 text-center">
+        <div className="max-w-md w-full bg-[#1c1c1c] border border-white/5 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden animate-in fade-in duration-500">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#3390ec]/5 blur-[50px] rounded-full pointer-events-none" />
+          <div className="w-16 h-16 bg-[#3390ec]/10 rounded-2xl flex items-center justify-center text-[#3390ec] text-3xl mx-auto mb-6 border border-white/5">
+            🔒
+          </div>
+          <h2 className="text-2xl font-black text-white uppercase italic tracking-tight mb-2">In-App Purchases Disabled</h2>
+          <p className="text-slate-400 text-sm mb-6 leading-relaxed font-semibold">
+            To comply with app store guidelines, subscription upgrades and renewals are not supported inside this application. 
+            <br/><br/>
+            Please manage your account online to proceed.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isReady) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -316,7 +335,7 @@ export default function BillingPage() {
         )}
       </div>
 
-      {isNative && (
+      {isPlaystoreApp && (
         <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-3xl p-6 text-xs font-semibold leading-relaxed space-y-2 max-w-5xl mx-auto shadow-lg shadow-amber-500/5 animate-in slide-in-from-top duration-500">
           <p className="uppercase tracking-widest text-[10px] font-black text-amber-500 flex items-center gap-1.5">
             <CreditCard className="w-3.5 h-3.5" />
@@ -487,7 +506,7 @@ export default function BillingPage() {
                   <Gift className="w-5 h-5 group-hover:scale-110 transition-transform" />
                   Redeem on Web
                 </>
-              ) : isNative ? (
+              ) : isPlaystoreApp ? (
                 <>
                   <CreditCard className="w-5 h-5 group-hover:scale-110 transition-transform" />
                   Open Payment on Web

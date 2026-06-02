@@ -44,6 +44,13 @@ export default function ProtectedRoute({ children }) {
   const isSuperAdmin = location.pathname.startsWith('/super-admin')
   const isAdminPage = isBillingPage || isSettingsPage || isSuperAdmin
 
+  const isPlaystoreApp = localStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined;
+
+  // Anti-Steering: Prevent loading billing page inside the native Play Store app
+  if (isPlaystoreApp && isBillingPage) {
+    return <Navigate to="/dashboard" replace />
+  }
+
   // ── Step 4: Members skip ALL gym/billing checks ──
   if (isMember) {
     return children
@@ -129,8 +136,7 @@ export default function ProtectedRoute({ children }) {
 
   // ── Step 8: Owner billing redirect — no gym, pending, or expired ──
   if (isOwner && !isAdminPage && (!gym || gym?.status === 'pending' || gym?.billing_status === 'expired')) {
-    const isNative = window.Capacitor !== undefined;
-    if (isNative) {
+    if (isPlaystoreApp) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-[#0F1117] p-6 text-center">
           <div className="max-w-md w-full bg-[#1c1c1c] border border-[#3390ec]/20 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
@@ -140,9 +146,9 @@ export default function ProtectedRoute({ children }) {
             </div>
             <h2 className="text-2xl font-black text-white uppercase italic tracking-tight mb-2">Reactivation Required</h2>
             <p className="text-slate-400 text-sm mb-8 leading-relaxed font-semibold">
-              To keep managing your gym, please visit our official web portal to activate or renew your subscription. 
+              To keep managing your gym, please manage your subscription online. 
               <br/><br/>
-              Log in to your account at <strong className="text-white">gymix.fit</strong> in a web browser. Once updated, your mobile app will automatically unlock!
+              Once your account has been updated, your mobile app will automatically unlock!
             </p>
             <div className="space-y-3">
               <button

@@ -109,6 +109,12 @@ function RootRoute() {
 }
 
 export default function App() {
+  // Detect if app is launched via Google Play Store (appended query params)
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('utm_source') === 'playstore' || params.get('mode') === 'android_app') {
+    localStorage.setItem('is_playstore_app', 'true');
+  }
+
   return (
     <BrowserRouter>
       <Toaster 
