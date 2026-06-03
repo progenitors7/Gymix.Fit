@@ -218,3 +218,18 @@ h1, h2, h3, h4, h5, h6 {
 .animate-float-crown {
   animation: float-crown 3s ease-in-out infinite;
 }
+
+/* ── WebView Safe Area Utility Classes ── */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom) !important;
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top) !important;
+}
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom) !important;
+}
+.mt-safe {
+  margin-top: env(safe-area-inset-top) !important;
+}
+

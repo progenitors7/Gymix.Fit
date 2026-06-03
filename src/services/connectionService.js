@@ -156,30 +156,49 @@ export const connectionService = {
     const targetPhone = memberPayload.phone_number?.trim()
     const targetName = memberPayload.full_name?.trim()
 
-    if (targetPhone) {
-      const { data: matchPhone, error: phoneErr } = await supabase
+    // 1. Try to find by profile_id first (most direct match)
+    if (profile_id) {
+      const { data: matchProfile, error: profileErr } = await supabase
         .from('members')
         .select('*')
         .eq('gym_id', gym_id)
-        .eq('phone_number', targetPhone)
+        .eq('profile_id', profile_id)
         .maybeSingle()
 
-      if (!phoneErr && matchPhone) {
-        existingMember = matchPhone
+      if (!profileErr && matchProfile) {
+        existingMember = matchProfile
       }
     }
 
-    if (!existingMember && targetName) {
-      const { data: matchName, error: nameErr } = await supabase
+    // 2. Fetch all members in this gym to check for cleaned phone number or case-insensitive name match
+    if (!existingMember) {
+      const { data: allMembers, error: membersErr } = await supabase
         .from('members')
         .select('*')
         .eq('gym_id', gym_id)
-        .eq('full_name', targetName)
-        .is('profile_id', null)
-        .maybeSingle()
 
-      if (!nameErr && matchName) {
-        existingMember = matchName
+      if (!membersErr && allMembers) {
+        const cleanNumber = (phone) => phone ? phone.replace(/\D/g, '') : ''
+        const cleanTargetPhone = cleanNumber(targetPhone)
+        const last10Target = cleanTargetPhone.slice(-10)
+
+        // Try phone matching first (last 10 digits match, and not linked to another user)
+        if (last10Target.length === 10) {
+          existingMember = allMembers.find(m => {
+            const cleanM = cleanNumber(m.phone_number)
+            return cleanM.slice(-10) === last10Target && (!m.profile_id || m.profile_id === profile_id)
+          })
+        }
+
+        // If no phone match, try case-insensitive name match (not linked to another user)
+        if (!existingMember && targetName) {
+          const normalizedTargetName = targetName.trim().toLowerCase()
+          existingMember = allMembers.find(m => {
+            return m.full_name && 
+                   m.full_name.trim().toLowerCase() === normalizedTargetName && 
+                   (!m.profile_id || m.profile_id === profile_id)
+          })
+        }
       }
     }
 

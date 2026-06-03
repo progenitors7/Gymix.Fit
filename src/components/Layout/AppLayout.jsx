@@ -146,7 +146,10 @@ function SidebarContent({ onClose, isMobile }) {
   return (
     <div className="flex flex-col h-full bg-[#151922] border-r border-white/5 relative">
       {/* Logo Area */}
-      <div className="flex items-center gap-3 px-6 py-6 border-b border-white/5">
+      <div 
+        style={{ paddingTop: 'calc(24px + env(safe-area-inset-top))' }}
+        className="flex items-center gap-3 px-6 pb-6 border-b border-white/5"
+      >
         <Logo className="w-8 h-8 flex-shrink-0 drop-shadow-[0_0_8px_rgba(134,59,255,0.2)]" />
         <div className="min-w-0 flex-1">
           <p className="font-bold text-white text-lg tracking-tight leading-none">Gymix</p>
@@ -350,7 +353,10 @@ export default function AppLayout({ children }) {
       {/* ── Main content ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Mobile topbar */}
-        <header className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#151922]/80 backdrop-blur-md flex-shrink-0 z-40 sticky top-0">
+        <header 
+          style={{ paddingTop: 'calc(12px + env(safe-area-inset-top))' }}
+          className="lg:hidden flex items-center justify-between px-4 pb-3 border-b border-white/5 bg-[#151922]/80 backdrop-blur-md flex-shrink-0 z-40 sticky top-0"
+        >
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setSidebarOpen(true)}

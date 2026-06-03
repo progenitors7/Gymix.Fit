@@ -23,7 +23,10 @@ export default function LightweightChart({ data, height = 300 }) {
             </div>
             
             {/* Bar */}
-            <div className="w-full flex justify-center items-end h-[calc(100%-24px)] relative">
+            <div 
+              style={{ height: 'calc(100% - 24px)' }}
+              className="w-full flex justify-center items-end relative"
+            >
               <motion.div 
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: heightPercent, opacity: 1 }}

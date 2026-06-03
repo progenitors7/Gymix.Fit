@@ -34,7 +34,10 @@ export default function MemberSidebar({
     <div className="flex flex-col h-full bg-[#151922] border-r border-white/5 justify-between">
       <div>
         {/* Logo Area */}
-        <div className="flex items-center gap-3 px-6 py-6 border-b border-white/5">
+        <div 
+          style={{ paddingTop: 'calc(24px + env(safe-area-inset-top))' }}
+          className="flex items-center gap-3 px-6 pb-6 border-b border-white/5"
+        >
           <Logo className="w-8 h-8 flex-shrink-0 drop-shadow-[0_0_8px_rgba(134,59,255,0.2)]" />
           <div className="min-w-0 flex-1">
             <p className="font-bold text-white text-lg tracking-tight leading-none">Gymix</p>

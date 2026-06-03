@@ -41,6 +41,11 @@ const getLatestSubscription = (subscriptions = []) => {
 }
 
 const syncMemberFromLatestSubscription = (member) => {
+  if (member.status === 'left') {
+    const { subscriptions, ...cleanMember } = member
+    return cleanMember
+  }
+
   const latest = getLatestSubscription(member.subscriptions)
   if (!latest) {
     const { subscriptions, ...cleanMember } = member

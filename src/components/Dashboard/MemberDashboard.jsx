@@ -694,7 +694,10 @@ export default function MemberDashboard() {
               transition={{ type: 'tween', duration: 0.2 }}
               className="relative w-80 max-w-[85vw] h-full bg-[#151922] z-50 flex flex-col"
             >
-              <div className="absolute top-4 right-4 z-50">
+              <div 
+                style={{ top: 'calc(16px + env(safe-area-inset-top))' }}
+                className="absolute right-4 z-50"
+              >
                 <button
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white"

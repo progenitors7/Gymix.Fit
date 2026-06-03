@@ -13,6 +13,15 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  // Capture role from URL query param if present and save to localStorage
+  if (typeof window !== 'undefined' && window.location) {
+    const params = new URLSearchParams(window.location.search)
+    const urlRole = params.get('role')
+    if (urlRole) {
+      localStorage.setItem('oauth_signup_role', urlRole)
+    }
+  }
+
   const fetchProfile = async (uid) => {
     if (!uid) return null
     const { data, error } = await supabase
@@ -61,16 +70,16 @@ export function AuthProvider({ children }) {
       try {
         let p = await fetchProfile(currUser.id)
         const savedRole = localStorage.getItem('oauth_signup_role')
+        const targetRole = savedRole || currUser.user_metadata?.role || 'member'
 
         if (!p) {
-          const finalRole = savedRole || currUser.user_metadata?.role || 'member'
           const { data, error } = await supabase
             .from('profiles')
             .upsert({
               id: currUser.id,
               full_name: currUser.user_metadata?.full_name || currUser.user_metadata?.name || 'New Member',
               email: currUser.email,
-              role: finalRole
+              role: targetRole
             })
             .select()
             .maybeSingle()
@@ -78,17 +87,19 @@ export function AuthProvider({ children }) {
           if (error) {
             console.error('[AuthProvider] Profile upsert failed:', error)
             p = buildFallbackProfile(currUser)
+            p.role = targetRole // Ensure fallback matches target role
           } else {
             p = data || buildFallbackProfile(currUser)
           }
         } else {
           // Profile exists in the database.
-          // If a specific role was requested via Google Signup and it differs from the database (which defaults to 'member'),
-          // we update the database record to match the explicitly requested signup role.
-          if (savedRole && p.role !== savedRole) {
+          // If the database role differs from the explicitly requested signup role,
+          // we update the database record to match the requested role.
+          if (targetRole && p.role !== targetRole) {
+            console.log(`[AuthProvider] Role mismatch detected. Updating profile role to: ${targetRole}`)
             const { data: updatedData, error: updateError } = await supabase
               .from('profiles')
-              .update({ role: savedRole })
+              .update({ role: targetRole })
               .eq('id', currUser.id)
               .select()
               .maybeSingle()
@@ -106,6 +117,13 @@ export function AuthProvider({ children }) {
         
         // Clear cached role once profile resolution has settled
         localStorage.removeItem('oauth_signup_role')
+        if (typeof window !== 'undefined' && window.location && window.history) {
+          const url = new URL(window.location.href)
+          if (url.searchParams.has('role')) {
+            url.searchParams.delete('role')
+            window.history.replaceState({}, '', url.pathname + url.search)
+          }
+        }
         setProfile(p)
         return p
       } catch (err) {
@@ -193,6 +211,12 @@ export function AuthProvider({ children }) {
 
                 if (accessToken && refreshToken) {
                   setLoading(true);
+                  // Parse and save role to localStorage for Capacitor deep links
+                  const match = urlStr.match(/[?&]role=([^&#]+)/)
+                  if (match) {
+                    localStorage.setItem('oauth_signup_role', match[1])
+                  }
+
                   const { data, error } = await supabase.auth.setSession({
                     access_token: accessToken,
                     refresh_token: refreshToken
@@ -287,7 +311,10 @@ export function AuthProvider({ children }) {
     }
 
     const isNative = window.Capacitor !== undefined;
-    const redirectUrl = isNative ? 'com.gymix.fit://' : `${window.location.origin}`;
+    let redirectUrl = isNative ? 'com.gymix.fit://' : `${window.location.origin}`;
+    if (role) {
+      redirectUrl += `?role=${role}`;
+    }
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',

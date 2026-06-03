@@ -11,7 +11,10 @@ export default function MemberMobileHeader({
   const initials = profile?.full_name?.slice(0, 2).toUpperCase() || 'M'
 
   return (
-    <header className="sticky top-0 z-40 md:hidden flex items-center justify-between px-6 py-4 bg-[#151922]/80 backdrop-blur-md border-b border-white/5 shadow-lg shadow-black/20">
+    <header 
+      style={{ paddingTop: 'calc(16px + env(safe-area-inset-top))' }}
+      className="sticky top-0 z-40 md:hidden flex items-center justify-between px-6 pb-4 bg-[#151922]/80 backdrop-blur-md border-b border-white/5 shadow-lg shadow-black/20"
+    >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#1A1F2B] to-[#2D3748] border border-white/10 flex items-center justify-center text-white text-xs font-bold shadow-inner overflow-hidden flex-shrink-0">
           {membership?.avatar_url || profile?.avatar_url ? (
