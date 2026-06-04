@@ -93,13 +93,15 @@ export function AuthProvider({ children }) {
           }
         } else {
           // Profile exists in the database.
-          // If the database role differs from the explicitly requested signup role,
-          // we update the database record to match the requested role.
-          if (targetRole && p.role !== targetRole) {
-            console.log(`[AuthProvider] Role mismatch detected. Updating profile role to: ${targetRole}`)
+          // We only upgrade the profile role from 'member' to 'owner' if:
+          // 1. The database profile currently has a 'member' role.
+          // 2. The intended role (requested via signup role parameter or metadata) is 'owner'.
+          // We NEVER downgrade an existing 'owner' to 'member'.
+          if (p.role === 'member' && targetRole === 'owner') {
+            console.log(`[AuthProvider] Role mismatch detected. Upgrading profile role from 'member' to 'owner'`)
             const { data: updatedData, error: updateError } = await supabase
               .from('profiles')
-              .update({ role: targetRole })
+              .update({ role: 'owner' })
               .eq('id', currUser.id)
               .select()
               .maybeSingle()
@@ -159,15 +161,34 @@ export function AuthProvider({ children }) {
         const currUser = session?.user ?? null
         setUser(currUser)
         if (currUser) {
-          // OPTIMIZATION: Instantly set initial profile from user metadata to prevent loading screens
-          const fallback = buildFallbackProfile(currUser)
-          setProfile(fallback)
-          setLoading(false)
-          
-          // Sync profile in background without blocking mount
-          syncProfile(currUser).catch(err => {
-            console.error('[AuthProvider] Background profile sync failed:', err)
-          })
+          // If we have a cached profile, we can load instantly. Otherwise, wait for sync.
+          const cacheKey = `profile_cache_${currUser.id}`
+          const cached = localStorage.getItem(cacheKey)
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached)
+              if (parsed) {
+                setProfile(parsed)
+                setLoading(false)
+                // Sync in background
+                syncProfile(currUser).catch(err => {
+                  console.error('[AuthProvider] Background profile sync failed:', err)
+                })
+                return
+              }
+            } catch (e) {
+              console.error('[AuthProvider] Error parsing cached profile:', e)
+            }
+          }
+
+          // No cache: wait for initial profile sync
+          try {
+            await syncProfile(currUser)
+          } catch (err) {
+            console.error('[AuthProvider] Initial profile sync failed:', err)
+          } finally {
+            setLoading(false)
+          }
         } else {
           setLoading(false)
         }
@@ -184,9 +205,25 @@ export function AuthProvider({ children }) {
       const currUser = session?.user ?? null
       setUser(currUser)
       if (currUser) {
-        // OPTIMIZATION: Set instant profile, then sync in background
-        const fallback = buildFallbackProfile(currUser)
-        setProfile(fallback)
+        // Use cached profile instantly if available
+        const cacheKey = `profile_cache_${currUser.id}`
+        const cached = localStorage.getItem(cacheKey)
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached)
+            if (parsed) {
+              setProfile(parsed)
+              // Sync in background
+              syncProfile(currUser).catch(err => {
+                console.error('[AuthProvider] Background profile sync failed:', err)
+              })
+              return
+            }
+          } catch (e) {
+            console.error('[AuthProvider] Error parsing cached profile:', e)
+          }
+        }
+        // No cache: sync in background
         syncProfile(currUser).catch(err => {
           console.error('[AuthProvider] Background profile sync failed:', err)
         })
