@@ -309,7 +309,7 @@ export const connectionService = {
       throw new Error(`Membership is Expired! (${member.full_name}) ❌`)
     }
 
-    // 3. Check if the member has any check-in record today to enforce cooldown and toggle check-out
+    // 3. Check if the member has any check-in record today to enforce daily limits and cooldowns
     const startOfDay = new Date()
     startOfDay.setHours(0, 0, 0, 0)
     const endOfDay = new Date()
@@ -329,53 +329,51 @@ export const connectionService = {
 
     if (checkInError) throw checkInError
 
-    // Cooldown Validation: Check if the last action (check-in or check-out) happened less than 5 minutes ago
     if (lastRecord) {
-      const lastTime = lastRecord.check_out_time 
-        ? new Date(lastRecord.check_out_time) 
-        : new Date(lastRecord.check_in_time)
+      // Case A: If they already checked out today, block any further action
+      if (lastRecord.check_out_time) {
+        throw new Error('Attendance already completed for today! Max 1 check-in/out per day. ⚠️')
+      }
 
-      const diffMins = (new Date() - lastTime) / 60000
+      // Case B: If they are checked in, enforce a 5-minute cooldown before checking out
+      const checkInTime = new Date(lastRecord.check_in_time)
+      const diffMins = (new Date() - checkInTime) / 60000
       if (diffMins < 5) {
-        throw new Error('Already checked in/out recently! Please wait 5 minutes between scans to prevent duplicates. ⚠️')
+        throw new Error('Already checked in! Please wait 5 minutes before checking out to avoid accidental duplicate scans. ⚠️')
       }
 
-      // 4a. If the last record exists but is not checked out, set check_out_time = now()
-      if (!lastRecord.check_out_time) {
-        const { data: attendance, error: updateError } = await supabase
-          .from('attendance')
-          .update({
-            check_out_time: new Date().toISOString()
-          })
-          .eq('id', lastRecord.id)
-          .select()
-          .single()
-
-        if (updateError) throw updateError
-
-        return {
-          success: true,
-          action: 'checkout',
-          member,
-          attendance
-        }
-      }
-    }
-
-    // 4b. Perform check-in (insert a new attendance record since no active session or it was checked out)
-    if (true) {
-      // 4b. Perform check-in (insert a new attendance record)
-      const { data: attendance, error: insertError } = await supabase
+      // Perform check-out
+      const { data: attendance, error: updateError } = await supabase
         .from('attendance')
-        .insert({
-          gym_id: gymId,
-          member_id: memberId,
-          check_in_time: new Date().toISOString()
+        .update({
+          check_out_time: new Date().toISOString()
         })
+        .eq('id', lastRecord.id)
         .select()
         .single()
 
-      if (insertError) throw insertError
+      if (updateError) throw updateError
+
+      return {
+        success: true,
+        action: 'checkout',
+        member,
+        attendance
+      }
+    }
+
+    // 4b. Perform check-in (insert a new attendance record since no record exists today yet)
+    const { data: attendance, error: insertError } = await supabase
+      .from('attendance')
+      .insert({
+        gym_id: gymId,
+        member_id: memberId,
+        check_in_time: new Date().toISOString()
+      })
+      .select()
+      .single()
+
+    if (insertError) throw insertError
 
       // Automatic Loyalty Coins Reward Logic
       try {
@@ -489,7 +487,6 @@ export const connectionService = {
         member,
         attendance
       }
-    }
   },
 
   /**

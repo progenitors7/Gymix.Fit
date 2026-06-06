@@ -63,6 +63,21 @@ export default function AttendancePage() {
     return logs.find(log => log.members?.id === memberId && !log.check_out_time)
   }
 
+  const getAttendanceStateForMember = (memberId) => {
+    const todayStr = new Date().toISOString().split('T')[0]
+    const memberTodayLogs = logs.filter(log => {
+      const logDateStr = new Date(log.check_in_time).toISOString().split('T')[0]
+      return log.members?.id === memberId && logDateStr === todayStr
+    })
+
+    const hasActive = memberTodayLogs.find(log => !log.check_out_time)
+    const hasCompleted = memberTodayLogs.find(log => log.check_out_time)
+
+    if (hasCompleted) return 'completed'
+    if (hasActive) return 'active'
+    return 'none'
+  }
+
   const handleManualAttendance = async (member) => {
     if (!gym?.id) return
     setActionLoading(member.id)
@@ -512,8 +527,9 @@ export default function AttendancePage() {
                     }
 
                     return filtered.map(member => {
-                      const activeLog = getActiveLogForMember(member.id)
-                      const isCheckedIn = !!activeLog
+                      const attState = getAttendanceStateForMember(member.id) // 'completed' | 'active' | 'none'
+                      const isCheckedIn = attState === 'active'
+                      const isCompleted = attState === 'completed'
                       const todayStr = new Date().toISOString().split('T')[0]
                       const isExpired = member.status === 'expired' || (member.expiry_date && member.expiry_date < todayStr)
                       const isLeft = member.status === 'left'
@@ -552,6 +568,11 @@ export default function AttendancePage() {
                                     In Gym ⚡
                                   </span>
                                 )}
+                                {isCompleted && (
+                                  <span className="px-1.5 py-0.5 rounded bg-sky-500/15 border border-sky-500/20 text-sky-400 text-[8px] font-black uppercase tracking-wider">
+                                    Done ✓
+                                  </span>
+                                )}
                               </div>
                               <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">
                                 {member.membership_plan || 'No Active Plan'}
@@ -562,9 +583,9 @@ export default function AttendancePage() {
 
                           <button
                             onClick={() => handleManualAttendance(member)}
-                            disabled={actionLoading !== null || isExpired}
+                            disabled={actionLoading !== null || isExpired || isCompleted}
                             className={`px-4 py-2.5 rounded-xl font-extrabold text-[10px] uppercase tracking-widest cursor-pointer transition-all duration-200 active:scale-95 flex items-center gap-1.5 shrink-0 ${
-                              isExpired
+                              isExpired || isCompleted
                                 ? 'bg-white/5 text-slate-500 border border-white/5 cursor-not-allowed'
                                 : isCheckedIn
                                 ? 'bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/10'
@@ -573,12 +594,14 @@ export default function AttendancePage() {
                           >
                             {actionLoading === member.id ? (
                               <div className={`w-3.5 h-3.5 border-2 ${isCheckedIn ? 'border-white/20 border-t-white' : 'border-black/20 border-t-black'} rounded-full animate-spin`} />
+                            ) : isCompleted ? (
+                              <CheckCircle className="w-3.5 h-3.5" />
                             ) : isCheckedIn ? (
                               <LogOut className="w-3.5 h-3.5" />
                             ) : (
                               <LogIn className="w-3.5 h-3.5" />
                             )}
-                            {isCheckedIn ? 'Check Out' : 'Check In'}
+                            {isCompleted ? 'Completed' : isCheckedIn ? 'Check Out' : 'Check In'}
                           </button>
                         </div>
                       )
