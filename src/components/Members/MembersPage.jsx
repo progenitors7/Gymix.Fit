@@ -3,7 +3,7 @@
  * Main members list with search, status filter tabs, table (desktop) + cards (mobile),
  * and quick-access delete confirm modal.
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Users, 
@@ -22,13 +22,16 @@ import {
   Fingerprint,
   CheckCircle2,
   AlertTriangle,
-  X
+  X,
+  QrCode,
+  Printer
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMembers } from '../../hooks/useMembers';
 import { useCurrentGym } from '../../hooks/useCurrentGym';
 import StatusBadge from '../UI/StatusBadge';
 import ConfirmModal from '../UI/ConfirmModal';
+import QRCode from 'qrcode';
 
 const STATUS_TABS = [
   { key: 'all', label: 'All' },
@@ -92,6 +95,30 @@ export default function MembersPage() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [waSendingInfo, setWaSendingInfo] = useState(null);
+
+  // QR Card print states
+  const [qrCardTarget, setQrCardTarget] = useState(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [generatingQr, setGeneratingQr] = useState(false);
+
+  useEffect(() => {
+    if (qrCardTarget) {
+      setGeneratingQr(true);
+      const token = `MEM_STATIC_${qrCardTarget.id}_${gym?.id || ''}`;
+      QRCode.toDataURL(token, { width: 250, margin: 2 })
+        .then((url) => {
+          setQrCodeUrl(url);
+        })
+        .catch((err) => {
+          console.error('[MembersPage] Error generating QR code:', err);
+        })
+        .finally(() => {
+          setGeneratingQr(false);
+        });
+    } else {
+      setQrCodeUrl('');
+    }
+  }, [qrCardTarget, gym?.id]);
 
   const displayed = statusFilter === 'all'
     ? filteredMembers.filter((m) => m.status !== 'left')
@@ -413,6 +440,13 @@ export default function MembersPage() {
                               </button>
                             )}
                             <button
+                              onClick={() => setQrCardTarget(member)}
+                              className="p-2.5 rounded-xl text-[#94A3B8] hover:text-[#863BFF] hover:bg-[#863BFF]/10 transition-all border border-transparent hover:border-[#863BFF]/20"
+                              title="Print QR Card"
+                            >
+                              <QrCode className="w-4 h-4" />
+                            </button>
+                            <button
                               onClick={() => navigate(`/members/${member.id}/edit`)}
                               className="p-2.5 rounded-xl text-[#94A3B8] hover:text-[#3B82F6] hover:bg-[#3B82F6]/10 transition-all border border-transparent hover:border-[#3B82F6]/20"
                               title="Edit member"
@@ -502,6 +536,13 @@ export default function MembersPage() {
                             <MessageCircle className="w-4 h-4" />
                           </button>
                         )}
+                        <button
+                          onClick={() => setQrCardTarget(member)}
+                          className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.03] text-[#863BFF] border border-white/5 active:bg-[#863BFF]/10 transition-colors shadow-sm"
+                          title="Print QR Card"
+                        >
+                          <QrCode className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => navigate(`/members/${member.id}/edit`)}
                           className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.03] text-[#94A3B8] border border-white/5 active:bg-white/10 transition-colors shadow-sm"
@@ -640,6 +681,135 @@ export default function MembersPage() {
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      {/* ── Printed QR Card Modal ── */}
+      <AnimatePresence>
+        {qrCardTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-[#12141C] border border-white/10 rounded-[2.5rem] w-full max-w-sm p-6 sm:p-8 shadow-2xl relative overflow-hidden text-center space-y-6 flex flex-col items-center"
+            >
+              {/* Top glowing strip */}
+              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#863BFF]/0 via-[#863BFF] to-[#863BFF]/0" />
+
+              {/* Close button */}
+              <button
+                type="button"
+                onClick={() => setQrCardTarget(null)}
+                className="absolute top-4.5 right-4.5 text-gray-500 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="space-y-1 text-center w-full border-b border-white/5 pb-4">
+                <h3 className="text-lg font-extrabold text-white uppercase tracking-tight">Print Membership Card</h3>
+                <p className="text-[9px] text-gray-500 font-bold tracking-widest uppercase">Static QR Code for Smartphone-Free Entry</p>
+              </div>
+
+              {/* Printable Card Mockup */}
+              <div 
+                id="printable-membership-card" 
+                className="w-full max-w-[280px] aspect-[2/3] bg-gradient-to-br from-[#1E2230] to-[#12141C] border border-white/10 rounded-[2rem] p-6 flex flex-col justify-between items-center relative overflow-hidden shadow-2xl print:m-0 print:border-none print:shadow-none print:bg-none print:w-full print:max-w-none print:aspect-auto"
+              >
+                {/* Visual decorations inside card */}
+                <div className="absolute -top-12 -left-12 w-24 h-24 rounded-full blur-2xl opacity-10 bg-[#863BFF]" />
+                <div className="absolute -bottom-12 -right-12 w-24 h-24 rounded-full blur-2xl opacity-10 bg-[#10B981]" />
+
+                {/* Card Header */}
+                <div className="text-center w-full">
+                  <span className="text-[10px] font-black uppercase text-[#863BFF] tracking-widest block leading-none mb-1">
+                    {gym?.gym_name || 'Gymix.Fit Athlete'}
+                  </span>
+                  <p className="text-white font-extrabold text-xs uppercase tracking-tight truncate max-w-full">
+                    Membership Pass
+                  </p>
+                </div>
+
+                {/* QR Code Container */}
+                <div className="w-[150px] h-[150px] bg-white rounded-2xl p-2.5 flex items-center justify-center shadow-inner relative group border border-white/5">
+                  {generatingQr ? (
+                    <div className="w-6 h-6 border-2 border-[#1E2230]/20 border-t-[#863BFF] rounded-full animate-spin" />
+                  ) : qrCodeUrl ? (
+                    <img src={qrCodeUrl} alt="Static Check-In QR" className="w-full h-full object-contain" />
+                  ) : (
+                    <span className="text-[10px] font-bold text-rose-500">Failed to render QR</span>
+                  )}
+                </div>
+
+                {/* Member Details */}
+                <div className="text-center w-full space-y-1">
+                  <h4 className="text-white font-black text-sm uppercase italic tracking-wide truncate">
+                    {qrCardTarget.full_name}
+                  </h4>
+                  <p className="text-[#94A3B8] text-[9px] font-black uppercase tracking-wider">
+                    Plan: {qrCardTarget.membership_plan || 'Custom Plan'}
+                  </p>
+                  <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
+                    Exp: {formatDate(qrCardTarget.expiry_date)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 w-full">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const printContent = document.getElementById('printable-membership-card');
+                    const originalContent = document.body.innerHTML;
+                    
+                    // Create simple print window/stylesheet logic
+                    const style = document.createElement('style');
+                    style.innerHTML = `
+                      @media print {
+                        body * {
+                          visibility: hidden;
+                        }
+                        #printable-membership-card, #printable-membership-card * {
+                          visibility: visible;
+                        }
+                        #printable-membership-card {
+                          position: absolute;
+                          left: 50%;
+                          top: 50%;
+                          transform: translate(-50%, -50%);
+                          border: 1px solid #000 !important;
+                          box-shadow: none !important;
+                          background: #fff !important;
+                        }
+                        #printable-membership-card * {
+                          color: #000 !important;
+                        }
+                        #printable-membership-card div {
+                          background: none !important;
+                        }
+                      }
+                    `;
+                    document.head.appendChild(style);
+                    window.print();
+                    document.head.removeChild(style);
+                  }}
+                  className="flex-1 px-5 py-3 bg-gradient-to-r from-[#863BFF] to-[#6A1BFF] hover:from-[#762BEF] hover:to-[#5B0CEF] text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer shadow-lg shadow-[#863BFF]/20 active:scale-95 flex items-center justify-center gap-1.5"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  Print Card
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setQrCardTarget(null)}
+                  className="flex-1 px-5 py-3 bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-bold uppercase tracking-wider rounded-xl border border-white/5 transition-all cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

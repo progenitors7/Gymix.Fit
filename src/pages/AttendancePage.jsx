@@ -2,10 +2,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Calendar, Clock, LogIn, LogOut, Search, RefreshCw, 
-  Users, CheckCircle, Flame, Sparkles
+  Users, CheckCircle, Flame, Sparkles, Plus, X, AlertCircle
 } from 'lucide-react'
 import { useCurrentGym } from '../hooks/useCurrentGym'
 import { supabase } from '../lib/supabaseClient'
+import { connectionService } from '../services/connectionService'
+import toast from 'react-hot-toast'
 
 export default function AttendancePage() {
   const { gym } = useCurrentGym()
@@ -25,6 +27,62 @@ export default function AttendancePage() {
     activeInside: 0,
     checkOuts: 0
   })
+
+  // Manual check-in States
+  const [isKioskOpen, setIsKioskOpen] = useState(false)
+  const [kioskSearch, setKioskSearch] = useState('')
+  const [members, setMembers] = useState([])
+  const [loadingMembers, setLoadingMembers] = useState(false)
+  const [actionLoading, setActionLoading] = useState(null)
+
+  const fetchMembersForManual = useCallback(async () => {
+    if (!gym?.id) return
+    setLoadingMembers(true)
+    try {
+      const { data, error: err } = await supabase
+        .from('members')
+        .select('id, full_name, phone_number, membership_plan, expiry_date, status, avatar_url')
+        .eq('gym_id', gym.id)
+        .order('full_name', { ascending: true })
+      if (err) throw err
+      setMembers(data || [])
+    } catch (e) {
+      console.error('Error fetching members:', e)
+    } finally {
+      setLoadingMembers(false)
+    }
+  }, [gym?.id])
+
+  useEffect(() => {
+    if (isKioskOpen && gym?.id) {
+      fetchMembersForManual()
+    }
+  }, [isKioskOpen, gym?.id, fetchMembersForManual])
+
+  const getActiveLogForMember = (memberId) => {
+    return logs.find(log => log.members?.id === memberId && !log.check_out_time)
+  }
+
+  const handleManualAttendance = async (member) => {
+    if (!gym?.id) return
+    setActionLoading(member.id)
+    try {
+      const res = await connectionService.logManualAttendance(gym.id, member.id)
+      if (res.success) {
+        if (res.action === 'checkout') {
+          toast.success(`${member.full_name} checked out successfully!`)
+        } else {
+          toast.success(`${member.full_name} checked in successfully!`)
+        }
+        await fetchAttendanceLogs()
+      }
+    } catch (err) {
+      console.error('Error logging manual attendance:', err)
+      toast.error(err.message || 'Failed to log attendance')
+    } finally {
+      setActionLoading(null)
+    }
+  }
 
   const fetchAttendanceLogs = useCallback(async () => {
     if (!gym?.id) return
@@ -160,15 +218,25 @@ export default function AttendancePage() {
           </p>
         </div>
 
-        {/* Sync Trigger */}
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="flex items-center gap-2 px-5 py-3 bg-[#1A1F2B] border border-white/5 hover:border-white/10 text-white rounded-2xl font-bold text-xs shadow-lg active:scale-95 transition-all cursor-pointer disabled:opacity-50"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-          Refresh Logs
-        </button>
+        {/* Actions Container */}
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <button
+            onClick={() => setIsKioskOpen(true)}
+            className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#863BFF] to-[#6A1BFF] hover:from-[#762BEF] hover:to-[#5B0CEF] text-white rounded-2xl font-bold text-xs shadow-lg shadow-[#863BFF]/10 active:scale-95 transition-all cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Manual Check-In
+          </button>
+          
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-5 py-3 bg-[#1A1F2B] border border-white/5 hover:border-white/10 text-white rounded-2xl font-bold text-xs shadow-lg active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh Logs
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -371,6 +439,157 @@ export default function AttendancePage() {
           </div>
         )}
       </div>
+
+      {/* MANUAL CHECK-IN MODAL */}
+      <AnimatePresence>
+        {isKioskOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-[#12141C] border border-white/10 rounded-[2.5rem] w-full max-w-xl p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh]"
+            >
+              {/* Top glowing strip */}
+              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-violet-500/0 via-violet-500 to-violet-500/0" />
+
+              {/* Modal Header */}
+              <div className="flex items-center justify-between pb-4 border-b border-white/5 mb-6">
+                <div>
+                  <h3 className="text-xl font-extrabold text-white tracking-tight flex items-center gap-2">
+                    <Users className="w-5 h-5 text-violet-400" />
+                    Manual Check-In Console
+                  </h3>
+                  <p className="text-[#94A3B8] text-[10px] font-bold uppercase tracking-widest mt-0.5">
+                    Search & log attendance for offline members
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsKioskOpen(false)
+                    setKioskSearch('')
+                  }}
+                  className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Search Input */}
+              <div className="relative group mb-6">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94A3B8] group-focus-within:text-[#863BFF] transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Search member by name or phone..."
+                  value={kioskSearch}
+                  onChange={(e) => setKioskSearch(e.target.value)}
+                  className="w-full bg-[#1A1F2B] border border-white/5 rounded-2xl pl-11 pr-4 py-3 text-sm text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#863BFF]/50 focus:ring-1 focus:ring-[#863BFF]/50 transition-all shadow-inner"
+                />
+              </div>
+
+              {/* Members List */}
+              <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar min-h-[200px]">
+                {loadingMembers ? (
+                  <div className="flex flex-col items-center justify-center py-10 gap-2 text-slate-500">
+                    <div className="w-8 h-8 border-2 border-violet-500/20 border-t-violet-500 rounded-full animate-spin" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest">Fetching members list...</p>
+                  </div>
+                ) : (
+                  (() => {
+                    const query = kioskSearch.trim().toLowerCase()
+                    const filtered = members.filter(m => 
+                      m.full_name?.toLowerCase().includes(query) ||
+                      m.phone_number?.toLowerCase().includes(query)
+                    )
+
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="text-center py-12 text-slate-500 font-semibold space-y-2">
+                          <AlertCircle className="w-6 h-6 text-slate-600 mx-auto" />
+                          <p className="text-xs uppercase tracking-widest">No matching members found</p>
+                        </div>
+                      )
+                    }
+
+                    return filtered.map(member => {
+                      const activeLog = getActiveLogForMember(member.id)
+                      const isCheckedIn = !!activeLog
+                      const todayStr = new Date().toISOString().split('T')[0]
+                      const isExpired = member.status === 'expired' || (member.expiry_date && member.expiry_date < todayStr)
+                      const isLeft = member.status === 'left'
+
+                      if (isLeft) return null // Hide members who have left
+
+                      return (
+                        <div
+                          key={member.id}
+                          className="p-4 bg-white/[0.02] hover:bg-white/[0.04] rounded-2xl border border-white/5 flex items-center justify-between gap-4 transition-colors"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            {member.avatar_url ? (
+                              <img
+                                src={member.avatar_url}
+                                alt={member.full_name}
+                                className="w-10 h-10 rounded-xl object-cover border border-white/10"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-xl bg-[#1E293B] border border-white/10 flex items-center justify-center text-[#F8FAFC] text-xs font-black uppercase">
+                                {member.full_name?.slice(0, 1)}
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-white font-extrabold text-sm truncate uppercase italic">
+                                  {member.full_name}
+                                </span>
+                                {isExpired && (
+                                  <span className="px-1.5 py-0.5 rounded bg-rose-500/15 border border-rose-500/20 text-rose-400 text-[8px] font-black uppercase tracking-wider">
+                                    Expired ⚠️
+                                  </span>
+                                )}
+                                {isCheckedIn && (
+                                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 text-[8px] font-black uppercase tracking-wider">
+                                    In Gym ⚡
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">
+                                {member.membership_plan || 'No Active Plan'}
+                                {member.expiry_date && ` • Exp: ${new Date(member.expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`}
+                              </p>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => handleManualAttendance(member)}
+                            disabled={actionLoading !== null || isExpired}
+                            className={`px-4 py-2.5 rounded-xl font-extrabold text-[10px] uppercase tracking-widest cursor-pointer transition-all duration-200 active:scale-95 flex items-center gap-1.5 shrink-0 ${
+                              isExpired
+                                ? 'bg-white/5 text-slate-500 border border-white/5 cursor-not-allowed'
+                                : isCheckedIn
+                                ? 'bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/10'
+                                : 'bg-emerald-500 hover:bg-emerald-600 text-black shadow-lg shadow-emerald-500/10'
+                            }`}
+                          >
+                            {actionLoading === member.id ? (
+                              <div className={`w-3.5 h-3.5 border-2 ${isCheckedIn ? 'border-white/20 border-t-white' : 'border-black/20 border-t-black'} rounded-full animate-spin`} />
+                            ) : isCheckedIn ? (
+                              <LogOut className="w-3.5 h-3.5" />
+                            ) : (
+                              <LogIn className="w-3.5 h-3.5" />
+                            )}
+                            {isCheckedIn ? 'Check Out' : 'Check In'}
+                          </button>
+                        </div>
+                      )
+                    })
+                  })()
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   )
