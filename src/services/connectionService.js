@@ -309,44 +309,61 @@ export const connectionService = {
       throw new Error(`Membership is Expired! (${member.full_name}) ❌`)
     }
 
-    // 3. Check if the member has an active check-in record today (where check_in_time is today, check_out_time is null)
+    // 3. Check if the member has any check-in record today to enforce cooldown and toggle check-out
     const startOfDay = new Date()
     startOfDay.setHours(0, 0, 0, 0)
     const endOfDay = new Date()
     endOfDay.setHours(23, 59, 59, 999)
 
-    const { data: activeSession, error: checkInError } = await supabase
+    // Fetch the absolute last attendance log for today (whether checked out or not)
+    const { data: lastRecord, error: checkInError } = await supabase
       .from('attendance')
       .select('id, check_in_time, check_out_time')
       .eq('member_id', memberId)
       .eq('gym_id', gymId)
       .gte('check_in_time', startOfDay.toISOString())
       .lte('check_in_time', endOfDay.toISOString())
-      .is('check_out_time', null)
+      .order('check_in_time', { ascending: false })
+      .limit(1)
       .maybeSingle()
 
     if (checkInError) throw checkInError
 
-    if (activeSession) {
-      // 4a. Active check-in today without checkout found, set check_out_time = now()
-      const { data: attendance, error: updateError } = await supabase
-        .from('attendance')
-        .update({
-          check_out_time: new Date().toISOString()
-        })
-        .eq('id', activeSession.id)
-        .select()
-        .single()
+    // Cooldown Validation: Check if the last action (check-in or check-out) happened less than 5 minutes ago
+    if (lastRecord) {
+      const lastTime = lastRecord.check_out_time 
+        ? new Date(lastRecord.check_out_time) 
+        : new Date(lastRecord.check_in_time)
 
-      if (updateError) throw updateError
-
-      return {
-        success: true,
-        action: 'checkout',
-        member,
-        attendance
+      const diffMins = (new Date() - lastTime) / 60000
+      if (diffMins < 5) {
+        throw new Error('Already checked in/out recently! Please wait 5 minutes between scans to prevent duplicates. ⚠️')
       }
-    } else {
+
+      // 4a. If the last record exists but is not checked out, set check_out_time = now()
+      if (!lastRecord.check_out_time) {
+        const { data: attendance, error: updateError } = await supabase
+          .from('attendance')
+          .update({
+            check_out_time: new Date().toISOString()
+          })
+          .eq('id', lastRecord.id)
+          .select()
+          .single()
+
+        if (updateError) throw updateError
+
+        return {
+          success: true,
+          action: 'checkout',
+          member,
+          attendance
+        }
+      }
+    }
+
+    // 4b. Perform check-in (insert a new attendance record since no active session or it was checked out)
+    if (true) {
       // 4b. Perform check-in (insert a new attendance record)
       const { data: attendance, error: insertError } = await supabase
         .from('attendance')
@@ -478,52 +495,33 @@ export const connectionService = {
   /**
    * Log Attendance Check-In via scanned QR Token.
    * Performs dynamic validation checks (screenshot rolling check, expiration, duplicate check-in).
-   * Supports static non-expiring QR cards starting with 'MEM_STATIC_'.
    */
   async logAttendanceCheckIn(gymId, qrToken) {
     if (!gymId) throw new Error('Gym ID is required')
     if (!qrToken) throw new Error('No QR token received')
 
+    // Parse token: MEM_SECURE_memberId_gymId_timestamp
     const parts = qrToken.split('_')
-    if (parts.length < 4 || parts[0] !== 'MEM') {
+    if (parts.length < 5 || parts[0] !== 'MEM' || parts[1] !== 'SECURE') {
       throw new Error('Invalid QR Code format! ❌')
     }
 
-    const type = parts[1] // 'SECURE' or 'STATIC'
+    const memberId = parts[2]
+    const tokenGymId = parts[3]
+    const timestamp = parseInt(parts[4], 10)
 
-    if (type === 'STATIC') {
-      // 1. Static printed QR format: MEM_STATIC_memberId_gymId
-      const memberId = parts[2]
-      const tokenGymId = parts[3]
-
-      if (tokenGymId !== gymId) {
-        throw new Error('Unauthorized Gym Connection! ❌')
-      }
-
-      return this.logMemberAttendanceDirect(gymId, memberId)
-    } 
-    
-    if (type === 'SECURE' && parts.length >= 5) {
-      // 2. Rolling secure QR format: MEM_SECURE_memberId_gymId_timestamp
-      const memberId = parts[2]
-      const tokenGymId = parts[3]
-      const timestamp = parseInt(parts[4], 10)
-
-      if (tokenGymId !== gymId) {
-        throw new Error('Unauthorized Gym Connection! ❌')
-      }
-
-      // Screenshot/Rolling check (Maximum 60s skew allowance)
-      const currentTime = Math.floor(Date.now() / 1000)
-      const timeDiff = Math.abs(currentTime - timestamp)
-      if (timeDiff > 60) {
-        throw new Error('QR Code expired! Screenshots are not allowed. ❌')
-      }
-
-      return this.logMemberAttendanceDirect(gymId, memberId)
+    if (tokenGymId !== gymId) {
+      throw new Error('Unauthorized Gym Connection! ❌')
     }
 
-    throw new Error('Invalid QR Code type! ❌')
+    // Screenshot/Rolling check (Maximum 60s skew allowance)
+    const currentTime = Math.floor(Date.now() / 1000)
+    const timeDiff = Math.abs(currentTime - timestamp)
+    if (timeDiff > 60) {
+      throw new Error('QR Code expired! Screenshots are not allowed. ❌')
+    }
+
+    return this.logMemberAttendanceDirect(gymId, memberId)
   },
 
   /**
