@@ -146,9 +146,9 @@ export default function MembersPage() {
     if (!text.includes(member.full_name)) {
        // If template doesn't have name (fallback)
        if (member.status === 'expired') {
-         text = `Hi ${member.full_name}, aapka gym plan expire ho gaya hai. Kripya apna subscription jaldi renew karein taaki aapka workout miss na ho!`;
+         text = `Hi ${member.full_name}, your gym plan has expired. Please renew your subscription to continue your workouts without interruption!`;
        } else if (member.status === 'expiring_soon') {
-         text = `Hi ${member.full_name}, aapka gym plan jaldi expire hone wala hai. Kripya apna subscription renew karein!`;
+         text = `Hi ${member.full_name}, your gym plan will expire soon. Please renew your subscription to keep up the momentum!`;
        } else {
          text = `Hi ${member.full_name}, hope you are enjoying your workouts!`;
        }

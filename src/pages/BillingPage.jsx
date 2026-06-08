@@ -192,9 +192,14 @@ export default function BillingPage() {
 
       if (error) {
         console.error('Edge Function Error:', error);
-        // Try to get the detailed error message from the response if possible
-        const errorMsg = error.message || 'Failed to create payment order';
-        setToastState({ message: `Billing Error: ${errorMsg}`, type: 'error' });
+        const rawMsg = error.message || '';
+        let errorMsg = 'Failed to create payment order. Please try again.';
+        if (rawMsg.includes('Failed to fetch') || rawMsg.includes('network')) {
+          errorMsg = 'Network connection issue. Please check your internet connection.';
+        } else if (rawMsg) {
+          errorMsg = rawMsg;
+        }
+        setToastState({ message: `Billing: ${errorMsg}`, type: 'error' });
         return;
       }
 
@@ -240,7 +245,14 @@ export default function BillingPage() {
 
     } catch (err) {
       console.error(err);
-      setToastState({ message: err.message || 'Action failed', type: 'error' });
+      const rawMsg = err.message || '';
+      let errMsg = 'Payment action failed. Please try again.';
+      if (rawMsg.includes('Failed to fetch') || rawMsg.includes('network') || rawMsg.includes('offline')) {
+        errMsg = 'Connection lost. Please check your internet and try again.';
+      } else if (rawMsg) {
+        errMsg = rawMsg;
+      }
+      setToastState({ message: errMsg, type: 'error' });
     } finally {
       setProcessing(false);
     }

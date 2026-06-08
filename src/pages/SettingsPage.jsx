@@ -1083,19 +1083,19 @@ export default function SettingsPage() {
                   
                   {pwaGuideTab === 'zkteco' ? (
                     <div className="text-[10px] text-slate-400 space-y-1.5 leading-normal">
-                      <p className="font-bold text-slate-200">1. Machine Menu open karein (M/OK long press).</p>
+                      <p className="font-bold text-slate-200">1. Open the Machine Menu (press and hold M/OK).</p>
                       <p>2. Go to <span className="text-white font-bold">Comm. (Communication) Settings</span> -&gt; <span className="text-white font-bold">ADMS / Cloud Server</span>.</p>
-                      <p>3. <span className="text-[#10B981] font-bold">Enable Server Settings</span> toggle karein aur select <span className="text-white font-bold">Domain Name</span>.</p>
-                      <p>4. Server Address mein <span className="text-white font-mono font-bold select-all">api.gymix.fit</span> aur Port mein <span className="text-white font-bold">80</span> daalein.</p>
-                      <p>5. Save karke restart karein, machine Gymix panel par automatic **ONLINE** aa jayegi! 🟢 (Note: eSSL, ZKTeco, BioMax, Realtime and other ADMS push terminals use this exact same setup).</p>
+                      <p>3. Enable <span className="text-[#10B981] font-bold">Cloud Server / Server Settings</span> and select <span className="text-white font-bold">Domain Name</span>.</p>
+                      <p>4. Set Server Address to <span className="text-white font-mono font-bold select-all">api.gymix.fit</span> and Port to <span className="text-white font-bold">80</span>.</p>
+                      <p>5. Save changes and restart the machine; it will automatically connect ONLINE! 🟢 (Note: eSSL, ZKTeco, BioMax, Realtime and other ADMS push terminals use this exact same setup).</p>
                     </div>
                   ) : (
                     <div className="text-[10px] text-slate-400 space-y-1.5 leading-normal">
-                      <p className="font-bold text-slate-200">1. Hikvision IVMS portal ya machine interface login karein.</p>
+                      <p className="font-bold text-slate-200">1. Log into the Hikvision IVMS portal or machine interface.</p>
                       <p>2. Go to <span className="text-white font-bold">Network Configuration</span> -&gt; <span className="text-white font-bold">Advanced Settings</span> -&gt; <span className="text-white font-bold">ISUP/EHome</span>.</p>
-                      <p>3. Enable ISUP set karein, and Protocol Version select <span className="text-white font-bold">ISUP5.0</span>.</p>
-                      <p>4. Server Address mein <span className="text-[#863BFF] font-mono font-bold select-all">api.gymix.fit</span> aur target port configure karein.</p>
-                      <p>5. Apni machine ka actual Serial Number copy karke upar **Device Serial Number** field mein update karein.</p>
+                      <p>3. Enable ISUP and select Protocol Version <span className="text-white font-bold">ISUP5.0</span>.</p>
+                      <p>4. Set Server Address to <span className="text-[#863BFF] font-mono font-bold select-all">api.gymix.fit</span> and configure the target port.</p>
+                      <p>5. Copy your machine's actual Serial Number and update it in the **Device Serial Number** field above.</p>
                     </div>
                   )}
                 </div>
@@ -1133,10 +1133,10 @@ export default function SettingsPage() {
                   <div className="p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 space-y-4">
                     <div className="flex items-center gap-2">
                       <Zap className="w-4.5 h-4.5 text-emerald-400 animate-pulse" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[#10B981]">Hardware Sensor Simulator (Developer Test)</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#10B981]">Biometric Connectivity Simulator</p>
                     </div>
                     <p className="text-[10px] text-slate-400 leading-normal font-semibold">
-                      Bina hardware install kiye aap yahan custom Biometric User ID enter karke instant punch signal test kar sakte hain!
+                      Test instant punch signals by entering a custom Biometric User ID below without installing any physical hardware!
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3">
                       <div className="flex-1">

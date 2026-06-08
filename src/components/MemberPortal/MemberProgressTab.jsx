@@ -75,7 +75,16 @@ export default function MemberProgressTab({
       toast.success('Progress logged successfully! 💪')
     } catch (err) {
       console.error('Error adding progress log:', err)
-      toast.error(err.message || 'Failed to save progress entry.')
+      const rawMsg = err.message || '';
+      let errMsg = 'Failed to save progress entry.';
+      if (rawMsg.includes('duplicate key') || rawMsg.includes('unique constraint')) {
+        errMsg = 'A progress log with this value already exists for today.';
+      } else if (rawMsg.includes('Failed to fetch') || rawMsg.includes('network') || rawMsg.includes('offline')) {
+        errMsg = 'Network connection lost. Please check your internet and try again.';
+      } else if (rawMsg) {
+        errMsg = rawMsg;
+      }
+      toast.error(errMsg)
     } finally {
       setLoggingProgress(false)
     }
@@ -598,7 +607,7 @@ export default function MemberProgressTab({
           </div>
 
           {progressLoading ? (
-            <div className="text-center py-10 text-slate-500 text-[10px] uppercase font-bold tracking-widest animate-pulse">Retreiving PR logs...</div>
+            <div className="text-center py-10 text-slate-500 text-[10px] uppercase font-bold tracking-widest animate-pulse">Retrieving PR logs...</div>
           ) : progressLogs.length === 0 ? (
             <div className="text-center py-12 text-slate-500 text-xs font-semibold">
               No progress entries logged yet. Record your lifts above to start tracking!

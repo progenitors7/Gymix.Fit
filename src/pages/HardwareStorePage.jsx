@@ -253,7 +253,7 @@ export default function HardwareStorePage() {
                           {prod.category} hardware module
                         </span>
                         <span className="text-[7px] text-slate-600 font-mono absolute bottom-2 right-3">
-                          DEV_SCHEMATIC // {prod.id.toUpperCase()}
+                          SCHEMATIC // INTEGRATED // {prod.id.toUpperCase()}
                         </span>
                       </div>
 

@@ -171,6 +171,39 @@ export default function MemberLeaderboardTab({
                 </div>
               )
             })}
+
+            {/* If user is ranked outside Top 10, show divider dots and their personalized rank card */}
+            {userRank && userRank > 10 && (
+              <>
+                <div className="flex justify-center items-center gap-1.5 py-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-700/60"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-700/60"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-700/60"></span>
+                </div>
+                {(() => {
+                  const currentUserRow = leaderboard[userRank - 1]
+                  if (!currentUserRow) return null
+                  return (
+                    <div 
+                      className="p-3.5 rounded-2xl border flex items-center justify-between text-xs transition-all bg-[#3B82F6]/10 border-[#3B82F6]/30 font-black animate-in fade-in duration-300"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-[10px] font-black text-[#3B82F6] w-4">#{userRank}</span>
+                        <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 text-[10px] font-bold overflow-hidden flex-shrink-0">
+                          {currentUserRow.avatar_url ? (
+                            <img src={currentUserRow.avatar_url} alt={currentUserRow.full_name} className="w-full h-full object-cover" />
+                          ) : (
+                            currentUserRow.full_name.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <span className="text-slate-200 font-bold">{currentUserRow.full_name} (You)</span>
+                      </div>
+                      <span className="text-[10px] font-black bg-[#3B82F6]/20 border border-[#3B82F6]/30 px-2.5 py-1 rounded text-white">{currentUserRow.xp_points} XP</span>
+                    </div>
+                  )
+                })()}
+              </>
+            )}
           </div>
         )}
       </div>
@@ -207,7 +240,7 @@ export default function MemberLeaderboardTab({
                 <div className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
                   <div>
-                    <strong className="text-white">⚡ Base check-in:</strong> Gate check-in scan complete karne par instant <span className="text-emerald-400 font-bold">+10 XP</span> credit hote hain.
+                    <strong className="text-white">⚡ Base check-in:</strong> Completing a gate check-in scan credits <span className="text-emerald-400 font-bold">+10 XP</span> instantly.
                   </div>
                 </div>
 
@@ -226,14 +259,14 @@ export default function MemberLeaderboardTab({
                 <div className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-1.5 flex-shrink-0" />
                   <div>
-                    <strong className="text-white">⏰ Temporal Clockwork Bonus:</strong> Continuous 3 din tak regular same-hour time window (discipline schedule) par check-in karne par <span className="text-yellow-400 font-bold">+10 XP</span> milega.
+                    <strong className="text-white">⏰ Temporal Clockwork Bonus:</strong> Checking in within the same daily hour-long window for 3 consecutive days awards a Temporal Clockwork bonus of <span className="text-yellow-400 font-bold">+10 XP</span>.
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-orange-400 mt-1.5 flex-shrink-0" />
                   <div>
-                    <strong className="text-white">🔥 Streak Multipliers:</strong> Gym continuous aane par aapki total base XP multiplier badh jayegi:
+                    <strong className="text-white">🔥 Streak Multipliers:</strong> Attending the gym consistently increases your base check-in XP multiplier:
                     <ul className="mt-1.5 space-y-1 text-[10px] text-slate-400 pl-3 list-disc">
                       <li>3+ Day Streak: <span className="text-orange-400 font-bold">1.2x XP</span>.</li>
                       <li>7+ Day Streak: <span className="text-orange-400 font-bold">1.5x XP</span>.</li>
@@ -245,7 +278,7 @@ export default function MemberLeaderboardTab({
               <div className="p-3.5 rounded-2xl bg-rose-500/5 border border-rose-500/10 text-[10px] text-rose-400 leading-normal flex items-start gap-2.5 font-medium">
                 <AlertTriangle className="w-4.5 h-4.5 flex-shrink-0 text-rose-400 mt-0.5" />
                 <div>
-                  <span className="font-bold text-rose-300">Important Anti-Ghosting Rule:</span> Agar aap gym chodte waqt <span className="font-black text-rose-300">CHECK-OUT scan</span> karna bhool jate hain, toh us training session ka **0 XP** milega (Lekin aapki <span className="font-bold text-emerald-400">Workout Streak safe rahegi!</span>). Always scan when leaving the gym.
+                  <span className="font-bold text-rose-300">Important Anti-Ghosting Rule:</span> If you forget to scan your <span className="font-black text-rose-300">CHECK-OUT scan</span> when leaving the gym, you will receive <span className="font-bold text-rose-300">0 XP</span> for that training session (However, your <span className="font-bold text-emerald-400">Workout Streak remains safe!</span>). Always scan when leaving the gym.
                 </div>
               </div>
             </div>

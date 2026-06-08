@@ -599,7 +599,7 @@ export function MemberProfileTab({
 
               {/* Athlete Info Stack */}
               <div className="space-y-3">
-                <h4 className="text-[9px] font-black uppercase tracking-widest text-slate-500 text-left ml-1">Athlete Pass Meta</h4>
+                <h4 className="text-[9px] font-black uppercase tracking-widest text-slate-500 text-left ml-1">Athlete Pass Info</h4>
                 
                 <div className="space-y-2 text-xs">
                   {/* Athlete ID */}
@@ -844,7 +844,7 @@ export function MemberOnboarding({
               Setup Your Athlete Profile
             </span>
             <h3 className="text-xl font-black text-white uppercase italic tracking-tight pt-1">
-              Yo, Welcome to Gymix!
+              Welcome to Gymix!
             </h3>
             <p className="text-slate-400 text-xs leading-relaxed max-w-xs mx-auto font-semibold">
               Please complete your display profile to get connected to your Gym Hub.
