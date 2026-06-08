@@ -394,14 +394,6 @@ export function MemberProfileTab({
 
               <div className="text-center space-y-1">
                 <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block">Profile Photo</span>
-                {profileAvatar && (
-                  <div>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[9px] font-black uppercase tracking-wider">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      <span>{profileAvatar.startsWith('data:') ? `${avatarSize || '—'} KB` : 'Google Synced 🌐'}</span>
-                    </span>
-                  </div>
-                )}
               </div>
 
               {/* Action buttons */}
@@ -459,53 +451,19 @@ export function MemberProfileTab({
               </div>
               
               {/* Photo updates quota */}
-              {avatarCooldownTimeLeft > 0 ? (
+              {avatarCooldownTimeLeft > 0 && (
                 <div className="px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 justify-center mt-1">
                   <Lock className="w-3.5 h-3.5" />
                   <span>Photo Changes Locked ({avatarCooldownTimeLeft} days left)</span>
-                </div>
-              ) : (
-                <div className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl bg-white/[0.02] border border-white/5 mt-1 text-[9px]">
-                  <span className="font-bold text-slate-500 uppercase tracking-wider">Photo Updates Quota</span>
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3].map((slot) => (
-                      <span 
-                        key={slot} 
-                        className={`w-2.5 h-2.5 rounded-full border transition-all ${
-                          slot <= avatarChangeCount 
-                            ? 'bg-[#3B82F6] border-[#3B82F6]' 
-                            : 'bg-transparent border-white/20'
-                        }`}
-                        title={slot <= avatarChangeCount ? 'Used Slot' : 'Available Slot'}
-                      />
-                    ))}
-                  </div>
                 </div>
               )}
             </div>
             
             {/* Name/Phone cooldown info */}
-            {cooldownTimeLeft > 0 ? (
+            {cooldownTimeLeft > 0 && (
               <div className="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[9px] font-black uppercase tracking-wider flex items-center gap-2 justify-center">
                 <Lock className="w-3.5 h-3.5" />
                 <span>Name/Phone Changes Locked ({cooldownTimeLeft} days left)</span>
-              </div>
-            ) : (
-              <div className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-[9px]">
-                <span className="font-bold text-slate-500 uppercase tracking-wider">Name/Phone Edits Quota</span>
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3].map((slot) => (
-                    <span 
-                      key={slot} 
-                      className={`w-2.5 h-2.5 rounded-full border transition-all ${
-                        slot <= nameChangeCount 
-                          ? 'bg-emerald-500 border-emerald-500' 
-                          : 'bg-transparent border-white/20'
-                      }`}
-                      title={slot <= nameChangeCount ? 'Used Slot' : 'Available Slot'}
-                    />
-                  ))}
-                </div>
               </div>
             )}
 
@@ -588,6 +546,9 @@ export function MemberProfileTab({
                 </>
               )}
             </button>
+            <p className="text-[9px] text-slate-500 font-semibold text-center italic mt-2.5">
+              * Profile updates (display name, phone number, and photo) are limited to 3 edits per 3 months to prevent duplicate account manipulation.
+            </p>
           </form>
         </div>
 
