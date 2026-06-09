@@ -1,46 +1,31 @@
 /**
- * Gymix Central WhatsApp Session Gateway (CommonJS Version)
- * --------------------------------------
- * Hosted once by the SaaS developer (on VPS, Render, or local machine).
- * Handles multiple concurrent gym sessions cleanly.
+ * Gymix Central WhatsApp Session Gateway (Baileys Edition)
+ * --------------------------------------------------------
+ * Uses @whiskeysockets/baileys (WebSocket-based, NO browser needed).
+ * Runs comfortably on Render free tier (512MB RAM).
  *
  * Run command:
  *   npm run wa-server
  */
 
 const express = require('express');
-const { execSync } = require('child_process');
-
-// Force Puppeteer to use the Render persistent cache directory at runtime
-if (process.env.RENDER) {
-  process.env.PUPPETEER_CACHE_DIR = '/opt/render/.cache/puppeteer';
-  console.log(`[Gymix WA] Running on Render. Set PUPPETEER_CACHE_DIR to: ${process.env.PUPPETEER_CACHE_DIR}`);
-  
-  try {
-    console.log('[Gymix WA] Verifying Chrome installation programmatically...');
-    execSync('npx puppeteer@24.38.0 browsers install chrome', { stdio: 'inherit' });
-    console.log('[Gymix WA] Chrome verification completed successfully.');
-  } catch (err) {
-    console.error('[Gymix WA] Failed to download Chrome programmatically:', err.message);
-  }
-}
-
 const cors = require('cors');
-const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
 const fs = require('fs');
 const path = require('path');
+const pino = require('pino');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 1. Root route for friendly service discovery on Render (resolves 'Cannot GET /')
+// Root route for service discovery
 app.get('/', (req, res) => {
   res.json({
     status: 'online',
     service: 'Gymix WhatsApp Central Gateway',
-    version: '1.0.0',
+    version: '2.0.0',
+    engine: 'baileys',
     uptime: process.uptime(),
     timestamp: new Date().toISOString()
   });
@@ -48,37 +33,33 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-// Active clients cache keyed by gymId
+// Active sessions keyed by gymId
 const sessions = {};
 
-// Get or initialize a WhatsApp client for a gym
-function getClient(gymId) {
+/**
+ * Dynamically import Baileys (ESM module from CommonJS)
+ */
+let baileysMod = null;
+async function getBaileys() {
+  if (!baileysMod) {
+    baileysMod = await import('@whiskeysockets/baileys');
+  }
+  return baileysMod;
+}
+
+/**
+ * Get or initialize a WhatsApp session for a gym
+ */
+async function getClient(gymId) {
   if (sessions[gymId]) {
     return sessions[gymId];
   }
 
-  console.log(`[Gymix WA] Initializing new WhatsApp session for Gym ID: ${gymId}`);
-
-  const client = new Client({
-    authStrategy: new LocalAuth({ clientId: `gymix_session_${gymId}` }),
-    puppeteer: {
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-blink-features=AutomationControlled'
-      ],
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
-    }
-  });
+  console.log(`[Gymix WA] Initializing new Baileys session for Gym ID: ${gymId}`);
 
   const sessionData = {
-    client: client,
-    status: 'disconnected', // 'disconnected' | 'connecting' | 'qr_ready' | 'connected'
+    sock: null,
+    status: 'connecting',
     qrCodeUrl: '',
     connectedNumber: '',
     expiryTimer: null,
@@ -86,75 +67,123 @@ function getClient(gymId) {
     lastErrorStack: null
   };
 
-  // Set a 60-second guard timeout for initialization
-  sessionData.expiryTimer = setTimeout(async () => {
-    if (sessionData.status === 'connecting') {
-      console.warn(`[Gymix WA] Session initialization timed out (60s limit reached) for Gym ID: ${gymId}. Cleaning up...`);
-      sessionData.status = 'disconnected';
-      sessionData.lastError = 'Session initialization timed out. Please try linking again.';
-      try {
-        await client.destroy();
-      } catch (destroyErr) {
-        console.error(`[Gymix WA] Failed to destroy client after timeout:`, destroyErr.message);
+  sessions[gymId] = sessionData;
+
+  try {
+    const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = await getBaileys();
+    const { Boom } = require('@hapi/boom');
+
+    // Auth state persistence directory
+    const authDir = path.join(__dirname, '.baileys_auth', `session_${gymId}`);
+    if (!fs.existsSync(authDir)) {
+      fs.mkdirSync(authDir, { recursive: true });
+    }
+
+    const { state, saveCreds } = await useMultiFileAuthState(authDir);
+    const { version } = await fetchLatestBaileysVersion();
+
+    console.log(`[Gymix WA] Using WA version: ${version.join('.')}`);
+
+    const sock = makeWASocket({
+      version,
+      auth: state,
+      printQRInTerminal: false,
+      logger: pino({ level: 'silent' }),
+      browser: ['Gymix', 'Chrome', '125.0.0'],
+      connectTimeoutMs: 60000,
+      defaultQueryTimeoutMs: 0,
+      keepAliveIntervalMs: 25000,
+      retryRequestDelayMs: 250,
+      generateHighQualityLinkPreview: false,
+    });
+
+    sessionData.sock = sock;
+
+    // 60-second guard timeout for initialization
+    sessionData.expiryTimer = setTimeout(() => {
+      if (sessionData.status === 'connecting') {
+        console.warn(`[Gymix WA] Session initialization timed out (60s) for Gym ID: ${gymId}. Cleaning up...`);
+        sessionData.status = 'disconnected';
+        sessionData.lastError = 'Session initialization timed out. Please try linking again.';
+        try {
+          sock.end(new Error('Initialization timeout'));
+        } catch (e) { /* ignore */ }
+        if (sessions[gymId] === sessionData) {
+          delete sessions[gymId];
+        }
       }
-      if (sessions[gymId] === sessionData) {
-        delete sessions[gymId];
+    }, 60000);
+
+    // Handle connection updates (QR code, open, close)
+    sock.ev.on('connection.update', async (update) => {
+      const { connection, lastDisconnect, qr } = update;
+
+      // QR Code received
+      if (qr) {
+        console.log(`[Gymix WA] QR Code generated for Gym ID: ${gymId}`);
+        sessionData.status = 'qr_ready';
+        if (sessionData.expiryTimer) {
+          clearTimeout(sessionData.expiryTimer);
+          sessionData.expiryTimer = null;
+        }
+        try {
+          sessionData.qrCodeUrl = await qrcode.toDataURL(qr);
+        } catch (err) {
+          console.error('[Gymix WA] Failed to generate QR Base64 image:', err);
+        }
       }
-    }
-  }, 60000);
 
-  client.on('qr', async (qr) => {
-    console.log(`[Gymix WA] QR Code generated for Gym ID: ${gymId}`);
-    sessionData.status = 'qr_ready';
-    if (sessionData.expiryTimer) {
-      clearTimeout(sessionData.expiryTimer);
-      sessionData.expiryTimer = null;
-    }
-    try {
-      // Convert raw authentication token to printable Base64 Data URL QR Code
-      sessionData.qrCodeUrl = await qrcode.toDataURL(qr);
-    } catch (err) {
-      console.error('[Gymix WA] Failed to generate QR Base64 image:', err);
-    }
-  });
+      // Connection opened successfully
+      if (connection === 'open') {
+        console.log(`[Gymix WA] WhatsApp connected for Gym ID: ${gymId}!`);
+        sessionData.status = 'connected';
+        sessionData.qrCodeUrl = '';
+        if (sessionData.expiryTimer) {
+          clearTimeout(sessionData.expiryTimer);
+          sessionData.expiryTimer = null;
+        }
+        // Extract connected phone number
+        try {
+          const jid = sock.user?.id || '';
+          sessionData.connectedNumber = jid.split(':')[0] || jid.split('@')[0] || 'Linked Device';
+        } catch (e) {
+          sessionData.connectedNumber = 'Linked Device';
+        }
+      }
 
-  client.on('ready', () => {
-    console.log(`[Gymix WA] WhatsApp Client is ready & linked for Gym ID: ${gymId}!`);
-    sessionData.status = 'connected';
-    sessionData.qrCodeUrl = '';
-    sessionData.connectedNumber = client.info.wid.user;
-    if (sessionData.expiryTimer) {
-      clearTimeout(sessionData.expiryTimer);
-      sessionData.expiryTimer = null;
-    }
-  });
+      // Connection closed
+      if (connection === 'close') {
+        const statusCode = (lastDisconnect?.error)?.output?.statusCode;
+        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
-  client.on('authenticated', () => {
-    console.log(`[Gymix WA] Session authenticated for Gym ID: ${gymId}`);
-  });
+        console.log(`[Gymix WA] Connection closed for Gym ID: ${gymId}. Status: ${statusCode}. Reconnect: ${shouldReconnect}`);
 
-  client.on('auth_failure', (msg) => {
-    console.error(`[Gymix WA] Authentication failure for Gym ID: ${gymId}:`, msg);
-    sessionData.status = 'disconnected';
-    sessionData.qrCodeUrl = '';
-    if (sessionData.expiryTimer) {
-      clearTimeout(sessionData.expiryTimer);
-      sessionData.expiryTimer = null;
-    }
-  });
+        if (sessionData.expiryTimer) {
+          clearTimeout(sessionData.expiryTimer);
+          sessionData.expiryTimer = null;
+        }
 
-  client.on('disconnected', (reason) => {
-    console.log(`[Gymix WA] Client disconnected for Gym ID: ${gymId}. Reason: ${reason}`);
-    sessionData.status = 'disconnected';
-    sessionData.qrCodeUrl = '';
-    sessionData.connectedNumber = '';
-    if (sessionData.expiryTimer) {
-      clearTimeout(sessionData.expiryTimer);
-      sessionData.expiryTimer = null;
-    }
-  });
+        if (shouldReconnect && sessions[gymId] === sessionData) {
+          // Auto-reconnect: clear this session and re-initialize
+          delete sessions[gymId];
+          console.log(`[Gymix WA] Auto-reconnecting for Gym ID: ${gymId}...`);
+          setTimeout(() => getClient(gymId), 3000);
+        } else {
+          // Logged out or manually disconnected
+          sessionData.status = 'disconnected';
+          sessionData.qrCodeUrl = '';
+          sessionData.connectedNumber = '';
+          if (sessions[gymId] === sessionData) {
+            delete sessions[gymId];
+          }
+        }
+      }
+    });
 
-  client.initialize().catch(err => {
+    // Save credentials on update
+    sock.ev.on('creds.update', saveCreds);
+
+  } catch (err) {
     console.error(`[Gymix WA] Initialization failed for Gym ID: ${gymId}:`, err);
     sessionData.status = 'disconnected';
     sessionData.lastError = err.message || String(err);
@@ -163,16 +192,13 @@ function getClient(gymId) {
       clearTimeout(sessionData.expiryTimer);
       sessionData.expiryTimer = null;
     }
-  });
+  }
 
-  sessionData.status = 'connecting';
-  sessions[gymId] = sessionData;
   return sessionData;
 }
 
 /**
  * 1. GET /api/whatsapp/status
- * Check current socket connection state and active details
  */
 app.get('/api/whatsapp/status', (req, res) => {
   const { gymId } = req.query;
@@ -190,7 +216,10 @@ app.get('/api/whatsapp/status', (req, res) => {
   });
 });
 
-app.get('/api/whatsapp/debug', async (req, res) => {
+/**
+ * Debug endpoint
+ */
+app.get('/api/whatsapp/debug', (req, res) => {
   const info = {};
   Object.keys(sessions).forEach(gymId => {
     info[gymId] = {
@@ -200,29 +229,6 @@ app.get('/api/whatsapp/debug', async (req, res) => {
       lastErrorStack: sessions[gymId].lastErrorStack
     };
   });
-
-  let launchTestResult = null;
-  if (req.query.testLaunch === 'true') {
-    try {
-      console.log('[Gymix WA] Running Puppeteer trial launch...');
-      const puppeteer = require('puppeteer');
-      const browser = await puppeteer.launch({
-        headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu'
-        ]
-      });
-      const version = await browser.version();
-      await browser.close();
-      launchTestResult = { success: true, version };
-    } catch (err) {
-      launchTestResult = { success: false, error: err.message, stack: err.stack };
-    }
-  }
-
   res.json({
     sessions: info,
     env: {
@@ -231,19 +237,19 @@ app.get('/api/whatsapp/debug', async (req, res) => {
     },
     platform: process.platform,
     arch: process.arch,
-    launchTest: launchTestResult
+    engine: 'baileys',
+    memoryUsage: process.memoryUsage()
   });
 });
 
 /**
  * 2. POST /api/whatsapp/connect
- * Trigger active linking loop, returns QR code if ready
  */
-app.post('/api/whatsapp/connect', (req, res) => {
+app.post('/api/whatsapp/connect', async (req, res) => {
   const { gymId } = req.body;
   if (!gymId) return res.status(400).json({ error: 'Missing gymId parameter' });
 
-  const session = getClient(gymId);
+  const session = await getClient(gymId);
 
   res.json({
     status: session.status,
@@ -254,7 +260,6 @@ app.post('/api/whatsapp/connect', (req, res) => {
 
 /**
  * 3. POST /api/whatsapp/send
- * Dispatches automated messages via active socket
  */
 app.post('/api/whatsapp/send', async (req, res) => {
   const { gymId, phone, message } = req.body;
@@ -263,12 +268,12 @@ app.post('/api/whatsapp/send', async (req, res) => {
   }
 
   const session = sessions[gymId];
-  if (!session || session.status !== 'connected') {
+  if (!session || session.status !== 'connected' || !session.sock) {
     return res.status(400).json({ error: 'WhatsApp session is not linked or connected for this gym' });
   }
 
   try {
-    // 1. Sanitize phone number (strip leading 0 and prepend 91 for Indian 10-digit formats)
+    // Sanitize phone number
     let cleanPhone = phone.replace(/\D/g, '');
     if (cleanPhone.startsWith('0')) {
       cleanPhone = cleanPhone.substring(1);
@@ -277,24 +282,11 @@ app.post('/api/whatsapp/send', async (req, res) => {
       cleanPhone = '91' + cleanPhone;
     }
 
-    // 2. Fetch official registered JID from WhatsApp servers
-    console.log(`[Gymix WA] Formatting target JID for number: ${cleanPhone}`);
-    let targetJid = `${cleanPhone}@c.us`;
-    try {
-      const numberId = await session.client.getNumberId(cleanPhone);
-      if (numberId && numberId._serialized) {
-        targetJid = numberId._serialized;
-        console.log(`[Gymix WA] Registered JID retrieved: ${targetJid}`);
-      } else {
-        console.log(`[Gymix WA] No direct registered JID found for ${cleanPhone}, falling back to ${targetJid}`);
-      }
-    } catch (e) {
-      console.warn('[Gymix WA] Failed to query getNumberId, using standard format fallback:', e.message);
-    }
+    const jid = `${cleanPhone}@s.whatsapp.net`;
+    console.log(`[Gymix WA] Sending message to ${jid}`);
 
-    // 3. Send message via WhatsApp API
-    await session.client.sendMessage(targetJid, message);
-    console.log(`[Gymix WA] Message dispatched successfully to ${targetJid}`);
+    await session.sock.sendMessage(jid, { text: message });
+    console.log(`[Gymix WA] Message dispatched successfully to ${jid}`);
     res.json({ success: true });
   } catch (err) {
     console.error('[Gymix WA] Message sending failed:', err);
@@ -304,7 +296,6 @@ app.post('/api/whatsapp/send', async (req, res) => {
 
 /**
  * 4. POST /api/whatsapp/disconnect
- * Closes socket connections and deletes saved keys
  */
 app.post('/api/whatsapp/disconnect', async (req, res) => {
   const { gymId } = req.body;
@@ -318,41 +309,38 @@ app.post('/api/whatsapp/disconnect', async (req, res) => {
         clearTimeout(session.expiryTimer);
         session.expiryTimer = null;
       }
-      if (session.client) {
-        console.log(`[Gymix WA] Unlinking and destroying active WhatsApp session for Gym ID: ${gymId}`);
+      if (session.sock) {
+        console.log(`[Gymix WA] Logging out WhatsApp session for Gym ID: ${gymId}`);
         try {
-          // Attempt clean logout (de-authorizes session with WhatsApp servers)
-          await session.client.logout();
-          console.log(`[Gymix WA] Successfully logged out session from WhatsApp for Gym: ${gymId}`);
+          await session.sock.logout();
+          console.log(`[Gymix WA] Successfully logged out for Gym: ${gymId}`);
         } catch (logoutErr) {
-          console.warn(`[Gymix WA] client.logout() failed (device may be already offline). Destroying client...:`, logoutErr.message);
+          console.warn(`[Gymix WA] logout() failed. Ending socket...:`, logoutErr.message);
           try {
-            await session.client.destroy();
-          } catch (destroyErr) {
-            console.error(`[Gymix WA] Failed to destroy client:`, destroyErr.message);
-          }
+            session.sock.end(new Error('Manual disconnect'));
+          } catch (e) { /* ignore */ }
         }
       }
       delete sessions[gymId];
     }
 
-    // Forcefully delete session auth credentials directory from disk to prevent automatic reconnects
-    const sessionDir = path.join(__dirname, '.wwebjs_auth', `session-gymix_session_${gymId}`);
-    if (fs.existsSync(sessionDir)) {
-      console.log(`[Gymix WA] Wiping session credentials directory from disk: ${sessionDir}`);
-      fs.rmSync(sessionDir, { recursive: true, force: true });
+    // Delete session auth directory
+    const authDir = path.join(__dirname, '.baileys_auth', `session_${gymId}`);
+    if (fs.existsSync(authDir)) {
+      console.log(`[Gymix WA] Wiping session auth directory: ${authDir}`);
+      fs.rmSync(authDir, { recursive: true, force: true });
     }
 
-    console.log(`[Gymix WA] Cleaned up and disconnected session for Gym ID: ${gymId}`);
+    console.log(`[Gymix WA] Cleaned up session for Gym ID: ${gymId}`);
     res.json({ success: true });
   } catch (err) {
-    console.error('[Gymix WA] Logout / Disconnect failed:', err);
+    console.error('[Gymix WA] Disconnect failed:', err);
     res.status(500).json({ error: 'Failed to destroy session', details: err.message });
   }
 });
 
 app.listen(PORT, () => {
   console.log(`===============================================`);
-  console.log(`🚀 Gymix WhatsApp Gateway is running on Port: ${PORT}`);
+  console.log(`🚀 Gymix WhatsApp Gateway v2.0 (Baileys) running on Port: ${PORT}`);
   console.log(`===============================================`);
 });
