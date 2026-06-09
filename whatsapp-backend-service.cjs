@@ -206,6 +206,17 @@ app.get('/api/whatsapp/status', (req, res) => {
 
   const session = sessions[gymId];
   if (!session) {
+    // Check if saved session credentials folder exists
+    const authDir = path.join(__dirname, '.baileys_auth', `session_${gymId}`);
+    const credsFile = path.join(authDir, 'creds.json');
+    if (fs.existsSync(credsFile)) {
+      console.log(`[Gymix WA] Saved session found for Gym ID: ${gymId}. Auto-restoring connection...`);
+      // Initialize in the background
+      getClient(gymId).catch(err => {
+        console.error(`[Gymix WA] Auto-restore connection failed for Gym ID: ${gymId}:`, err);
+      });
+      return res.json({ status: 'connecting', qrCodeUrl: '', connectedNumber: '' });
+    }
     return res.json({ status: 'disconnected', connectedNumber: '' });
   }
 
@@ -258,6 +269,27 @@ app.post('/api/whatsapp/connect', async (req, res) => {
   });
 });
 
+// Daily message limit tracker (in-memory)
+const dailyLimitTracker = {};
+const DAILY_LIMIT_MAX = 50;
+
+function checkAndIncrementDailyLimit(gymId) {
+  const today = new Date().toISOString().split('T')[0];
+  if (!dailyLimitTracker[gymId]) {
+    dailyLimitTracker[gymId] = { date: today, count: 0 };
+  }
+  const tracker = dailyLimitTracker[gymId];
+  if (tracker.date !== today) {
+    tracker.date = today;
+    tracker.count = 0;
+  }
+  if (tracker.count >= DAILY_LIMIT_MAX) {
+    return false;
+  }
+  tracker.count++;
+  return true;
+}
+
 /**
  * 3. POST /api/whatsapp/send
  */
@@ -269,11 +301,36 @@ app.post('/api/whatsapp/send', async (req, res) => {
 
   const session = sessions[gymId];
   if (!session || session.status !== 'connected' || !session.sock) {
+    // If it's not connected, see if we can restore it from credentials first
+    const authDir = path.join(__dirname, '.baileys_auth', `session_${gymId}`);
+    const credsFile = path.join(authDir, 'creds.json');
+    if (fs.existsSync(credsFile)) {
+      getClient(gymId).catch(() => {});
+      return res.status(400).json({ error: 'WhatsApp is reconnecting. Please wait 10 seconds and try again.' });
+    }
     return res.status(400).json({ error: 'WhatsApp session is not linked or connected for this gym' });
   }
 
-  try {
-    // Sanitize phone number
+  // 1. Fast check of the limit before queuing
+  const today = new Date().toISOString().split('T')[0];
+  const tracker = dailyLimitTracker[gymId];
+  if (tracker && tracker.date === today && tracker.count >= DAILY_LIMIT_MAX) {
+    return res.status(429).json({ error: `Daily safety limit of ${DAILY_LIMIT_MAX} messages reached to protect your account.` });
+  }
+
+  // Ensure queue is initialized
+  if (!session.messageQueue) {
+    session.messageQueue = Promise.resolve();
+  }
+
+  // 2. Queue the message sending in the background
+  session.messageQueue = session.messageQueue.then(async () => {
+    // Double check daily limit just in case
+    if (!checkAndIncrementDailyLimit(gymId)) {
+      throw new Error(`Daily safety limit of ${DAILY_LIMIT_MAX} messages reached.`);
+    }
+
+    // Sanitize phone
     let cleanPhone = phone.replace(/\D/g, '');
     if (cleanPhone.startsWith('0')) {
       cleanPhone = cleanPhone.substring(1);
@@ -283,15 +340,21 @@ app.post('/api/whatsapp/send', async (req, res) => {
     }
 
     const jid = `${cleanPhone}@s.whatsapp.net`;
-    console.log(`[Gymix WA] Sending message to ${jid}`);
-
+    console.log(`[Gymix WA] Queue processing: Sending message to ${jid}`);
+    
     await session.sock.sendMessage(jid, { text: message });
-    console.log(`[Gymix WA] Message dispatched successfully to ${jid}`);
-    res.json({ success: true });
-  } catch (err) {
-    console.error('[Gymix WA] Message sending failed:', err);
-    res.status(500).json({ error: 'Failed to send message via WhatsApp gateway API', details: err.message });
-  }
+    console.log(`[Gymix WA] Queue processing: Message dispatched successfully to ${jid}`);
+
+    // Anti-ban random delay: 5 to 10 seconds (5000 - 10000ms)
+    const delay = 5000 + Math.floor(Math.random() * 5000);
+    console.log(`[Gymix WA] Queue processing: waiting ${delay}ms before next message...`);
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }).catch(err => {
+    console.error('[Gymix WA] Error in queued message send:', err.message);
+  });
+
+  // Return success immediately (fire-and-forget for the queue)
+  res.json({ success: true, status: 'queued' });
 });
 
 /**
