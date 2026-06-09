@@ -660,9 +660,9 @@ export default function MemberDashboard() {
   const activeRank = getAthleteRank(streakCount)
 
   return (
-    <div className="h-screen bg-[#0F1117] text-slate-100 font-sans flex flex-col md:flex-row relative overflow-hidden">
+    <div className="h-screen bg-[#0F1117] text-slate-100 font-sans flex flex-col lg:flex-row relative overflow-hidden">
       {/* Sidebar Navigation */}
-      <aside className="hidden md:block w-80 flex-shrink-0">
+      <aside className="hidden lg:block w-80 flex-shrink-0">
         <MemberSidebar
           profile={profile}
           membership={membership}
@@ -677,7 +677,7 @@ export default function MemberDashboard() {
       {/* Mobile Menu Drawer Overlay */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <div className="fixed inset-0 z-[110] md:hidden flex">
+          <div className="fixed inset-0 z-[110] lg:hidden flex">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -734,7 +734,7 @@ export default function MemberDashboard() {
           notifications={notifications}
         />
 
-        <main className="flex-1 p-6 md:p-8 pb-24 md:pb-8 max-w-6xl w-full mx-auto overflow-y-auto">
+        <main className="flex-1 p-6 lg:p-8 pb-28 lg:pb-8 max-w-6xl w-full mx-auto overflow-y-auto">
           {!membership ? (
             <MemberConnectionPanel
               gymCode={gymCode}

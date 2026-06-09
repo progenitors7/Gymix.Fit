@@ -341,7 +341,7 @@ export function MemberProfileTab({
       {/* Mobile Quick-Access to Lifts PR */}
       <div 
         onClick={() => setActiveTab('progress')}
-        className="md:hidden p-4.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between cursor-pointer active:scale-98 transition-all duration-300"
+        className="lg:hidden p-4.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between cursor-pointer active:scale-98 transition-all duration-300"
       >
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center border border-amber-500/25 text-amber-400">

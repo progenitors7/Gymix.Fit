@@ -13,7 +13,7 @@ export default function MemberMobileHeader({
   return (
     <header 
       style={{ paddingTop: 'calc(16px + env(safe-area-inset-top))' }}
-      className="sticky top-0 z-40 md:hidden flex items-center justify-between px-6 pb-4 bg-[#151922]/80 backdrop-blur-md border-b border-white/5 shadow-lg shadow-black/20"
+      className="sticky top-0 z-40 lg:hidden flex items-center justify-between px-6 pb-4 bg-[#151922]/80 backdrop-blur-md border-b border-white/5 shadow-lg shadow-black/20"
     >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#1A1F2B] to-[#2D3748] border border-white/10 flex items-center justify-center text-white text-xs font-bold shadow-inner overflow-hidden flex-shrink-0">
@@ -25,7 +25,7 @@ export default function MemberMobileHeader({
         </div>
         <div className="space-y-0.5">
           <h1 className="text-sm font-black text-white tracking-wider flex items-center gap-1">
-            <span>Yo, {profile?.full_name?.split(' ')[0] || 'Athlete'}!</span>
+            <span>Hi, {profile?.full_name?.split(' ')[0] || 'Athlete'}!</span>
           </h1>
           <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-none">
             {membership ? membership.gyms?.gym_name : 'No Connected Gym'}
