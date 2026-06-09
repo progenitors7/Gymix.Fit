@@ -9,6 +9,13 @@
  */
 
 const express = require('express');
+
+// Force Puppeteer to use the Render persistent cache directory at runtime
+if (process.env.RENDER) {
+  process.env.PUPPETEER_CACHE_DIR = '/opt/render/.cache/puppeteer';
+  console.log(`[Gymix WA] Running on Render. Set PUPPETEER_CACHE_DIR to: ${process.env.PUPPETEER_CACHE_DIR}`);
+}
+
 const cors = require('cors');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
