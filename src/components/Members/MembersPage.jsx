@@ -29,6 +29,7 @@ import { useMembers } from '../../hooks/useMembers';
 import { useCurrentGym } from '../../hooks/useCurrentGym';
 import StatusBadge from '../UI/StatusBadge';
 import ConfirmModal from '../UI/ConfirmModal';
+import { DEFAULT_EXPIRY_SOON_TEMPLATE, DEFAULT_EXPIRED_TEMPLATE } from '../../config/whatsappTemplates';
 
 const STATUS_TABS = [
   { key: 'all', label: 'All' },
@@ -116,8 +117,8 @@ export default function MembersPage() {
     if (!member.phone_number) return;
     const phone = member.phone_number.replace(/\D/g, '');
     
-    // Get custom template or use default
-    let template = 'Hello {{name}}, your plan expires on {{date}}.';
+    // Get custom template or use default based on status
+    let template = '';
     let autopilotEnabled = false;
     let autopilotConnected = false;
 
@@ -126,33 +127,40 @@ export default function MembersPage() {
         const saved = localStorage.getItem(`gym_settings_${gym.id}`);
         if (saved) {
           const parsed = JSON.parse(saved);
-          template = parsed.waTemplate || template;
           autopilotEnabled = parsed.waAutopilotEnabled || false;
           autopilotConnected = parsed.waConnected || false;
+          
+          if (member.status === 'expired') {
+            template = parsed.waTemplateExpired || DEFAULT_EXPIRED_TEMPLATE;
+          } else if (member.status === 'expiring_soon') {
+            template = parsed.waTemplateExpirySoon || DEFAULT_EXPIRY_SOON_TEMPLATE;
+          } else {
+            template = parsed.waTemplate || 'Hello {{name}}, your plan expires on {{date}}.';
+          }
         }
       } catch (e) {
         console.error(e);
       }
     }
 
+    if (!template) {
+      if (member.status === 'expired') {
+        template = DEFAULT_EXPIRED_TEMPLATE;
+      } else if (member.status === 'expiring_soon') {
+        template = DEFAULT_EXPIRY_SOON_TEMPLATE;
+      } else {
+        template = 'Hello {{name}}, your plan expires on {{date}}.';
+      }
+    }
+
     const expiry = member.expiry_date ? new Date(member.expiry_date).toLocaleDateString() : 'soon';
     
-    // Default dynamic texts based on status (fallback if user didn't write custom template correctly)
+    // Default dynamic texts based on status
     let text = template
       .replace(/{{name}}/g, member.full_name)
+      .replace(/{{gymName}}/g, gym?.gym_name || 'Gym')
       .replace(/{{date}}/g, expiry)
       .replace(/{{plan}}/g, member.membership_plan || 'plan');
-
-    if (!text.includes(member.full_name)) {
-       // If template doesn't have name (fallback)
-       if (member.status === 'expired') {
-         text = `Hi ${member.full_name}, your gym plan has expired. Please renew your subscription to continue your workouts without interruption!`;
-       } else if (member.status === 'expiring_soon') {
-         text = `Hi ${member.full_name}, your gym plan will expire soon. Please renew your subscription to keep up the momentum!`;
-       } else {
-         text = `Hi ${member.full_name}, hope you are enjoying your workouts!`;
-       }
-    }
     
     if (autopilotEnabled && autopilotConnected) {
       // Autopilot dispatch

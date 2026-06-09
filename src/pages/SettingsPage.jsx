@@ -37,6 +37,11 @@ import { planService } from '../services/planService';
 import ConfirmModal from '../components/UI/ConfirmModal';
 // ... imports
 import { Plus, X as CloseIcon, Edit2, Sparkles } from 'lucide-react';
+import {
+  DEFAULT_WELCOME_TEMPLATE,
+  DEFAULT_EXPIRY_SOON_TEMPLATE,
+  DEFAULT_EXPIRED_TEMPLATE
+} from '../config/whatsappTemplates';
 
 const WA_PRESETS = [
   { label: 'Professional Reminder', text: 'Hello {{name}}, this is a friendly reminder that your {{plan}} plan expires on {{date}}. Please renew to avoid interruption.' },
@@ -316,6 +321,9 @@ export default function SettingsPage() {
   const [globalSettings, setGlobalSettings] = useState({ 
     currency: '₹', 
     waTemplate: 'Hello {{name}}, your plan expires on {{date}}.',
+    waTemplateWelcome: DEFAULT_WELCOME_TEMPLATE,
+    waTemplateExpirySoon: DEFAULT_EXPIRY_SOON_TEMPLATE,
+    waTemplateExpired: DEFAULT_EXPIRED_TEMPLATE,
     waAutopilotEnabled: false,
     waConnected: false,
     waConnectedNumber: '',
@@ -348,6 +356,9 @@ export default function SettingsPage() {
         setGlobalSettings({
           currency: '₹',
           waTemplate: 'Hello {{name}}, your plan expires on {{date}}.',
+          waTemplateWelcome: DEFAULT_WELCOME_TEMPLATE,
+          waTemplateExpirySoon: DEFAULT_EXPIRY_SOON_TEMPLATE,
+          waTemplateExpired: DEFAULT_EXPIRED_TEMPLATE,
           waAutopilotEnabled: false,
           waConnected: false,
           waConnectedNumber: '',
@@ -1387,6 +1398,111 @@ export default function SettingsPage() {
           </div>
         </Section>
 
+        {/* WhatsApp Message Templates */}
+        <Section 
+          icon={<Sparkles className="w-5.5 h-5.5 text-amber-400 fill-amber-400/10" />}
+          title="WhatsApp Message Templates" 
+          description="Customize the automated messages sent to your members. These templates will be pre-filled in manual chat tabs or dispatched automatically via Autopilot."
+        >
+          <div className="space-y-6">
+            {/* Welcome Template */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between px-1">
+                <label className="text-xs font-semibold text-gray-400">Welcome Message Template (New Members)</label>
+                <button
+                  type="button"
+                  onClick={() => setGlobalSettings({...globalSettings, waTemplateWelcome: DEFAULT_WELCOME_TEMPLATE})}
+                  className="text-[10px] font-bold text-[#3390ec] hover:text-[#2b7ad2] uppercase tracking-wider cursor-pointer"
+                >
+                  Reset Default
+                </button>
+              </div>
+              <textarea
+                rows={4}
+                value={globalSettings.waTemplateWelcome}
+                onChange={e => setGlobalSettings({...globalSettings, waTemplateWelcome: e.target.value})}
+                className="w-full bg-[#1c1c1c] border border-white/5 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#3390ec]/50 transition-all resize-y"
+                placeholder="Welcome template..."
+              />
+            </div>
+
+            {/* Expiry Soon Template */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between px-1">
+                <label className="text-xs font-semibold text-gray-400">Expiry Soon Reminder Template</label>
+                <button
+                  type="button"
+                  onClick={() => setGlobalSettings({...globalSettings, waTemplateExpirySoon: DEFAULT_EXPIRY_SOON_TEMPLATE})}
+                  className="text-[10px] font-bold text-[#3390ec] hover:text-[#2b7ad2] uppercase tracking-wider cursor-pointer"
+                >
+                  Reset Default
+                </button>
+              </div>
+              <textarea
+                rows={4}
+                value={globalSettings.waTemplateExpirySoon}
+                onChange={e => setGlobalSettings({...globalSettings, waTemplateExpirySoon: e.target.value})}
+                className="w-full bg-[#1c1c1c] border border-white/5 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#3390ec]/50 transition-all resize-y"
+                placeholder="Expiry soon template..."
+              />
+            </div>
+
+            {/* Expired Template */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between px-1">
+                <label className="text-xs font-semibold text-gray-400">Expired Plan Notification Template</label>
+                <button
+                  type="button"
+                  onClick={() => setGlobalSettings({...globalSettings, waTemplateExpired: DEFAULT_EXPIRED_TEMPLATE})}
+                  className="text-[10px] font-bold text-[#3390ec] hover:text-[#2b7ad2] uppercase tracking-wider cursor-pointer"
+                >
+                  Reset Default
+                </button>
+              </div>
+              <textarea
+                rows={4}
+                value={globalSettings.waTemplateExpired}
+                onChange={e => setGlobalSettings({...globalSettings, waTemplateExpired: e.target.value})}
+                className="w-full bg-[#1c1c1c] border border-white/5 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#3390ec]/50 transition-all resize-y"
+                placeholder="Expired template..."
+              />
+            </div>
+
+            {/* Guide to Placeholders */}
+            <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-4.5 space-y-2.5">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Available placeholders:</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] font-medium text-gray-500">
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-mono text-emerald-400 font-bold">{"{{name}}"}</span>
+                  <span>Member's Full Name</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-mono text-[#3390ec] font-bold">{"{{gymName}}"}</span>
+                  <span>Your Gym Name</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-mono text-purple-400 font-bold">{"{{plan}}"}</span>
+                  <span>Membership Plan</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-mono text-amber-500 font-bold">{"{{date}}"}</span>
+                  <span>Expiry Date</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button 
+                onClick={handleSaveGlobalSettings} 
+                disabled={savingSettings} 
+                className="px-6 py-2.5 bg-[#3390ec] hover:bg-[#2b7ad2] disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-all"
+              >
+                {savingSettings ? 'Saving...' : 'Save Templates'}
+              </button>
+            </div>
+          </div>
+        </Section>
+
         {/* Global Settings */}
         <Section 
           icon={<SettingsIcon className="w-5 h-5" />}
@@ -1406,32 +1522,6 @@ export default function SettingsPage() {
                 <option value="€">€ (EUR)</option>
                 <option value="£">£ (GBP)</option>
               </select>
-            </div>
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between px-1">
-                <label className="text-xs font-medium text-gray-400">WhatsApp Template</label>
-                <select
-                  onChange={(e) => {
-                    const template = WA_PRESETS.find(p => p.label === e.target.value)?.text;
-                    if (template) setGlobalSettings({...globalSettings, waTemplate: template});
-                  }}
-                  className="bg-transparent border-none text-[10px] font-bold text-[#3390ec] uppercase tracking-wider cursor-pointer focus:outline-none"
-                  defaultValue=""
-                >
-                  <option value="" disabled>Load Preset</option>
-                  {WA_PRESETS.map(preset => (
-                    <option key={preset.label} value={preset.label} className="text-black">{preset.label}</option>
-                  ))}
-                </select>
-              </div>
-              <textarea
-                rows={3}
-                value={globalSettings.waTemplate}
-                onChange={e => setGlobalSettings({...globalSettings, waTemplate: e.target.value})}
-                className="w-full bg-[#1c1c1c] border border-white/5 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#3390ec]/50 transition-all resize-none"
-                placeholder="Hello {{name}}, your plan expires on {{date}}."
-              />
-              <p className="text-[10px] text-gray-500 px-1">Available variables: {'{{name}}'}, {'{{date}}'}, {'{{plan}}'}</p>
             </div>
           </div>
           <div className="pt-2">
