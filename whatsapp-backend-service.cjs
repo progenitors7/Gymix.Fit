@@ -9,11 +9,20 @@
  */
 
 const express = require('express');
+const { execSync } = require('child_process');
 
 // Force Puppeteer to use the Render persistent cache directory at runtime
 if (process.env.RENDER) {
   process.env.PUPPETEER_CACHE_DIR = '/opt/render/.cache/puppeteer';
   console.log(`[Gymix WA] Running on Render. Set PUPPETEER_CACHE_DIR to: ${process.env.PUPPETEER_CACHE_DIR}`);
+  
+  try {
+    console.log('[Gymix WA] Verifying Chrome installation programmatically...');
+    execSync('npx puppeteer@24.38.0 browsers install chrome', { stdio: 'inherit' });
+    console.log('[Gymix WA] Chrome verification completed successfully.');
+  } catch (err) {
+    console.error('[Gymix WA] Failed to download Chrome programmatically:', err.message);
+  }
 }
 
 const cors = require('cors');
