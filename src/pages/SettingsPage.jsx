@@ -1254,6 +1254,13 @@ export default function SettingsPage() {
                         Configuring virtual browser instance on cloud node...
                       </p>
                     </div>
+                    <button
+                      type="button"
+                      onClick={handleDisconnectWa}
+                      className="px-4 py-2 mt-2 bg-white/5 hover:bg-white/10 active:scale-95 text-gray-400 hover:text-white text-[10px] font-bold uppercase tracking-wider rounded-lg border border-white/5 transition-all cursor-pointer"
+                    >
+                      Cancel & Reset Connection
+                    </button>
                   </div>
                 )}
 

@@ -63,7 +63,14 @@ function getClient(gymId) {
     authStrategy: new LocalAuth({ clientId: `gymix_session_${gymId}` }),
     puppeteer: {
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-zygote'
+      ]
     }
   });
 
@@ -77,9 +84,30 @@ function getClient(gymId) {
     lastErrorStack: null
   };
 
+  // Set a 60-second guard timeout for initialization
+  sessionData.expiryTimer = setTimeout(async () => {
+    if (sessionData.status === 'connecting') {
+      console.warn(`[Gymix WA] Session initialization timed out (60s limit reached) for Gym ID: ${gymId}. Cleaning up...`);
+      sessionData.status = 'disconnected';
+      sessionData.lastError = 'Session initialization timed out. Please try linking again.';
+      try {
+        await client.destroy();
+      } catch (destroyErr) {
+        console.error(`[Gymix WA] Failed to destroy client after timeout:`, destroyErr.message);
+      }
+      if (sessions[gymId] === sessionData) {
+        delete sessions[gymId];
+      }
+    }
+  }, 60000);
+
   client.on('qr', async (qr) => {
     console.log(`[Gymix WA] QR Code generated for Gym ID: ${gymId}`);
     sessionData.status = 'qr_ready';
+    if (sessionData.expiryTimer) {
+      clearTimeout(sessionData.expiryTimer);
+      sessionData.expiryTimer = null;
+    }
     try {
       // Convert raw authentication token to printable Base64 Data URL QR Code
       sessionData.qrCodeUrl = await qrcode.toDataURL(qr);
@@ -93,6 +121,10 @@ function getClient(gymId) {
     sessionData.status = 'connected';
     sessionData.qrCodeUrl = '';
     sessionData.connectedNumber = client.info.wid.user;
+    if (sessionData.expiryTimer) {
+      clearTimeout(sessionData.expiryTimer);
+      sessionData.expiryTimer = null;
+    }
   });
 
   client.on('authenticated', () => {
@@ -103,6 +135,10 @@ function getClient(gymId) {
     console.error(`[Gymix WA] Authentication failure for Gym ID: ${gymId}:`, msg);
     sessionData.status = 'disconnected';
     sessionData.qrCodeUrl = '';
+    if (sessionData.expiryTimer) {
+      clearTimeout(sessionData.expiryTimer);
+      sessionData.expiryTimer = null;
+    }
   });
 
   client.on('disconnected', (reason) => {
@@ -110,6 +146,10 @@ function getClient(gymId) {
     sessionData.status = 'disconnected';
     sessionData.qrCodeUrl = '';
     sessionData.connectedNumber = '';
+    if (sessionData.expiryTimer) {
+      clearTimeout(sessionData.expiryTimer);
+      sessionData.expiryTimer = null;
+    }
   });
 
   client.initialize().catch(err => {
@@ -117,6 +157,10 @@ function getClient(gymId) {
     sessionData.status = 'disconnected';
     sessionData.lastError = err.message || String(err);
     sessionData.lastErrorStack = err.stack || '';
+    if (sessionData.expiryTimer) {
+      clearTimeout(sessionData.expiryTimer);
+      sessionData.expiryTimer = null;
+    }
   });
 
   sessionData.status = 'connecting';
@@ -246,24 +290,26 @@ app.post('/api/whatsapp/disconnect', async (req, res) => {
   const session = sessions[gymId];
 
   try {
-    if (session && session.client) {
-      console.log(`[Gymix WA] Unlinking and destroying active WhatsApp session for Gym ID: ${gymId}`);
-      try {
-        // Attempt clean logout (de-authorizes session with WhatsApp servers)
-        await session.client.logout();
-        console.log(`[Gymix WA] Successfully logged out session from WhatsApp for Gym: ${gymId}`);
-      } catch (logoutErr) {
-        console.warn(`[Gymix WA] client.logout() failed (device may be already offline). Destroying client...:`, logoutErr.message);
+    if (session) {
+      if (session.expiryTimer) {
+        clearTimeout(session.expiryTimer);
+        session.expiryTimer = null;
+      }
+      if (session.client) {
+        console.log(`[Gymix WA] Unlinking and destroying active WhatsApp session for Gym ID: ${gymId}`);
         try {
-          await session.client.destroy();
-        } catch (destroyErr) {
-          console.error(`[Gymix WA] Failed to destroy client:`, destroyErr.message);
+          // Attempt clean logout (de-authorizes session with WhatsApp servers)
+          await session.client.logout();
+          console.log(`[Gymix WA] Successfully logged out session from WhatsApp for Gym: ${gymId}`);
+        } catch (logoutErr) {
+          console.warn(`[Gymix WA] client.logout() failed (device may be already offline). Destroying client...:`, logoutErr.message);
+          try {
+            await session.client.destroy();
+          } catch (destroyErr) {
+            console.error(`[Gymix WA] Failed to destroy client:`, destroyErr.message);
+          }
         }
       }
-    }
-
-    // Clean up session in active server cache
-    if (session) {
       delete sessions[gymId];
     }
 
