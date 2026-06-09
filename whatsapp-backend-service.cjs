@@ -188,10 +188,7 @@ app.get('/api/whatsapp/status', (req, res) => {
   });
 });
 
-/**
- * Diagnostic debug endpoint to read initialization errors from the server
- */
-app.get('/api/whatsapp/debug', (req, res) => {
+app.get('/api/whatsapp/debug', async (req, res) => {
   const info = {};
   Object.keys(sessions).forEach(gymId => {
     info[gymId] = {
@@ -201,6 +198,29 @@ app.get('/api/whatsapp/debug', (req, res) => {
       lastErrorStack: sessions[gymId].lastErrorStack
     };
   });
+
+  let launchTestResult = null;
+  if (req.query.testLaunch === 'true') {
+    try {
+      console.log('[Gymix WA] Running Puppeteer trial launch...');
+      const puppeteer = require('puppeteer');
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu'
+        ]
+      });
+      const version = await browser.version();
+      await browser.close();
+      launchTestResult = { success: true, version };
+    } catch (err) {
+      launchTestResult = { success: false, error: err.message, stack: err.stack };
+    }
+  }
+
   res.json({
     sessions: info,
     env: {
@@ -208,7 +228,8 @@ app.get('/api/whatsapp/debug', (req, res) => {
       PORT: process.env.PORT
     },
     platform: process.platform,
-    arch: process.arch
+    arch: process.arch,
+    launchTest: launchTestResult
   });
 });
 
