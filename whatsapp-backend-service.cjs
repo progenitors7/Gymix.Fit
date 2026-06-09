@@ -63,6 +63,8 @@ async function getClient(gymId) {
     qrCodeUrl: '',
     connectedNumber: '',
     expiryTimer: null,
+    healthPinger: null,
+    reconnectAttempts: 0,
     lastError: null,
     lastErrorStack: null
   };
@@ -138,6 +140,7 @@ async function getClient(gymId) {
         console.log(`[Gymix WA] WhatsApp connected for Gym ID: ${gymId}!`);
         sessionData.status = 'connected';
         sessionData.qrCodeUrl = '';
+        sessionData.reconnectAttempts = 0; // Reset on successful connection
         if (sessionData.expiryTimer) {
           clearTimeout(sessionData.expiryTimer);
           sessionData.expiryTimer = null;
@@ -149,6 +152,24 @@ async function getClient(gymId) {
         } catch (e) {
           sessionData.connectedNumber = 'Linked Device';
         }
+
+        // Start periodic health pinger to keep connection alive
+        if (sessionData.healthPinger) clearInterval(sessionData.healthPinger);
+        sessionData.healthPinger = setInterval(() => {
+          try {
+            if (sessionData.sock && sessionData.status === 'connected') {
+              // Lightweight keepalive: check socket state
+              const isOpen = sessionData.sock?.ws?.readyState === 1; // WebSocket.OPEN
+              if (!isOpen) {
+                console.warn(`[Gymix WA] Health pinger: WebSocket not open for Gym ${gymId}. State: ${sessionData.sock?.ws?.readyState}`);
+              } else {
+                console.log(`[Gymix WA] Health pinger: Connection alive for Gym ${gymId}`);
+              }
+            }
+          } catch (e) {
+            console.warn(`[Gymix WA] Health pinger error for Gym ${gymId}:`, e.message);
+          }
+        }, 5 * 60 * 1000); // Every 5 minutes
       }
 
       // Connection closed
@@ -162,12 +183,40 @@ async function getClient(gymId) {
           clearTimeout(sessionData.expiryTimer);
           sessionData.expiryTimer = null;
         }
+        if (sessionData.healthPinger) {
+          clearInterval(sessionData.healthPinger);
+          sessionData.healthPinger = null;
+        }
 
         if (shouldReconnect && sessions[gymId] === sessionData) {
-          // Auto-reconnect: clear this session and re-initialize
-          delete sessions[gymId];
-          console.log(`[Gymix WA] Auto-reconnecting for Gym ID: ${gymId}...`);
-          setTimeout(() => getClient(gymId), 3000);
+          const MAX_RECONNECT_ATTEMPTS = 5;
+          sessionData.reconnectAttempts = (sessionData.reconnectAttempts || 0) + 1;
+
+          if (sessionData.reconnectAttempts <= MAX_RECONNECT_ATTEMPTS) {
+            // Exponential backoff: 3s, 6s, 12s, 24s, 48s
+            const backoffMs = 3000 * Math.pow(2, sessionData.reconnectAttempts - 1);
+            console.log(`[Gymix WA] Auto-reconnecting for Gym ID: ${gymId} (attempt ${sessionData.reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}) in ${backoffMs / 1000}s...`);
+            
+            // Keep the session entry alive during reconnection so status endpoint returns 'connecting'
+            sessionData.status = 'connecting';
+            sessionData.qrCodeUrl = '';
+            
+            setTimeout(async () => {
+              try {
+                // Don't delete the session entry - just reinitialize the socket
+                delete sessions[gymId];
+                await getClient(gymId);
+              } catch (err) {
+                console.error(`[Gymix WA] Reconnection attempt failed for Gym ${gymId}:`, err.message);
+              }
+            }, backoffMs);
+          } else {
+            console.error(`[Gymix WA] Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached for Gym ID: ${gymId}. Giving up.`);
+            sessionData.status = 'disconnected';
+            sessionData.qrCodeUrl = '';
+            sessionData.connectedNumber = '';
+            // Don't delete session so status endpoint can report 'disconnected'
+          }
         } else {
           // Logged out or manually disconnected
           sessionData.status = 'disconnected';

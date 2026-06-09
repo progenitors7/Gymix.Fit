@@ -216,12 +216,13 @@ export const connectionService = {
           membership_plan: memberPayload.membership_plan,
           expiry_date: memberPayload.expiry_date,
           status: memberPayload.status,
-          notes: memberPayload.notes || existingMember.notes || 'Reconnected profile'
+          left_at: null, // Clear left_at timestamp on rejoin to stop 30-day auto-purge
+          notes: memberPayload.notes || existingMember.notes || 'Reconnected profile — data restored'
         })
         .eq('id', existingMember.id)
         .select(`
           id, gym_id, profile_id, avatar_url, full_name, phone_number, gender,
-          join_date, membership_plan, expiry_date, status, notes, biometric_user_id, created_at
+          join_date, membership_plan, expiry_date, status, notes, biometric_user_id, left_at, created_at
         `)
         .single()
 

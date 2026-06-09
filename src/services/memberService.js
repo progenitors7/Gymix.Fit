@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabaseClient'
 
 const MEMBER_FIELDS = `
   id, gym_id, profile_id, avatar_url, full_name, phone_number, gender,
-  join_date, membership_plan, expiry_date, status, notes, biometric_user_id, created_at
+  join_date, membership_plan, expiry_date, status, notes, biometric_user_id, left_at, created_at
 `
 
 const MEMBER_WITH_SUBSCRIPTIONS = `
@@ -75,7 +75,29 @@ export async function getMembers(gymId) {
     .order('created_at', { ascending: false })
 
   if (error) throw error
-  return (data ?? []).map(syncMemberFromLatestSubscription)
+
+  const allMembers = (data ?? []).map(syncMemberFromLatestSubscription)
+
+  // 30-day auto-purge: permanently delete "left" members whose left_at > 30 days ago
+  const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
+  const now = Date.now()
+  const expiredLeftMembers = allMembers.filter(m => {
+    if (m.status !== 'left' || !m.left_at) return false
+    const leftTime = new Date(m.left_at).getTime()
+    return (now - leftTime) > THIRTY_DAYS_MS
+  })
+
+  if (expiredLeftMembers.length > 0) {
+    // Fire-and-forget background purge
+    Promise.all(expiredLeftMembers.map(m => deleteMember(m.id))).catch(err => {
+      console.error('[Gymix] Auto-purge failed for expired left members:', err)
+    })
+    console.log(`[Gymix] Auto-purging ${expiredLeftMembers.length} left member(s) older than 30 days`)
+  }
+
+  // Return all members except the ones being purged
+  const purgeIds = new Set(expiredLeftMembers.map(m => m.id))
+  return allMembers.filter(m => !purgeIds.has(m.id))
 }
 
 /**

@@ -301,13 +301,59 @@ export function MemberProfileTab({
         .from('members')
         .update({ 
           profile_id: null,
-          status: 'left'
+          status: 'left',
+          left_at: new Date().toISOString()
         })
         .eq('id', membership.id)
 
       if (error) throw error
+
+      // Send goodbye WhatsApp message if autopilot is connected
+      if (membership.phone_number && membership.gym_id) {
+        try {
+          const saved = localStorage.getItem(`gym_settings_${membership.gym_id}`);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            const WA_BACKEND_URL = import.meta.env.VITE_WA_BACKEND_URL || 'http://localhost:5000';
+
+            const sendGoodbye = async () => {
+              try {
+                const statusRes = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${membership.gym_id}`);
+                if (!statusRes.ok) return;
+                const statusData = await statusRes.json();
+
+                if (statusData.status === 'connected' && parsed.waAutopilotEnabled !== false) {
+                  const { DEFAULT_LEFT_TEMPLATE } = await import('../../config/whatsappTemplates');
+                  const leftTemplate = parsed.waTemplateLeft || DEFAULT_LEFT_TEMPLATE;
+                  const text = leftTemplate
+                    .replace(/{{name}}/g, membership.full_name || profile?.full_name || 'Member')
+                    .replace(/{{gymName}}/g, 'Gym')
+                    .replace(/{{plan}}/g, membership.membership_plan || 'Plan')
+                    .replace(/{{date}}/g, membership.expiry_date ? new Date(membership.expiry_date).toLocaleDateString() : 'soon');
+
+                  await fetch(`${WA_BACKEND_URL}/api/whatsapp/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      gymId: membership.gym_id,
+                      phone: membership.phone_number,
+                      message: text
+                    })
+                  });
+                  console.log('[Gymix WA] Goodbye message sent on member disconnect');
+                }
+              } catch (err) {
+                console.warn('[Gymix WA] Goodbye message error:', err);
+              }
+            };
+            sendGoodbye();
+          }
+        } catch (e) {
+          console.warn('[Gymix WA] Goodbye trigger error:', e);
+        }
+      }
       
-      setProfileSuccess('Successfully disconnected from your gym.')
+      setProfileSuccess('Successfully disconnected from your gym. Your data will be kept for 30 days in case you wish to rejoin.')
       await loadMemberSystem()
       setActiveTab('pass')
     } catch (err) {
@@ -672,7 +718,7 @@ export function MemberProfileTab({
       <ConfirmModal
         open={showLeaveConfirm}
         title="Disconnect Gym"
-        message="Are you sure you want to disconnect from this gym? All check-in history and access keys associated with this profile will be disconnected."
+        message="Are you sure you want to disconnect from this gym? Your data will be kept for 30 days — if you rejoin within that time, all your check-in history, coins, and progress will be restored automatically."
         confirmLabel="Disconnect"
         loading={savingProfile}
         onConfirm={async () => {

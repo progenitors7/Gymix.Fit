@@ -644,8 +644,8 @@ export default function MembersPage() {
       <ConfirmModal
         open={!!deleteTarget}
         title="Delete Member"
-        message={`Are you sure you want to delete "${deleteTarget?.name}"?`}
-        confirmLabel="Delete Member"
+        message={`Are you sure you want to permanently delete "${deleteTarget?.name}"? All their data including payments, attendance, and subscriptions will be removed.`}
+        confirmLabel="Delete Permanently"
         loading={deleting}
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteTarget(null)}

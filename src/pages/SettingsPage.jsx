@@ -413,6 +413,45 @@ export default function SettingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gymId]);
 
+  // Periodic health check: keep frontend synced with backend even when 'connected'
+  // This catches cases where the server auto-reconnects after a transient disconnect
+  useEffect(() => {
+    if (waSessionState !== 'connected' || !isRealBackend) return;
+
+    const healthCheck = setInterval(async () => {
+      try {
+        const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${gymId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === 'connected') {
+            // Still connected — update number if changed
+            setGlobalSettings(prev => {
+              const newNumber = data.connectedNumber ? `+${data.connectedNumber}` : prev.waConnectedNumber;
+              if (prev.waConnected && prev.waConnectedNumber === newNumber) return prev;
+              const updated = { ...prev, waConnected: true, waConnectedNumber: newNumber };
+              localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updated));
+              return updated;
+            });
+          } else if (data.status === 'connecting') {
+            // Backend is auto-reconnecting — don't show as disconnected yet
+            console.log('[Gymix WA] Health: Server is reconnecting...');
+          } else if (data.status === 'disconnected') {
+            setWaSessionState('disconnected');
+            setGlobalSettings(prev => {
+              const updated = { ...prev, waConnected: false, waConnectedNumber: '' };
+              localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updated));
+              return updated;
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('[Gymix WA] Health check failed:', err.message);
+      }
+    }, 30000); // Every 30 seconds
+
+    return () => clearInterval(healthCheck);
+  }, [waSessionState, gymId, isRealBackend, WA_BACKEND_URL]);
+
   // Real-time server polling
   useEffect(() => {
     let countdownInterval;
