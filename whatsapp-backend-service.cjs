@@ -299,16 +299,35 @@ app.post('/api/whatsapp/send', async (req, res) => {
     return res.status(400).json({ error: 'Missing parameters (gymId, phone, message)' });
   }
 
-  const session = sessions[gymId];
+  let session = sessions[gymId];
   if (!session || session.status !== 'connected' || !session.sock) {
     // If it's not connected, see if we can restore it from credentials first
     const authDir = path.join(__dirname, '.baileys_auth', `session_${gymId}`);
     const credsFile = path.join(authDir, 'creds.json');
     if (fs.existsSync(credsFile)) {
+      console.log(`[Gymix WA] Send request received but session not active. Triggering reconnect and waiting...`);
       getClient(gymId).catch(() => {});
-      return res.status(400).json({ error: 'WhatsApp is reconnecting. Please wait 10 seconds and try again.' });
+      
+      // Wait for up to 15 seconds for status to become 'connected'
+      let retries = 15;
+      while (retries > 0) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const currentSession = sessions[gymId];
+        if (currentSession && currentSession.status === 'connected' && currentSession.sock) {
+          console.log(`[Gymix WA] Reconnection successful during send wait! Proceeding to queue.`);
+          session = currentSession;
+          break;
+        }
+        retries--;
+      }
+      
+      // Recheck after waiting
+      if (!session || session.status !== 'connected' || !session.sock) {
+        return res.status(400).json({ error: 'WhatsApp is reconnecting. Please try again in a moment.' });
+      }
+    } else {
+      return res.status(400).json({ error: 'WhatsApp session is not linked or connected for this gym' });
     }
-    return res.status(400).json({ error: 'WhatsApp session is not linked or connected for this gym' });
   }
 
   // 1. Fast check of the limit before queuing

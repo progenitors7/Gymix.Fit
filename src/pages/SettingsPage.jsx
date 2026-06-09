@@ -389,6 +389,8 @@ export default function SettingsPage() {
               localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updated));
               return updated;
             });
+          } else if (data.status === 'connecting') {
+            setWaSessionState('connecting');
           } else if (data.status === 'disconnected') {
             setWaSessionState('disconnected');
             setGlobalSettings(prev => {
@@ -405,7 +407,8 @@ export default function SettingsPage() {
     };
 
     checkServerStatus();
-  }, [gymId, fetchPlans, fetchUserTickets]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gymId]);
 
   // Real-time server polling
   useEffect(() => {
