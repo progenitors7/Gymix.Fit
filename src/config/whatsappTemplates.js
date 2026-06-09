@@ -35,3 +35,17 @@ Hope to see you back on the gym floor today! ⚡
 
 ---
 *Managed via Gymix.fit*`;
+
+export const DEFAULT_LEFT_TEMPLATE = `👋 *{{gymName}}*
+
+Hi *{{name}}*,
+We've updated your status to Inactive/Left at **{{gymName}}**.
+
+It was an absolute pleasure training with you! We will miss your energy on the gym floor. 
+
+If you ever want to resume your workouts, reactivate your subscription, or restore biometric access, just walk in or message us anytime.
+
+Wishing you the very best on your fitness journey! Keep moving! ⚡
+
+---
+*Managed via Gymix.fit*`;

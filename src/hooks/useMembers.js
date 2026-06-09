@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { getMembers, createMember, updateMember, deleteMember, filterMembers } from '../services/memberService'
 import { useCurrentGym } from './useCurrentGym'
 import { unifiedService } from '../services/unifiedService'
-import { DEFAULT_WELCOME_TEMPLATE } from '../config/whatsappTemplates'
+import { DEFAULT_WELCOME_TEMPLATE, DEFAULT_LEFT_TEMPLATE } from '../config/whatsappTemplates'
 
 export function useMembers() {
   const { gym, gymId, isReady } = useCurrentGym()
@@ -121,10 +121,53 @@ export function useMembers() {
   }, [gymId, gym])
 
   const editMember = useCallback(async (id, formData) => {
+    const previousMember = members.find(m => m.id === id);
+    const wasAlreadyLeft = previousMember?.status === 'left';
+
     const updated = await updateMember(id, formData)
     setMembers((prev) => prev.map((m) => (m.id === id ? updated : m)))
+
+    // Trigger WhatsApp goodbye message if status changed to 'left' and autopilot is enabled
+    if (updated && updated.status === 'left' && !wasAlreadyLeft && updated.phone_number) {
+      try {
+        const saved = localStorage.getItem(`gym_settings_${gymId}`);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.waAutopilotEnabled && parsed.waConnected) {
+            const leftTemplate = parsed.waTemplateLeft || DEFAULT_LEFT_TEMPLATE;
+            const text = leftTemplate
+              .replace(/{{name}}/g, updated.full_name)
+              .replace(/{{gymName}}/g, gym?.gym_name || 'Gym')
+              .replace(/{{plan}}/g, updated.membership_plan || 'Plan')
+              .replace(/{{date}}/g, updated.expiry_date ? new Date(updated.expiry_date).toLocaleDateString() : 'soon');
+
+            const WA_BACKEND_URL = import.meta.env.VITE_WA_BACKEND_URL || 'http://localhost:5000';
+            fetch(`${WA_BACKEND_URL}/api/whatsapp/send`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                gymId: gym.id,
+                phone: updated.phone_number,
+                message: text
+              })
+            }).then(res => {
+              if (res.ok) {
+                console.log('[Gymix WA] Goodbye message sent to', updated.full_name);
+              } else {
+                console.warn('[Gymix WA] Failed to send goodbye message');
+              }
+            }).catch(err => {
+              console.warn('[Gymix WA] Error sending goodbye message:', err);
+            });
+          }
+        }
+      } catch (e) {
+        console.error('[Gymix WA] Goodbye message trigger error:', e);
+      }
+    }
+
     return updated
-  }, [])
+  }, [gymId, gym, members])
 
   const removeMember = useCallback(async (id) => {
     await deleteMember(id)

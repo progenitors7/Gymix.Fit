@@ -40,7 +40,8 @@ import { Plus, X as CloseIcon, Edit2, Sparkles } from 'lucide-react';
 import {
   DEFAULT_WELCOME_TEMPLATE,
   DEFAULT_EXPIRY_SOON_TEMPLATE,
-  DEFAULT_EXPIRED_TEMPLATE
+  DEFAULT_EXPIRED_TEMPLATE,
+  DEFAULT_LEFT_TEMPLATE
 } from '../config/whatsappTemplates';
 
 const WA_PRESETS = [
@@ -324,6 +325,7 @@ export default function SettingsPage() {
     waTemplateWelcome: DEFAULT_WELCOME_TEMPLATE,
     waTemplateExpirySoon: DEFAULT_EXPIRY_SOON_TEMPLATE,
     waTemplateExpired: DEFAULT_EXPIRED_TEMPLATE,
+    waTemplateLeft: DEFAULT_LEFT_TEMPLATE,
     waAutopilotEnabled: false,
     waConnected: false,
     waConnectedNumber: '',
@@ -359,6 +361,7 @@ export default function SettingsPage() {
           waTemplateWelcome: DEFAULT_WELCOME_TEMPLATE,
           waTemplateExpirySoon: DEFAULT_EXPIRY_SOON_TEMPLATE,
           waTemplateExpired: DEFAULT_EXPIRED_TEMPLATE,
+          waTemplateLeft: DEFAULT_LEFT_TEMPLATE,
           waAutopilotEnabled: false,
           waConnected: false,
           waConnectedNumber: '',
@@ -1471,7 +1474,26 @@ export default function SettingsPage() {
               />
             </div>
 
-            {/* Guide to Placeholders */}
+            {/* Left/Goodbye Template */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between px-1">
+                <label className="text-xs font-semibold text-gray-400">Goodbye Message Template (Members Leaving)</label>
+                <button
+                  type="button"
+                  onClick={() => setGlobalSettings({...globalSettings, waTemplateLeft: DEFAULT_LEFT_TEMPLATE})}
+                  className="text-[10px] font-bold text-[#3390ec] hover:text-[#2b7ad2] uppercase tracking-wider cursor-pointer"
+                >
+                  Reset Default
+                </button>
+              </div>
+              <textarea
+                rows={4}
+                value={globalSettings.waTemplateLeft}
+                onChange={e => setGlobalSettings({...globalSettings, waTemplateLeft: e.target.value})}
+                className="w-full bg-[#1c1c1c] border border-white/5 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#3390ec]/50 transition-all resize-y"
+                placeholder="Goodbye template..."
+              />
+            </div>
             <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-4.5 space-y-2.5">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Available placeholders:</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] font-medium text-gray-500">

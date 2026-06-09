@@ -115,7 +115,7 @@ export async function updateMember(id, payload) {
     .from('members')
     .update(payload)
     .eq('id', id)
-    .select(MEMBER_FIELDS)
+    .select(MEMBER_WITH_SUBSCRIPTIONS)
     .single()
 
   if (error) throw error
@@ -136,7 +136,7 @@ export async function updateMember(id, payload) {
     }
   }
 
-  return data
+  return syncMemberFromLatestSubscription(data)
 }
 
 /**

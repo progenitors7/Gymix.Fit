@@ -26,6 +26,7 @@ const DEFAULTS = {
   notes: '',
   biometric_user_id: '',
   avatar_url: '',
+  status: 'active',
 }
 
 function Field({ label, required, children, error }) {
@@ -439,6 +440,29 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
           <div className="flex items-center pb-1">
             <p className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest leading-tight">
               Enter the numeric User ID/Card ID of this member registered on the biometric fingerprint/face scanner.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Status (Only in Edit Mode) */}
+      {mode === 'edit' && (
+        <div className="grid sm:grid-cols-2 gap-5 animate-in fade-in duration-300">
+          <Field label="Member Status">
+            <Activity className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
+            <select 
+              id="member-status" 
+              value={form.status || 'active'} 
+              onChange={set('status')} 
+              className={inputCls}
+            >
+              <option value="active">Active (Auto-calculate)</option>
+              <option value="left">Left (Inactive)</option>
+            </select>
+          </Field>
+          <div className="flex items-center pb-1">
+            <p className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest leading-tight">
+              Marking status as "Left" will immediately restrict biometric scanner access and label them as inactive.
             </p>
           </div>
         </div>
