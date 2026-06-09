@@ -56,7 +56,9 @@ function getClient(gymId) {
     status: 'disconnected', // 'disconnected' | 'connecting' | 'qr_ready' | 'connected'
     qrCodeUrl: '',
     connectedNumber: '',
-    expiryTimer: null
+    expiryTimer: null,
+    lastError: null,
+    lastErrorStack: null
   };
 
   client.on('qr', async (qr) => {
@@ -97,6 +99,8 @@ function getClient(gymId) {
   client.initialize().catch(err => {
     console.error(`[Gymix WA] Initialization failed for Gym ID: ${gymId}:`, err);
     sessionData.status = 'disconnected';
+    sessionData.lastError = err.message || String(err);
+    sessionData.lastErrorStack = err.stack || '';
   });
 
   sessionData.status = 'connecting';
@@ -121,6 +125,30 @@ app.get('/api/whatsapp/status', (req, res) => {
     status: session.status,
     qrCodeUrl: session.qrCodeUrl,
     connectedNumber: session.connectedNumber
+  });
+});
+
+/**
+ * Diagnostic debug endpoint to read initialization errors from the server
+ */
+app.get('/api/whatsapp/debug', (req, res) => {
+  const info = {};
+  Object.keys(sessions).forEach(gymId => {
+    info[gymId] = {
+      status: sessions[gymId].status,
+      connectedNumber: sessions[gymId].connectedNumber,
+      lastError: sessions[gymId].lastError,
+      lastErrorStack: sessions[gymId].lastErrorStack
+    };
+  });
+  res.json({
+    sessions: info,
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      PORT: process.env.PORT
+    },
+    platform: process.platform,
+    arch: process.arch
   });
 });
 
