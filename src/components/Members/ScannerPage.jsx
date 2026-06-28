@@ -25,30 +25,12 @@ export default function ScannerPage() {
   const html5QrCodeRef = useRef(null)
   const scannerId = 'qr-reader-container'
 
-  // Initialize and list cameras
-  useEffect(() => {
-    Html5Qrcode.getCameras()
-      .then((devices) => {
-        if (devices && devices.length > 0) {
-          setCameras(devices)
-          setSelectedCameraId(devices[0].id)
-        } else {
-          setScannerError('No camera devices found. Please ensure camera access is enabled.')
-        }
-      })
-      .catch((err) => {
-        console.error('Error fetching cameras:', err)
-        setScannerError('Camera permission denied or unavailable.')
-      })
 
-    return () => {
-      stopScanner()
-    }
-  }, [])
 
   // Start the PWA QR camera stream
   const startScanner = async (cameraId) => {
     if (!cameraId || isProcessing) return
+    await Promise.resolve()
     setScannerError('')
     setScanning(true)
     
@@ -99,6 +81,39 @@ export default function ScannerPage() {
       }
     }
   }
+
+  // Initialize and list cameras
+  const requestCameraAccess = () => {
+    Html5Qrcode.getCameras()
+      .then((devices) => {
+        setScannerError('')
+        if (devices && devices.length > 0) {
+          setCameras(devices)
+          setSelectedCameraId((prevId) => {
+            const firstId = devices[0].id
+            if (prevId === firstId) {
+              startScanner(firstId)
+            }
+            return firstId
+          })
+        } else {
+          setScannerError('No camera devices found. Please ensure camera access is enabled.')
+        }
+      })
+      .catch((err) => {
+        console.error('Error fetching cameras:', err)
+        setScannerError('Camera permission denied or unavailable.')
+      })
+  }
+
+  useEffect(() => {
+    requestCameraAccess()
+
+    return () => {
+      stopScanner()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Handle scanned QR tokens
   const handleScanSuccess = async (decodedText) => {
@@ -165,8 +180,12 @@ export default function ScannerPage() {
   // Toggle/start camera stream manually
   useEffect(() => {
     if (selectedCameraId && !scanning && !scanResult) {
-      startScanner(selectedCameraId)
+      const timer = setTimeout(() => {
+        startScanner(selectedCameraId)
+      }, 0)
+      return () => clearTimeout(timer)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCameraId])
 
   return (
@@ -196,9 +215,17 @@ export default function ScannerPage() {
 
         <div className="relative z-10 flex-1 flex flex-col justify-center items-center space-y-6">
           {scannerError && (
-            <div className="w-full px-4.5 py-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-bold uppercase tracking-wider animate-shake">
-              <ShieldAlert className="w-5 h-5 inline mr-2 text-rose-400" />
-              {scannerError}
+            <div className="w-full flex flex-col items-center gap-4">
+              <div className="w-full px-4.5 py-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-bold uppercase tracking-wider animate-shake">
+                <ShieldAlert className="w-5 h-5 inline mr-2 text-rose-400" />
+                {scannerError}
+              </div>
+              <button
+                onClick={requestCameraAccess}
+                className="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-emerald-500/10 border border-emerald-500/15 text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer"
+              >
+                Retry Camera Access
+              </button>
             </div>
           )}
 

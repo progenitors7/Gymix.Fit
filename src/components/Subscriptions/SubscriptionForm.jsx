@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, User, Tag } from 'lucide-react';
+import { Calendar, User, Tag, AlertTriangle } from 'lucide-react';
 import { useMembers } from '../../hooks/useMembers';
 import DatePicker from '../UI/DatePicker';
 import { planService } from '../../services/planService';
@@ -34,28 +34,7 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
     }
   }, [fetchMembers, members.length]);
 
-  // Auto-calculate expiry date
-  useEffect(() => {
-    if (!formData.start_date || !formData.duration_type || formData.duration_type === 'custom') return;
 
-    const calculateExpiry = (startDate, type) => {
-      const date = new Date(startDate);
-      if (isNaN(date.getTime())) return null;
-
-      switch (type) {
-        case 'monthly': date.setDate(date.getDate() + 30); break;
-        case 'quarterly': date.setDate(date.getDate() + 90); break;
-        case 'yearly': date.setDate(date.getDate() + 365); break;
-        default: return null;
-      }
-      return date.toISOString().split('T')[0];
-    };
-
-    const newExpiry = calculateExpiry(formData.start_date, formData.duration_type);
-    if (newExpiry && newExpiry !== formData.expiry_date) {
-      setFormData(prev => ({ ...prev, expiry_date: newExpiry }));
-    }
-  }, [formData.start_date, formData.duration_type]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -65,18 +44,41 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
       // Auto-fill if member is selected
       if (name === 'member_id') {
         const member = members.find(m => m.id === value);
-        if (member && member.membership_plan) {
-          next.plan_name = member.membership_plan;
+        if (member) {
+          const todayStr = new Date().toISOString().split('T')[0];
+          let suggestedStartDate = todayStr;
+          
+          if (member.expiry_date && member.expiry_date >= todayStr) {
+            const nextDay = new Date(member.expiry_date);
+            nextDay.setDate(nextDay.getDate() + 1);
+            suggestedStartDate = nextDay.toISOString().split('T')[0];
+          }
+
+          next.start_date = suggestedStartDate;
+          next.plan_name = member.membership_plan || '';
+
           const matchedPlan = plans.find(p => p.name === member.membership_plan);
           if (matchedPlan) {
             next.amount = matchedPlan.price;
             next.duration_type = 'custom'; // Custom since we use dynamic days
-            const date = new Date(next.start_date);
+            const date = new Date(suggestedStartDate);
             date.setDate(date.getDate() + matchedPlan.duration_days);
             next.expiry_date = date.toISOString().split('T')[0];
           }
         }
       }
+
+      // Auto-calculate expiry if duration_type changes
+      if (name === 'duration_type') {
+        if (value !== 'custom') {
+          const date = new Date(prev.start_date);
+          if (value === 'monthly') date.setDate(date.getDate() + 30);
+          else if (value === 'quarterly') date.setDate(date.getDate() + 90);
+          else if (value === 'yearly') date.setDate(date.getDate() + 365);
+          next.expiry_date = date.toISOString().split('T')[0];
+        }
+      }
+
       return next;
     });
   };
@@ -84,6 +86,48 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(formData);
+  };
+
+  const selectedMember = members.find(m => m.id === formData.member_id);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const hasOverlap = selectedMember && 
+                     selectedMember.expiry_date && 
+                     selectedMember.expiry_date >= todayStr && 
+                     formData.start_date <= selectedMember.expiry_date;
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  const getNextDayDateString = (dateStr) => {
+    const d = new Date(dateStr);
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  };
+
+  const handleAutoSchedule = () => {
+    if (!selectedMember || !selectedMember.expiry_date) return;
+    const nextDayStr = getNextDayDateString(selectedMember.expiry_date);
+    
+    setFormData(prev => {
+      const next = { ...prev, start_date: nextDayStr };
+      if (prev.duration_type && prev.duration_type !== 'custom') {
+        const date = new Date(nextDayStr);
+        if (prev.duration_type === 'monthly') date.setDate(date.getDate() + 30);
+        else if (prev.duration_type === 'quarterly') date.setDate(date.getDate() + 90);
+        else if (prev.duration_type === 'yearly') date.setDate(date.getDate() + 365);
+        next.expiry_date = date.toISOString().split('T')[0];
+      } else {
+        const matchedPlan = plans.find(p => p.name === prev.plan_name);
+        if (matchedPlan) {
+          const date = new Date(nextDayStr);
+          date.setDate(date.getDate() + matchedPlan.duration_days);
+          next.expiry_date = date.toISOString().split('T')[0];
+        }
+      }
+      return next;
+    });
   };
 
   return (
@@ -208,7 +252,27 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
           <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Activation Date</label>
           <DatePicker
             value={formData.start_date}
-            onChange={(val) => setFormData(prev => ({ ...prev, start_date: val }))}
+            onChange={(val) => {
+              setFormData(prev => {
+                const next = { ...prev, start_date: val };
+                if (prev.duration_type && prev.duration_type !== 'custom') {
+                  const date = new Date(val);
+                  if (prev.duration_type === 'monthly') date.setDate(date.getDate() + 30);
+                  else if (prev.duration_type === 'quarterly') date.setDate(date.getDate() + 90);
+                  else if (prev.duration_type === 'yearly') date.setDate(date.getDate() + 365);
+                  next.expiry_date = date.toISOString().split('T')[0];
+                } else {
+                  // custom plan matched auto-recalculate
+                  const matchedPlan = plans.find(p => p.name === prev.plan_name);
+                  if (matchedPlan) {
+                    const date = new Date(val);
+                    date.setDate(date.getDate() + matchedPlan.duration_days);
+                    next.expiry_date = date.toISOString().split('T')[0];
+                  }
+                }
+                return next;
+              });
+            }}
           />
         </div>
 
@@ -229,6 +293,26 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
             </div>
           )}
         </div>
+
+        {/* Overlap Warning Info Tip */}
+        {hasOverlap && (
+          <div className="md:col-span-2 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 text-amber-400 text-xs font-semibold space-y-2">
+            <p className="flex items-center gap-2">
+              <AlertTriangle className="w-4.5 h-4.5 text-amber-400 flex-shrink-0 animate-pulse" />
+              <span>
+                Athlete has an active plan until <strong>{formatDate(selectedMember.expiry_date)}</strong>. 
+                Activating the new plan on <strong>{formatDate(formData.start_date)}</strong> will overlap with their current active plan.
+              </span>
+            </p>
+            <button
+              type="button"
+              onClick={handleAutoSchedule}
+              className="text-emerald-400 hover:text-emerald-300 font-bold underline transition-colors cursor-pointer text-left block"
+            >
+              Click here to auto-schedule starting the day after (starts {formatDate(getNextDayDateString(selectedMember.expiry_date))}).
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t border-white/5">

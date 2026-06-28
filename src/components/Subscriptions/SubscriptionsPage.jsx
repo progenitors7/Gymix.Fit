@@ -2,9 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Plus, Search, Calendar, Clock, CheckCircle2, AlertCircle, XCircle,
-  Phone, ArrowRight, User, Target, ShieldCheck, X, History, Edit3,
-  ChevronRight, TrendingUp, Layers
+  Plus, Search, Calendar, Clock, AlertCircle,
+  Phone, ArrowRight, Target, ShieldCheck, X, History, Edit3, Layers
 } from 'lucide-react';
 import { useSubscriptions } from '../../hooks/useSubscriptions';
 import { subscriptionService } from '../../services/subscriptionService';
@@ -26,7 +25,7 @@ const statusConfig = {
   expired: { color: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/20', dot: 'bg-rose-400' },
 };
 
-function MemberDetailModal({ sub, allSubs, onClose, onEdit }) {
+function MemberDetailModal({ sub, onClose, onEdit }) {
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const memberId = sub.member_id || sub.members?.id;
@@ -34,6 +33,7 @@ function MemberDetailModal({ sub, allSubs, onClose, onEdit }) {
   const fetchHistory = useCallback(async () => {
     if (!memberId) return;
     try {
+      await Promise.resolve();
       setLoadingHistory(true);
       const data = await subscriptionService.getSubscriptionsByMember(memberId, sub.gym_id);
       setHistory(data);
@@ -42,10 +42,13 @@ function MemberDetailModal({ sub, allSubs, onClose, onEdit }) {
     } finally {
       setLoadingHistory(false);
     }
-  }, [memberId]);
+  }, [memberId, sub.gym_id]);
 
   useEffect(() => {
-    fetchHistory();
+    const timer = setTimeout(() => {
+      fetchHistory();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchHistory]);
 
   const joinDate = sub.members?.join_date;
@@ -237,20 +240,41 @@ export default function SubscriptionsPage() {
     fetchSubscriptions();
   }, [fetchSubscriptions]);
 
-  const consolidatedSubscriptions = Object.values(
-    subscriptions.reduce((acc, sub) => {
-      const memberId = sub.member_id || sub.members?.id;
-      if (!memberId) return acc;
-      if (!acc[memberId]) {
-        acc[memberId] = sub;
-      } else {
-        const currentExpiry = new Date(acc[memberId].expiry_date).getTime();
-        const newExpiry = new Date(sub.expiry_date).getTime();
-        if (newExpiry > currentExpiry) acc[memberId] = sub;
+  // Group subscriptions by member and select the current/most relevant subscription for each
+  const todayStr = new Date().toISOString().split('T')[0];
+  const subsByMember = subscriptions.reduce((acc, sub) => {
+    const memberId = sub.member_id || sub.members?.id;
+    if (!memberId) return acc;
+    if (!acc[memberId]) acc[memberId] = [];
+    acc[memberId].push(sub);
+    return acc;
+  }, {});
+
+  const consolidatedSubscriptions = Object.values(subsByMember)
+    .map((memberSubs) => {
+      // 1. Try to find currently active subscriptions (covering today)
+      const activeSubs = memberSubs.filter(
+        (sub) => sub.start_date <= todayStr && sub.expiry_date >= todayStr
+      );
+      if (activeSubs.length > 0) {
+        return activeSubs.sort((a, b) => new Date(b.expiry_date) - new Date(a.expiry_date))[0];
       }
-      return acc;
-    }, {})
-  ).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      // 2. If none active, try to find upcoming/future subscriptions
+      const futureSubs = memberSubs.filter((sub) => sub.start_date > todayStr);
+      if (futureSubs.length > 0) {
+        return futureSubs.sort((a, b) => new Date(a.start_date) - new Date(b.start_date))[0];
+      }
+
+      // 3. Fallback to past/expired subscriptions (most recently expired first)
+      const pastSubs = memberSubs.filter((sub) => sub.expiry_date < todayStr);
+      if (pastSubs.length > 0) {
+        return pastSubs.sort((a, b) => new Date(b.expiry_date) - new Date(a.expiry_date))[0];
+      }
+
+      return memberSubs[0];
+    })
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   const filteredSubscriptions = consolidatedSubscriptions.filter(sub => {
     const matchesSearch =

@@ -7,6 +7,20 @@ const formatDate = (date) => {
 
 const AUTO_DURATION_TYPES = new Set(['monthly', 'quarterly', 'yearly']);
 
+export const getStatusFromExpiry = (expiryDate) => {
+  if (!expiryDate) return 'active';
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expiry = new Date(expiryDate);
+  expiry.setHours(0, 0, 0, 0);
+  const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+
+  if (daysLeft < 0) return 'expired';
+  if (daysLeft <= 7) return 'expiring_soon';
+  return 'active';
+};
+
 export const subscriptionService = {
   // Get all subscriptions for a specific gym (protects against Super Admin leakage in dashboard)
   async getAllSubscriptions(gymId) {
@@ -27,7 +41,10 @@ export const subscriptionService = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data;
+    return (data ?? []).map(sub => ({
+      ...sub,
+      status: getStatusFromExpiry(sub.expiry_date)
+    }));
   },
 
   // Get all subscriptions for a specific member (full plan history)
@@ -45,7 +62,10 @@ export const subscriptionService = {
       .order('start_date', { ascending: false });
 
     if (error) throw error;
-    return data;
+    return (data ?? []).map(sub => ({
+      ...sub,
+      status: getStatusFromExpiry(sub.expiry_date)
+    }));
   },
 
   // Get active subscriptions count

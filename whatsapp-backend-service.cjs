@@ -399,7 +399,7 @@ app.post('/api/whatsapp/send', async (req, res) => {
     }
 
     // Sanitize phone
-    let cleanPhone = phone.replace(/\D/g, '');
+    let cleanPhone = String(phone || '').replace(/\D/g, '');
     if (cleanPhone.startsWith('0')) {
       cleanPhone = cleanPhone.substring(1);
     }

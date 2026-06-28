@@ -18,6 +18,50 @@ export function useDashboardStats() {
       setLoading(true);
       setError(null);
 
+      // Lazy background database status sync for expired members and subscriptions
+      const syncDatabaseStatuses = async (gymId) => {
+        try {
+          const todayStr = new Date().toISOString().split('T')[0];
+
+          // 1. Find and update expired members in DB
+          const { data: expiredMembers } = await supabase
+            .from('members')
+            .select('id')
+            .eq('gym_id', gymId)
+            .eq('status', 'active')
+            .lt('expiry_date', todayStr);
+
+          if (expiredMembers && expiredMembers.length > 0) {
+            const ids = expiredMembers.map(m => m.id);
+            await supabase
+              .from('members')
+              .update({ status: 'expired' })
+              .in('id', ids);
+          }
+
+          // 2. Find and update expired subscriptions in DB
+          const { data: expiredSubs } = await supabase
+            .from('subscriptions')
+            .select('id')
+            .eq('gym_id', gymId)
+            .eq('status', 'active')
+            .lt('expiry_date', todayStr);
+
+          if (expiredSubs && expiredSubs.length > 0) {
+            const ids = expiredSubs.map(s => s.id);
+            await supabase
+              .from('subscriptions')
+              .update({ status: 'expired' })
+              .in('id', ids);
+          }
+        } catch (syncErr) {
+          console.error('[Gymix Sync] Error syncing expired statuses in database:', syncErr);
+        }
+      };
+
+      // Run database status synchronization in the background
+      syncDatabaseStatuses(gym.id).catch(console.error);
+
       // Fetch all members for this gym with their subscriptions
       const { data: rawMembers, error: membersError } = await supabase
         .from('members')
@@ -60,18 +104,19 @@ export function useDashboardStats() {
       };
 
       const syncMemberFromLatestSubscription = (member) => {
-        if (member.status === 'left') {
-          const { subscriptions, ...cleanMember } = member;
+        const cleanMember = { ...member };
+        if (cleanMember.status === 'left') {
+          delete cleanMember.subscriptions;
           return cleanMember;
         }
 
-        const latest = getLatestSubscription(member.subscriptions);
+        const latest = getLatestSubscription(cleanMember.subscriptions);
         if (!latest) {
-          const { subscriptions, ...cleanMember } = member;
+          delete cleanMember.subscriptions;
           return cleanMember;
         }
 
-        const { subscriptions, ...cleanMember } = member;
+        delete cleanMember.subscriptions;
         return {
           ...cleanMember,
           membership_plan: latest.plan_name || cleanMember.membership_plan,
