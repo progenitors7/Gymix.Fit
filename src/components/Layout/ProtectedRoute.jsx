@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useCurrentGym } from '../../hooks/useCurrentGym'
+import toast from 'react-hot-toast'
 
 /**
  * ProtectedRoute — Clean state machine guard.
@@ -16,8 +18,28 @@ import { useCurrentGym } from '../../hooks/useCurrentGym'
  */
 export default function ProtectedRoute({ children }) {
   const { user, profile, loading: authLoading, signOut } = useAuth()
-  const { gym, gymLoading, gymError } = useCurrentGym()
+  const { gym, gymLoading, gymError, refreshGym } = useCurrentGym()
   const location = useLocation()
+  
+  const [refreshing, setRefreshing] = useState(false)
+
+  const handleRefresh = async () => {
+    if (refreshing) return
+    setRefreshing(true)
+    try {
+      await refreshGym()
+      toast.success('Access status refreshed!')
+    } catch (err) {
+      toast.error('Failed to refresh status.')
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  const handleManageOnline = () => {
+    toast.success('Opening secure billing portal...')
+    window.open('https://gymix.fit/billing', '_system')
+  }
 
   // ── Step 1: Auth still loading (user + profile sync) ──
   if (authLoading) {
@@ -152,11 +174,29 @@ export default function ProtectedRoute({ children }) {
             </p>
             <div className="space-y-3">
               <button
+                onClick={handleManageOnline}
+                className="w-full py-4 bg-[#3390ec] hover:bg-[#287cd0] text-white font-bold rounded-2xl transition-all uppercase text-xs tracking-wider shadow-lg shadow-[#3390ec]/10 flex items-center justify-center gap-2"
+              >
+                Manage Subscription Online
+              </button>
+
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="w-full py-4 bg-white/5 hover:bg-white/10 text-slate-300 font-bold rounded-2xl transition-all border border-white/5 uppercase text-xs tracking-wider flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {refreshing ? (
+                  <div className="w-4 h-4 border-2 border-slate-300 border-t-transparent rounded-full animate-spin" />
+                ) : null}
+                {refreshing ? 'Refreshing...' : 'Refresh Payment Status'}
+              </button>
+
+              <button
                 onClick={async () => {
                   await signOut();
                   window.location.href = '/login';
                 }}
-                className="w-full py-4 bg-white/5 hover:bg-white/10 text-slate-300 font-bold rounded-2xl transition-all border border-white/5 uppercase text-xs tracking-wider"
+                className="w-full py-4 bg-transparent hover:bg-white/5 text-slate-500 hover:text-slate-400 font-bold rounded-2xl transition-all uppercase text-[10px] tracking-widest"
               >
                 Sign Out / Log Out
               </button>
