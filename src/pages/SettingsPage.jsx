@@ -963,7 +963,7 @@ export default function SettingsPage() {
               
               <button 
                 onClick={openAddPlanModal}
-                className="p-5 rounded-2xl border-2 border-dashed border-white/5 hover:border-[#3390ec]/30 hover:bg-[#3390ec]/5 text-gray-500 hover:text-[#3390ec] transition-all duration-300 flex flex-col items-center justify-center gap-2 min-h-[110px] w-full"
+                className="onboarding-add-plan-btn p-5 rounded-2xl border-2 border-dashed border-white/5 hover:border-[#3390ec]/30 hover:bg-[#3390ec]/5 text-gray-500 hover:text-[#3390ec] transition-all duration-300 flex flex-col items-center justify-center gap-2 min-h-[110px] w-full"
               >
                 <Plus className="w-5 h-5 mb-1 text-gray-600 group-hover:text-[#3390ec] transition-colors" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Add New Plan</span>

@@ -272,7 +272,7 @@ export default function ProfilePage() {
                       value={profileName}
                       onChange={(e) => setProfileName(e.target.value)}
                       placeholder="Enter full name..."
-                      className="w-full bg-white/[0.03] border border-white/5 rounded-2xl pl-12 pr-4 py-4 text-white placeholder-slate-600 text-sm font-medium focus:outline-none focus:bg-white/[0.05] focus:border-blue-500/50 transition-all"
+                      className="onboarding-profile-name w-full bg-white/[0.03] border border-white/5 rounded-2xl pl-12 pr-4 py-4 text-white placeholder-slate-600 text-sm font-medium focus:outline-none focus:bg-white/[0.05] focus:border-blue-500/50 transition-all"
                     />
                   </div>
                 </div>
@@ -287,7 +287,7 @@ export default function ProfilePage() {
                       value={profilePhone}
                       onChange={(e) => setProfilePhone(e.target.value)}
                       placeholder="e.g. +91 9876543210"
-                      className="w-full bg-white/[0.03] border border-white/5 rounded-2xl pl-12 pr-4 py-4 text-white placeholder-slate-600 text-sm font-medium focus:outline-none focus:bg-white/[0.05] focus:border-blue-500/50 transition-all"
+                      className="onboarding-profile-phone w-full bg-white/[0.03] border border-white/5 rounded-2xl pl-12 pr-4 py-4 text-white placeholder-slate-600 text-sm font-medium focus:outline-none focus:bg-white/[0.05] focus:border-blue-500/50 transition-all"
                     />
                   </div>
                 </div>
@@ -332,7 +332,7 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   disabled={savingProfile}
-                  className="w-full sm:w-auto px-10 py-4 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50"
+                  className="onboarding-profile-save w-full sm:w-auto px-10 py-4 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50"
                 >
                   {savingProfile ? (
                     <span className="flex items-center justify-center gap-3">

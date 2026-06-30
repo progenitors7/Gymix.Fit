@@ -358,60 +358,8 @@ export const superAdminService = {
    * Permanently delete a gym and all its associated data.
    */
   async deleteGym(gymId) {
-    // 1. Fetch gym to get owner_user_id
-    const { data: gym } = await supabase
-      .from('gyms')
-      .select('owner_user_id')
-      .eq('id', gymId)
-      .maybeSingle();
-
-    // 2. Fetch members of this gym to delete their individual logs
-    const { data: gymMembers } = await supabase
-      .from('members')
-      .select('id')
-      .eq('gym_id', gymId);
-    
-    const memberIds = gymMembers?.map(m => m.id) || [];
-
-    if (memberIds.length > 0) {
-      await supabase.from('member_coins_transactions').delete().in('member_id', memberIds);
-      await supabase.from('member_progress_logs').delete().in('member_id', memberIds);
-      await supabase.from('member_xp_transactions').delete().in('member_id', memberIds);
-    }
-
-    // 3. Manually delete dependent records to avoid foreign key constraints
-    await supabase.from('leaderboard_season_history').delete().eq('gym_id', gymId);
-    await supabase.from('leaderboard_seasons').delete().eq('gym_id', gymId);
-    await supabase.from('attendance').delete().eq('gym_id', gymId);
-    await supabase.from('connection_requests').delete().eq('gym_id', gymId);
-    await supabase.from('payments').delete().eq('gym_id', gymId);
-    await supabase.from('subscriptions').delete().eq('gym_id', gymId);
-    await supabase.from('notifications').delete().eq('gym_id', gymId);
-    await supabase.from('members').delete().eq('gym_id', gymId);
-    await supabase.from('membership_plans').delete().eq('gym_id', gymId);
-    await supabase.from('saas_subscriptions').delete().eq('gym_id', gymId);
-    await supabase.from('support_tickets').delete().eq('gym_id', gymId);
-    
-    // 4. Delete gym
-    const { error: gymError } = await supabase
-      .from('gyms')
-      .delete()
-      .eq('id', gymId);
-    
-    if (gymError) throw gymError;
-
-    // 5. Delete the owner profile and auth.users entry completely to strip owner login capabilities
-    if (gym?.owner_user_id) {
-      const { error: rpcError } = await supabase.rpc('delete_user_by_admin', { target_user_id: gym.owner_user_id });
-      if (rpcError) {
-        // Fallback to profile deletion if RPC has issues
-        await supabase
-          .from('profiles')
-          .delete()
-          .eq('id', gym.owner_user_id);
-      }
-    }
-
+    const { data, error } = await supabase.rpc('delete_gym_by_admin', { target_gym_id: gymId });
+    if (error) throw error;
     return true;
   },
 

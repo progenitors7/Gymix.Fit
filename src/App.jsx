@@ -184,6 +184,16 @@ function DeepLinkHandler() {
       import('@capacitor/app').then(({ App }) => {
         const handler = App.addListener('backButton', (data) => {
           console.log('[DeepLinkHandler] Hardware back button pressed. Can go back:', data.canGoBack)
+          
+          // Dispatch custom cancelable event to allow active modals/views to intercept the back button
+          const backEvent = new CustomEvent('hardwareBack', { cancelable: true })
+          const defaultPrevented = !window.dispatchEvent(backEvent)
+          
+          if (defaultPrevented) {
+            console.log('[DeepLinkHandler] Back button default prevented by active modal/view.')
+            return
+          }
+
           const currentPath = window.location.pathname
           const exitRoutes = ['/dashboard', '/login', '/signup', '/']
           

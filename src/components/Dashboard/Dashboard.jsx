@@ -12,6 +12,7 @@ import PendingPaymentsWidget from './PendingPaymentsWidget';
 import { useAuth } from '../../hooks/useAuth';
 import MemberDashboard from './MemberDashboard';
 import PendingRequestsWidget from './PendingRequestsWidget';
+import OnboardingChecklist from './OnboardingChecklist';
 import { toast } from 'react-hot-toast';
 
 import { 
@@ -69,6 +70,19 @@ export default function Dashboard() {
   }
 
   const [showPosterModal, setShowPosterModal] = useState(false)
+
+  useEffect(() => {
+    const handleHardwareBack = (e) => {
+      if (showPosterModal) {
+        e.preventDefault();
+        setShowPosterModal(false);
+      }
+    };
+    window.addEventListener('hardwareBack', handleHardwareBack);
+    return () => {
+      window.removeEventListener('hardwareBack', handleHardwareBack);
+    };
+  }, [showPosterModal]);
 
   const handlePrintPoster = () => {
     setShowPosterModal(true)
@@ -217,7 +231,7 @@ export default function Dashboard() {
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-        <div className="bg-[#1c1c1c] border border-white/5 rounded-[2.5rem] p-6 sm:p-8 max-w-md w-full text-center space-y-6 relative overflow-y-auto max-h-[90vh] shadow-2xl">
+        <div className="bg-[#1c1c1c] border border-white/5 rounded-[2.5rem] p-5 sm:p-8 max-w-md w-full text-center space-y-4 relative overflow-y-auto max-h-[92vh] hide-scrollbar shadow-2xl">
           {/* Subtle background glow */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#3b82f6]/5 blur-[50px] rounded-full pointer-events-none" />
           
@@ -231,13 +245,13 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <div className="space-y-1 pt-2 relative z-10">
-            <h2 className="text-xl sm:text-2xl font-black text-white uppercase italic tracking-tight">SCAN TO CONNECT TO</h2>
-            <h3 className="text-lg sm:text-xl font-bold text-[#3b82f6] uppercase tracking-wide italic">{gymName}</h3>
+          <div className="space-y-0.5 pt-1 relative z-10">
+            <h2 className="text-lg sm:text-2xl font-black text-white uppercase italic tracking-tight">SCAN TO CONNECT TO</h2>
+            <h3 className="text-base sm:text-xl font-bold text-[#3b82f6] uppercase tracking-wide italic">{gymName}</h3>
           </div>
 
           {/* QR Code Container */}
-          <div className="relative w-52 h-52 sm:w-60 sm:h-60 mx-auto bg-white p-4 rounded-3xl border-4 border-slate-900 shadow-xl flex items-center justify-center relative z-10">
+          <div className="relative w-44 h-44 sm:w-60 sm:h-60 mx-auto bg-white p-4 rounded-3xl border-4 border-slate-900 shadow-xl flex items-center justify-center relative z-10">
             <img src={qrUrl} alt="Gym QR Code" className="w-full h-full object-contain" />
           </div>
 
@@ -245,14 +259,14 @@ export default function Dashboard() {
             Open your mobile camera or any QR scanner to scan and connect instantly. Setup your athlete profile or log in, then tap 'Connect Terminal'!
           </p>
 
-          <div className="space-y-2 relative z-10">
+          <div className="space-y-1 relative z-10">
             <p className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest">Manual Code Entry</p>
-            <div className="inline-block bg-[#0F1117] border border-white/10 px-5 py-2.5 sm:px-6 sm:py-3 rounded-2xl font-mono text-xl sm:text-2xl font-black tracking-[0.2em] text-white">
+            <div className="inline-block bg-[#0F1117] border border-white/10 px-4 py-2 sm:px-6 sm:py-3 rounded-2xl font-mono text-lg sm:text-2xl font-black tracking-[0.2em] text-white">
               {gym?.unique_code}
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 pt-2 relative z-10">
+          <div className="flex flex-col gap-2 pt-1 relative z-10">
             {!isPlaystoreApp && (
               <button
                 onClick={triggerWebPrint}
@@ -412,6 +426,11 @@ export default function Dashboard() {
           />
         </div>
       </div>
+
+      {/* Onboarding Checklist Widget */}
+      {profile?.role === 'owner' && (
+        <OnboardingChecklist profile={profile} gym={gym} stats={stats} />
+      )}
 
       {/* ── KPI Grid (2-column grid on mobile, 3-column grid on md, 6-column grid on desktop) ── */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-6">
@@ -638,7 +657,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 gap-3 mb-5">
               <Link 
                 to="/members/new" 
-                className="p-4 bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 rounded-2xl flex flex-col items-center justify-center text-center gap-2 transition-all cursor-pointer group"
+                className="onboarding-add-member-btn p-4 bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 rounded-2xl flex flex-col items-center justify-center text-center gap-2 transition-all cursor-pointer group"
               >
                 <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
                   <UserPlus className="w-4.5 h-4.5" />
@@ -648,7 +667,7 @@ export default function Dashboard() {
               
               <Link 
                 to="/subscriptions/new" 
-                className="p-4 bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 rounded-2xl flex flex-col items-center justify-center text-center gap-2 transition-all cursor-pointer group"
+                className="onboarding-activate-plan-btn p-4 bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 rounded-2xl flex flex-col items-center justify-center text-center gap-2 transition-all cursor-pointer group"
               >
                 <div className="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center">
                   <CalendarPlus className="w-4.5 h-4.5" />
@@ -658,7 +677,7 @@ export default function Dashboard() {
 
               <Link 
                 to="/payments/new" 
-                className="p-4 bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 rounded-2xl flex flex-col items-center justify-center text-center gap-2 transition-all cursor-pointer group"
+                className="onboarding-pay-invoice-btn p-4 bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 rounded-2xl flex flex-col items-center justify-center text-center gap-2 transition-all cursor-pointer group"
               >
                 <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
                   <CircleDollarSign className="w-4.5 h-4.5" />
@@ -668,7 +687,7 @@ export default function Dashboard() {
 
               <Link 
                 to="/scanner" 
-                className="p-4 bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 rounded-2xl flex flex-col items-center justify-center text-center gap-2 transition-all cursor-pointer group"
+                className="onboarding-gate-scanner-btn p-4 bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 rounded-2xl flex flex-col items-center justify-center text-center gap-2 transition-all cursor-pointer group"
               >
                 <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
                   <QrCode className="w-4.5 h-4.5" />
@@ -680,7 +699,7 @@ export default function Dashboard() {
             <div className="border-t border-white/5 pt-4 flex flex-col gap-3">
               <button 
                 onClick={handlePrintPoster}
-                className="w-full py-3 bg-[#3B82F6]/10 hover:bg-[#3B82F6]/20 border border-[#3B82F6]/20 rounded-xl text-[10px] font-black uppercase tracking-wider text-[#60A5FA] transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="onboarding-print-poster-btn w-full py-3 bg-[#3B82F6]/10 hover:bg-[#3B82F6]/20 border border-[#3B82F6]/20 rounded-xl text-[10px] font-black uppercase tracking-wider text-[#60A5FA] transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <Printer className="w-3.5 h-3.5" />
                 Print QR Poster
@@ -698,15 +717,17 @@ export default function Dashboard() {
           </div>
 
           {/* Pending requests approval box (Brought to top-priority area & highlighted!) */}
-          <PendingRequestsWidget gymId={gym?.id} gymCode={gym?.unique_code} onRefreshStats={fetchStats} />
+          <div className="onboarding-requests-widget">
+            <PendingRequestsWidget gymId={gym?.id} gymCode={gym?.unique_code} onRefreshStats={fetchStats} />
+          </div>
 
           {/* Expiring Soon */}
-          <div>
+          <div className="onboarding-expiring-widget">
             <ExpiringWidget members={stats.expiringMembers} onRefresh={fetchStats} />
           </div>
 
           {/* Outstanding dues */}
-          <div>
+          <div className="onboarding-payments-widget">
             <PendingPaymentsWidget payments={stats.pendingPayments} />
           </div>
 
