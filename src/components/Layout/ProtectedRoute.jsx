@@ -36,9 +36,20 @@ export default function ProtectedRoute({ children }) {
     }
   }
 
-  const handleManageOnline = () => {
+  const handleManageOnline = async () => {
     toast.success('Opening secure billing portal...')
-    window.open('https://gymix.fit/billing', '_system')
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        const tokenHash = `#access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`
+        window.open(`https://gymix.fit/billing?source=app${tokenHash}`, '_system')
+      } else {
+        window.open('https://gymix.fit/billing?source=app', '_system')
+      }
+    } catch (e) {
+      console.error('[ProtectedRoute] Failed to get session for billing:', e)
+      window.open('https://gymix.fit/billing?source=app', '_system')
+    }
   }
 
   // ── Step 1: Auth still loading (user + profile sync) ──

@@ -7,7 +7,8 @@ import {
   RefreshCw,
   Ticket,
   Clock,
-  Gift
+  Gift,
+  ArrowRight
 } from 'lucide-react';
 import { useCurrentGym } from '../hooks/useCurrentGym';
 import { supabase } from '../lib/supabaseClient';
@@ -143,8 +144,18 @@ export default function BillingPage() {
           message: 'Opening secure payment gateway...', 
           type: 'success' 
         });
-        setTimeout(() => {
-          window.open('https://gymix.fit/billing', '_system');
+        setTimeout(async () => {
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+              const tokenHash = `#access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`;
+              window.open(`https://gymix.fit/billing?source=app${tokenHash}`, '_system');
+            } else {
+              window.open('https://gymix.fit/billing?source=app', '_system');
+            }
+          } catch (e) {
+            window.open('https://gymix.fit/billing?source=app', '_system');
+          }
         }, 800);
         return;
       }
@@ -294,6 +305,39 @@ export default function BillingPage() {
   const isPending = gym?.billing_status === 'pending' || gym?.status === 'pending';
   const isExpiringSoon = Number.isFinite(gym?.billing_days_left) && gym.billing_days_left >= 0 && gym.billing_days_left <= 7;
   const isDurationDisabled = appliedPromo?.discount_type === 'full_free';
+
+  const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const source = params ? params.get('source') : null;
+  const showReturnToApp = source === 'app' && gym?.billing_status === 'active';
+
+  if (showReturnToApp) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center p-4">
+        <div className="bg-[#1c1c1c] border border-emerald-500/20 rounded-[2.5rem] p-8 sm:p-12 text-center space-y-6 max-w-md w-full shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-[50px] rounded-full pointer-events-none" />
+          
+          <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20 text-emerald-400 text-3xl mx-auto mb-2">
+            🎉
+          </div>
+          
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black text-white uppercase italic tracking-tight">Payment Successful!</h2>
+            <p className="text-slate-400 text-sm font-semibold leading-relaxed">
+              Your Gymix subscription for <strong className="text-white">"{gymName}"</strong> is now active. You can close this window and return to the app.
+            </p>
+          </div>
+          
+          <a
+            href="com.gymix.fit://dashboard"
+            className="block w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-2xl transition-all uppercase text-xs tracking-widest shadow-lg shadow-emerald-500/20 text-center flex items-center justify-center gap-2"
+          >
+            <span>Return to Mobile App</span>
+            <ArrowRight className="w-4 h-4" />
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-10 animate-in fade-in duration-700">

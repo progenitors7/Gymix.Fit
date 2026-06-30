@@ -120,8 +120,8 @@ function DeepLinkHandler() {
           console.log('[DeepLinkHandler] App opened with URL:', event.url)
           try {
             const urlStr = event.url
-            if (urlStr.includes('://signup') || urlStr.includes('://login') || urlStr.includes('://forgot-password')) {
-              const match = urlStr.match(/:\/\/(signup|login|forgot-password)(\?.*)?/)
+            if (urlStr.includes('://signup') || urlStr.includes('://login') || urlStr.includes('://forgot-password') || urlStr.includes('://billing-success') || urlStr.includes('://dashboard')) {
+              const match = urlStr.match(/:\/\/(signup|login|forgot-password|billing-success|dashboard)(\?.*)?/)
               if (match) {
                 const path = match[1]
                 const search = match[2] || ''
@@ -133,7 +133,12 @@ function DeepLinkHandler() {
                   localStorage.setItem('scanned_gym_code', gym.trim().toUpperCase())
                 }
                 
-                navigate(`/${path}${search}`, { replace: true })
+                if (path === 'billing-success' || path === 'dashboard') {
+                  navigate('/dashboard', { replace: true })
+                  window.location.reload()
+                } else {
+                  navigate(`/${path}${search}`, { replace: true })
+                }
               }
             }
           } catch (e) {

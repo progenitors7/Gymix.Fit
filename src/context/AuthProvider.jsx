@@ -154,52 +154,80 @@ export function AuthProvider({ children }) {
       }
     }, 5000)
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!settled) {
-        settled = true
-        clearTimeout(timer)
-        const currUser = session?.user ?? null
-        setUser(currUser)
-        if (currUser) {
-          // If we have a cached profile, we can load instantly. Otherwise, wait for sync.
-          const cacheKey = `profile_cache_${currUser.id}`
-          const cached = localStorage.getItem(cacheKey)
-          if (cached) {
-            try {
-              const parsed = JSON.parse(cached)
-              if (parsed) {
-                setProfile(parsed)
-                setLoading(false)
-                // Sync in background
-                syncProfile(currUser).catch(err => {
-                  console.error('[AuthProvider] Background profile sync failed:', err)
-                })
-                return
-              }
-            } catch (e) {
-              console.error('[AuthProvider] Error parsing cached profile:', e)
-            }
-          }
-
-          // No cache: wait for initial profile sync
+    const checkHashParamsAndInit = async () => {
+      // 1. Check if hash params exist on web window (browser auto-login token pass)
+      if (typeof window !== 'undefined' && window.location.hash) {
+        const hash = window.location.hash.substring(1)
+        const params = new URLSearchParams(hash)
+        const accessToken = params.get('access_token')
+        const refreshToken = params.get('refresh_token')
+        
+        if (accessToken && refreshToken) {
+          console.log('[AuthProvider] Found session tokens in URL hash. Restoring session...')
           try {
-            await syncProfile(currUser)
-          } catch (err) {
-            console.error('[AuthProvider] Initial profile sync failed:', err)
-          } finally {
+            await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken
+            })
+            // Clean up the hash from the URL bar to keep it tidy
+            window.history.replaceState(null, null, ' ');
+          } catch (e) {
+            console.error('[AuthProvider] Failed to set session from hash:', e)
+          }
+        }
+      }
+
+      // 2. Load the session
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!settled) {
+          settled = true
+          clearTimeout(timer)
+          const currUser = session?.user ?? null
+          setUser(currUser)
+          if (currUser) {
+            // If we have a cached profile, we can load instantly. Otherwise, wait for sync.
+            const cacheKey = `profile_cache_${currUser.id}`
+            const cached = localStorage.getItem(cacheKey)
+            if (cached) {
+              try {
+                const parsed = JSON.parse(cached)
+                if (parsed) {
+                  setProfile(parsed)
+                  setLoading(false)
+                  // Sync in background
+                  syncProfile(currUser).catch(err => {
+                    console.error('[AuthProvider] Background profile sync failed:', err)
+                  })
+                  return
+                }
+              } catch (e) {
+                console.error('[AuthProvider] Error parsing cached profile:', e)
+              }
+            }
+
+            // No cache: wait for initial profile sync
+            try {
+              await syncProfile(currUser)
+            } catch (err) {
+              console.error('[AuthProvider] Initial profile sync failed:', err)
+            } finally {
+              setLoading(false)
+            }
+          } else {
             setLoading(false)
           }
-        } else {
+        }
+      } catch (err) {
+        if (!settled) {
+          settled = true
+          clearTimeout(timer)
           setLoading(false)
         }
       }
-    }).catch(() => {
-      if (!settled) {
-        settled = true
-        clearTimeout(timer)
-        setLoading(false)
-      }
-    })
+    }
+
+    checkHashParamsAndInit()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const currUser = session?.user ?? null
