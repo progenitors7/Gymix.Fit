@@ -305,12 +305,10 @@ export default function LandingPage() {
 
           {/* Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center gap-8 text-xs font-black uppercase tracking-wider text-slate-400">
-            <button onClick={() => scrollToId('features')} className="hover:text-white transition-colors">Core Features</button>
-            <button onClick={() => scrollToId('simulator')} className="hover:text-white transition-colors">Interactive Demo</button>
-            <button onClick={() => scrollToId('pwa-installer')} className="hover:text-white transition-colors">PWA Mobile</button>
-            <button onClick={() => scrollToId('hardware-store')} className="hover:text-white transition-colors">Hardware Store</button>
-            <button onClick={() => scrollToId('roadmap')} className="hover:text-white transition-colors">Technological Roadmap</button>
-            <button onClick={() => scrollToId('pricing')} className="hover:text-white transition-colors">Pricing Calculator</button>
+            <button onClick={() => scrollToId('features')} className="hover:text-white transition-colors">Features</button>
+            <button onClick={() => scrollToId('simulator')} className="hover:text-white transition-colors">Simulator</button>
+            <button onClick={() => scrollToId('pwa-installer')} className="hover:text-white transition-colors">Get App</button>
+            <button onClick={() => scrollToId('pricing')} className="hover:text-white transition-colors">Pricing</button>
             <button onClick={() => scrollToId('faq')} className="hover:text-slate-200 transition-colors">FAQ</button>
           </nav>
 
@@ -396,13 +394,11 @@ export default function LandingPage() {
 
                 <div className="flex flex-col gap-4 mt-8">
                   {[
-                    { label: 'Core Features', target: 'features' },
-                    { label: 'Interactive Demo', target: 'simulator' },
-                    { label: 'PWA Mobile App', target: 'pwa-installer' },
-                    { label: 'Hardware Store', target: 'hardware-store' },
-                    { label: 'Technological Roadmap', target: 'roadmap' },
-                    { label: 'Pricing Calculator', target: 'pricing' },
-                    { label: 'Frequently Asked Questions', target: 'faq' }
+                    { label: 'Features', target: 'features' },
+                    { label: 'Simulator', target: 'simulator' },
+                    { label: 'Get App', target: 'pwa-installer' },
+                    { label: 'Pricing', target: 'pricing' },
+                    { label: 'FAQ', target: 'faq' }
                   ].map((link, index) => (
                     <button
                       key={index}
@@ -469,7 +465,7 @@ export default function LandingPage() {
           className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white leading-[1.05] tracking-tight uppercase italic max-w-5xl py-2"
         >
           UNLEASH YOUR <br className="hidden sm:inline" />
-          GYM'S <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#863BFF] via-[#a87cff] to-[#10B981] drop-shadow-[0_0_30px_rgba(134,59,255,0.2)]">REVENUE</span> POTENTIAL
+          GYM'S <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#863BFF] to-[#10B981] drop-shadow-[0_0_30px_rgba(134,59,255,0.2)]">REVENUE</span> POTENTIAL
         </motion.h1>
 
         {/* Description Paragraph */}
@@ -524,27 +520,34 @@ export default function LandingPage() {
               href="https://play.google.com/store/apps/details?id=com.gymix.fit"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 px-5 py-3 bg-white/[0.02] border border-white/5 hover:border-white/15 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 text-left w-[165px]"
+              className="flex items-center gap-3.5 px-5 py-2.5 bg-white border border-slate-200 hover:border-slate-350 hover:bg-slate-50 rounded-[1.25rem] transition-all hover:scale-[1.02] active:scale-95 text-left w-[175px] shadow-md shadow-black/10"
             >
-              <Smartphone className="w-6 h-6 text-[#10B981]" />
+              <svg viewBox="0 0 360 360" className="w-5.5 h-5.5 flex-shrink-0">
+                <path d="M33 19.3c-1.4 1.5-2.2 3.8-2.2 6.8V334c0 3 0.8 5.3 2.2 6.8l1.2 1.2L194.5 181.7v-3.4L34.2 18.1l-1.2 1.2z" fill="#3bccff" />
+                <path d="M248.5 236.3L194.5 182.2v-3.4l54 54.1 1.2-0.7 63.8-36.2c18.2-10.3 18.2-27.2 0-37.5L249.7 122.2l-1.2-0.7-54 54.1v6.8l54 53.9z" fill="#fec400" />
+                <path d="M248.5 236.3l-54-54.1-160.3 160.3c5.3 5.6 14.1 6.3 23.9 0.7l190.4-106.9z" fill="#ff5a5f" />
+                <path d="M248.5 123.7L58.1 16.8c-9.8-5.6-18.6-4.9-23.9 0.7l160.3 160.3 54-54.1z" fill="#00e676" />
+              </svg>
               <div>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-wider leading-none">Get it on</p>
-                <p className="text-[11px] text-white font-extrabold uppercase tracking-wide leading-none pt-1">Google Play</p>
+                <p className="text-[7.5px] text-slate-500 font-bold uppercase tracking-wider leading-none">GET IT ON</p>
+                <p className="text-[14px] text-slate-950 font-black tracking-tight leading-none pt-0.5 font-sans">Google Play</p>
               </div>
             </a>
 
-            {/* Custom PWA Install Button for iOS */}
+            {/* iOS Safari PWA Prompt Button */}
             <button
               onClick={() => {
                 setIsIOS(true);
                 setShowInstallPrompt(true);
               }}
-              className="flex items-center gap-3 px-5 py-3 bg-white/[0.02] border border-white/5 hover:border-white/15 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 text-left w-[165px] cursor-pointer"
+              className="flex items-center gap-3.5 px-5 py-2.5 bg-white border border-slate-200 hover:border-slate-350 hover:bg-slate-50 rounded-[1.25rem] transition-all hover:scale-[1.02] active:scale-95 text-left w-[175px] shadow-md shadow-black/10 cursor-pointer"
             >
-              <Sparkles className="w-6 h-6 text-[#863BFF]" />
+              <svg viewBox="0 0 384 512" className="w-5 h-5 flex-shrink-0 text-black fill-current">
+                <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-48.7-22.9-76.9-22.9-35.7 0-77.8 20.6-101.8 53.6-45.7 62.8-10.8 153.9 34.8 210.6 21.5 27.5 47.8 55 74.1 53.5 26.6-1.5 35.7-18 69.4-18 33 0 41.8 18 69.4 18 27.1-1.5 50.4-24.6 71.9-53.5 26.3-34.4 33.7-61.9 34-63.3-.8-.4-66.2-25.4-66.8-97.3zM286.9 83.1c16.2-20.2 27.3-48.2 24.3-76.2-23.9 1-52.9 15.9-70.1 35.9-15.1 17.5-28.2 46-24.8 73.3 26.6 2 54.4-12.8 70.6-33z"/>
+              </svg>
               <div>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-wider leading-none">Install on</p>
-                <p className="text-[11px] text-white font-extrabold uppercase tracking-wide leading-none pt-1">iPhone (iOS)</p>
+                <p className="text-[7.5px] text-slate-500 font-bold uppercase tracking-wider leading-none">Download on the</p>
+                <p className="text-[14px] text-slate-950 font-black tracking-tight leading-none pt-0.5 font-sans">App Store</p>
               </div>
             </button>
           </div>
@@ -1988,12 +1991,17 @@ export default function LandingPage() {
               href="https://play.google.com/store/apps/details?id=com.gymix.fit"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2.5 px-4 py-2.5 bg-white/[0.02] border border-white/5 hover:border-white/15 rounded-xl transition-all hover:scale-[1.02] active:scale-95 text-left"
+              className="flex items-center gap-2.5 px-4 py-2 bg-white border border-slate-200 hover:border-slate-350 hover:bg-slate-50 rounded-xl transition-all hover:scale-[1.02] active:scale-95 text-left w-[145px] shadow-sm"
             >
-              <Smartphone className="w-4.5 h-4.5 text-[#10B981]" />
+              <svg viewBox="0 0 360 360" className="w-4 h-4 flex-shrink-0">
+                <path d="M33 19.3c-1.4 1.5-2.2 3.8-2.2 6.8V334c0 3 0.8 5.3 2.2 6.8l1.2 1.2L194.5 181.7v-3.4L34.2 18.1l-1.2 1.2z" fill="#3bccff" />
+                <path d="M248.5 236.3L194.5 182.2v-3.4l54 54.1 1.2-0.7 63.8-36.2c18.2-10.3 18.2-27.2 0-37.5L249.7 122.2l-1.2-0.7-54 54.1v6.8l54 53.9z" fill="#fec400" />
+                <path d="M248.5 236.3l-54-54.1-160.3 160.3c5.3 5.6 14.1 6.3 23.9 0.7l190.4-106.9z" fill="#ff5a5f" />
+                <path d="M248.5 123.7L58.1 16.8c-9.8-5.6-18.6-4.9-23.9 0.7l160.3 160.3 54-54.1z" fill="#00e676" />
+              </svg>
               <div>
-                <p className="text-[7px] text-slate-500 font-bold uppercase tracking-wider leading-none">Get it on</p>
-                <p className="text-[9px] text-white font-extrabold uppercase tracking-wide leading-none pt-0.5">Google Play</p>
+                <p className="text-[6.5px] text-slate-500 font-bold uppercase tracking-wider leading-none">GET IT ON</p>
+                <p className="text-[11px] text-slate-950 font-black tracking-tight leading-none pt-0.5 font-sans">Google Play</p>
               </div>
             </a>
 
@@ -2003,12 +2011,14 @@ export default function LandingPage() {
                 setIsIOS(true);
                 setShowInstallPrompt(true);
               }}
-              className="flex items-center gap-2.5 px-4 py-2.5 bg-white/[0.02] border border-white/5 hover:border-white/15 rounded-xl transition-all hover:scale-[1.02] active:scale-95 text-left cursor-pointer"
+              className="flex items-center gap-2.5 px-4 py-2 bg-white border border-slate-200 hover:border-slate-350 hover:bg-slate-50 rounded-xl transition-all hover:scale-[1.02] active:scale-95 text-left w-[145px] shadow-sm cursor-pointer"
             >
-              <Sparkles className="w-4.5 h-4.5 text-[#863BFF]" />
+              <svg viewBox="0 0 384 512" className="w-3.5 h-3.5 flex-shrink-0 text-black fill-current">
+                <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-48.7-22.9-76.9-22.9-35.7 0-77.8 20.6-101.8 53.6-45.7 62.8-10.8 153.9 34.8 210.6 21.5 27.5 47.8 55 74.1 53.5 26.6-1.5 35.7-18 69.4-18 33 0 41.8 18 69.4 18 27.1-1.5 50.4-24.6 71.9-53.5 26.3-34.4 33.7-61.9 34-63.3-.8-.4-66.2-25.4-66.8-97.3zM286.9 83.1c16.2-20.2 27.3-48.2 24.3-76.2-23.9 1-52.9 15.9-70.1 35.9-15.1 17.5-28.2 46-24.8 73.3 26.6 2 54.4-12.8 70.6-33z"/>
+              </svg>
               <div>
-                <p className="text-[7px] text-slate-500 font-bold uppercase tracking-wider leading-none">Install on</p>
-                <p className="text-[9px] text-white font-extrabold uppercase tracking-wide leading-none pt-0.5">iPhone (iOS)</p>
+                <p className="text-[6.5px] text-slate-500 font-bold uppercase tracking-wider leading-none">Download on the</p>
+                <p className="text-[11px] text-slate-950 font-black tracking-tight leading-none pt-0.5 font-sans">App Store</p>
               </div>
             </button>
           </div>
