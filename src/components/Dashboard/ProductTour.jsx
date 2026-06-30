@@ -95,22 +95,82 @@ export default function ProductTour() {
 
   const step = TOUR_STEPS[currentStepIndex];
 
-  // Initialize tour if owner is not onboarded
+  // Initialize tour if owner is not onboarded, or auto-complete if they are an active existing owner
   useEffect(() => {
-    const isTourActive = localStorage.getItem('gymix_onboarding_active') === 'true';
-    if (profile?.role === 'owner' && profile?.onboarding_completed === false && !isTourActive) {
-      localStorage.setItem('gymix_onboarding_active', 'true');
-      localStorage.setItem('gymix_onboarding_step', 'welcome');
-      setActive(true);
-      setCurrentStepIndex(0);
-    } else if (isTourActive && profile?.role === 'owner') {
-      setActive(true);
-      const savedStep = localStorage.getItem('gymix_onboarding_step') || 'welcome';
-      const idx = TOUR_STEPS.findIndex(s => s.id === savedStep);
-      setCurrentStepIndex(idx >= 0 ? idx : 0);
-    } else {
+    if (!profile || profile.role !== 'owner') {
       setActive(false);
+      return;
     }
+
+    const checkExistingUser = async () => {
+      const isTourActive = localStorage.getItem('gymix_onboarding_active') === 'true';
+
+      // If database says onboarding is false, let's verify if they have data
+      if (profile.onboarding_completed === false) {
+        try {
+          const { data: gymData } = await supabase
+            .from('gyms')
+            .select('id')
+            .eq('owner_user_id', profile.id)
+            .maybeSingle();
+          
+          if (gymData?.id) {
+            const gymId = gymData.id;
+            
+            // Check members count
+            const { count: memberCount } = await supabase
+              .from('members')
+              .select('*', { count: 'exact', head: true })
+              .eq('gym_id', gymId);
+
+            // Check custom plans
+            const { data: plans } = await supabase
+              .from('membership_plans')
+              .select('id')
+              .eq('gym_id', gymId)
+              .neq('id', 'trial_default');
+
+            if ((memberCount && memberCount > 0) || (plans && plans.length > 0)) {
+              console.log('[Onboarding] Active user detected. Auto-completing onboarding.');
+              await supabase
+                .from('profiles')
+                .update({ onboarding_completed: true })
+                .eq('id', profile.id);
+              
+              localStorage.removeItem('gymix_onboarding_active');
+              localStorage.removeItem('gymix_onboarding_step');
+              
+              if (refreshProfile) {
+                await refreshProfile();
+              }
+              setActive(false);
+              return;
+            }
+          }
+        } catch (e) {
+          console.error('[Onboarding] Error checking active user status:', e);
+        }
+      }
+
+      // Start or resume tour
+      if (profile.onboarding_completed === false && !isTourActive) {
+        localStorage.setItem('gymix_onboarding_active', 'true');
+        localStorage.setItem('gymix_onboarding_step', 'welcome');
+        setActive(true);
+        setCurrentStepIndex(0);
+      } else if (isTourActive && profile.onboarding_completed === false) {
+        setActive(true);
+        const savedStep = localStorage.getItem('gymix_onboarding_step') || 'welcome';
+        const idx = TOUR_STEPS.findIndex(s => s.id === savedStep);
+        setCurrentStepIndex(idx >= 0 ? idx : 0);
+      } else {
+        localStorage.removeItem('gymix_onboarding_active');
+        localStorage.removeItem('gymix_onboarding_step');
+        setActive(false);
+      }
+    };
+
+    checkExistingUser();
   }, [profile]);
 
   // Handle step-specific logic on route change
@@ -257,7 +317,7 @@ export default function ProductTour() {
   return (
     <div className="fixed inset-0 z-[9999] pointer-events-none">
       {/* SVG backdrop overlay with cut-out hole */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-auto" style={{ filter: 'drop-shadow(0 0 10px rgba(0,0,0,0.5))' }}>
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ filter: 'drop-shadow(0 0 10px rgba(0,0,0,0.5))' }}>
         <defs>
           <mask id="tour-mask">
             <rect width="100%" height="100%" fill="white" />
