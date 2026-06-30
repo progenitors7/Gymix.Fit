@@ -26,6 +26,97 @@ export default function MemberDashboard() {
   // Navigation & View tab: 'pass' | 'notifications' | 'attendance' | 'streaks' | 'leaderboard' | 'progress' | 'profile'
   const [activeTab, setActiveTab] = useState('pass')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [showPwaBanner, setShowPwaBanner] = useState(false)
+
+  useEffect(() => {
+    const isDismissed = localStorage.getItem('gymix_pwa_banner_dismissed') === 'true'
+    const isPlaystoreApp = localStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+    
+    if (!isDismissed && !isPlaystoreApp && isMobile) {
+      setShowPwaBanner(true)
+    }
+  }, [])
+
+  const getMobileOS = () => {
+    const userAgent = navigator.userAgent || window.opera
+    if (/android/i.test(userAgent)) {
+      return 'android'
+    }
+    if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+      return 'ios'
+    }
+    return 'unknown'
+  }
+
+  const renderPwaBanner = () => {
+    if (!showPwaBanner) return null
+    const os = getMobileOS()
+
+    if (os === 'android') {
+      return (
+        <div className="mb-6 bg-gradient-to-r from-indigo-600/30 to-blue-500/10 border border-blue-500/20 rounded-[2rem] p-5 flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden animate-in slide-in-from-top duration-300">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 blur-[30px] rounded-full pointer-events-none" />
+          <div className="space-y-1 text-center sm:text-left z-10">
+            <h4 className="text-sm font-black text-white uppercase italic tracking-tight flex items-center justify-center sm:justify-start gap-1.5">
+              <span>Official Android App is Live! 🚀</span>
+            </h4>
+            <p className="text-[#94A3B8] text-xs font-semibold max-w-lg">
+              Download the official Gymix app from Play Store for faster QR entry scanning, smoother performance, and instant notifications!
+            </p>
+          </div>
+          <div className="flex items-center gap-3 z-10 w-full sm:w-auto">
+            <a 
+              href="https://play.google.com/store/apps/details?id=com.gymix.fit"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 sm:flex-none text-center px-5 py-3 bg-[#3B82F6] hover:bg-[#287cd0] text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-[#3B82F6]/10"
+            >
+              Download App
+            </a>
+            <button 
+              onClick={() => {
+                localStorage.setItem('gymix_pwa_banner_dismissed', 'true')
+                setShowPwaBanner(false)
+              }}
+              className="px-4 py-3 bg-white/5 hover:bg-white/10 text-slate-300 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all border border-white/5 cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    if (os === 'ios') {
+      return (
+        <div className="mb-6 bg-gradient-to-r from-purple-600/30 to-pink-500/10 border border-purple-500/20 rounded-[2rem] p-5 flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden animate-in slide-in-from-top duration-300">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 blur-[30px] rounded-full pointer-events-none" />
+          <div className="space-y-1 text-center sm:text-left z-10">
+            <h4 className="text-sm font-black text-white uppercase italic tracking-tight flex items-center justify-center sm:justify-start gap-1.5">
+              <span>Install Gymix on your iPhone! 📲</span>
+            </h4>
+            <p className="text-[#94A3B8] text-xs font-semibold max-w-lg">
+              For full-screen workspace, faster loading, and alerts: tap the <strong className="text-white">Share</strong> icon in Safari and select <strong className="text-white">"Add to Home Screen"</strong>.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 z-10 w-full sm:w-auto">
+            <button 
+              onClick={() => {
+                localStorage.setItem('gymix_pwa_banner_dismissed', 'true')
+                setShowPwaBanner(false)
+              }}
+              className="flex-1 sm:flex-none text-center px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-purple-500/10 cursor-pointer"
+            >
+              Okay, Got It
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    return null
+  }
 
   // Onboarding Profile state
   const [onboardingCompleted, setOnboardingCompleted] = useState(true)
@@ -735,6 +826,7 @@ export default function MemberDashboard() {
         />
 
         <main className="flex-1 p-6 lg:p-8 pb-28 lg:pb-8 max-w-6xl w-full mx-auto overflow-y-auto">
+          {renderPwaBanner()}
           {!membership ? (
             <MemberConnectionPanel
               gymCode={gymCode}
