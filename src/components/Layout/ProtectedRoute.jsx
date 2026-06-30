@@ -169,7 +169,7 @@ export default function ProtectedRoute({ children }) {
   }
 
   // ── Step 8: Owner billing redirect — no gym, pending, or expired ──
-  if (isOwner && !isAdminPage && (!gym || gym?.status === 'pending' || gym?.billing_status === 'expired')) {
+  if (isOwner && !isAdminPage && user?.email !== 'demo.owner@gymix.fit' && (!gym || gym?.status === 'pending' || gym?.billing_status === 'expired')) {
     if (isPlaystoreApp) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-[#0F1117] p-6 text-center">

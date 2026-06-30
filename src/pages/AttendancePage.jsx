@@ -99,11 +99,57 @@ export default function AttendancePage() {
     }
   }
 
+  const fetchTodayStats = useCallback(async () => {
+    if (!gym?.id) return
+    try {
+      const todayStr = new Date().toISOString().split('T')[0]
+      const todayStartISO = `${todayStr}T00:00:00.000Z`
+      const todayEndISO = `${todayStr}T23:59:59.999Z`
+
+      const { data, error } = await supabase
+        .from('attendance')
+        .select('check_out_time')
+        .eq('gym_id', gym.id)
+        .gte('check_in_time', todayStartISO)
+        .lte('check_in_time', todayEndISO)
+
+      if (error) throw error
+
+      let arrivals = 0
+      let inside = 0
+      let outs = 0
+
+      if (data) {
+        arrivals = data.length
+        data.forEach(log => {
+          if (log.check_out_time) {
+            outs++
+          } else {
+            inside++
+          }
+        })
+      }
+
+      setStats({
+        todayArrivals: arrivals,
+        activeInside: inside,
+        checkOuts: outs
+      })
+    } catch (e) {
+      console.error('Error fetching today stats:', e)
+    }
+  }, [gym?.id])
+
   const fetchAttendanceLogs = useCallback(async () => {
     if (!gym?.id) return
     setError(null)
     
     try {
+      // Filter by selectedDate directly on the database level
+      const targetDate = selectedDate || new Date().toISOString().split('T')[0]
+      const startISO = `${targetDate}T00:00:00.000Z`
+      const endISO = `${targetDate}T23:59:59.999Z`
+
       const { data, error: err } = await supabase
         .from('attendance')
         .select(`
@@ -119,6 +165,8 @@ export default function AttendancePage() {
           )
         `)
         .eq('gym_id', gym.id)
+        .gte('check_in_time', startISO)
+        .lte('check_in_time', endISO)
         .order('check_in_time', { ascending: false })
 
       if (err) throw err
@@ -127,60 +175,40 @@ export default function AttendancePage() {
       console.error('Error fetching attendance logs:', e)
       setError(e.message || 'Failed to fetch logs')
     }
-  }, [gym?.id])
+  }, [gym?.id, selectedDate])
 
   // Initial load
   useEffect(() => {
     if (gym?.id) {
       setLoading(true)
-      fetchAttendanceLogs().finally(() => setLoading(false))
+      Promise.all([
+        fetchAttendanceLogs(),
+        fetchTodayStats()
+      ]).finally(() => setLoading(false))
     }
-  }, [gym?.id, fetchAttendanceLogs])
+  }, [gym?.id, fetchAttendanceLogs, fetchTodayStats])
+
+  // Reload logs when date selection changes
+  useEffect(() => {
+    if (gym?.id) {
+      fetchAttendanceLogs()
+    }
+  }, [selectedDate, gym?.id, fetchAttendanceLogs])
 
   const handleRefresh = async () => {
     setRefreshing(true)
-    await fetchAttendanceLogs()
+    await Promise.all([
+      fetchAttendanceLogs(),
+      fetchTodayStats()
+    ])
     setRefreshing(false)
   }
 
-  // Filter logs dynamically and compute stats
+  // Filter logs dynamically by search query (date is handled by DB)
   useEffect(() => {
     if (!logs) return
 
-    // 1. Compute today stats (using today's date in local time)
-    const todayStr = new Date().toISOString().split('T')[0]
-    
-    let arrivals = 0
-    let inside = 0
-    let outs = 0
-
-    logs.forEach((log) => {
-      const logDateStr = new Date(log.check_in_time).toISOString().split('T')[0]
-      if (logDateStr === todayStr) {
-        arrivals++
-        if (log.check_out_time) {
-          outs++
-        } else {
-          inside++
-        }
-      }
-    })
-
-    setStats({
-      todayArrivals: arrivals,
-      activeInside: inside,
-      checkOuts: outs
-    })
-
-    // 2. Filter logs by search and selected date
     let filtered = [...logs]
-    
-    if (selectedDate) {
-      filtered = filtered.filter(log => {
-        const logDateStr = new Date(log.check_in_time).toISOString().split('T')[0]
-        return logDateStr === selectedDate
-      })
-    }
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
@@ -192,8 +220,7 @@ export default function AttendancePage() {
     }
 
     setFilteredLogs(filtered)
-
-  }, [logs, searchQuery, selectedDate])
+  }, [logs, searchQuery])
 
   // Session duration helper
   const getSessionDuration = (inTime, outTime) => {

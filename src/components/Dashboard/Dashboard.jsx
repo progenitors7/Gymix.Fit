@@ -36,20 +36,24 @@ import {
 } from 'lucide-react'
 import Logo from '../UI/Logo'
 
+const isNativeApp = window.Capacitor !== undefined || window.matchMedia('(display-mode: standalone)').matches;
+
 // Animation variants for staggered load
 const containerVariants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: {
+    transition: isNativeApp ? { duration: 0.05 } : {
       staggerChildren: 0.1
     }
   }
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  hidden: isNativeApp ? { opacity: 0 } : { opacity: 0, y: 20 },
+  show: isNativeApp 
+    ? { opacity: 1, transition: { duration: 0.1 } } 
+    : { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
 };
 
 /* ── Main Dashboard ── */
@@ -59,6 +63,10 @@ export default function Dashboard() {
   const { gym, gymLoading, gymError, gymName, updateGymName } = useCurrentGym()
   const { stats, loading: statsLoading, error: statsError, fetchStats } = useDashboardStats();
   const navigate = useNavigate();
+
+  const isPlaystoreApp = localStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined;
+  const daysLeft = gym?.billing_days_left;
+  const isExpiringSoon = Number.isFinite(daysLeft) && daysLeft >= 0 && daysLeft <= 7;
 
   useEffect(() => {
     fetchStats();
@@ -90,7 +98,10 @@ export default function Dashboard() {
 
   const triggerWebPrint = () => {
     const printWindow = window.open('', '_blank', 'width=800,height=1000')
-    const scanUrl = `${window.location.origin}/signup?gym=${gym?.unique_code}&role=member`
+    const originFallback = (window.location.origin && !window.location.origin.includes('localhost')) 
+      ? window.location.origin 
+      : 'https://gymix.fit'
+    const scanUrl = `${originFallback}/signup?gym=${gym?.unique_code}&role=member`
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(scanUrl)}`
     
     printWindow.document.write(`
@@ -225,7 +236,10 @@ export default function Dashboard() {
 
   const renderPosterModal = () => {
     if (!showPosterModal) return null
-    const scanUrl = `${window.location.origin}/signup?gym=${gym?.unique_code}&role=member`
+    const originFallback = (window.location.origin && !window.location.origin.includes('localhost')) 
+      ? window.location.origin 
+      : 'https://gymix.fit'
+    const scanUrl = `${originFallback}/signup?gym=${gym?.unique_code}&role=member`
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(scanUrl)}`
     const isPlaystoreApp = localStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined
 
@@ -390,6 +404,29 @@ export default function Dashboard() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-8">
       
+      {/* Play Store Subscription Reminder Banner */}
+      {isPlaystoreApp && isExpiringSoon && (
+        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+              <Clock className="w-5 h-5 animate-pulse" />
+            </div>
+            <div className="text-left">
+              <p className="text-amber-200 text-xs font-bold">Subscription Expiring Soon</p>
+              <p className="text-slate-400 text-[11px] font-medium mt-0.5">
+                Your Gymix membership will expire in {daysLeft} day{daysLeft === 1 ? '' : 's'}. Visit <span className="text-white select-all">https://gymix.fit</span> on a web browser to renew.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/subscription-status"
+            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-[10px] font-black uppercase tracking-widest text-center shadow-lg shadow-amber-500/10 transition-all active:scale-95 whitespace-nowrap"
+          >
+            Manage Plan
+          </Link>
+        </div>
+      )}
+
       {/* ── Top Bar (Search & Header) ── */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div className="space-y-2">

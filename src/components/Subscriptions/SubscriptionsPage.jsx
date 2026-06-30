@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -9,14 +9,23 @@ import { useSubscriptions } from '../../hooks/useSubscriptions';
 import { subscriptionService } from '../../services/subscriptionService';
 import StatusBadge from '../UI/StatusBadge';
 
+const isNativeApp = window.Capacitor !== undefined || window.matchMedia('(display-mode: standalone)').matches;
+
 const containerVariants = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+  show: {
+    opacity: 1,
+    transition: isNativeApp ? { duration: 0.1 } : {
+      staggerChildren: 0.05
+    }
+  }
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 10 },
-  show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+  hidden: isNativeApp ? { opacity: 0 } : { opacity: 0, y: 10 },
+  show: isNativeApp 
+    ? { opacity: 1, transition: { duration: 0.1 } } 
+    : { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
 };
 
 const statusConfig = {
@@ -236,6 +245,10 @@ export default function SubscriptionsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedSub, setSelectedSub] = useState(null);
 
+  // Infinite scroll pagination
+  const [visibleCount, setVisibleCount] = useState(30);
+  const observerRef = useRef();
+
   useEffect(() => {
     fetchSubscriptions();
   }, [fetchSubscriptions]);
@@ -283,6 +296,36 @@ export default function SubscriptionsPage() {
     const matchesStatus = statusFilter === 'all' || sub.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const visibleSubscriptions = filteredSubscriptions.slice(0, visibleCount);
+
+  useEffect(() => {
+    setVisibleCount(30);
+  }, [searchTerm, statusFilter]);
+
+  useEffect(() => {
+    if (loading || visibleCount >= filteredSubscriptions.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + 30, filteredSubscriptions.length));
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const current = observerRef.current;
+    if (current) {
+      observer.observe(current);
+    }
+
+    return () => {
+      if (current) {
+        observer.unobserve(current);
+      }
+    };
+  }, [filteredSubscriptions.length, visibleCount, loading]);
 
   return (
     <>
@@ -393,13 +436,14 @@ export default function SubscriptionsPage() {
             )}
           </motion.div>
         ) : (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {filteredSubscriptions.map((sub) => (
+          <>
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+            {visibleSubscriptions.map((sub) => (
               <motion.div
                 variants={itemVariants}
                 key={sub.id}
@@ -472,6 +516,14 @@ export default function SubscriptionsPage() {
               </motion.div>
             ))}
           </motion.div>
+          
+          {/* Sentinel observer target for infinite scroll */}
+          {visibleCount < filteredSubscriptions.length && (
+            <div ref={observerRef} className="h-16 flex items-center justify-center mt-4">
+              <div className="w-6 h-6 border-2 border-[#3390ec]/20 border-t-[#3390ec] rounded-full animate-spin" />
+            </div>
+          )}
+          </>
         )}
       </motion.div>
 

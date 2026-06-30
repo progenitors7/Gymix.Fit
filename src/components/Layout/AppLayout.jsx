@@ -113,12 +113,17 @@ function SidebarContent({ onClose, isMobile }) {
   const isPaywalled = gym?.status === 'pending' || gym?.billing_status === 'expired'
   const isPlaystoreApp = localStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined
 
-  const filteredNavItems = NAV_ITEMS.filter(item => {
-    if (isPlaystoreApp && item.path === '/billing') return false
+  const baseNavItems = NAV_ITEMS.map(item => {
+    if (isPlaystoreApp && item.path === '/billing') {
+      return { ...item, label: 'Subscription', path: '/subscription-status' };
+    }
+    return item;
+  });
+
+  const filteredNavItems = baseNavItems.filter(item => {
     if (item.path === '/super-admin') return hasAdminAccess
-    // When paywalled, only show Billing and Settings nav items
     if (isPaywalled) {
-      return (isPlaystoreApp ? false : item.path === '/billing') || item.path === '/settings'
+      return item.path === '/billing' || item.path === '/subscription-status' || item.path === '/settings'
     }
     return true
   })
@@ -247,17 +252,29 @@ function BottomNav() {
 
   const ownerBottomNavPaths = ['/dashboard', '/scanner', '/members', '/subscriptions', '/payments']
   const isPlaystoreApp = localStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined
-  const visibleItems = NAV_ITEMS.filter(item => {
-    if (isPlaystoreApp && item.path === '/billing') return false
+  const baseNavItems = NAV_ITEMS.map(item => {
+    if (isPlaystoreApp && item.path === '/billing') {
+      return { ...item, label: 'Subscription', path: '/subscription-status' };
+    }
+    return item;
+  });
+
+  const visibleItems = baseNavItems.filter(item => {
     if (isPaywalled) {
-      return isPlaystoreApp ? false : item.path === '/billing'
+      return item.path === '/billing' || item.path === '/subscription-status'
     }
     return ownerBottomNavPaths.includes(item.path)
   })
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#1A1F2B] border-t border-white/5 z-[100] pb-safe shadow-lg">
-      <div className="flex items-center justify-around h-full px-2">
+    <nav 
+      className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#1A1F2B] border-t border-white/5 z-[100] shadow-lg"
+      style={{
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        height: 'calc(4rem + env(safe-area-inset-bottom))'
+      }}
+    >
+      <div className="flex items-center justify-around h-16 px-2">
         {visibleItems.map((item) => {
           const isActive = location.pathname === item.path
           const Icon = item.icon

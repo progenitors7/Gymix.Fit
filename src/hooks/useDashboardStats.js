@@ -313,15 +313,16 @@ export function useDashboardStats() {
         .slice(0, 5);
 
       // 3. Recent Activity (Mix of new members and recent payments)
+      // Only map the top 8 elements from each pre-sorted list to prevent massive CPU mapping/sorting overhead
       const recentActivity = [
-        ...members.map(m => ({
+        ...members.slice(0, 8).map(m => ({
           id: m.id,
           type: 'member_joined',
           title: 'New Member Joined',
           description: `${m.full_name} joined the gym.`,
           date: m.created_at
         })),
-        ...paymentsList.map(p => ({
+        ...paymentsList.slice(0, 8).map(p => ({
           id: p.id,
           type: p.payment_status === 'paid' ? 'payment_received' : 'payment_pending',
           title: p.payment_status === 'paid' ? 'Payment Received' : 'Payment Pending',

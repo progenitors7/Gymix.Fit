@@ -31,6 +31,7 @@ const ProfilePage = React.lazy(() => import('./pages/ProfilePage'))
 const StoreManagerPage = React.lazy(() => import('./pages/StoreManagerPage'))
 const SuperAdminPage = React.lazy(() => import('./pages/SuperAdminPage'))
 const BillingPage = React.lazy(() => import('./pages/BillingPage'))
+const SubscriptionStatusPage = React.lazy(() => import('./pages/SubscriptionStatusPage'))
 const AttendancePage = React.lazy(() => import('./pages/AttendancePage'))
 const LeaderboardPage = React.lazy(() => import('./pages/LeaderboardPage'))
 const HardwareStorePage = React.lazy(() => import('./pages/HardwareStorePage'))
@@ -301,6 +302,7 @@ export default function App() {
             <Route path="/settings"          element={<Protected><SettingsPage /></Protected>} />
             <Route path="/profile"           element={<Protected><ProfilePage /></Protected>} />
             <Route path="/billing"           element={<Protected><BillingPage /></Protected>} />
+            <Route path="/subscription-status" element={<Protected><SubscriptionStatusPage /></Protected>} />
             <Route path="/attendance"        element={<Protected><AttendancePage /></Protected>} />
             <Route path="/super-admin"      element={<Protected><SuperAdminRoute><SuperAdminPage /></SuperAdminRoute></Protected>} />
 

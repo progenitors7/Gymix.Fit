@@ -88,8 +88,9 @@ export async function getMembers(gymId) {
   })
 
   if (expiredLeftMembers.length > 0) {
-    // Fire-and-forget background purge
-    Promise.all(expiredLeftMembers.map(m => deleteMember(m.id))).catch(err => {
+    // Fire-and-forget background batch purge in a single network request
+    const idsToPurge = expiredLeftMembers.map(m => m.id)
+    deleteMembersBatch(idsToPurge).catch(err => {
       console.error('[Gymix] Auto-purge failed for expired left members:', err)
     })
     console.log(`[Gymix] Auto-purging ${expiredLeftMembers.length} left member(s) older than 30 days`)
@@ -165,19 +166,27 @@ export async function updateMember(id, payload) {
  * Delete a member by id.
  */
 export async function deleteMember(id) {
-  // Delete all dependent records to prevent foreign key constraint violations
-  await supabase.from('member_coins_transactions').delete().eq('member_id', id);
-  await supabase.from('member_progress_logs').delete().eq('member_id', id);
-  await supabase.from('member_xp_transactions').delete().eq('member_id', id);
-  await supabase.from('leaderboard_season_history').delete().eq('member_id', id);
-  await supabase.from('payments').delete().eq('member_id', id);
-  await supabase.from('subscriptions').delete().eq('member_id', id);
-  await supabase.from('attendance').delete().eq('member_id', id);
-
+  // Cascading deletes are configured on the database level, so all dependent
+  // child records (payments, subscriptions, attendance, transactions, etc.) 
+  // will be deleted automatically in a single fast transaction.
   const { error } = await supabase
     .from('members')
     .delete()
     .eq('id', id)
+
+  if (error) throw error
+}
+
+/**
+ * Bulk delete members by their IDs.
+ * Utilizes database cascading deletes for maximum efficiency in 1 query.
+ */
+export async function deleteMembersBatch(ids) {
+  if (!ids || ids.length === 0) return
+  const { error } = await supabase
+    .from('members')
+    .delete()
+    .in('id', ids)
 
   if (error) throw error
 }
