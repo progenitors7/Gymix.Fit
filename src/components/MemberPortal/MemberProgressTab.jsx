@@ -416,6 +416,7 @@ export default function MemberProgressTab({
     if (!canvas) return
     
     const caption = `💪 Verified Lift: I just smashed a new ${activeShareLog.exercise_name} PR of ${activeShareLog.value} kg at ${membership?.gyms?.gym_name || 'My Gym'} on Gymix! Consistency Streak: ${streakCount} Days! 🔥 #Gymix #FitnessGoal`
+    const target = window.Capacitor ? '_system' : '_blank'
     
     try {
       if (navigator.share && navigator.canShare) {
@@ -423,7 +424,7 @@ export default function MemberProgressTab({
           if (!blob) {
             // Direct text share fallback
             const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(caption)}`
-            window.open(waUrl, '_blank')
+            window.open(waUrl, target)
             return
           }
           
@@ -439,21 +440,21 @@ export default function MemberProgressTab({
             } catch (shareErr) {
               console.log('Share dismissed or failed, fallback to direct text link', shareErr)
               const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(caption)}`
-              window.open(waUrl, '_blank')
+              window.open(waUrl, target)
             }
           } else {
             const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(caption)}`
-            window.open(waUrl, '_blank')
+            window.open(waUrl, target)
           }
         }, 'image/png')
       } else {
         const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(caption)}`
-        window.open(waUrl, '_blank')
+        window.open(waUrl, target)
       }
     } catch (err) {
       console.error('Error sharing achievement:', err)
       const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(caption)}`
-      window.open(waUrl, '_blank')
+      window.open(waUrl, target)
     }
   }
 

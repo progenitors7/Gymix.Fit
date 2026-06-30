@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Html5Qrcode } from 'html5-qrcode'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { useCurrentGym } from '../../hooks/useCurrentGym'
 import { connectionService } from '../../services/connectionService'
+import toast from 'react-hot-toast'
 
 export default function ScannerPage() {
   const navigate = useNavigate()
@@ -24,6 +25,42 @@ export default function ScannerPage() {
   // Ref to hold Html5Qrcode instance
   const html5QrCodeRef = useRef(null)
   const scannerId = 'qr-reader-container'
+
+  // Sync queued offline check-in logs to the database using manual attendance logging bypass
+  const syncOfflineLogs = useCallback(async () => {
+    if (!gymId || !navigator.onLine) return
+    const queueKey = `gymix_offline_checkins_${gymId}`
+    const queue = JSON.parse(localStorage.getItem(queueKey) || '[]')
+    if (queue.length === 0) return
+
+    console.log(`[Scanner] Syncing ${queue.length} offline check-in(s)...`)
+    let successCount = 0
+    
+    for (const item of queue) {
+      try {
+        await connectionService.logManualAttendance(gymId, item.memberId)
+        successCount++
+      } catch (err) {
+        console.error('[Scanner] Failed to sync offline item:', item, err)
+      }
+    }
+
+    localStorage.removeItem(queueKey)
+    if (successCount > 0) {
+      toast.success(`Synced ${successCount} offline check-ins to server! ⚡`)
+    }
+  }, [gymId])
+
+  // Run sync on mount and when connection status changes back to online
+  useEffect(() => {
+    syncOfflineLogs()
+
+    const handleOnline = () => syncOfflineLogs()
+    window.addEventListener('online', handleOnline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+    }
+  }, [gymId, syncOfflineLogs])
 
 
 
@@ -141,6 +178,60 @@ export default function ScannerPage() {
     
     // Pause scan checks by stopping the scanner stream temporarily
     await stopScanner()
+
+    const isOffline = !navigator.onLine
+    if (isOffline) {
+      try {
+        // Parse token locally for basic validation: MEM_SECURE_memberId_gymId_timestamp
+        const parts = decodedText.split('_')
+        if (parts.length < 5 || parts[0] !== 'MEM' || parts[1] !== 'SECURE' || parts[3] !== gymId) {
+          throw new Error('Invalid QR Code format! ❌')
+        }
+        
+        const memberId = parts[2]
+        
+        // Save to offline queue in localStorage
+        const queueKey = `gymix_offline_checkins_${gymId}`
+        const queue = JSON.parse(localStorage.getItem(queueKey) || '[]')
+        
+        if (!queue.find(q => q.qrToken === decodedText)) {
+          queue.push({
+            qrToken: decodedText,
+            memberId,
+            scannedAt: new Date().toISOString()
+          })
+          localStorage.setItem(queueKey, JSON.stringify(queue))
+        }
+
+        setScanResult({
+          success: true,
+          action: 'checkin',
+          message: 'Saved Offline! Will sync when online. 💾',
+          member: { full_name: 'Offline Athlete', membership_plan: 'Offline Validation' },
+          time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+          checkInTimeStr: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+          checkOutTimeStr: null,
+          durationStr: null
+        })
+      } catch (err) {
+        setScanResult({
+          success: false,
+          message: err.message || 'Offline Scan Failed! ❌'
+        })
+      } finally {
+        setIsProcessing(false)
+        
+        // Auto-restart camera after 4 seconds to scan next member
+        setTimeout(() => {
+          setScanResult(null)
+          const element = document.getElementById(scannerId)
+          if (element) {
+            startScanner(selectedCameraId)
+          }
+        }, 4000)
+      }
+      return
+    }
 
     try {
       // Execute B2B2C secure rolling token validation checks

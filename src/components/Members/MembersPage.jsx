@@ -203,7 +203,8 @@ export default function MembersPage() {
     } else {
       // Fall back to direct WhatsApp Click-to-Chat
       const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-      window.open(url, '_blank');
+      const target = window.Capacitor ? '_system' : '_blank';
+      window.open(url, target);
     }
   };
 
@@ -620,7 +621,8 @@ export default function MembersPage() {
                   onClick={() => {
                     const phone = waSendingInfo.phoneNumber.replace(/\D/g, '');
                     const url = `https://wa.me/${phone}?text=${encodeURIComponent(waSendingInfo.messageText)}`;
-                    window.open(url, '_blank');
+                    const target = window.Capacitor ? '_system' : '_blank';
+                    window.open(url, target);
                     setWaSendingInfo(null);
                   }}
                   className="flex-1 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-black text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer shadow-lg shadow-emerald-500/10 text-center"

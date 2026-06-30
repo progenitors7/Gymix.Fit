@@ -178,6 +178,28 @@ function DeepLinkHandler() {
     return () => clearTimeout(timer)
   }, [navigate, user])
 
+  useEffect(() => {
+    // 3. Listen for native hardware back button (Android)
+    if (window.Capacitor) {
+      import('@capacitor/app').then(({ App }) => {
+        const handler = App.addListener('backButton', (data) => {
+          console.log('[DeepLinkHandler] Hardware back button pressed. Can go back:', data.canGoBack)
+          const currentPath = window.location.pathname
+          const exitRoutes = ['/dashboard', '/login', '/signup', '/']
+          
+          if (exitRoutes.includes(currentPath)) {
+            App.exitApp()
+          } else {
+            navigate(-1)
+          }
+        })
+        return () => {
+          handler.then(h => h.remove())
+        }
+      })
+    }
+  }, [navigate])
+
   return null
 }
 
