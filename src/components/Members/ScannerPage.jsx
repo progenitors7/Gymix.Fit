@@ -84,26 +84,45 @@ export default function ScannerPage() {
 
   // Initialize and list cameras
   const requestCameraAccess = () => {
-    Html5Qrcode.getCameras()
-      .then((devices) => {
-        setScannerError('')
-        if (devices && devices.length > 0) {
-          setCameras(devices)
-          setSelectedCameraId((prevId) => {
-            const firstId = devices[0].id
-            if (prevId === firstId) {
-              startScanner(firstId)
-            }
-            return firstId
-          })
-        } else {
-          setScannerError('No camera devices found. Please ensure camera access is enabled.')
-        }
-      })
-      .catch((err) => {
-        console.error('Error fetching cameras:', err)
-        setScannerError('Camera permission denied or unavailable.')
-      })
+    setScannerError('')
+    
+    const obtainDevices = () => {
+      Html5Qrcode.getCameras()
+        .then((devices) => {
+          if (devices && devices.length > 0) {
+            setCameras(devices)
+            setSelectedCameraId((prevId) => {
+              const firstId = devices[0].id
+              if (prevId === firstId) {
+                startScanner(firstId)
+              }
+              return firstId
+            })
+          } else {
+            setScannerError('No camera devices found. Please ensure camera access is enabled.')
+          }
+        })
+        .catch((err) => {
+          console.error('Error listing cameras:', err)
+          setScannerError('Failed to list camera devices.')
+        })
+    }
+
+    // Force WebView to request native camera permission using getUserMedia
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then((stream) => {
+          // Stop stream immediately to release hardware lock
+          stream.getTracks().forEach(track => track.stop())
+          obtainDevices()
+        })
+        .catch((err) => {
+          console.error('Camera permission request failed:', err)
+          setScannerError('Camera permission denied or unavailable.')
+        })
+    } else {
+      obtainDevices()
+    }
   }
 
   useEffect(() => {
