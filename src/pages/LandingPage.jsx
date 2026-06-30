@@ -1861,9 +1861,9 @@ export default function LandingPage() {
                 glow: 'hover:border-[#10B981]/30'
               },
               {
-                quote: "Installed the Progressive Web App (PWA) straight to our administration tablet. It launches fullscreen and manages records with complete offline speed. Genuinely elite operating system software.",
-                author: "Karan Johar",
-                role: "Founder, Titan Fitness Labs",
+                quote: "Gymix dashboard dynamic logging is spectacular. Biometric check-ins sync automatically, and offline attendance mode works perfectly during server latency. Genuinely elite gym software.",
+                author: "Virendra",
+                role: "Owner, Race Gym",
                 rating: 5,
                 glow: 'hover:border-blue-500/30'
               }
@@ -1900,6 +1900,65 @@ export default function LandingPage() {
                 </div>
               </motion.div>
             ))}
+          </div>
+
+          {/* Inline CSS styling for Infinite Testimonial Marquee */}
+          <style>{`
+            @keyframes marquee-scroll {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-50%); }
+            }
+            .animate-marquee-track {
+              display: flex;
+              width: max-content;
+              animation: marquee-scroll 35s linear infinite;
+            }
+            .animate-marquee-track:hover {
+              animation-play-state: paused;
+            }
+          `}</style>
+
+          {/* ── INFINITE HORIZONTAL MARQUEE TESTIMONIALS ── */}
+          <div className="mt-16 overflow-hidden relative w-full border-y border-white/5 py-8 bg-white/[0.003]">
+            {/* Left and Right blur overlays to mask edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-[#0C0E13] to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-[#0C0E13] to-transparent z-10 pointer-events-none" />
+            
+            <div className="animate-marquee-track gap-5">
+              {[
+                { quote: "Race Gym members love the WhatsApp check-in receipt. Keeps them highly motivated!", author: "Virendra", role: "Owner, Race Gym" },
+                { quote: "Coin system rewards are addicting. Attending gym daily to redeem supplement vouchers.", author: "Rohan", role: "Athlete, Peak Fitness" },
+                { quote: "Secured gate QR scanning stops unauthorized entry completely. Worth every rupee.", author: "Amit", role: "Owner, Steel Gym" },
+                { quote: "Best SaaS software for gyms in India. The UPI billing and receipt download is super fast.", author: "Pooja", role: "Manager, Active Labs" },
+                { quote: "App is clean, lightning fast, and has all my membership data at one click.", author: "Rahul", role: "Athlete, Race Gym" },
+                { quote: "The automated WhatsApp reminders reduced our manual follow-up calls to zero.", author: "Vikram", role: "Director, Peak Fitness" },
+                // Duplicate once to make it seamless
+                { quote: "Race Gym members love the WhatsApp check-in receipt. Keeps them highly motivated!", author: "Virendra", role: "Owner, Race Gym" },
+                { quote: "Coin system rewards are addicting. Attending gym daily to redeem supplement vouchers.", author: "Rohan", role: "Athlete, Peak Fitness" },
+                { quote: "Secured gate QR scanning stops unauthorized entry completely. Worth every rupee.", author: "Amit", role: "Owner, Steel Gym" },
+                { quote: "Best SaaS software for gyms in India. The UPI billing and receipt download is super fast.", author: "Pooja", role: "Manager, Active Labs" },
+                { quote: "App is clean, lightning fast, and has all my membership data at one click.", author: "Rahul", role: "Athlete, Race Gym" },
+                { quote: "The automated WhatsApp reminders reduced our manual follow-up calls to zero.", author: "Vikram", role: "Director, Peak Fitness" }
+              ].map((item, idx) => (
+                <div 
+                  key={idx} 
+                  className="flex-shrink-0 w-[280px] sm:w-[320px] p-5 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col justify-between hover:border-[#863BFF]/20 hover:bg-white/[0.015] transition-all duration-300"
+                >
+                  <p className="text-slate-400 text-[11px] font-semibold leading-relaxed italic">
+                    "{item.quote}"
+                  </p>
+                  <div className="flex items-center gap-2 pt-3 border-t border-white/5 mt-3">
+                    <div className="w-6 h-6 rounded-md bg-slate-900 border border-white/5 flex items-center justify-center text-[9px] font-black text-slate-300">
+                      {item.author[0]}
+                    </div>
+                    <div>
+                      <h5 className="text-[9px] font-black text-white leading-none">{item.author}</h5>
+                      <p className="text-[8px] text-[#10B981] font-bold uppercase tracking-wider pt-0.5">{item.role}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
         </div>
