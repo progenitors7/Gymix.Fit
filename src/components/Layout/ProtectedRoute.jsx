@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useCurrentGym } from '../../hooks/useCurrentGym'
 import toast from 'react-hot-toast'
+import { supabase } from '../../lib/supabaseClient'
 
 /**
  * ProtectedRoute — Clean state machine guard.
