@@ -498,7 +498,7 @@ export default function LandingPage() {
             }}
             className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-[#863BFF] to-[#601bdf] hover:from-[#9c5eff] hover:to-[#863BFF] text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-[#863BFF]/25 transition-all duration-300 hover:scale-[1.03] active:scale-95 flex items-center justify-center gap-2.5 border border-[#863BFF]/30 cursor-pointer"
           >
-            Get 1 Month Free Access
+            Launch Your Gym OS
             <ArrowRight className="w-4 h-4 text-white" />
           </button>
           
@@ -508,6 +508,46 @@ export default function LandingPage() {
           >
             Explore Dashboard Simulator
           </button>
+        </motion.div>
+
+        {/* Athlete App Prompts for Members */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.35 }}
+          className="mt-12 flex flex-col items-center gap-4 border-t border-white/5 pt-8 w-full max-w-lg z-10"
+        >
+          <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Gym Member / Athlete?</p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {/* Google Play Store Badge Button */}
+            <a
+              href="https://play.google.com/store/apps/details?id=com.gymix.fit"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 px-5 py-3 bg-white/[0.02] border border-white/5 hover:border-white/15 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 text-left w-[165px]"
+            >
+              <Smartphone className="w-6 h-6 text-[#10B981]" />
+              <div>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-wider leading-none">Get it on</p>
+                <p className="text-[11px] text-white font-extrabold uppercase tracking-wide leading-none pt-1">Google Play</p>
+              </div>
+            </a>
+
+            {/* Custom PWA Install Button for iOS */}
+            <button
+              onClick={() => {
+                setIsIOS(true);
+                setShowInstallPrompt(true);
+              }}
+              className="flex items-center gap-3 px-5 py-3 bg-white/[0.02] border border-white/5 hover:border-white/15 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 text-left w-[165px] cursor-pointer"
+            >
+              <Sparkles className="w-6 h-6 text-[#863BFF]" />
+              <div>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-wider leading-none">Install on</p>
+                <p className="text-[11px] text-white font-extrabold uppercase tracking-wide leading-none pt-1">iPhone (iOS)</p>
+              </div>
+            </button>
+          </div>
         </motion.div>
 
         {/* Dynamic Metric Numbers (Staggered hover animation) */}
@@ -1071,15 +1111,15 @@ export default function LandingPage() {
                     className="space-y-5.5"
                   >
                     <div className="flex items-center justify-between pb-3 border-b border-white/5">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-[#10B981]">Chrome direct installation</span>
-                      <span className="text-[8px] text-slate-500 font-bold uppercase">Standard Engine</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#10B981]">Official Google Play App</span>
+                      <span className="text-[8px] text-slate-500 font-bold uppercase">Android Live</span>
                     </div>
 
                     <div className="space-y-4">
                       {[
-                        { step: '1', title: 'Trigger Install Prompt', desc: 'Tap the "Install Standalone OS" button below or click the trigger inside your navigation bar header.' },
-                        { step: '2', title: 'Confirm Chrome Action', desc: 'In the system popup prompt that appears on your screen, click the green "Install" button.' },
-                        { step: '3', title: 'Access Mobile Grid', desc: 'The Gymix icon compiles on your home screen grid. Launch it to run fullscreen with total speed.' }
+                        { step: '1', title: 'Visit Play Store', desc: 'Tap the download button below to go to our official Google Play Store app listing.' },
+                        { step: '2', title: 'Install Application', desc: 'Tap "Install" to download and add the high-performance native app to your mobile system.' },
+                        { step: '3', title: 'Open & Sync', desc: 'Open the Gymix app from your home screen. Log in to sync your active athlete profile instantly.' }
                       ].map((item, idx) => (
                         <div key={idx} className="flex gap-4">
                           <div className="w-7 h-7 rounded-lg bg-[#10B981]/15 border border-[#10B981]/25 flex items-center justify-center text-[#10B981] text-xs font-black flex-shrink-0">
@@ -1094,13 +1134,15 @@ export default function LandingPage() {
                     </div>
 
                     <div className="pt-4 border-t border-white/5 flex flex-col sm:flex-row gap-3">
-                      <button
-                        onClick={triggerInstallFlow}
-                        className="flex-1 py-3.5 bg-gradient-to-r from-[#10B981] to-[#0d9466] hover:from-[#1bc58c] hover:to-[#10B981] text-black text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-[#10B981]/15 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                      <a
+                        href="https://play.google.com/store/apps/details?id=com.gymix.fit"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 py-3.5 bg-gradient-to-r from-[#10B981] to-[#0d9466] hover:from-[#1bc58c] hover:to-[#10B981] text-black text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-[#10B981]/15 hover:scale-[1.01] active:scale-[0.99] cursor-pointer text-center"
                       >
-                        <Download className="w-3.5 h-3.5" />
-                        Install Standalone OS
-                      </button>
+                        <Smartphone className="w-3.5 h-3.5" />
+                        Download from Google Play
+                      </a>
                     </div>
                   </motion.div>
                 ) : (
@@ -1926,13 +1968,49 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="py-12 border-t border-white/5 relative z-10 bg-[#07090D]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2.5">
-            <Logo className="w-8 h-8 opacity-70" />
-            <span className="font-black text-slate-400 text-sm tracking-tighter uppercase italic">
-              GYMIX <span className="text-[#863BFF]/75">.FIT</span>
-            </span>
+      <footer className="py-16 border-t border-white/5 relative z-10 bg-[#07090D]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="flex flex-col items-center md:items-start gap-3">
+            <div className="flex items-center gap-2.5">
+              <Logo className="w-8 h-8 opacity-70" />
+              <span className="font-black text-slate-400 text-sm tracking-tighter uppercase italic">
+                GYMIX <span className="text-[#863BFF]/75">.FIT</span>
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider text-center md:text-left">
+              The premium software engine for elite gym spaces.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {/* Google Play Store Badge Button */}
+            <a
+              href="https://play.google.com/store/apps/details?id=com.gymix.fit"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2.5 px-4 py-2.5 bg-white/[0.02] border border-white/5 hover:border-white/15 rounded-xl transition-all hover:scale-[1.02] active:scale-95 text-left"
+            >
+              <Smartphone className="w-4.5 h-4.5 text-[#10B981]" />
+              <div>
+                <p className="text-[7px] text-slate-500 font-bold uppercase tracking-wider leading-none">Get it on</p>
+                <p className="text-[9px] text-white font-extrabold uppercase tracking-wide leading-none pt-0.5">Google Play</p>
+              </div>
+            </a>
+
+            {/* iOS Safari PWA Prompt Button */}
+            <button
+              onClick={() => {
+                setIsIOS(true);
+                setShowInstallPrompt(true);
+              }}
+              className="flex items-center gap-2.5 px-4 py-2.5 bg-white/[0.02] border border-white/5 hover:border-white/15 rounded-xl transition-all hover:scale-[1.02] active:scale-95 text-left cursor-pointer"
+            >
+              <Sparkles className="w-4.5 h-4.5 text-[#863BFF]" />
+              <div>
+                <p className="text-[7px] text-slate-500 font-bold uppercase tracking-wider leading-none">Install on</p>
+                <p className="text-[9px] text-white font-extrabold uppercase tracking-wide leading-none pt-0.5">iPhone (iOS)</p>
+              </div>
+            </button>
           </div>
           
           <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.2em] text-center md:text-right">
