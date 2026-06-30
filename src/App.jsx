@@ -188,6 +188,22 @@ export default function App() {
     localStorage.setItem('is_playstore_app', 'true');
   }
 
+  // Request Notification permission automatically on startup (PWA & Android WebView fallback)
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      const timer = setTimeout(() => {
+        Notification.requestPermission()
+          .then((permission) => {
+            console.log('[Notification] Permission status:', permission);
+          })
+          .catch((err) => {
+            console.warn('[Notification] Permission request failed:', err);
+          });
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   return (
     <BrowserRouter>
       <Toaster 
