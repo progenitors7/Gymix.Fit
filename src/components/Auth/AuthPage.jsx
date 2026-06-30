@@ -7,6 +7,7 @@ import Logo from '../UI/Logo'
 import LoginForm from './LoginForm'
 import SignupForm from './SignupForm'
 import ForgotPasswordForm from './ForgotPasswordForm'
+import AppConnectionBridge from './AppConnectionBridge'
 import { supabase } from '../../lib/supabaseClient'
 
 export default function AuthPage() {
@@ -21,6 +22,32 @@ export default function AuthPage() {
     revenueText: '₹48Cr+',
     membersCount: '2.4L+'
   })
+
+  const [bypassBridge, setBypassBridge] = useState(false)
+  const [gymName, setGymName] = useState('')
+  const [showBridge, setShowBridge] = useState(false)
+
+  // Detect mobile browser scan connection bridge
+  useEffect(() => {
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+    const isNative = window.Capacitor !== undefined
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
+
+    if (isMobile && !isNative && !isStandalone && paramGym && location.pathname === '/signup' && !bypassBridge) {
+      setShowBridge(true)
+      // Fetch gym name to display on the bridge
+      supabase
+        .from('gyms')
+        .select('gym_name')
+        .eq('unique_code', paramGym.trim().toUpperCase())
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) setGymName(data.gym_name)
+        })
+    } else {
+      setShowBridge(false)
+    }
+  }, [paramGym, location.pathname, bypassBridge])
 
   // Fetch real platform stats from the database dynamically
   useEffect(() => {
@@ -216,20 +243,23 @@ export default function AuthPage() {
               className="glass-card border border-white/10 rounded-[2.5rem] p-8 sm:p-10 shadow-2xl relative overflow-hidden"
             >
               {/* Header moved inside the glass-card for seamless transition sync */}
-              <div className="text-center space-y-3 mb-8">
-                <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase italic leading-none">
-                  {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : 'Forgot Password'}
-                </h2>
-                <p className="text-slate-500 text-sm font-medium leading-relaxed">
-                  {mode === 'login' 
-                    ? 'Sign in to manage your gym dashboard.' 
-                    : mode === 'signup' 
-                      ? 'Start growing your business today.' 
-                      : 'We will help you get back into your account.'}
-                </p>
-              </div>
+              {!showBridge && (
+                <div className="text-center space-y-3 mb-8">
+                  <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase italic leading-none">
+                    {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : 'Forgot Password'}
+                  </h2>
+                  <p className="text-slate-500 text-sm font-medium leading-relaxed">
+                    {mode === 'login' 
+                      ? 'Sign in to manage your gym dashboard.' 
+                      : mode === 'signup' 
+                        ? 'Start growing your business today.' 
+                        : 'We will help you get back into your account.'}
+                  </p>
+                </div>
+              )}
+
               {/* Dynamic Tabs */}
-              {mode !== 'forgot-password' && (
+              {mode !== 'forgot-password' && !showBridge && (
                 <div className="flex rounded-2xl bg-black/40 p-1.5 border border-white/5 mb-8">
                   <button
                     onClick={() => navigate('/login')}
@@ -257,7 +287,15 @@ export default function AuthPage() {
               {mode === 'login' ? (
                 <LoginForm onSwitch={() => navigate('/signup')} onForgotPassword={() => navigate('/forgot-password')} />
               ) : mode === 'signup' ? (
-                <SignupForm onSwitch={() => navigate('/login')} />
+                showBridge ? (
+                  <AppConnectionBridge 
+                    gymCode={paramGym} 
+                    gymName={gymName} 
+                    onContinueWeb={() => setBypassBridge(true)} 
+                  />
+                ) : (
+                  <SignupForm onSwitch={() => navigate('/login')} />
+                )
               ) : (
                 <ForgotPasswordForm onSwitch={(newMode) => {
                   if (newMode === 'login') navigate('/login')

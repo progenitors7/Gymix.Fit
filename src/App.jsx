@@ -1,5 +1,5 @@
-import React, { Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import React, { Suspense, useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthProvider'
 import { GymProvider } from './context/GymProvider'
 import { NotificationProvider } from './context/NotificationProvider'
@@ -108,6 +108,79 @@ function RootRoute() {
   return <LandingPage />
 }
 
+function DeepLinkHandler() {
+  const navigate = useNavigate()
+  const { user } = useAuth()
+
+  useEffect(() => {
+    // 1. Listen for native deep link events (com.gymix.fit://)
+    if (window.Capacitor) {
+      import('@capacitor/app').then(({ App }) => {
+        const handler = App.addListener('appUrlOpen', (event) => {
+          console.log('[DeepLinkHandler] App opened with URL:', event.url)
+          try {
+            const urlStr = event.url
+            if (urlStr.includes('://signup') || urlStr.includes('://login') || urlStr.includes('://forgot-password')) {
+              const match = urlStr.match(/:\/\/(signup|login|forgot-password)(\?.*)?/)
+              if (match) {
+                const path = match[1]
+                const search = match[2] || ''
+                
+                // Parse gym param and store in localStorage
+                const params = new URLSearchParams(search)
+                const gym = params.get('gym')
+                if (gym) {
+                  localStorage.setItem('scanned_gym_code', gym.trim().toUpperCase())
+                }
+                
+                navigate(`/${path}${search}`, { replace: true })
+              }
+            }
+          } catch (e) {
+            console.error('[DeepLinkHandler] Error parsing deep link:', e)
+          }
+        })
+        return () => {
+          handler.then(h => h.remove())
+        }
+      })
+    }
+  }, [navigate])
+
+  useEffect(() => {
+    // 2. Check clipboard for gym connection bridge code (from mobile web browser redirect)
+    const checkClipboardForGymCode = async () => {
+      if (!window.Capacitor) return
+      try {
+        const text = await navigator.clipboard.readText()
+        if (text && text.trim().startsWith('gymix-connect:')) {
+          const gymCode = text.replace('gymix-connect:', '').trim().toUpperCase()
+          if (gymCode) {
+            console.log('[DeepLinkHandler] Found gym connection code in clipboard:', gymCode)
+            localStorage.setItem('scanned_gym_code', gymCode)
+            
+            // Clear clipboard to avoid loops
+            await navigator.clipboard.writeText('')
+            
+            // Redirect to signup page if not logged in
+            if (!user) {
+              navigate(`/signup?gym=${gymCode}&role=member`, { replace: true })
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[DeepLinkHandler] Clipboard read failed (expected on some devices):', err)
+      }
+    }
+
+    // Delay clipboard check slightly to let WebView fully initialize
+    const timer = setTimeout(checkClipboardForGymCode, 1500)
+    return () => clearTimeout(timer)
+  }, [navigate, user])
+
+  return null
+}
+
 export default function App() {
   // Detect if app is launched via Google Play Store (appended query params)
   const params = new URLSearchParams(window.location.search);
@@ -144,6 +217,7 @@ export default function App() {
       />
       <AuthProvider>
         <GymProvider>
+          <DeepLinkHandler />
           <Suspense fallback={<div className="h-screen flex items-center justify-center bg-[#1c1c1c]"><LoadingScreen /></div>}>
             <Routes>
               {/* ── Public ── */}
