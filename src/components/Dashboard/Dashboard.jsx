@@ -68,7 +68,13 @@ export default function Dashboard() {
     return <MemberDashboard />
   }
 
+  const [showPosterModal, setShowPosterModal] = useState(false)
+
   const handlePrintPoster = () => {
+    setShowPosterModal(true)
+  }
+
+  const triggerWebPrint = () => {
     const printWindow = window.open('', '_blank', 'width=800,height=1000')
     const scanUrl = `${window.location.origin}/signup?gym=${gym?.unique_code}&role=member`
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(scanUrl)}`
@@ -203,6 +209,72 @@ export default function Dashboard() {
     printWindow.document.close()
   }
 
+  const renderPosterModal = () => {
+    if (!showPosterModal) return null
+    const scanUrl = `${window.location.origin}/signup?gym=${gym?.unique_code}&role=member`
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(scanUrl)}`
+    const isPlaystoreApp = localStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+        <div className="bg-[#1c1c1c] border border-white/5 rounded-[2.5rem] p-6 sm:p-8 max-w-md w-full text-center space-y-6 relative overflow-y-auto max-h-[90vh] shadow-2xl">
+          {/* Subtle background glow */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#3b82f6]/5 blur-[50px] rounded-full pointer-events-none" />
+          
+          <div className="flex items-center justify-between pb-2 border-b border-white/5 relative z-10">
+            <span className="text-[#3b82f6] font-black uppercase tracking-wider text-[10px] sm:text-xs italic">Gymix Connection Portal</span>
+            <button 
+              onClick={() => setShowPosterModal(false)}
+              className="text-slate-400 hover:text-white font-black text-[10px] sm:text-xs uppercase tracking-wider cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+
+          <div className="space-y-1 pt-2 relative z-10">
+            <h2 className="text-xl sm:text-2xl font-black text-white uppercase italic tracking-tight">SCAN TO CONNECT TO</h2>
+            <h3 className="text-lg sm:text-xl font-bold text-[#3b82f6] uppercase tracking-wide italic">{gymName}</h3>
+          </div>
+
+          {/* QR Code Container */}
+          <div className="relative w-52 h-52 sm:w-60 sm:h-60 mx-auto bg-white p-4 rounded-3xl border-4 border-slate-900 shadow-xl flex items-center justify-center relative z-10">
+            <img src={qrUrl} alt="Gym QR Code" className="w-full h-full object-contain" />
+          </div>
+
+          <p className="text-slate-400 text-[10px] sm:text-xs font-semibold leading-relaxed max-w-xs mx-auto uppercase tracking-wide relative z-10">
+            Open your mobile camera or any QR scanner to scan and connect instantly. Setup your athlete profile or log in, then tap 'Connect Terminal'!
+          </p>
+
+          <div className="space-y-2 relative z-10">
+            <p className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest">Manual Code Entry</p>
+            <div className="inline-block bg-[#0F1117] border border-white/10 px-5 py-2.5 sm:px-6 sm:py-3 rounded-2xl font-mono text-xl sm:text-2xl font-black tracking-[0.2em] text-white">
+              {gym?.unique_code}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 pt-2 relative z-10">
+            {!isPlaystoreApp && (
+              <button
+                onClick={triggerWebPrint}
+                className="w-full py-3.5 bg-[#3b82f6] hover:bg-[#287cd0] text-white font-bold rounded-2xl transition-all uppercase text-[10px] sm:text-xs tracking-wider shadow-lg shadow-[#3b82f6]/10 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                Print Wall Poster
+              </button>
+            )}
+            
+            <button
+              onClick={() => setShowPosterModal(false)}
+              className="w-full py-3.5 bg-white/5 hover:bg-white/10 text-slate-300 font-bold rounded-2xl transition-all border border-white/5 uppercase text-[10px] sm:text-xs tracking-wider cursor-pointer"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const greeting = (() => {
     const h = new Date().getHours()
     if (h < 12) return 'Good morning'
@@ -296,6 +368,7 @@ export default function Dashboard() {
             <span className="text-lg">Open Gate Scanner</span>
           </Link>
         </div>
+        {renderPosterModal()}
       </div>
     );
   }
@@ -640,7 +713,7 @@ export default function Dashboard() {
         </div>
 
       </div>
-
+      {renderPosterModal()}
     </div>
   )
 }
