@@ -5,7 +5,6 @@ import { useGym } from '../../hooks/useGym'
 import { isSuperAdmin } from '../../config/admins'
 import { useNotifications } from '../../hooks/useNotifications'
 import BroadcastBanner from './BroadcastBanner'
-import ProductTour from '../Dashboard/ProductTour'
 import { motion, AnimatePresence } from 'framer-motion'
 import clsx from 'clsx'
 import { twMerge } from 'tailwind-merge'
@@ -423,7 +422,6 @@ export default function AppLayout({ children }) {
         </main>
 
         <BottomNav />
-        <ProductTour />
       </div>
     </div>
   )

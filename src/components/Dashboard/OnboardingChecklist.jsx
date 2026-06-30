@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, Circle, ArrowRight, PlayCircle, HelpCircle } from 'lucide-react';
+import { CheckCircle2, Circle, ArrowRight } from 'lucide-react';
 import { planService } from '../../services/planService';
 import { toast } from 'react-hot-toast';
 
@@ -40,8 +40,7 @@ export default function OnboardingChecklist({ profile, gym, stats }) {
       description: 'Fill in your name and contact phone number.',
       completed: isProfileComplete,
       actionLabel: 'Edit Profile',
-      path: '/profile',
-      tourStep: 'profile_name'
+      path: '/profile'
     },
     {
       id: 'plans',
@@ -49,8 +48,7 @@ export default function OnboardingChecklist({ profile, gym, stats }) {
       description: 'Configure your subscription tiers (e.g. Monthly, Yearly) in settings.',
       completed: isPlansConfigured,
       actionLabel: 'Configure Plans',
-      path: '/settings',
-      tourStep: 'settings_plans'
+      path: '/settings'
     },
     {
       id: 'members',
@@ -58,8 +56,7 @@ export default function OnboardingChecklist({ profile, gym, stats }) {
       description: 'Add a member manually or let them scan your QR Connection Poster.',
       completed: isMembersOnboarded,
       actionLabel: 'Add Member',
-      path: '/members/new',
-      tourStep: 'dashboard_members'
+      path: '/members/new'
     },
     {
       id: 'store',
@@ -67,21 +64,12 @@ export default function OnboardingChecklist({ profile, gym, stats }) {
       description: 'Set up supplements, drinks, or gym gear catalog for sales.',
       completed: isStoreVisited,
       actionLabel: 'Open Store Manager',
-      path: '/store-manager',
-      tourStep: 'store_intro'
+      path: '/store-manager'
     }
   ];
 
   const completedCount = steps.filter(s => s.completed).length;
   const progressPercent = Math.round((completedCount / steps.length) * 100);
-
-  const startTourAtStep = (tourStepId, path) => {
-    localStorage.setItem('gymix_onboarding_active', 'true');
-    localStorage.setItem('gymix_onboarding_step', tourStepId);
-    navigate(path);
-    // Dispatch event to wake up the tour overlay immediately
-    window.dispatchEvent(new Event('storage'));
-  };
 
   // Hide the checklist if all tasks are complete
   if (completedCount === steps.length) {
@@ -169,7 +157,7 @@ export default function OnboardingChecklist({ profile, gym, stats }) {
 
             {!step.completed && (
               <button
-                onClick={() => startTourAtStep(step.tourStep, step.path)}
+                onClick={() => navigate(step.path)}
                 className="self-end px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-[#60A5FA] hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all cursor-pointer"
               >
                 <span>{step.actionLabel}</span>
@@ -178,19 +166,6 @@ export default function OnboardingChecklist({ profile, gym, stats }) {
             )}
           </div>
         ))}
-      </div>
-
-      {/* Restart Tour button */}
-      <div className="pt-2 flex items-center justify-between relative z-10 text-slate-500">
-        <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider">
-          <HelpCircle className="w-3.5 h-3.5" /> Need help? Start the guide!
-        </div>
-        <button
-          onClick={() => startTourAtStep('welcome', '/dashboard')}
-          className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-300 transition-all cursor-pointer flex items-center gap-1.5"
-        >
-          <PlayCircle className="w-3.5 h-3.5" /> Restart Guided Tour
-        </button>
       </div>
     </div>
   );
