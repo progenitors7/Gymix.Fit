@@ -16,18 +16,50 @@ export function useMembers() {
   const [searchQuery, setSearchQuery] = useState('')
   const [hasFetched, setHasFetched] = useState(false)
 
-  const fetchMembers = useCallback(async () => {
+  const fetchMembers = useCallback(async (isBackground = false) => {
     if (!isReady) {
       setLoading(false)
       return
     }
-    setLoading(true)
+
+    const cacheKey = `gym_members_cache_${gymId}`
+
+    if (!isBackground) {
+      // Check cache first for instant UI response
+      const cached = localStorage.getItem(cacheKey)
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached)
+          setMembers(parsed)
+          setLoading(false) // instantly complete loading
+        } catch (e) {
+          console.warn('[Cache] Failed parsing cached members:', e)
+        }
+      } else {
+        setLoading(true)
+      }
+    }
+
     setError(null)
     try {
       const data = await getMembers(gymId)
-      setMembers(data || [])
+      const freshData = data || []
+      const freshStr = JSON.stringify(freshData)
+      const cachedStr = localStorage.getItem(cacheKey)
+
+      // Only trigger state updates if actual database records differ
+      if (freshStr !== cachedStr) {
+        setMembers(freshData)
+        localStorage.setItem(cacheKey, freshStr)
+      }
     } catch (err) {
-      setError(err.message)
+      // Avoid breaking UI if offline and cache is present
+      const cached = localStorage.getItem(cacheKey)
+      if (cached) {
+        console.warn('[Cache] Sync failed, showing cached fallback:', err.message)
+      } else {
+        setError(err.message)
+      }
     } finally {
       setLoading(false)
       setHasFetched(true)
@@ -38,7 +70,7 @@ export function useMembers() {
     let mounted = true;
     if (isReady && !hasFetched) {
       setTimeout(() => {
-        if (mounted) fetchMembers()
+        if (mounted) fetchMembers(false)
       }, 0);
     }
     return () => {
@@ -137,7 +169,11 @@ export function useMembers() {
       }
     }
 
-    setMembers((prev) => [newMember, ...prev])
+    setMembers((prev) => {
+      const updatedList = [newMember, ...prev]
+      localStorage.setItem(`gym_members_cache_${gymId}`, JSON.stringify(updatedList))
+      return updatedList
+    })
     return newMember
   }, [gymId, gym])
 
@@ -146,7 +182,11 @@ export function useMembers() {
     const wasAlreadyLeft = previousMember?.status === 'left';
 
     const updated = await updateMember(id, formData)
-    setMembers((prev) => prev.map((m) => (m.id === id ? updated : m)))
+    setMembers((prev) => {
+      const updatedList = prev.map((m) => (m.id === id ? updated : m))
+      localStorage.setItem(`gym_members_cache_${gymId}`, JSON.stringify(updatedList))
+      return updatedList
+    })
 
     // Trigger WhatsApp goodbye message if status changed to 'left' and autopilot is enabled
     if (updated && updated.status === 'left' && !wasAlreadyLeft && updated.phone_number) {
@@ -211,8 +251,12 @@ export function useMembers() {
   // Hard-delete: gym owner permanently removes a member
   const removeMember = useCallback(async (id) => {
     await deleteMember(id)
-    setMembers((prev) => prev.filter((m) => m.id !== id))
-  }, [])
+    setMembers((prev) => {
+      const updatedList = prev.filter((m) => m.id !== id)
+      localStorage.setItem(`gym_members_cache_${gymId}`, JSON.stringify(updatedList))
+      return updatedList
+    })
+  }, [gymId])
 
   const filtered = filterMembers(members, searchQuery)
 

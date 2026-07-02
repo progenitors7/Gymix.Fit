@@ -3,8 +3,8 @@
  * Main members list with search, status filter tabs, table (desktop) + cards (mobile),
  * and quick-access delete confirm modal.
  */
-import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Users, 
   Search, 
@@ -80,6 +80,7 @@ function EmptyState({ hasSearch }) {
 export default function MembersPage() {
   const navigate = useNavigate();
   const { gym } = useCurrentGym();
+  const [searchParams] = useSearchParams();
   const {
     filteredMembers,
     loading,
@@ -89,7 +90,22 @@ export default function MembersPage() {
     removeMember,
   } = useMembers();
 
+  const [localSearch, setLocalSearch] = useState(() => searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  // Sync search query from URL if changed
+  useEffect(() => {
+    const urlQuery = searchParams.get('search') || '';
+    setLocalSearch(urlQuery);
+  }, [searchParams]);
+
+  // Debounce search query to prevent rendering lag while typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(localSearch);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [localSearch, setSearchQuery]);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [waSendingInfo, setWaSendingInfo] = useState(null);
@@ -108,12 +124,17 @@ export default function MembersPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Filter members list based on selected status tab
-  const displayed = statusFilter === 'all'
-    ? filteredMembers.filter((m) => m.status !== 'left')
-    : filteredMembers.filter((m) => m.status === statusFilter);
+  // Filter members list based on selected status tab (memoized)
+  const displayed = useMemo(() => {
+    return statusFilter === 'all'
+      ? filteredMembers.filter((m) => m.status !== 'left')
+      : filteredMembers.filter((m) => m.status === statusFilter);
+  }, [filteredMembers, statusFilter]);
 
-  const visibleMembers = displayed.slice(0, visibleCount);
+  // Paginated members list (memoized)
+  const visibleMembers = useMemo(() => {
+    return displayed.slice(0, visibleCount);
+  }, [displayed, visibleCount]);
 
   // Reset pagination when searching or changing filters
   useEffect(() => {
@@ -253,13 +274,27 @@ export default function MembersPage() {
     }
   };
 
-  const counts = {
-    all: filteredMembers.filter((m) => m.status !== 'left').length,
-    active: filteredMembers.filter((m) => m.status === 'active').length,
-    expiring_soon: filteredMembers.filter((m) => m.status === 'expiring_soon').length,
-    expired: filteredMembers.filter((m) => m.status === 'expired').length,
-    left: filteredMembers.filter((m) => m.status === 'left').length,
-  };
+  const counts = useMemo(() => {
+    let all = 0;
+    let active = 0;
+    let expiring_soon = 0;
+    let expired = 0;
+    let left = 0;
+    
+    for (let i = 0; i < filteredMembers.length; i++) {
+      const m = filteredMembers[i];
+      if (m.status === 'left') {
+        left++;
+      } else {
+        all++;
+        if (m.status === 'active') active++;
+        else if (m.status === 'expiring_soon') expiring_soon++;
+        else if (m.status === 'expired') expired++;
+      }
+    }
+    
+    return { all, active, expiring_soon, expired, left };
+  }, [filteredMembers]);
 
   const isNativeApp = window.Capacitor !== undefined || window.matchMedia('(display-mode: standalone)').matches;
 
@@ -320,8 +355,8 @@ export default function MembersPage() {
           <input
             id="member-search"
             type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
             placeholder="Search by name or phone…"
             className="w-full pl-14 pr-6 py-4 rounded-2xl bg-white/[0.02] border border-white/5 text-[#F8FAFC] placeholder-[#64748B] text-[15px] font-medium focus:outline-none focus:border-[#3B82F6]/40 focus:bg-white/[0.04] focus:ring-4 focus:ring-[#3B82F6]/10 transition-all shadow-inner"
           />
@@ -404,8 +439,7 @@ export default function MembersPage() {
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {visibleMembers.map((member) => (
-                        <motion.tr 
-                          variants={itemVariants}
+                        <tr 
                           key={member.id} 
                           className="group hover:bg-white/[0.03] transition-colors duration-200"
                         >
@@ -493,7 +527,7 @@ export default function MembersPage() {
                               </button>
                             </div>
                           </td>
-                        </motion.tr>
+                        </tr>
                       ))}
                     </tbody>
                   </table>
@@ -504,8 +538,7 @@ export default function MembersPage() {
               {isMobile && (
                 <div className="md:hidden space-y-4">
                   {visibleMembers.map((member) => (
-                    <motion.div 
-                      variants={itemVariants}
+                    <div 
                       key={member.id} 
                       className="glass-card border border-white/5 rounded-3xl p-6 active:scale-[0.98] transition-all relative overflow-hidden"
                     >
@@ -587,7 +620,7 @@ export default function MembersPage() {
                           </button>
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               )}
@@ -599,12 +632,11 @@ export default function MembersPage() {
                 </div>
               )}
 
-              <motion.p 
-                variants={itemVariants}
+              <p 
                 className="text-[#64748B] text-[10px] font-bold uppercase tracking-widest text-center mt-10"
               >
                 Showing {visibleMembers.length} of {displayed.length} Athletes
-              </motion.p>
+              </p>
             </motion.div>
           )}
         </AnimatePresence>

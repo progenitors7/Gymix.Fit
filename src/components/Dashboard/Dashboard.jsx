@@ -14,6 +14,7 @@ import MemberDashboard from './MemberDashboard';
 import PendingRequestsWidget from './PendingRequestsWidget';
 import OnboardingChecklist from './OnboardingChecklist';
 import { toast } from 'react-hot-toast';
+import { supabase } from '../../lib/supabaseClient';
 
 import { 
   Users, 
@@ -32,7 +33,8 @@ import {
   Target,
   UserPlus,
   SlidersHorizontal,
-  Store
+  Store,
+  RefreshCw
 } from 'lucide-react'
 import Logo from '../UI/Logo'
 
@@ -63,6 +65,113 @@ export default function Dashboard() {
   const { gym, gymLoading, gymError, gymName, updateGymName } = useCurrentGym()
   const { stats, loading: statsLoading, error: statsError, fetchStats } = useDashboardStats();
   const navigate = useNavigate();
+
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [pullStart, setPullStart] = useState(0);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await fetchStats();
+      setRefreshKey(prev => prev + 1);
+      toast.success('Dashboard refreshed successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to refresh dashboard');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleTouchStart = (e) => {
+    if (window.scrollY === 0 && !isRefreshing) {
+      setPullStart(e.touches[0].clientY);
+      setIsPulling(true);
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isPulling || isRefreshing) return;
+    const currentY = e.touches[0].clientY;
+    const distance = currentY - pullStart;
+    if (distance > 0) {
+      const dampedDistance = Math.min(distance * 0.4, 80);
+      setPullDistance(dampedDistance);
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (!isPulling || isRefreshing) return;
+    setIsPulling(false);
+    if (pullDistance >= 60) {
+      setIsRefreshing(true);
+      setPullDistance(60);
+      try {
+        await fetchStats();
+        setRefreshKey(prev => prev + 1);
+        toast.success('Dashboard refreshed successfully!');
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsRefreshing(false);
+        setPullDistance(0);
+      }
+    } else {
+      setPullDistance(0);
+    }
+  };
+
+  useEffect(() => {
+    if (!gym?.id) return;
+
+    const requestsChannel = supabase
+      .channel(`realtime-requests-${gym.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'connection_requests',
+          filter: `gym_id=eq.${gym.id}`
+        },
+        (payload) => {
+          console.log('[Realtime] Connection request change detected:', payload);
+          setRefreshKey(prev => prev + 1);
+          fetchStats();
+          if (payload.eventType === 'INSERT') {
+            toast.success('New member connection request received! ⚡', {
+              id: 'realtime-req-toast',
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    const attendanceChannel = supabase
+      .channel(`realtime-attendance-${gym.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'attendance',
+          filter: `gym_id=eq.${gym.id}`
+        },
+        (payload) => {
+          console.log('[Realtime] Attendance change detected:', payload);
+          fetchStats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(requestsChannel);
+      supabase.removeChannel(attendanceChannel);
+    };
+  }, [gym?.id, fetchStats]);
 
   const isPlaystoreApp = localStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined;
   const daysLeft = gym?.billing_days_left;
@@ -101,7 +210,7 @@ export default function Dashboard() {
     const originFallback = (window.location.origin && !window.location.origin.includes('localhost')) 
       ? window.location.origin 
       : 'https://gymix.fit'
-    const scanUrl = `${originFallback}/signup?gym=${gym?.unique_code}&role=member`
+    const scanUrl = `${originFallback}/join/${gym?.unique_code}`
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(scanUrl)}`
     
     printWindow.document.write(`
@@ -239,7 +348,7 @@ export default function Dashboard() {
     const originFallback = (window.location.origin && !window.location.origin.includes('localhost')) 
       ? window.location.origin 
       : 'https://gymix.fit'
-    const scanUrl = `${originFallback}/signup?gym=${gym?.unique_code}&role=member`
+    const scanUrl = `${originFallback}/join/${gym?.unique_code}`
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(scanUrl)}`
     const isPlaystoreApp = localStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined
 
@@ -402,7 +511,34 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-8">
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className="relative min-h-screen"
+    >
+      {/* Sliding Pull to Refresh Indicator */}
+      <div 
+        className="absolute left-0 right-0 z-50 flex items-center justify-center pointer-events-none transition-all duration-150"
+        style={{ 
+          top: `${pullDistance - 40}px`,
+          opacity: pullDistance > 10 ? 1 : 0
+        }}
+      >
+        <div className="w-10 h-10 rounded-full bg-[#1A1F2B] border border-white/10 flex items-center justify-center shadow-2xl relative overflow-hidden">
+          <div className="absolute inset-0 bg-[#3B82F6]/5 pointer-events-none" />
+          <RefreshCw 
+            className={`w-4.5 h-4.5 text-[#3B82F6] ${
+              isRefreshing ? 'animate-spin' : ''
+            }`}
+            style={{ 
+              transform: isRefreshing ? undefined : `rotate(${pullDistance * 4}deg)`
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-8">
       
       {/* Play Store Subscription Reminder Banner */}
       {isPlaystoreApp && isExpiringSoon && (
@@ -452,15 +588,26 @@ export default function Dashboard() {
           </div>
         </div>
         
-        {/* Real-time search bar */}
-        <div className="relative group w-full lg:w-80">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94A3B8] group-focus-within:text-[#3B82F6] transition-colors" />
-          <input 
-            type="text" 
-            placeholder="Quick search members..." 
-            onKeyDown={handleSearch}
-            className="w-full bg-[#1A1F2B] border border-white/5 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#3B82F6]/50 focus:ring-1 focus:ring-[#3B82F6]/50 transition-all shadow-inner"
-          />
+        {/* Real-time search bar & Refresh button */}
+        <div className="flex items-center gap-3 w-full lg:w-auto">
+          <div className="relative group flex-1 lg:w-80">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94A3B8] group-focus-within:text-[#3B82F6] transition-colors" />
+            <input 
+              type="text" 
+              placeholder="Quick search members..." 
+              onKeyDown={handleSearch}
+              className="w-full bg-[#1A1F2B] border border-white/5 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#3B82F6]/50 focus:ring-1 focus:ring-[#3B82F6]/50 transition-all shadow-inner"
+            />
+          </div>
+          
+          <button
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            className="flex-shrink-0 p-3.5 bg-[#1A1F2B] border border-white/5 hover:border-white/10 text-slate-300 hover:text-white rounded-2xl transition-all cursor-pointer disabled:opacity-50"
+            title="Refresh Dashboard"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </button>
         </div>
       </div>
 
@@ -755,7 +902,12 @@ export default function Dashboard() {
 
           {/* Pending requests approval box (Brought to top-priority area & highlighted!) */}
           <div className="onboarding-requests-widget">
-            <PendingRequestsWidget gymId={gym?.id} gymCode={gym?.unique_code} onRefreshStats={fetchStats} />
+            <PendingRequestsWidget 
+              gymId={gym?.id} 
+              gymCode={gym?.unique_code} 
+              onRefreshStats={fetchStats} 
+              refreshKey={refreshKey} 
+            />
           </div>
 
           {/* Expiring Soon */}
@@ -772,6 +924,7 @@ export default function Dashboard() {
 
       </div>
       {renderPosterModal()}
+      </div>
     </div>
   )
 }

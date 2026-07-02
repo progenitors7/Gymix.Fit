@@ -36,6 +36,7 @@ const AttendancePage = React.lazy(() => import('./pages/AttendancePage'))
 const LeaderboardPage = React.lazy(() => import('./pages/LeaderboardPage'))
 const HardwareStorePage = React.lazy(() => import('./pages/HardwareStorePage'))
 const PrivacyPolicyPage = React.lazy(() => import('./pages/PrivacyPolicyPage'))
+const JoinGymPage = React.lazy(() => import('./pages/JoinGymPage'))
 
 function LoadingScreen() {
   return (
@@ -278,10 +279,12 @@ export default function App() {
               <Route path="/" element={<RootRoute />} />
               <Route path="/login" element={<AuthPage />} />
               <Route path="/signup" element={<AuthPage />} />
+              <Route path="/owner-signup" element={<AuthPage />} />
               <Route path="/forgot-password" element={<AuthPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/hardware" element={<HardwareStorePage />} />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
+              <Route path="/join/:gymCode" element={<JoinGymPage />} />
 
             {/* ── Protected ── */}
             <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />

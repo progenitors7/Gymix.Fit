@@ -9,6 +9,12 @@ import { useCurrentGym } from '../../hooks/useCurrentGym'
 import { connectionService } from '../../services/connectionService'
 import toast from 'react-hot-toast'
 
+/**
+ * Html5Qrcode internal scanner states (from library source).
+ * Used to safely check state before calling pause/resume/stop.
+ */
+const SCANNER_STATE = { NOT_STARTED: 1, SCANNING: 2, PAUSED: 3 }
+
 export default function ScannerPage() {
   const navigate = useNavigate()
   const { gymId } = useCurrentGym()
@@ -22,10 +28,19 @@ export default function ScannerPage() {
   const [scanResult, setScanResult] = useState(null) // { success: boolean, message: string, member: object }
   const [isProcessing, setIsProcessing] = useState(false)
 
-  // Ref to hold Html5Qrcode instance
+  // Refs for race-condition-safe access inside callbacks and timers
   const html5QrCodeRef = useRef(null)
+  const isProcessingRef = useRef(false)
+  const selectedCameraIdRef = useRef('')
+  const resumeTimerRef = useRef(null)
   const scannerId = 'qr-reader-container'
 
+  // Keep camera ID ref in sync with React state so setTimeout closures always read the latest value
+  useEffect(() => {
+    selectedCameraIdRef.current = selectedCameraId
+  }, [selectedCameraId])
+
+  // ── Offline Sync ──────────────────────────────────────────────────────────
   // Sync queued offline check-in logs to the database using manual attendance logging bypass
   const syncOfflineLogs = useCallback(async () => {
     if (!gymId || !navigator.onLine) return
@@ -54,72 +69,117 @@ export default function ScannerPage() {
   // Run sync on mount and when connection status changes back to online
   useEffect(() => {
     syncOfflineLogs()
-
     const handleOnline = () => syncOfflineLogs()
     window.addEventListener('online', handleOnline)
-    return () => {
-      window.removeEventListener('online', handleOnline)
-    }
+    return () => window.removeEventListener('online', handleOnline)
   }, [gymId, syncOfflineLogs])
 
+  // ── Scanner State Helper ──────────────────────────────────────────────────
+  /** Safely read the current Html5Qrcode scanner state without throwing. */
+  const getScannerState = () => {
+    try {
+      return html5QrCodeRef.current?.getState?.() ?? SCANNER_STATE.NOT_STARTED
+    } catch {
+      return SCANNER_STATE.NOT_STARTED
+    }
+  }
 
-
-  // Start the PWA QR camera stream
+  // ── Start Camera (full hardware init — used on mount & camera change ONLY) ──
   const startScanner = async (cameraId) => {
-    if (!cameraId || isProcessing) return
-    await Promise.resolve()
+    if (!cameraId || isProcessingRef.current) return
     setScannerError('')
-    setScanning(true)
-    
-    // Stop any existing instance
+
+    // Clear any pending resume timer
+    if (resumeTimerRef.current) {
+      clearTimeout(resumeTimerRef.current)
+      resumeTimerRef.current = null
+    }
+
+    // Stop any existing scan cleanly
     if (html5QrCodeRef.current) {
       try {
-        await html5QrCodeRef.current.stop()
+        const state = getScannerState()
+        if (state === SCANNER_STATE.SCANNING || state === SCANNER_STATE.PAUSED) {
+          await html5QrCodeRef.current.stop()
+        }
       } catch {
-        // Ignored
+        // Instance is corrupted — discard it, we'll create a fresh one below
+        html5QrCodeRef.current = null
       }
     }
 
-    const html5QrCode = new Html5Qrcode(scannerId)
-    html5QrCodeRef.current = html5QrCode
+    // Reuse existing instance when possible; create fresh one if needed
+    if (!html5QrCodeRef.current) {
+      html5QrCodeRef.current = new Html5Qrcode(scannerId)
+    }
 
     const config = {
-      fps: 10,
+      fps: 12, // Slightly higher than default for faster detection
       qrbox: { width: 250, height: 250 }
     }
 
     try {
-      await html5QrCode.start(
+      await html5QrCodeRef.current.start(
         cameraId,
         config,
-        async (decodedText) => {
-          // Trigger scan success
-          await handleScanSuccess(decodedText)
-        },
-        () => {
-          // Silent callback for qr discovery failures (standard behavior)
-        }
+        (decodedText) => handleScanSuccess(decodedText),
+        () => {} // Silent callback for QR discovery failures (standard behavior)
       )
+      setScanning(true)
     } catch (err) {
-      console.error('Failed to start scanner:', err)
+      console.error('[Scanner] Failed to start camera:', err)
+      // Instance failed — clear so next attempt creates a fresh one
+      html5QrCodeRef.current = null
       setScannerError('Failed to initialize camera. Try selecting a different camera device.')
       setScanning(false)
     }
   }
 
-  // Stop camera feed
+  // ── Stop Camera (full hardware teardown — only for cleanup & camera switch) ──
   const stopScanner = async () => {
-    setScanning(false)
-    if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+    if (resumeTimerRef.current) {
+      clearTimeout(resumeTimerRef.current)
+      resumeTimerRef.current = null
+    }
+
+    if (html5QrCodeRef.current) {
       try {
-        await html5QrCodeRef.current.stop()
+        const state = getScannerState()
+        if (state === SCANNER_STATE.SCANNING || state === SCANNER_STATE.PAUSED) {
+          await html5QrCodeRef.current.stop()
+        }
       } catch (err) {
-        console.error('Error stopping scanner:', err)
+        console.error('[Scanner] Error stopping:', err)
       }
+    }
+    setScanning(false)
+  }
+
+  // ── Pause Scanner (freeze video + stop decoding, but KEEP camera hardware open) ──
+  const pauseScanner = () => {
+    try {
+      if (getScannerState() === SCANNER_STATE.SCANNING) {
+        html5QrCodeRef.current.pause(true) // true = also freeze video frame
+      }
+    } catch (err) {
+      console.error('[Scanner] Error pausing:', err)
     }
   }
 
-  // Initialize and list cameras
+  // ── Resume Scanner (unfreeze video + restart decoding — instant, no hardware re-init) ──
+  const resumeScanner = () => {
+    try {
+      if (getScannerState() === SCANNER_STATE.PAUSED) {
+        html5QrCodeRef.current.resume()
+        return true
+      }
+    } catch (err) {
+      console.error('[Scanner] Error resuming:', err)
+    }
+    return false
+  }
+
+  // ── Camera Init & Permission Request ──────────────────────────────────────
   const requestCameraAccess = () => {
     setScannerError('')
     
@@ -128,33 +188,45 @@ export default function ScannerPage() {
         .then((devices) => {
           if (devices && devices.length > 0) {
             setCameras(devices)
-            setSelectedCameraId((prevId) => {
-              const firstId = devices[0].id
-              if (prevId === firstId) {
-                startScanner(firstId)
-              }
-              return firstId
+            // Prefer the back/environment-facing camera for gym QR scanning
+            const backCam = devices.find(d => {
+              const label = (d.label || '').toLowerCase()
+              return label.includes('back') || label.includes('rear') || label.includes('environment')
             })
+            
+            if (backCam) {
+              setSelectedCameraId(backCam.id)
+              startScanner(backCam.id)
+            } else if (devices.length > 1) {
+              // If labels are empty (common in WebView), select devices[1].id for dropdown
+              // (usually the back camera is the second one in the list on Android)
+              // but start with facingMode environment to let the OS choose the back camera.
+              setSelectedCameraId(devices[1].id)
+              startScanner({ facingMode: "environment" })
+            } else {
+              setSelectedCameraId(devices[0].id)
+              startScanner(devices[0].id)
+            }
           } else {
             setScannerError('No camera devices found. Please ensure camera access is enabled.')
           }
         })
         .catch((err) => {
-          console.error('Error listing cameras:', err)
+          console.error('[Scanner] Error listing cameras:', err)
           setScannerError('Failed to list camera devices.')
         })
     }
 
     // Force WebView to request native camera permission using getUserMedia
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    if (navigator.mediaDevices?.getUserMedia) {
       navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
         .then((stream) => {
-          // Stop stream immediately to release hardware lock
+          // Stop stream immediately to release hardware lock before Html5Qrcode takes over
           stream.getTracks().forEach(track => track.stop())
           obtainDevices()
         })
         .catch((err) => {
-          console.error('Camera permission request failed:', err)
+          console.error('[Scanner] Camera permission request failed:', err)
           setScannerError('Camera permission denied or unavailable.')
         })
     } else {
@@ -162,22 +234,66 @@ export default function ScannerPage() {
     }
   }
 
+  // Mount: request camera & start scanning. Unmount: full teardown.
   useEffect(() => {
     requestCameraAccess()
 
     return () => {
-      stopScanner()
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current)
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      if (html5QrCodeRef.current) {
+        try {
+          const state = html5QrCodeRef.current.getState?.() ?? SCANNER_STATE.NOT_STARTED
+          if (state === SCANNER_STATE.SCANNING || state === SCANNER_STATE.PAUSED) {
+            html5QrCodeRef.current.stop().catch(() => {})
+          }
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Handle scanned QR tokens
+  // ── QR Scan Success Handler ───────────────────────────────────────────────
   const handleScanSuccess = async (decodedText) => {
-    if (isProcessing) return
+    // Race-condition-safe duplicate check using ref (React state update is async and would be too slow)
+    if (isProcessingRef.current) return
+    isProcessingRef.current = true
     setIsProcessing(true)
     
-    // Pause scan checks by stopping the scanner stream temporarily
-    await stopScanner()
+    // PAUSE the scanner — freezes video frame & stops decoding, but keeps camera hardware open.
+    // This is the key fix: we never release the camera hardware between scans.
+    pauseScanner()
+
+    // Clear any previous resume timer
+    if (resumeTimerRef.current) {
+      clearTimeout(resumeTimerRef.current)
+      resumeTimerRef.current = null
+    }
+
+    /**
+     * Helper: schedule auto-resume after the result card is shown.
+     * Tries instant resume() first; falls back to full startScanner() if resume fails.
+     */
+    const scheduleResume = (delayMs) => {
+      isProcessingRef.current = false
+      setIsProcessing(false)
+      
+      resumeTimerRef.current = setTimeout(() => {
+        setScanResult(null)
+        resumeTimerRef.current = null
+
+        // Try instant resume (no camera re-init, zero lag)
+        if (!resumeScanner()) {
+          // Fallback: full restart (e.g. if pause() had failed earlier)
+          const cameraId = selectedCameraIdRef.current
+          if (cameraId && document.getElementById(scannerId)) {
+            startScanner(cameraId)
+          }
+        }
+      }, delayMs)
+    }
 
     const isOffline = !navigator.onLine
     if (isOffline) {
@@ -218,18 +334,8 @@ export default function ScannerPage() {
           success: false,
           message: err.message || 'Offline Scan Failed! ❌'
         })
-      } finally {
-        setIsProcessing(false)
-        
-        // Auto-restart camera after 4 seconds to scan next member
-        setTimeout(() => {
-          setScanResult(null)
-          const element = document.getElementById(scannerId)
-          if (element) {
-            startScanner(selectedCameraId)
-          }
-        }, 4000)
       }
+      scheduleResume(2500)
       return
     }
 
@@ -266,37 +372,16 @@ export default function ScannerPage() {
         checkOutTimeStr: checkOutTime ? checkOutTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : null,
         durationStr
       })
+      scheduleResume(2500) // 2.5s — fast enough for busy gym queues
     } catch (err) {
       // Error Overlay State
       setScanResult({
         success: false,
         message: err.message || 'Check-in Failed! ❌'
       })
-    } finally {
-      setIsProcessing(false)
-      
-      // Auto-restart camera after 4 seconds to scan next member
-      setTimeout(() => {
-        setScanResult(null)
-        // Check if component is still active
-        const element = document.getElementById(scannerId)
-        if (element) {
-          startScanner(selectedCameraId)
-        }
-      }, 4000)
+      scheduleResume(3000) // 3s for errors — slightly longer so owner can read
     }
   }
-
-  // Toggle/start camera stream manually
-  useEffect(() => {
-    if (selectedCameraId && !scanning && !scanResult) {
-      const timer = setTimeout(() => {
-        startScanner(selectedCameraId)
-      }, 0)
-      return () => clearTimeout(timer)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCameraId])
 
   return (
     <div className="p-6 sm:p-10 lg:p-12 max-w-2xl mx-auto space-y-8 pb-28 sm:pb-10">
@@ -321,8 +406,6 @@ export default function ScannerPage() {
       {/* Main glass frame card */}
       <div className="glass-card border border-white/5 rounded-[2.5rem] p-8 sm:p-12 relative overflow-hidden text-center min-h-[450px] flex flex-col justify-between">
         
-        {/* Elegant border only */}
-
         <div className="relative z-10 flex-1 flex flex-col justify-center items-center space-y-6">
           {scannerError && (
             <div className="w-full flex flex-col items-center gap-4">
@@ -339,23 +422,107 @@ export default function ScannerPage() {
             </div>
           )}
 
-          {/* DYNAMIC SCANNED STATE OVERLAY */}
-          <AnimatePresence mode="wait">
-            {scanResult ? (
-              <motion.div
-                key="result"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className={`w-full p-8 rounded-[2rem] border relative overflow-hidden flex flex-col items-center justify-center space-y-6 ${
-                  scanResult.success 
-                    ? scanResult.action === 'checkout'
-                      ? 'bg-sky-500/5 border-sky-500/20 text-sky-400'
-                      : 'bg-emerald-500/5 border-emerald-500/20 text-emerald-400' 
-                    : 'bg-rose-500/5 border-rose-500/20 text-rose-400'
-                }`}
-              >
-                {/* No background glow */}
+          {/* ─── SCANNER VIEW — ALWAYS MOUNTED IN DOM, NEVER REMOVED ─── */}
+          <div className="w-full flex flex-col items-center space-y-6">
+
+            {/* Cameras Dropdown selection — hidden during result overlay */}
+            {cameras.length > 1 && !scanResult && (
+              <div className="w-full max-w-xs flex flex-col gap-2 text-left">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Select Camera Lens</label>
+                <select
+                  value={selectedCameraId}
+                  onChange={(e) => {
+                    const newId = e.target.value
+                    setSelectedCameraId(newId)
+                    startScanner(newId)
+                  }}
+                  className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-3.5 text-white text-xs font-medium focus:outline-none"
+                >
+                  {cameras.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.label || `Camera ${cameras.indexOf(c) + 1}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Secure Scan window wrapper — ALWAYS in DOM so camera hardware is never released */}
+            <div className="relative w-64 h-64 mx-auto rounded-[2rem] overflow-hidden border border-white/5 bg-slate-950/80 p-1">
+              {/* Neon flashing camera alignment lines — only visible during active scanning */}
+              {scanning && !scanResult && (
+                <div className="absolute inset-0 z-10 pointer-events-none border-2 border-emerald-500/20 rounded-[2rem] overflow-hidden">
+                  {/* Highly performant CSS-only Laser scanner effect line */}
+                  <>
+                    <style>{`
+                      @keyframes scanLaser {
+                        0% { top: 0%; }
+                        50% { top: 100%; }
+                        100% { top: 0%; }
+                      }
+                      .animate-laser {
+                        animation: scanLaser 3s linear infinite;
+                      }
+                    `}</style>
+                    <div className="w-full h-0.5 bg-emerald-500 absolute top-0 animate-laser" style={{ boxShadow: '0 0 8px #10B981' }} />
+                  </>
+                </div>
+              )}
+
+              {/* HTML5 QR Container — PERMANENTLY in DOM. Never unmounted. */}
+              <div 
+                id={scannerId} 
+                className="w-full h-full rounded-[2rem] overflow-hidden [&>video]:object-cover [&>video]:w-full [&>video]:h-full"
+              />
+            </div>
+
+            {/* Instructions & toggle — hidden during result overlay */}
+            {!scanResult && (
+              <>
+                <div className="space-y-1">
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider">ALIGN MEMBER QR CODE</h3>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">System matches rolling sessions dynamically</p>
+                </div>
+
+                <div className="flex gap-3 justify-center pt-2">
+                  <button
+                    onClick={() => {
+                      if (scanning) stopScanner()
+                      else startScanner(selectedCameraId)
+                    }}
+                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                      scanning 
+                        ? 'bg-rose-500/10 border border-rose-500/15 text-rose-400 hover:bg-rose-500/20' 
+                        : 'bg-emerald-500/10 border border-emerald-500/15 text-emerald-400 hover:bg-emerald-500/20'
+                    }`}
+                  >
+                    {scanning ? 'Stop Camera' : 'Start Camera'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* ─── RESULT OVERLAY — Absolute positioned over the glass card ─── */}
+        {/* This covers the frozen camera view without unmounting it */}
+        <AnimatePresence>
+          {scanResult && (
+            <motion.div
+              key="result-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 z-30 flex items-center justify-center p-6 sm:p-8 bg-[#12141C]/98 rounded-[2.5rem]"
+            >
+              <div className={`w-full max-w-sm p-8 rounded-[2rem] border relative overflow-hidden flex flex-col items-center justify-center space-y-6 ${
+                scanResult.success 
+                  ? scanResult.action === 'checkout'
+                    ? 'bg-sky-500/5 border-sky-500/20 text-sky-400'
+                    : 'bg-emerald-500/5 border-emerald-500/20 text-emerald-400' 
+                  : 'bg-rose-500/5 border-rose-500/20 text-rose-400'
+              }`}>
 
                 <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-inner ${
                   scanResult.success 
@@ -430,90 +597,10 @@ export default function ScannerPage() {
                 <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest pt-2 animate-pulse">
                   System returning to live scanner feed shortly...
                 </p>
-              </motion.div>
-            ) : (
-              /* LIVE SCANNERS ACTIVE CAMERA WINDOW */
-              <motion.div
-                key="scanner"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="w-full flex flex-col items-center space-y-6"
-              >
-                {/* Cameras Dropdown selection */}
-                {cameras.length > 1 && (
-                  <div className="w-full max-w-xs flex flex-col gap-2 text-left">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Select Camera Lens</label>
-                    <select
-                      value={selectedCameraId}
-                      onChange={(e) => {
-                        setSelectedCameraId(e.target.value)
-                        startScanner(e.target.value)
-                      }}
-                      className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-3.5 text-white text-xs font-medium focus:outline-none"
-                    >
-                      {cameras.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.label || `Camera ${cameras.indexOf(c) + 1}`}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {/* Secure Scan window wrapper */}
-                <div className="relative w-64 h-64 mx-auto rounded-[2rem] overflow-hidden border border-white/5 bg-slate-950/80 p-1">
-                  {/* Neon flashing camera alignment lines */}
-                  {scanning && (
-                    <div className="absolute inset-0 z-10 pointer-events-none border-2 border-emerald-500/20 rounded-[2rem] overflow-hidden">
-                      {/* Highly performant CSS-only Laser scanner effect line */}
-                      <>
-                        <style>{`
-                          @keyframes scanLaser {
-                            0% { top: 0%; }
-                            50% { top: 100%; }
-                            100% { top: 0%; }
-                          }
-                          .animate-laser {
-                            animation: scanLaser 3s linear infinite;
-                          }
-                        `}</style>
-                        <div className="w-full h-0.5 bg-emerald-500 absolute top-0 animate-laser" style={{ boxShadow: '0 0 8px #10B981' }} />
-                      </>
-                    </div>
-                  )}
-
-                  {/* HTML5 QR Container */}
-                  <div 
-                    id={scannerId} 
-                    className="w-full h-full rounded-[2rem] overflow-hidden [&>video]:object-cover [&>video]:w-full [&>video]:h-full"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <h3 className="text-sm font-black text-white uppercase tracking-wider">ALIGN MEMBER QR CODE</h3>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">System matches rolling sessions dynamically</p>
-                </div>
-
-                <div className="flex gap-3 justify-center pt-2">
-                  <button
-                    onClick={() => {
-                      if (scanning) stopScanner()
-                      else startScanner(selectedCameraId)
-                    }}
-                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                      scanning 
-                        ? 'bg-rose-500/10 border border-rose-500/15 text-rose-400 hover:bg-rose-500/20' 
-                        : 'bg-emerald-500/10 border border-emerald-500/15 text-emerald-400 hover:bg-emerald-500/20'
-                    }`}
-                  >
-                    {scanning ? 'Stop Camera' : 'Start Camera'}
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )

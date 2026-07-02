@@ -16,6 +16,7 @@ export default function AuthPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const paramGym = searchParams.get('gym')
+  const isOwnerSignup = location.pathname === '/owner-signup'
 
   const [platformStats, setPlatformStats] = useState({
     gymsCount: '1.2K+',
@@ -100,13 +101,13 @@ export default function AuthPage() {
   }, [paramGym])
 
   const [mode, setMode] = useState(() => {
-    if (location.pathname === '/signup') return 'signup'
+    if (location.pathname === '/signup' || location.pathname === '/owner-signup') return 'signup'
     if (location.pathname === '/forgot-password') return 'forgot-password'
     return 'login'
   })
 
   useEffect(() => {
-    if (location.pathname === '/signup') {
+    if (location.pathname === '/signup' || location.pathname === '/owner-signup') {
       setMode('signup')
     } else if (location.pathname === '/login') {
       setMode('login')
@@ -234,32 +235,37 @@ export default function AuthPage() {
 
           <AnimatePresence mode="wait">
             <motion.div
-              key={mode}
+              key={`${mode}-${location.pathname}`}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.25, ease: "easeInOut" }}
               style={{ transition: 'none' }}
-              className="glass-card border border-white/10 rounded-[2.5rem] p-8 sm:p-10 shadow-2xl relative overflow-hidden"
+              className={`glass-card rounded-[2.5rem] p-8 sm:p-10 shadow-2xl relative overflow-hidden ${
+                isOwnerSignup
+                  ? 'border border-emerald-400/30 ring-1 ring-emerald-400/10 shadow-emerald-500/10'
+                  : 'border border-white/10'
+              }`}
             >
+              {isOwnerSignup && (
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 via-sky-400 to-emerald-400" />
+              )}
               {/* Header moved inside the glass-card for seamless transition sync */}
-              {!showBridge && (
+              {!showBridge && mode !== 'signup' && (
                 <div className="text-center space-y-3 mb-8">
                   <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase italic leading-none">
-                    {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : 'Forgot Password'}
+                    {mode === 'login' ? 'Welcome Back' : 'Forgot Password'}
                   </h2>
                   <p className="text-slate-500 text-sm font-medium leading-relaxed">
                     {mode === 'login' 
                       ? 'Sign in to manage your gym dashboard.' 
-                      : mode === 'signup' 
-                        ? 'Start growing your business today.' 
-                        : 'We will help you get back into your account.'}
+                      : 'We will help you get back into your account.'}
                   </p>
                 </div>
               )}
 
               {/* Dynamic Tabs */}
-              {mode !== 'forgot-password' && !showBridge && (
+              {mode !== 'forgot-password' && !showBridge && !isOwnerSignup && (
                 <div className="flex rounded-2xl bg-black/40 p-1.5 border border-white/5 mb-8">
                   <button
                     onClick={() => navigate('/login')}
@@ -294,7 +300,7 @@ export default function AuthPage() {
                     onContinueWeb={() => setBypassBridge(true)} 
                   />
                 ) : (
-                  <SignupForm onSwitch={() => navigate('/login')} />
+                  <SignupForm onSwitch={() => navigate('/login')} forcedRole={isOwnerSignup ? 'owner' : undefined} />
                 )
               ) : (
                 <ForgotPasswordForm onSwitch={(newMode) => {

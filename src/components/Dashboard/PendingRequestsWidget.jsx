@@ -8,7 +8,7 @@ import SmartApprovalModal from './SmartApprovalModal'
 import { toast } from 'react-hot-toast'
 import ConfirmModal from '../UI/ConfirmModal'
 
-export default function PendingRequestsWidget({ gymId, gymCode, onRefreshStats }) {
+export default function PendingRequestsWidget({ gymId, gymCode, onRefreshStats, refreshKey }) {
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedReq, setSelectedReq] = useState(null)
@@ -32,7 +32,7 @@ export default function PendingRequestsWidget({ gymId, gymCode, onRefreshStats }
 
   useEffect(() => {
     fetchRequests()
-  }, [fetchRequests])
+  }, [fetchRequests, refreshKey])
 
   // Handle request rejection
   const handleReject = (requestId) => {
