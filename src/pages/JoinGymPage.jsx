@@ -88,11 +88,11 @@ export default function JoinGymPage() {
       const appUri = `com.gymix.fit://signup?gym=${normalized}&role=member`;
       window.location.href = appUri;
       
-      // If page is still in focus after 2 seconds, redirect to Play Store
+      // If page is still in focus after 2 seconds, redirect to Play Store app directly
       const start = Date.now();
       setTimeout(() => {
         if (Date.now() - start < 2500) {
-          window.location.href = 'https://play.google.com/store/apps/details?id=com.gymix.fit';
+          window.location.href = 'market://details?id=com.gymix.fit';
         }
       }, 2000);
     } else {

@@ -43,11 +43,15 @@ export default function AppConnectionBridge({ gymCode, gymName, onContinueWeb })
     // 1. Copy the sync code to clipboard so the app can auto-read it upon first launch
     await handleCopyCode()
 
-    // 2. Trigger the Android Intent to open the app if installed, or fallback to Play Store
-    const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.gymix.fit'
-    const intentUrl = `intent://signup?gym=${gymCode}&role=member#Intent;scheme=com.gymix.fit;package=com.gymix.fit;S.browser_fallback_url=${encodeURIComponent(playStoreUrl)};end`
-    
-    window.location.href = intentUrl
+    // 2. Trigger the Android scheme to open the app if installed, or fallback to Play Store app
+    window.location.href = `com.gymix.fit://signup?gym=${gymCode}&role=member`
+
+    const start = Date.now()
+    setTimeout(() => {
+      if (Date.now() - start < 2000) {
+        window.location.href = 'market://details?id=com.gymix.fit'
+      }
+    }, 1500)
   }
 
   return (
