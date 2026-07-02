@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from 'react'
+import React, { Suspense, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthProvider'
 import { GymProvider } from './context/GymProvider'
@@ -10,7 +10,8 @@ import SuperAdminRoute from './components/Layout/SuperAdminRoute'
 import Logo from './components/UI/Logo'
 import { motion } from 'framer-motion'
 import { useAuth } from './hooks/useAuth'
-import { Toaster } from 'react-hot-toast'
+import { Toaster, toast } from 'react-hot-toast'
+import { pushNotificationService } from './services/pushNotificationService'
 
 
 const LandingPage = React.lazy(() => import('./pages/LandingPage'))
@@ -113,9 +114,10 @@ function RootRoute() {
 function DeepLinkHandler() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const pushInitialized = useRef(false)
 
+  // ── 1. Native deep link handler (com.gymix.fit://) ──
   useEffect(() => {
-    // 1. Listen for native deep link events (com.gymix.fit://)
     if (window.Capacitor) {
       import('@capacitor/app').then(({ App }) => {
         const handler = App.addListener('appUrlOpen', (event) => {
@@ -127,14 +129,11 @@ function DeepLinkHandler() {
               if (match) {
                 const path = match[1]
                 const search = match[2] || ''
-                
-                // Parse gym param and store in localStorage
                 const params = new URLSearchParams(search)
                 const gym = params.get('gym')
                 if (gym) {
                   localStorage.setItem('scanned_gym_code', gym.trim().toUpperCase())
                 }
-                
                 if (path === 'billing-success' || path === 'dashboard') {
                   navigate('/dashboard', { replace: true })
                   window.location.reload()
@@ -154,8 +153,8 @@ function DeepLinkHandler() {
     }
   }, [navigate])
 
+  // ── 2. Clipboard gym code bridge (after Play Store install) ──
   useEffect(() => {
-    // 2. Check clipboard for gym connection bridge code (from mobile web browser redirect)
     const checkClipboardForGymCode = async () => {
       if (!window.Capacitor) return
       try {
@@ -165,11 +164,7 @@ function DeepLinkHandler() {
           if (gymCode) {
             console.log('[DeepLinkHandler] Found gym connection code in clipboard:', gymCode)
             localStorage.setItem('scanned_gym_code', gymCode)
-            
-            // Clear clipboard to avoid loops
             await navigator.clipboard.writeText('')
-            
-            // Redirect to signup page if not logged in
             if (!user) {
               navigate(`/signup?gym=${gymCode}&role=member`, { replace: true })
             }
@@ -179,31 +174,21 @@ function DeepLinkHandler() {
         console.warn('[DeepLinkHandler] Clipboard read failed (expected on some devices):', err)
       }
     }
-
-    // Delay clipboard check slightly to let WebView fully initialize
     const timer = setTimeout(checkClipboardForGymCode, 1500)
     return () => clearTimeout(timer)
   }, [navigate, user])
 
+  // ── 3. Hardware back button (Android) ──
   useEffect(() => {
-    // 3. Listen for native hardware back button (Android)
     if (window.Capacitor) {
       import('@capacitor/app').then(({ App }) => {
         const handler = App.addListener('backButton', (data) => {
           console.log('[DeepLinkHandler] Hardware back button pressed. Can go back:', data.canGoBack)
-          
-          // Dispatch custom cancelable event to allow active modals/views to intercept the back button
           const backEvent = new CustomEvent('hardwareBack', { cancelable: true })
           const defaultPrevented = !window.dispatchEvent(backEvent)
-          
-          if (defaultPrevented) {
-            console.log('[DeepLinkHandler] Back button default prevented by active modal/view.')
-            return
-          }
-
+          if (defaultPrevented) return
           const currentPath = window.location.pathname
           const exitRoutes = ['/dashboard', '/login', '/signup', '/']
-          
           if (exitRoutes.includes(currentPath)) {
             App.exitApp()
           } else {
@@ -217,6 +202,46 @@ function DeepLinkHandler() {
     }
   }, [navigate])
 
+  // ── 4. Push Notifications initialization (runs when user logs in) ──
+  useEffect(() => {
+    if (!user || pushInitialized.current) return
+    pushInitialized.current = true
+
+    pushNotificationService.initialize(
+      user.id,
+      // Foreground notification handler — show a toast when app is open
+      (notification) => {
+        const title = notification.title || 'Gymix'
+        const body = notification.body || ''
+        toast(body ? `${title}: ${body}` : title, {
+          icon: '🔔',
+          duration: 5000,
+          style: {
+            background: '#1A1F2B',
+            color: '#fff',
+            border: '1px solid rgba(134,59,255,0.3)',
+            borderRadius: '16px',
+          },
+        })
+      }
+    )
+
+    // Navigate when user taps a notification (app was in background/closed)
+    const handleNotificationTap = (e) => {
+      const route = e.detail?.route || '/notifications'
+      navigate(route, { replace: true })
+    }
+    window.addEventListener('push-notification-tap', handleNotificationTap)
+    return () => window.removeEventListener('push-notification-tap', handleNotificationTap)
+  }, [user, navigate])
+
+  // ── 5. Remove push token on logout ──
+  useEffect(() => {
+    if (!user) {
+      pushInitialized.current = false
+    }
+  }, [user])
+
   return null
 }
 
@@ -227,21 +252,8 @@ export default function App() {
     localStorage.setItem('is_playstore_app', 'true');
   }
 
-  // Request Notification permission automatically on startup (PWA & Android WebView fallback)
-  useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      const timer = setTimeout(() => {
-        Notification.requestPermission()
-          .then((permission) => {
-            console.log('[Notification] Permission status:', permission);
-          })
-          .catch((err) => {
-            console.warn('[Notification] Permission request failed:', err);
-          });
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, []);
+  // Push notification initialization is handled inside DeepLinkHandler
+  // after user auth state is confirmed (to associate the FCM token with the user).
 
   return (
     <BrowserRouter>
