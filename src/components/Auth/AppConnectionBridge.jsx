@@ -39,9 +39,16 @@ export default function AppConnectionBridge({ gymCode, gymName, onContinueWeb })
     }
   }
 
-  const handleAndroidRedirect = async () => {
-    // 1. Copy the sync code to clipboard so the app can auto-read it upon first launch
-    await handleCopyCode()
+  const handleAndroidRedirect = () => {
+    // 1. Copy the sync code to clipboard (non-async/await to preserve user gesture context)
+    navigator.clipboard.writeText(`gymix-connect:${gymCode}`)
+      .then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 3000)
+      })
+      .catch((err) => {
+        console.warn('Failed to copy gym code:', err)
+      })
 
     // 2. Trigger the Android scheme to open the app if installed, or fallback to Play Store app
     window.location.href = `com.gymix.fit://signup?gym=${gymCode}&role=member`

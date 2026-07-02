@@ -71,20 +71,21 @@ export default function JoinGymPage() {
     setIsiOS(/iphone|ipad|ipod/i.test(ua));
   }, [gymCode]);
 
-  const handleAction = async () => {
+  const handleAction = () => {
     const normalized = getNormalizedCode(gymCode);
-    // 1. Copy the gym connection bridge code to clipboard
+    // 1. Copy the gym connection bridge code to clipboard (non-async/await to preserve user gesture context)
     const bridgeText = `gymix-connect:${normalized}`;
-    try {
-      await navigator.clipboard.writeText(bridgeText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 3000);
-    } catch (err) {
-      console.warn('[JoinGym] Clipboard copy failed:', err);
-    }
+    navigator.clipboard.writeText(bridgeText)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 3000);
+      })
+      .catch((err) => {
+        console.warn('[JoinGym] Clipboard copy failed:', err);
+      });
 
     if (isAndroid) {
-      // Android: Attempt to launch app, fallback to Play Store
+      // Android: Attempt to launch app, fallback to Play Store app directly
       const appUri = `com.gymix.fit://signup?gym=${normalized}&role=member`;
       window.location.href = appUri;
       
