@@ -1,4 +1,6 @@
-import { QrCode, Building, Send, Clock, RefreshCw, AlertCircle, Activity } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Html5Qrcode } from 'html5-qrcode'
+import { QrCode, Building, Send, Clock, RefreshCw, AlertCircle, Activity, Camera, X } from 'lucide-react'
 
 export default function MemberConnectionPanel({
   gymCode,
@@ -12,6 +14,107 @@ export default function MemberConnectionPanel({
   handleClearScannedGym,
   loadMemberSystem
 }) {
+  const [isScanning, setIsScanning] = useState(false)
+  const [scannerError, setScannerError] = useState('')
+  const html5QrCodeRef = useRef(null)
+  const scannerId = 'member-join-qr-reader'
+
+  const startScanner = async () => {
+    setScannerError('')
+    try {
+      const devices = await Html5Qrcode.getCameras()
+      if (!devices || devices.length === 0) {
+        setScannerError('No camera devices found.')
+        return
+      }
+
+      const backCam = devices.find(d => {
+        const label = (d.label || '').toLowerCase()
+        return label.includes('back') || label.includes('rear') || label.includes('environment')
+      })
+      const cameraId = backCam ? backCam.id : devices[0].id
+
+      if (!html5QrCodeRef.current) {
+        html5QrCodeRef.current = new Html5Qrcode(scannerId)
+      }
+
+      await html5QrCodeRef.current.start(
+        cameraId,
+        {
+          fps: 10,
+          qrbox: { width: 200, height: 200 }
+        },
+        (decodedText) => {
+          handleScanSuccess(decodedText)
+        },
+        () => {} // silent error callback
+      )
+    } catch (err) {
+      console.error('Failed to start camera:', err)
+      setScannerError('Camera access denied or failed to initialize.')
+    }
+  }
+
+  const stopScanner = async () => {
+    if (html5QrCodeRef.current) {
+      try {
+        if (html5QrCodeRef.current.isScanning) {
+          await html5QrCodeRef.current.stop()
+        }
+      } catch (err) {
+        console.error('Failed to stop camera:', err)
+      }
+      html5QrCodeRef.current = null
+    }
+  }
+
+  const handleScanSuccess = async (decodedText) => {
+    try {
+      let extractedCode = decodedText
+      if (decodedText.includes('/join/')) {
+        const match = decodedText.match(/\/join\/([^/?#\s]+)/)
+        if (match) {
+          extractedCode = match[1]
+        }
+      } else if (decodedText.startsWith('gymix-connect:')) {
+        extractedCode = decodedText.replace('gymix-connect:', '')
+      }
+
+      const normalized = extractedCode.toUpperCase().trim()
+        .replace(/I/g, '1')
+        .replace(/O/g, '0')
+        .replace(/L/g, '1')
+
+      localStorage.setItem('scanned_gym_code', normalized)
+
+      await stopScanner()
+      setIsScanning(false)
+
+      if (loadMemberSystem) {
+        loadMemberSystem()
+      }
+    } catch (err) {
+      console.error('Error handling scan success:', err)
+    }
+  }
+
+  useEffect(() => {
+    if (isScanning) {
+      const timer = setTimeout(() => {
+        startScanner()
+      }, 300)
+      return () => clearTimeout(timer)
+    } else {
+      stopScanner()
+    }
+  }, [isScanning])
+
+  useEffect(() => {
+    return () => {
+      stopScanner()
+    }
+  }, [])
+
   const inputCls = 'w-full pl-12 pr-5 py-4 rounded-2xl bg-white/[0.02] border border-white/5 text-white placeholder-slate-600 text-sm font-medium focus:outline-none focus:bg-white/[0.04] focus:border-[#3B82F6]/50 focus:ring-1 focus:ring-[#3B82F6]/30 transition-all'
 
   return (
@@ -85,36 +188,88 @@ export default function MemberConnectionPanel({
             </div>
           ) : (
             /* MANUAL GYM CODE ENTRY */
-            <form onSubmit={handleConnect} className="space-y-4">
-              <div className="relative group">
-                <Activity className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-[#3B82F6] transition-colors" />
-                <input
-                  type="text"
-                  placeholder="ENTER GYM CODE (E.G. AX7Y9D)"
-                  value={gymCode}
-                  onChange={(e) => setGymCode(e.target.value.toUpperCase())}
-                  maxLength={10}
+            <div className="space-y-4">
+              <form onSubmit={handleConnect} className="space-y-4">
+                <div className="relative group">
+                  <Activity className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-[#3B82F6] transition-colors" />
+                  <input
+                    type="text"
+                    placeholder="ENTER GYM CODE (E.G. AX7Y9D)"
+                    value={gymCode}
+                    onChange={(e) => setGymCode(e.target.value.toUpperCase())}
+                    maxLength={10}
+                    disabled={submittingReq}
+                    required
+                    className={inputCls}
+                  />
+                </div>
+
+                <button
+                  type="submit"
                   disabled={submittingReq}
-                  required
-                  className={inputCls}
-                />
+                  className="w-full py-4.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-black uppercase tracking-widest rounded-2xl active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {submittingReq ? (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Connect Terminal
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
+                <div className="relative flex justify-center text-[8px] font-black uppercase tracking-[0.2em]"><span className="bg-[#0F1117] px-3 text-slate-600">OR</span></div>
               </div>
 
               <button
-                type="submit"
-                disabled={submittingReq}
-                className="w-full py-4.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-black uppercase tracking-widest rounded-2xl active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                type="button"
+                onClick={() => setIsScanning(true)}
+                className="w-full py-4 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/15 text-xs font-black uppercase tracking-widest rounded-2xl active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
               >
-                {submittingReq ? (
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <Send className="w-4 h-4" />
-                    Connect Terminal
-                  </>
-                )}
+                <QrCode className="w-4 h-4" />
+                Scan QR Code
               </button>
-            </form>
+            </div>
+          )}
+
+          {/* SCANNING MODAL */}
+          {isScanning && (
+            <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+              <div className="bg-[#12141C] border border-white/10 rounded-[2.5rem] w-full max-w-sm p-6 text-center space-y-6 shadow-2xl relative">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between pb-3 border-b border-white/5">
+                  <div className="flex items-center gap-2 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
+                    <Camera className="w-4 h-4" />
+                    Scan QR Code
+                  </div>
+                  <button
+                    onClick={() => setIsScanning(false)}
+                    className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {scannerError && (
+                  <div className="px-4 py-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-bold uppercase tracking-wider">
+                    {scannerError}
+                  </div>
+                )}
+
+                {/* Scanner window */}
+                <div className="relative w-56 h-56 mx-auto rounded-[2rem] overflow-hidden border border-white/5 bg-slate-950 p-1">
+                  <div id={scannerId} className="w-full h-full rounded-[2rem] overflow-hidden [&>video]:object-cover [&>video]:w-full [&>video]:h-full" />
+                </div>
+
+                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider max-w-xs mx-auto">
+                  Align the gym's printed QR poster code within the frame to connect instantly
+                </p>
+              </div>
+            </div>
           )}
         </div>
       ) : (
