@@ -73,29 +73,24 @@ export default function JoinGymPage() {
 
   const handleAction = () => {
     const normalized = getNormalizedCode(gymCode);
-    // 1. Copy the gym connection bridge code to clipboard (non-async/await to preserve user gesture context)
+
+    // 1. Copy the gym connection bridge code to clipboard
     const bridgeText = `gymix-connect:${normalized}`;
     navigator.clipboard.writeText(bridgeText)
       .then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 3000);
       })
-      .catch((err) => {
-        console.warn('[JoinGym] Clipboard copy failed:', err);
-      });
+      .catch(() => {});
 
     if (isAndroid) {
-      // Android: Attempt to launch app, fallback to Play Store app directly
-      const appUri = `com.gymix.fit://signup?gym=${normalized}&role=member`;
-      window.location.href = appUri;
-      
-      // If page is still in focus after 2 seconds, redirect to Play Store app directly
-      const start = Date.now();
-      setTimeout(() => {
-        if (Date.now() - start < 2500) {
-          window.location.href = 'market://details?id=com.gymix.fit';
-        }
-      }, 2000);
+      // Android: Use Chrome's Intent URL - the ONLY reliable way to handle
+      // "open app if installed, otherwise go to Play Store" in one step.
+      // Chrome kills the page JS context when a custom scheme (com.gymix.fit://) 
+      // has no handler, so setTimeout fallbacks never fire.
+      const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.gymix.fit';
+      const intentUrl = `intent://signup?gym=${normalized}&role=member#Intent;scheme=com.gymix.fit;package=com.gymix.fit;S.browser_fallback_url=${encodeURIComponent(playStoreUrl)};end`;
+      window.location.href = intentUrl;
     } else {
       // iOS / Desktop: Redirect to web signup with prefilled params
       navigate(`/signup?gym=${normalized}&role=member`);

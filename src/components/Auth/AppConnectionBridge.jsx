@@ -40,25 +40,22 @@ export default function AppConnectionBridge({ gymCode, gymName, onContinueWeb })
   }
 
   const handleAndroidRedirect = () => {
-    // 1. Copy the sync code to clipboard (non-async/await to preserve user gesture context)
+    // 1. Copy the sync code to clipboard
     navigator.clipboard.writeText(`gymix-connect:${gymCode}`)
       .then(() => {
         setCopied(true)
         setTimeout(() => setCopied(false), 3000)
       })
-      .catch((err) => {
-        console.warn('Failed to copy gym code:', err)
-      })
+      .catch(() => {})
 
-    // 2. Trigger the Android scheme to open the app if installed, or fallback to Play Store app
-    window.location.href = `com.gymix.fit://signup?gym=${gymCode}&role=member`
-
-    const start = Date.now()
-    setTimeout(() => {
-      if (Date.now() - start < 2000) {
-        window.location.href = 'market://details?id=com.gymix.fit'
-      }
-    }, 1500)
+    // 2. Android Intent URL - Chrome's official mechanism.
+    // Tries to open com.gymix.fit:// app scheme first.
+    // If app not installed, Chrome automatically redirects to browser_fallback_url (Play Store).
+    // This is the ONLY reliable approach — custom schemes + setTimeout fallback
+    // fails because Chrome kills page JS context when no app handles the scheme.
+    const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.gymix.fit'
+    const intentUrl = `intent://signup?gym=${gymCode}&role=member#Intent;scheme=com.gymix.fit;package=com.gymix.fit;S.browser_fallback_url=${encodeURIComponent(playStoreUrl)};end`
+    window.location.href = intentUrl
   }
 
   return (
