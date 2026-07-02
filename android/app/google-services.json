@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "902852876941",
+    "project_id": "gymixnotification",
+    "storage_bucket": "gymixnotification.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:902852876941:android:f5fad5a34294fff034a0c4",
+        "android_client_info": {
+          "package_name": "com.gymix.fit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGxyMkgyde_KL8JY5HohLxxCky1_rkc2A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
