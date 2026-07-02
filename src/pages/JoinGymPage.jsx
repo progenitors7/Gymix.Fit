@@ -25,6 +25,14 @@ export default function JoinGymPage() {
   const [isAndroid, setIsAndroid] = useState(false);
   const [isiOS, setIsiOS] = useState(false);
 
+  const getNormalizedCode = (code) => {
+    if (!code) return '';
+    return code.toUpperCase().trim()
+      .replace(/I/g, '1')
+      .replace(/O/g, '0')
+      .replace(/L/g, '1');
+  };
+
   // Fetch gym details on load
   useEffect(() => {
     async function fetchGymDetails() {
@@ -35,10 +43,11 @@ export default function JoinGymPage() {
       }
       
       try {
+        const normalized = getNormalizedCode(gymCode);
         const { data, error: dbError } = await supabase
           .from('gyms')
           .select('gym_name')
-          .eq('unique_code', gymCode.toUpperCase().trim())
+          .eq('unique_code', normalized)
           .single();
           
         if (dbError || !data) {
@@ -63,8 +72,9 @@ export default function JoinGymPage() {
   }, [gymCode]);
 
   const handleAction = async () => {
+    const normalized = getNormalizedCode(gymCode);
     // 1. Copy the gym connection bridge code to clipboard
-    const bridgeText = `gymix-connect:${gymCode.toUpperCase()}`;
+    const bridgeText = `gymix-connect:${normalized}`;
     try {
       await navigator.clipboard.writeText(bridgeText);
       setCopied(true);
@@ -75,7 +85,7 @@ export default function JoinGymPage() {
 
     if (isAndroid) {
       // Android: Attempt to launch app, fallback to Play Store
-      const appUri = `com.gymix.fit://signup?gym=${gymCode}&role=member`;
+      const appUri = `com.gymix.fit://signup?gym=${normalized}&role=member`;
       window.location.href = appUri;
       
       // If page is still in focus after 2 seconds, redirect to Play Store
@@ -87,7 +97,7 @@ export default function JoinGymPage() {
       }, 2000);
     } else {
       // iOS / Desktop: Redirect to web signup with prefilled params
-      navigate(`/signup?gym=${gymCode.toUpperCase()}&role=member`);
+      navigate(`/signup?gym=${normalized}&role=member`);
     }
   };
 

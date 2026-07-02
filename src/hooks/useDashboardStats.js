@@ -8,14 +8,33 @@ export function useDashboardStats() {
   const [error, setError] = useState(null);
   const [stats, setStats] = useState(null);
 
-  const fetchStats = useCallback(async () => {
+  const fetchStats = useCallback(async (isBackground = false) => {
     if (!gym) {
       setLoading(false);
       return;
     }
     
+    const cacheKey = `gym_dashboard_stats_cache_${gym.id}`;
+
+    // Populating cache instantly to prevent screen flicker
+    if (!isBackground) {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setStats(parsed);
+          setLoading(false);
+        } catch (e) {
+          console.warn('[Cache] Failed parsing cached stats:', e);
+        }
+      }
+    }
+
     try {
-      setLoading(true);
+      const cachedData = localStorage.getItem(cacheKey);
+      if (!isBackground && !cachedData) {
+        setLoading(true);
+      }
       setError(null);
 
       // Lazy background database status sync for expired members and subscriptions
@@ -395,7 +414,7 @@ export function useDashboardStats() {
       const pendingCount = paymentsList.filter(p => p.payment_status === 'pending' || p.payment_status === 'overdue').length;
       const pendingTrend = pendingAmount > 0 ? `${pendingCount} invoices` : "No dues";
 
-      setStats({
+      const calculatedStats = {
         membership: membershipStats,
         revenue: revenueStats,
         pendingPayments: pendingPaymentsList,
@@ -413,7 +432,10 @@ export function useDashboardStats() {
           membership: memberTrend,
           pending: pendingTrend
         }
-      });
+      };
+
+      setStats(calculatedStats);
+      localStorage.setItem(cacheKey, JSON.stringify(calculatedStats));
 
     } catch (err) {
       console.error('Error fetching dashboard stats:', err);
@@ -425,15 +447,18 @@ export function useDashboardStats() {
 
   useEffect(() => {
     let mounted = true;
-    if (gym && !stats && !error) {
+    if (gym) {
+      const cacheKey = `gym_dashboard_stats_cache_${gym.id}`;
+      const hasCache = !!localStorage.getItem(cacheKey);
+      
       setTimeout(() => {
-        if (mounted) fetchStats();
+        if (mounted) fetchStats(hasCache);
       }, 0);
     }
     return () => {
       mounted = false;
     };
-  }, [fetchStats, gym, stats, error]);
+  }, [fetchStats, gym]);
 
   return {
     stats,

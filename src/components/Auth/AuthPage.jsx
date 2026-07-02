@@ -16,6 +16,14 @@ export default function AuthPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const paramGym = searchParams.get('gym')
+  const getNormalizedCode = (code) => {
+    if (!code) return '';
+    return code.toUpperCase().trim()
+      .replace(/I/g, '1')
+      .replace(/O/g, '0')
+      .replace(/L/g, '1');
+  };
+  const normalizedGymParam = getNormalizedCode(paramGym);
   const isOwnerSignup = location.pathname === '/owner-signup'
 
   const [platformStats, setPlatformStats] = useState({
@@ -34,13 +42,13 @@ export default function AuthPage() {
     const isNative = window.Capacitor !== undefined
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
 
-    if (isMobile && !isNative && !isStandalone && paramGym && location.pathname === '/signup' && !bypassBridge) {
+    if (isMobile && !isNative && !isStandalone && normalizedGymParam && location.pathname === '/signup' && !bypassBridge) {
       setShowBridge(true)
       // Fetch gym name to display on the bridge
       supabase
         .from('gyms')
         .select('gym_name')
-        .eq('unique_code', paramGym.trim().toUpperCase())
+        .eq('unique_code', normalizedGymParam)
         .maybeSingle()
         .then(({ data }) => {
           if (data) setGymName(data.gym_name)
@@ -48,7 +56,7 @@ export default function AuthPage() {
     } else {
       setShowBridge(false)
     }
-  }, [paramGym, location.pathname, bypassBridge])
+  }, [normalizedGymParam, location.pathname, bypassBridge])
 
   // Fetch real platform stats from the database dynamically
   useEffect(() => {
@@ -95,10 +103,10 @@ export default function AuthPage() {
 
   // Capture scanned gym code from URL parameter securely
   useEffect(() => {
-    if (paramGym) {
-      localStorage.setItem('scanned_gym_code', paramGym.trim().toUpperCase())
+    if (normalizedGymParam) {
+      localStorage.setItem('scanned_gym_code', normalizedGymParam)
     }
-  }, [paramGym])
+  }, [normalizedGymParam])
 
   const [mode, setMode] = useState(() => {
     if (location.pathname === '/signup' || location.pathname === '/owner-signup') return 'signup'
@@ -295,7 +303,7 @@ export default function AuthPage() {
               ) : mode === 'signup' ? (
                 showBridge ? (
                   <AppConnectionBridge 
-                    gymCode={paramGym} 
+                    gymCode={normalizedGymParam} 
                     gymName={gymName} 
                     onContinueWeb={() => setBypassBridge(true)} 
                   />
