@@ -153,23 +153,27 @@ async function getClient(gymId) {
           sessionData.connectedNumber = 'Linked Device';
         }
 
-        // Start periodic health pinger to keep connection alive
+        // Tell WhatsApp servers we are online (important for Baileys)
+        try { await sock.sendPresenceUpdate('available'); } catch(e) { /* ignore */ }
+
+        // Start periodic health pinger to keep WA WebSocket alive
         if (sessionData.healthPinger) clearInterval(sessionData.healthPinger);
-        sessionData.healthPinger = setInterval(() => {
+        sessionData.healthPinger = setInterval(async () => {
           try {
             if (sessionData.sock && sessionData.status === 'connected') {
-              // Lightweight keepalive: check socket state
               const isOpen = sessionData.sock?.ws?.readyState === 1; // WebSocket.OPEN
               if (!isOpen) {
-                console.warn(`[Gymix WA] Health pinger: WebSocket not open for Gym ${gymId}. State: ${sessionData.sock?.ws?.readyState}`);
+                console.warn(`[Gymix WA] Health pinger: WebSocket not open for Gym ${gymId}. State: ${sessionData.sock?.ws?.readyState}. Will rely on auto-reconnect.`);
               } else {
-                console.log(`[Gymix WA] Health pinger: Connection alive for Gym ${gymId}`);
+                // Send a presence update as a lightweight keepalive ping to WA servers
+                try { await sessionData.sock.sendPresenceUpdate('available'); } catch(e) { /* ignore */ }
+                console.log(`[Gymix WA] Health pinger: Presence ping sent for Gym ${gymId}`);
               }
             }
           } catch (e) {
             console.warn(`[Gymix WA] Health pinger error for Gym ${gymId}:`, e.message);
           }
-        }, 5 * 60 * 1000); // Every 5 minutes
+        }, 4 * 60 * 1000); // Every 4 minutes (WhatsApp times out ~5 min idle)
       }
 
       // Connection closed
@@ -470,8 +474,68 @@ app.post('/api/whatsapp/disconnect', async (req, res) => {
   }
 });
 
+// Health check endpoint for UptimeRobot / external monitor
+app.get('/healthz', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime(), activeSessions: Object.keys(sessions).length });
+});
+
 app.listen(PORT, () => {
   console.log(`===============================================`);
   console.log(`🚀 Gymix WhatsApp Gateway v2.0 (Baileys) running on Port: ${PORT}`);
   console.log(`===============================================`);
+
+  // ─── SELF-PING KEEPALIVE ─────────────────────────────────────────────
+  // Render Free Tier sleeps after 15 min of inactivity.
+  // We ping our own /healthz every 10 min to stay awake.
+  // Also works as a watchdog - if the process is healthy, it responds.
+  const SELF_URL = process.env.RENDER_EXTERNAL_URL || process.env.SELF_URL;
+  if (SELF_URL) {
+    const http = require('https'); // render uses https
+    setInterval(() => {
+      const pingUrl = `${SELF_URL}/healthz`;
+      try {
+        const protocol = pingUrl.startsWith('https') ? require('https') : require('http');
+        const req = protocol.get(pingUrl, (res) => {
+          console.log(`[Gymix WA] Self-ping OK → ${pingUrl} (status: ${res.statusCode})`);
+        });
+        req.on('error', (e) => {
+          console.warn(`[Gymix WA] Self-ping failed: ${e.message}`);
+        });
+        req.setTimeout(10000, () => {
+          req.destroy();
+          console.warn('[Gymix WA] Self-ping timed out.');
+        });
+      } catch (e) {
+        console.warn('[Gymix WA] Self-ping error:', e.message);
+      }
+    }, 10 * 60 * 1000); // Every 10 minutes
+    console.log(`[Gymix WA] Self-ping keepalive enabled → ${SELF_URL}/healthz`);
+  } else {
+    console.warn('[Gymix WA] RENDER_EXTERNAL_URL not set — self-ping disabled. Set it in Render env vars to prevent sleep.');
+  }
 });
+
+// ─── GRACEFUL SHUTDOWN ─────────────────────────────────────────────────
+// When Render restarts the container (SIGTERM), cleanly close all WA sockets
+// so WhatsApp servers know the device is going offline (not hard-killed)
+async function gracefulShutdown(signal) {
+  console.log(`[Gymix WA] Received ${signal}. Gracefully closing ${Object.keys(sessions).length} session(s)...`);
+  const closePromises = Object.entries(sessions).map(async ([gymId, session]) => {
+    try {
+      if (session.healthPinger) clearInterval(session.healthPinger);
+      if (session.expiryTimer) clearTimeout(session.expiryTimer);
+      if (session.sock) {
+        session.sock.end(new Error('Server shutting down'));
+        console.log(`[Gymix WA] Closed socket for Gym ID: ${gymId}`);
+      }
+    } catch (e) {
+      console.warn(`[Gymix WA] Error closing session ${gymId}:`, e.message);
+    }
+  });
+  await Promise.allSettled(closePromises);
+  console.log('[Gymix WA] All sessions closed. Exiting.');
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT',  () => gracefulShutdown('SIGINT'));

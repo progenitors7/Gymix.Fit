@@ -9,9 +9,9 @@ echo "=================================================="
 # 1. Install npm dependencies
 npm install
 
-# 2. Clean stale WhatsApp Web session and cache data
-echo "🧹 Cleaning stale session data..."
-rm -rf .wwebjs_auth .wwebjs_cache .baileys_auth
+# 2. Clean stale legacy WhatsApp Web data ONLY (NOT .baileys_auth - that holds the active session!)
+echo "🧹 Cleaning stale legacy session data (keeping active Baileys session)..."
+rm -rf .wwebjs_auth .wwebjs_cache
 
 echo "=================================================="
 echo "✅ Build script completed successfully!"

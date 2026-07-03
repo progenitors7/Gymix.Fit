@@ -155,6 +155,27 @@ export const pushNotificationService = {
   },
 
   /**
+   * Check current push notification permission status.
+   * Returns: 'granted' | 'denied' | 'prompt' | 'default'
+   */
+  async checkPermissionStatus() {
+    const Push = await getPushPlugin();
+    if (!Push) {
+      if ('Notification' in window) {
+        return Notification.permission; // 'granted' | 'denied' | 'default'
+      }
+      return 'denied';
+    }
+    try {
+      const permResult = await Push.checkPermissions();
+      return permResult.receive; // 'granted' | 'denied' | 'prompt'
+    } catch (err) {
+      console.warn('[Push] Error checking permissions:', err);
+      return 'denied';
+    }
+  },
+
+  /**
    * Web Notifications fallback for PWA / browser users (non-Capacitor).
    */
   _initWebNotifications() {

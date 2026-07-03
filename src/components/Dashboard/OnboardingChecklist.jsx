@@ -25,7 +25,7 @@ export default function OnboardingChecklist({ profile, gym, stats }) {
     } else {
       setLoading(false);
     }
-  }, [gym?.id]);
+  }, [gym?.id, stats]);
 
   // Determine step completion states
   const isProfileComplete = !!(profile?.full_name && profile?.phone_number);
