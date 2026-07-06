@@ -191,18 +191,16 @@ export default function MembersPage() {
     if (gym?.id) {
       try {
         const saved = localStorage.getItem(`gym_settings_${gym.id}`);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          autopilotEnabled = parsed.waAutopilotEnabled || false;
-          autopilotConnected = parsed.waConnected || false;
-          
-          if (member.status === 'expired') {
-            template = parsed.waTemplateExpired || DEFAULT_EXPIRED_TEMPLATE;
-          } else if (member.status === 'expiring_soon') {
-            template = parsed.waTemplateExpirySoon || DEFAULT_EXPIRY_SOON_TEMPLATE;
-          } else {
-            template = parsed.waTemplate || 'Hello {{name}}, your plan expires on {{date}}.';
-          }
+        const parsed = saved ? JSON.parse(saved) : {};
+        autopilotEnabled = gym.wa_autopilot_enabled ?? parsed.waAutopilotEnabled ?? false;
+        autopilotConnected = parsed.waConnected || false;
+        
+        if (member.status === 'expired') {
+          template = gym.wa_template_expired || parsed.waTemplateExpired || DEFAULT_EXPIRED_TEMPLATE;
+        } else if (member.status === 'expiring_soon') {
+          template = gym.wa_template_expiry_soon || parsed.waTemplateExpirySoon || DEFAULT_EXPIRY_SOON_TEMPLATE;
+        } else {
+          template = 'Hello {{name}}, your plan expires on {{date}}.';
         }
       } catch (e) {
         console.error(e);

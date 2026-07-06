@@ -300,6 +300,20 @@ export default function SettingsPage() {
     }
   }, [gymId]);
 
+  // Sync loaded DB settings into state variables when context resolves
+  useEffect(() => {
+    if (gym) {
+      setGlobalSettings(prev => ({
+        ...prev,
+        waAutopilotEnabled: gym.wa_autopilot_enabled ?? false,
+        waTemplateWelcome: gym.wa_template_welcome ?? DEFAULT_WELCOME_TEMPLATE,
+        waTemplateExpirySoon: gym.wa_template_expiry_soon ?? DEFAULT_EXPIRY_SOON_TEMPLATE,
+        waTemplateExpired: gym.wa_template_expired ?? DEFAULT_EXPIRED_TEMPLATE,
+        waTemplateLeft: gym.wa_template_left ?? DEFAULT_LEFT_TEMPLATE,
+      }));
+    }
+  }, [gym]);
+
   const fetchUserTickets = useCallback(async () => {
     if (!gymId) return;
     setLoadingTickets(true);
@@ -350,27 +364,24 @@ export default function SettingsPage() {
     fetchUserTickets();
     if (!gymId) return;
 
-    // Load initial local settings
+    // Load initial settings (DB + LocalStorage currency/connection details)
     try {
       const saved = localStorage.getItem(`gym_settings_${gymId}`);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setGlobalSettings({
-          currency: '₹',
-          waTemplate: 'Hello {{name}}, your plan expires on {{date}}.',
-          waTemplateWelcome: DEFAULT_WELCOME_TEMPLATE,
-          waTemplateExpirySoon: DEFAULT_EXPIRY_SOON_TEMPLATE,
-          waTemplateExpired: DEFAULT_EXPIRED_TEMPLATE,
-          waTemplateLeft: DEFAULT_LEFT_TEMPLATE,
-          waAutopilotEnabled: false,
-          waConnected: false,
-          waConnectedNumber: '',
-          waGatewayUrl: 'http://localhost:5000',
-          ...parsed
-        });
-        if (parsed.waConnected) {
-          setWaSessionState('connected');
-        }
+      const parsed = saved ? JSON.parse(saved) : {};
+      setGlobalSettings({
+        currency: parsed.currency || '₹',
+        waTemplate: 'Hello {{name}}, your plan expires on {{date}}.',
+        waTemplateWelcome: gym?.wa_template_welcome || parsed.waTemplateWelcome || DEFAULT_WELCOME_TEMPLATE,
+        waTemplateExpirySoon: gym?.wa_template_expiry_soon || parsed.waTemplateExpirySoon || DEFAULT_EXPIRY_SOON_TEMPLATE,
+        waTemplateExpired: gym?.wa_template_expired || parsed.waTemplateExpired || DEFAULT_EXPIRED_TEMPLATE,
+        waTemplateLeft: gym?.wa_template_left || parsed.waTemplateLeft || DEFAULT_LEFT_TEMPLATE,
+        waAutopilotEnabled: gym?.wa_autopilot_enabled ?? parsed.waAutopilotEnabled ?? false,
+        waConnected: parsed.waConnected || false,
+        waConnectedNumber: parsed.waConnectedNumber || '',
+        waGatewayUrl: parsed.waGatewayUrl || 'http://localhost:5000'
+      });
+      if (parsed.waConnected) {
+        setWaSessionState('connected');
       }
     } catch { /* ignore */ }
 
@@ -659,14 +670,32 @@ export default function SettingsPage() {
     }
   }, [userTickets]);
 
-  const handleSaveGlobalSettings = () => {
+  const handleSaveGlobalSettings = async () => {
     if (!gym?.id) return;
     setSavingSettings(true);
     try {
       localStorage.setItem(`gym_settings_${gym.id}`, JSON.stringify(globalSettings));
+      
+      const { error } = await supabase
+        .from('gyms')
+        .update({
+          wa_autopilot_enabled: globalSettings.waAutopilotEnabled,
+          wa_template_welcome: globalSettings.waTemplateWelcome,
+          wa_template_expiry_soon: globalSettings.waTemplateExpirySoon,
+          wa_template_expired: globalSettings.waTemplateExpired,
+          wa_template_left: globalSettings.waTemplateLeft,
+        })
+        .eq('id', gym.id);
+
+      if (error) throw error;
+
+      localStorage.removeItem(`gym_cache_${user.id}`);
+      refreshGym();
+
       showToast('Global settings updated successfully!');
     } catch (err) {
-      showToast('Failed to save settings', 'error');
+      console.error('[Settings] Failed to save settings:', err);
+      showToast(err.message || 'Failed to save settings', 'error');
     } finally {
       setSavingSettings(false);
     }
@@ -1262,11 +1291,24 @@ export default function SettingsPage() {
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  const updated = { ...globalSettings, waAutopilotEnabled: !globalSettings.waAutopilotEnabled };
+                onClick={async () => {
+                  const newAutopilotState = !globalSettings.waAutopilotEnabled;
+                  const updated = { ...globalSettings, waAutopilotEnabled: newAutopilotState };
                   setGlobalSettings(updated);
                   localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updated));
-                  showToast(updated.waAutopilotEnabled ? 'WhatsApp Autopilot Mode Enabled!' : 'WhatsApp Manual Mode Activated.');
+                  
+                  try {
+                    await supabase
+                      .from('gyms')
+                      .update({ wa_autopilot_enabled: newAutopilotState })
+                      .eq('id', gymId);
+                    localStorage.removeItem(`gym_cache_${user.id}`);
+                    refreshGym();
+                  } catch (e) {
+                    console.error('Failed to sync autopilot state to DB:', e);
+                  }
+
+                  showToast(newAutopilotState ? 'WhatsApp Autopilot Mode Enabled!' : 'WhatsApp Manual Mode Activated.');
                 }}
                 className={`w-12 h-7 rounded-full p-1 transition-all cursor-pointer relative flex items-center ${globalSettings.waAutopilotEnabled ? 'bg-emerald-500' : 'bg-white/10'}`}
               >

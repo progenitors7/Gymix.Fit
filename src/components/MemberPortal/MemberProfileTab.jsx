@@ -312,42 +312,43 @@ export function MemberProfileTab({
       if (membership.phone_number && membership.gym_id) {
         try {
           const saved = localStorage.getItem(`gym_settings_${membership.gym_id}`);
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            const WA_BACKEND_URL = import.meta.env.VITE_WA_BACKEND_URL || 'http://localhost:5000';
+          const parsed = saved ? JSON.parse(saved) : {};
+          const WA_BACKEND_URL = import.meta.env.VITE_WA_BACKEND_URL || 'http://localhost:5000';
 
-            const sendGoodbye = async () => {
-              try {
-                const statusRes = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${membership.gym_id}`);
-                if (!statusRes.ok) return;
-                const statusData = await statusRes.json();
+          const sendGoodbye = async () => {
+            try {
+              const statusRes = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${membership.gym_id}`);
+              if (!statusRes.ok) return;
+              const statusData = await statusRes.json();
 
-                if (statusData.status === 'connected' && parsed.waAutopilotEnabled !== false) {
-                  const { DEFAULT_LEFT_TEMPLATE } = await import('../../config/whatsappTemplates');
-                  const leftTemplate = parsed.waTemplateLeft || DEFAULT_LEFT_TEMPLATE;
-                  const text = leftTemplate
-                    .replace(/{{name}}/g, membership.full_name || profile?.full_name || 'Member')
-                    .replace(/{{gymName}}/g, 'Gym')
-                    .replace(/{{plan}}/g, membership.membership_plan || 'Plan')
-                    .replace(/{{date}}/g, membership.expiry_date ? new Date(membership.expiry_date).toLocaleDateString() : 'soon');
+              const isConnected = statusData.status === 'connected';
+              const autopilotEnabled = membership.gyms?.wa_autopilot_enabled ?? parsed.waAutopilotEnabled ?? false;
 
-                  await fetch(`${WA_BACKEND_URL}/api/whatsapp/send`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      gymId: membership.gym_id,
-                      phone: membership.phone_number,
-                      message: text
-                    })
-                  });
-                  console.log('[Gymix WA] Goodbye message sent on member disconnect');
-                }
-              } catch (err) {
-                console.warn('[Gymix WA] Goodbye message error:', err);
+              if (autopilotEnabled && isConnected) {
+                const { DEFAULT_LEFT_TEMPLATE } = await import('../../config/whatsappTemplates');
+                const leftTemplate = membership.gyms?.wa_template_left || parsed.waTemplateLeft || DEFAULT_LEFT_TEMPLATE;
+                const text = leftTemplate
+                  .replace(/{{name}}/g, membership.full_name || profile?.full_name || 'Member')
+                  .replace(/{{gymName}}/g, membership.gyms?.gym_name || 'Gym')
+                  .replace(/{{plan}}/g, membership.membership_plan || 'Plan')
+                  .replace(/{{date}}/g, membership.expiry_date ? new Date(membership.expiry_date).toLocaleDateString() : 'soon');
+
+                await fetch(`${WA_BACKEND_URL}/api/whatsapp/send`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    gymId: membership.gym_id,
+                    phone: membership.phone_number,
+                    message: text
+                  })
+                });
+                console.log('[Gymix WA] Goodbye message sent on member disconnect');
               }
-            };
-            sendGoodbye();
-          }
+            } catch (err) {
+              console.warn('[Gymix WA] Goodbye message error:', err);
+            }
+          };
+          sendGoodbye();
         } catch (e) {
           console.warn('[Gymix WA] Goodbye trigger error:', e);
         }

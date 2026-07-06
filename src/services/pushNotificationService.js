@@ -48,10 +48,7 @@ export const pushNotificationService = {
         return;
       }
 
-      // 2. Register with FCM to get a device push token
-      await Push.register();
-
-      // 3. Save FCM token when received
+      // 2. Save FCM token when received (Must add listeners BEFORE register)
       Push.addListener('registration', async (token) => {
         console.log('[Push] FCM Token received:', token.value);
         if (userId && token.value) {
@@ -59,12 +56,12 @@ export const pushNotificationService = {
         }
       });
 
-      // 4. Handle registration errors
+      // 3. Handle registration errors
       Push.addListener('registrationError', (err) => {
         console.error('[Push] FCM Registration error:', err);
       });
 
-      // 5. Notification received while app is OPEN (foreground)
+      // 4. Notification received while app is OPEN (foreground)
       Push.addListener('pushNotificationReceived', (notification) => {
         console.log('[Push] Foreground notification:', notification);
         if (onNotificationReceived) {
@@ -72,7 +69,7 @@ export const pushNotificationService = {
         }
       });
 
-      // 6. User TAPPED a notification (app was in background/closed)
+      // 5. User TAPPED a notification (app was in background/closed)
       Push.addListener('pushNotificationActionPerformed', (action) => {
         console.log('[Push] Notification tapped:', action);
         // Navigate to the appropriate page
@@ -83,6 +80,9 @@ export const pushNotificationService = {
           console.warn('[Push] Could not dispatch nav event:', e);
         }
       });
+
+      // 6. Register with FCM to get a device push token
+      await Push.register();
 
     } catch (err) {
       console.error('[Push] Failed to initialize push notifications:', err);

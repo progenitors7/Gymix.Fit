@@ -111,35 +111,34 @@ export function useMembers() {
       if (newMember.phone_number) {
         try {
           const saved = localStorage.getItem(`gym_settings_${gymId}`);
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            const WA_BACKEND_URL = import.meta.env.VITE_WA_BACKEND_URL || 'http://localhost:5000';
+          const parsed = saved ? JSON.parse(saved) : {};
+          const WA_BACKEND_URL = import.meta.env.VITE_WA_BACKEND_URL || 'http://localhost:5000';
 
-            // First verify live server connection, then send
-            const statusCheck = async () => {
-              try {
-                const statusRes = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${gym.id}`);
-                if (!statusRes.ok) return;
-                const statusData = await statusRes.json();
+          // First verify live server connection, then send
+          const statusCheck = async () => {
+            try {
+              const statusRes = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${gym.id}`);
+              if (!statusRes.ok) return;
+              const statusData = await statusRes.json();
 
-                const isConnected = statusData.status === 'connected';
-                const autopilotEnabled = parsed.waAutopilotEnabled !== false; // default to true if not set
+              const isConnected = statusData.status === 'connected';
+              const autopilotEnabled = gym?.wa_autopilot_enabled ?? parsed.waAutopilotEnabled ?? false;
 
-                if (autopilotEnabled && isConnected) {
-                  // Update localStorage with live connection status
-                  const updatedSettings = { ...parsed, waConnected: true };
-                  if (statusData.connectedNumber) {
-                    updatedSettings.waConnectedNumber = `+${statusData.connectedNumber}`;
-                  }
-                  localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updatedSettings));
+              if (autopilotEnabled && isConnected) {
+                // Update localStorage with live connection status
+                const updatedSettings = { ...parsed, waConnected: true };
+                if (statusData.connectedNumber) {
+                  updatedSettings.waConnectedNumber = `+${statusData.connectedNumber}`;
+                }
+                localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updatedSettings));
 
-                  const welcomeTemplate = parsed.waTemplateWelcome || DEFAULT_WELCOME_TEMPLATE;
-                  const expiry = newMember.expiry_date ? new Date(newMember.expiry_date).toLocaleDateString() : 'soon';
-                  const text = welcomeTemplate
-                    .replace(/{{name}}/g, newMember.full_name)
-                    .replace(/{{gymName}}/g, gym?.gym_name || 'Gym')
-                    .replace(/{{plan}}/g, newMember.membership_plan || 'Plan')
-                    .replace(/{{date}}/g, expiry);
+                const welcomeTemplate = gym?.wa_template_welcome || parsed.waTemplateWelcome || DEFAULT_WELCOME_TEMPLATE;
+                const expiry = newMember.expiry_date ? new Date(newMember.expiry_date).toLocaleDateString() : 'soon';
+                const text = welcomeTemplate
+                  .replace(/{{name}}/g, newMember.full_name)
+                  .replace(/{{gymName}}/g, gym?.gym_name || 'Gym')
+                  .replace(/{{plan}}/g, newMember.membership_plan || 'Plan')
+                  .replace(/{{date}}/g, expiry);
 
                   const sendRes = await fetch(`${WA_BACKEND_URL}/api/whatsapp/send`, {
                     method: 'POST',
@@ -162,10 +161,9 @@ export function useMembers() {
             };
 
             statusCheck();
+          } catch (e) {
+            console.error('[Gymix WA] Welcome message trigger error:', e);
           }
-        } catch (e) {
-          console.error('[Gymix WA] Welcome message trigger error:', e);
-        }
       }
     }
 
@@ -200,8 +198,7 @@ export function useMembers() {
   const _sendGoodbyeMessage = useCallback((member) => {
     try {
       const saved = localStorage.getItem(`gym_settings_${gymId}`);
-      if (!saved) return;
-      const parsed = JSON.parse(saved);
+      const parsed = saved ? JSON.parse(saved) : {};
       const WA_BACKEND_URL = import.meta.env.VITE_WA_BACKEND_URL || 'http://localhost:5000';
 
       const sendGoodbye = async () => {
@@ -212,10 +209,10 @@ export function useMembers() {
           const statusData = await statusRes.json();
 
           const isConnected = statusData.status === 'connected';
-          const autopilotEnabled = parsed.waAutopilotEnabled !== false;
+          const autopilotEnabled = gym?.wa_autopilot_enabled ?? parsed.waAutopilotEnabled ?? false;
 
           if (autopilotEnabled && isConnected) {
-            const leftTemplate = parsed.waTemplateLeft || DEFAULT_LEFT_TEMPLATE;
+            const leftTemplate = gym?.wa_template_left || parsed.waTemplateLeft || DEFAULT_LEFT_TEMPLATE;
             const text = leftTemplate
               .replace(/{{name}}/g, member.full_name)
               .replace(/{{gymName}}/g, gym?.gym_name || 'Gym')

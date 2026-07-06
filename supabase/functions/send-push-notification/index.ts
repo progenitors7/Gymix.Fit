@@ -40,7 +40,65 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const body = await req.json();
-    const { userIds, title, message, body: notifBody, data = {} } = body;
+    const { userIds, title, message, body: notifBody, data = {}, gymId, type, relatedMemberId } = body;
+
+    // Automate WhatsApp alerts if autopilot is enabled and it is a member notification
+    if (gymId && relatedMemberId && type) {
+      try {
+        const { data: gym, error: gymErr } = await supabase
+          .from('gyms')
+          .select('gym_name, wa_autopilot_enabled, wa_template_welcome, wa_template_expiry_soon, wa_template_expired, wa_template_left')
+          .eq('id', gymId)
+          .maybeSingle();
+
+        if (!gymErr && gym && gym.wa_autopilot_enabled) {
+          const { data: member, error: memberErr } = await supabase
+            .from('members')
+            .select('full_name, phone_number, membership_plan, expiry_date')
+            .eq('id', relatedMemberId)
+            .maybeSingle();
+
+          if (!memberErr && member && member.phone_number) {
+            let waTemplate = '';
+            if (type === 'trial_ending' || type === 'membership_expiring') {
+              waTemplate = gym.wa_template_expiry_soon;
+            } else if (type === 'trial_expired' || type === 'membership_expired') {
+              waTemplate = gym.wa_template_expired;
+            } else if (type === 'left') {
+              waTemplate = gym.wa_template_left;
+            } else if (type === 'welcome') {
+              waTemplate = gym.wa_template_welcome;
+            }
+
+            if (waTemplate) {
+              const expiry = member.expiry_date
+                ? new Date(member.expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                : 'soon';
+              const formattedMessage = waTemplate
+                .replace(/{{name}}/g, member.full_name || '')
+                .replace(/{{gymName}}/g, gym.gym_name || 'Gym')
+                .replace(/{{plan}}/g, member.membership_plan || 'Plan')
+                .replace(/{{date}}/g, expiry);
+
+              const waUrl = 'https://gymix-whatsapp-gateway.onrender.com/api/whatsapp/send';
+              const waRes = await fetch(waUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  gymId: gymId,
+                  phone: member.phone_number,
+                  message: formattedMessage
+                })
+              });
+              const waData = await waRes.json();
+              console.log('FCM_EDGE_FUNCTION: WhatsApp autopilot send outcome:', waData);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('FCM_EDGE_FUNCTION: WhatsApp autopilot failed:', err);
+      }
+    }
 
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
       return new Response(
