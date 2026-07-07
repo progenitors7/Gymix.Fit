@@ -147,7 +147,7 @@ Deno.serve(async (req) => {
             android: {
               notification: {
                 channel_id: 'gymix_default',
-                priority: 'HIGH',
+                notification_priority: 'PRIORITY_HIGH',
                 sound: 'default',
                 click_action: 'FLUTTER_NOTIFICATION_CLICK',
               },
