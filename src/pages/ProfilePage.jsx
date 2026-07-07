@@ -27,6 +27,14 @@ export default function ProfilePage() {
   const [newGymName, setNewGymName] = useState(gym?.gym_name || '')
   const [savingGymName, setSavingGymName] = useState(false)
 
+  const [fcmToken, setFcmToken] = useState('')
+  const [fcmError, setFcmError] = useState('')
+
+  useEffect(() => {
+    setFcmToken(localStorage.getItem('gymix_fcm_token') || '')
+    setFcmError(localStorage.getItem('gymix_fcm_error') || '')
+  }, [])
+
   useEffect(() => {
     if (profile) {
       setProfileName(profile.full_name || '')
@@ -446,6 +454,90 @@ export default function ProfilePage() {
               </div>
             </div>
           )}
+
+          {/* Notification Diagnostics Panel */}
+          <div className="glass-card border border-white/5 rounded-[2.5rem] p-8 text-left space-y-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+            
+            <div className="relative z-10 space-y-4">
+              <div className="space-y-1">
+                <h4 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-blue-400 animate-pulse" />
+                  Push Notification Diagnostics
+                </h4>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Verify FCM registration & token generation status</p>
+              </div>
+
+              <div className="space-y-4 text-xs">
+                {/* Registered FCM Token */}
+                <div className="p-4 rounded-2xl bg-[#1A1F2B] border border-white/5 space-y-2">
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Generated FCM Token</span>
+                  {fcmToken ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-400 font-mono text-[10px] select-all break-all flex-1">{fcmToken}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(fcmToken)
+                          toast.success('Copied FCM Token!')
+                        }}
+                        className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 hover:text-white transition-all active:scale-90"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-rose-400 font-semibold italic text-[11px]">No active FCM token found (Waiting or Not Registered)</span>
+                  )}
+                </div>
+
+                {/* FCM Error Message */}
+                {fcmError && (
+                  <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 space-y-1">
+                    <span className="text-[10px] font-black text-rose-400 uppercase tracking-wider block">Registration Error Log</span>
+                    <span className="text-rose-300 font-mono text-[10px] break-all">{fcmError}</span>
+                  </div>
+                )}
+
+                {/* Re-trigger initialize button */}
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!profile?.id) return;
+                      toast.loading('Triggering FCM registration...', { id: 'fcm-diag' });
+                      const { pushNotificationService } = await import('../services/pushNotificationService');
+                      await pushNotificationService.initialize(profile.id);
+                      
+                      // Wait a bit and re-fetch local storage status
+                      setTimeout(() => {
+                        setFcmToken(localStorage.getItem('gymix_fcm_token') || '');
+                        setFcmError(localStorage.getItem('gymix_fcm_error') || '');
+                        toast.success('Diagnostics refreshed!', { id: 'fcm-diag' });
+                      }, 2000);
+                    }}
+                    className="w-full py-3.5 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/25 text-blue-400 text-xs font-black uppercase tracking-wider rounded-2xl transition-all active:scale-98 cursor-pointer"
+                  >
+                    Trigger FCM Registration & Refresh
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      localStorage.removeItem('gymix_fcm_token');
+                      localStorage.removeItem('gymix_fcm_error');
+                      setFcmToken('');
+                      setFcmError('');
+                      toast.success('Diagnostics cleared!');
+                    }}
+                    className="px-4 py-3.5 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 hover:text-white rounded-2xl text-xs font-black uppercase transition-all cursor-pointer"
+                  >
+                    Reset
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </div>
 
         </div>
 

@@ -52,6 +52,8 @@ export const pushNotificationService = {
       // 2. Save FCM token when received (Must add listeners BEFORE register)
       Push.addListener('registration', async (token) => {
         console.log('[Push] FCM Token received:', token.value);
+        localStorage.setItem('gymix_fcm_token', token.value);
+        localStorage.removeItem('gymix_fcm_error');
         if (userId && token.value) {
           await this._saveTokenToDatabase(userId, token.value);
         }
@@ -60,6 +62,8 @@ export const pushNotificationService = {
       // 3. Handle registration errors
       Push.addListener('registrationError', (err) => {
         console.error('[Push] FCM Registration error:', err);
+        localStorage.setItem('gymix_fcm_error', err.message || JSON.stringify(err) || String(err));
+        localStorage.removeItem('gymix_fcm_token');
       });
 
       // 4. Notification received while app is OPEN (foreground)
