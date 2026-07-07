@@ -27,8 +27,8 @@ const getPushPlugin = () => {
 export const pushNotificationService = {
   /**
    * Initializes push notifications. Call this once on app startup (in App.jsx).
-   * @param {string} userId - The authenticated user's ID (to save token to DB)
    * @param {function} onNotificationReceived - Callback when notification arrives while app is open
+   */
   async initialize(userId, onNotificationReceived) {
     const Push = getPushPlugin();
     if (!Push) {
