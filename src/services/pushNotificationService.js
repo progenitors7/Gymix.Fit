@@ -14,16 +14,14 @@
 
 import { supabase } from '../lib/supabaseClient';
 
-// Lazily import PushNotifications only when running in Capacitor native context
-const getPushPlugin = async () => {
-  if (!window.Capacitor) return null;
-  try {
-    const { PushNotifications } = await import('@capacitor/push-notifications');
+import { PushNotifications } from '@capacitor/push-notifications';
+
+// Lazily resolve PushNotifications plugin if running in Capacitor native context
+const getPushPlugin = () => {
+  if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isPluginAvailable('PushNotifications')) {
     return PushNotifications;
-  } catch (err) {
-    console.warn('[Push] @capacitor/push-notifications not available:', err);
-    return null;
   }
+  return null;
 };
 
 export const pushNotificationService = {
@@ -31,9 +29,8 @@ export const pushNotificationService = {
    * Initializes push notifications. Call this once on app startup (in App.jsx).
    * @param {string} userId - The authenticated user's ID (to save token to DB)
    * @param {function} onNotificationReceived - Callback when notification arrives while app is open
-   */
   async initialize(userId, onNotificationReceived) {
-    const Push = await getPushPlugin();
+    const Push = getPushPlugin();
     if (!Push) {
       // Not in Capacitor — use Web Notifications API fallback for PWA/browser
       this._initWebNotifications();
@@ -164,7 +161,7 @@ export const pushNotificationService = {
    * Returns: 'granted' | 'denied' | 'prompt' | 'default'
    */
   async checkPermissionStatus() {
-    const Push = await getPushPlugin();
+    const Push = getPushPlugin();
     if (!Push) {
       if ('Notification' in window) {
         return Notification.permission; // 'granted' | 'denied' | 'default'
