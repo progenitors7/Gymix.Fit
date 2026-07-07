@@ -204,7 +204,11 @@ function DeepLinkHandler() {
 
   // ── 4. Push Notifications initialization (runs when user logs in) ──
   useEffect(() => {
-    if (!user || pushInitialized.current) return
+    if (!user) {
+      pushInitialized.current = false
+      return
+    }
+    if (pushInitialized.current) return
     pushInitialized.current = true
 
     pushNotificationService.initialize(
