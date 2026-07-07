@@ -41,11 +41,12 @@ export const pushNotificationService = {
     }
 
     try {
-      // 1. Check and request permission
-      const permResult = await Push.requestPermissions();
-      if (permResult.receive !== 'granted') {
-        console.log('[Push] Notification permission denied by user');
-        return;
+      // 1. Check and request permission (non-blocking)
+      try {
+        const permResult = await Push.requestPermissions();
+        console.log('[Push] Permission request result:', permResult);
+      } catch (permErr) {
+        console.warn('[Push] Failed to request permissions:', permErr);
       }
 
       // 2. Save FCM token when received (Must add listeners BEFORE register)
