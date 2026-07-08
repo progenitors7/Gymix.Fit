@@ -1383,10 +1383,17 @@ export default function SettingsPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              if (!waPairingPhone || waPairingPhone.trim().length < 8) {
-                                return showToast('Please enter a valid phone number with country code.', 'error');
+                              if (!waPairingPhone) {
+                                return showToast('Please enter a valid phone number.', 'error');
                               }
-                              handleStartWaSession(waPairingPhone);
+                              let formattedPhone = waPairingPhone.replace(/\D/g, '');
+                              if (formattedPhone.length === 10) {
+                                formattedPhone = '91' + formattedPhone;
+                              }
+                              if (formattedPhone.length < 11 || formattedPhone.length > 13) {
+                                return showToast('Please enter a valid phone number with country code (e.g. 919876543210).', 'error');
+                              }
+                              handleStartWaSession(formattedPhone);
                             }}
                             className="px-5 py-2.5 bg-[#3390ec] hover:bg-[#2b7ad2] active:scale-95 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer"
                           >
