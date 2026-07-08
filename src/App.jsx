@@ -300,6 +300,7 @@ export default function App() {
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/hardware" element={<HardwareStorePage />} />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
               <Route path="/join/:gymCode" element={<JoinGymPage />} />
 
             {/* ── Protected ── */}
