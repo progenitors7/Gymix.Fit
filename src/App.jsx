@@ -86,6 +86,10 @@ function Protected({ children }) {
 function RootRoute() {
   const { user, loading } = useAuth()
   
+  // Check if forced to show the landing page via URL parameters
+  const params = new URLSearchParams(window.location.search)
+  const forceLanding = params.get('landing') === 'true' || params.get('home') === 'true'
+
   // Check if launched as a standalone PWA or native app
   const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
                 window.navigator.standalone === true || 
@@ -97,6 +101,10 @@ function RootRoute() {
         <LoadingScreen />
       </div>
     )
+  }
+
+  if (forceLanding) {
+    return <LandingPage />
   }
 
   if (isPWA) {
@@ -293,6 +301,8 @@ export default function App() {
             <Routes>
               {/* ── Public ── */}
               <Route path="/" element={<RootRoute />} />
+              <Route path="/home" element={<LandingPage />} />
+              <Route path="/landing" element={<LandingPage />} />
               <Route path="/login" element={<AuthPage />} />
               <Route path="/signup" element={<AuthPage />} />
               <Route path="/owner-signup" element={<AuthPage />} />
