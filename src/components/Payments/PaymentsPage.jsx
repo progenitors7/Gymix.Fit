@@ -17,7 +17,8 @@ import {
   MoreVertical,
   User,
   ArrowRight,
-  TrendingUp
+  TrendingUp,
+  Store
 } from 'lucide-react';
 import { usePayments } from '../../hooks/usePayments';
 import StatusBadge from '../UI/StatusBadge';
@@ -43,9 +44,10 @@ const itemVariants = {
 
 export default function PaymentsPage() {
   const navigate = useNavigate();
-  const { payments, loading, error, fetchPayments } = usePayments();
+  const { payments, storeOrders, loading, error, fetchPayments } = usePayments();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState('subscriptions'); // 'subscriptions' or 'store'
 
   // Responsive state & infinite scroll pagination
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
@@ -64,6 +66,22 @@ export default function PaymentsPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const getLocalDateString = (d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getLocalDateFromISO = (isoString) => {
+    if (!isoString) return '';
+    const d = new Date(isoString);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const filteredPayments = payments.filter(payment => {
     const matchesSearch = payment.members?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           payment.subscriptions?.plan_name?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -71,19 +89,29 @@ export default function PaymentsPage() {
     return matchesSearch && matchesStatus;
   });
 
+  const filteredStoreOrders = storeOrders.filter(order => {
+    const buyerName = order.members?.full_name || 'Guest / Walk-in';
+    const matchesSearch = buyerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          order.items?.some(item => item.name?.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesStatus = statusFilter === 'all' || statusFilter === 'paid'; // Store orders are completed (paid)
+    return matchesSearch && matchesStatus;
+  });
+
   const visiblePayments = filteredPayments.slice(0, visibleCount);
+  const visibleStoreOrders = filteredStoreOrders.slice(0, visibleCount);
 
   useEffect(() => {
     setVisibleCount(30);
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, activeTab]);
 
   useEffect(() => {
-    if (loading || visibleCount >= filteredPayments.length) return;
+    const totalLength = activeTab === 'subscriptions' ? filteredPayments.length : filteredStoreOrders.length;
+    if (loading || visibleCount >= totalLength) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + 30, filteredPayments.length));
+          setVisibleCount((prev) => Math.min(prev + 30, totalLength));
         }
       },
       { threshold: 0.1 }
@@ -99,7 +127,7 @@ export default function PaymentsPage() {
         observer.unobserve(current);
       }
     };
-  }, [filteredPayments.length, visibleCount, loading]);
+  }, [filteredPayments.length, filteredStoreOrders.length, visibleCount, loading, activeTab]);
 
   const getMethodIcon = (method) => {
     switch (method) {
@@ -152,7 +180,7 @@ export default function PaymentsPage() {
       </div>
 
       {/* Analytics Dashboard */}
-      {!loading && !error && payments.length > 0 && (
+      {!loading && !error && (payments.length > 0 || storeOrders.length > 0) && (
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -160,20 +188,36 @@ export default function PaymentsPage() {
           className="grid grid-cols-1 md:grid-cols-3 gap-4"
         >
           {(() => {
-            const today = new Date().toISOString().split('T')[0];
-            const thisMonth = new Date().toISOString().slice(0, 7);
+            const today = new Date();
+            const todayStr = getLocalDateString(today);
+            const thisMonthStr = todayStr.slice(0, 7); // "YYYY-MM"
             
-            const todayRevenue = payments
-              .filter(p => p.payment_status === 'paid' && p.payment_date.startsWith(today))
+            // Subscriptions paid
+            const todaySubRevenue = payments
+              .filter(p => p.payment_status === 'paid' && p.payment_date === todayStr)
               .reduce((sum, p) => sum + parseFloat(p.amount_paid), 0);
               
-            const monthRevenue = payments
-              .filter(p => p.payment_status === 'paid' && p.payment_date.startsWith(thisMonth))
+            const monthSubRevenue = payments
+              .filter(p => p.payment_status === 'paid' && p.payment_date.startsWith(thisMonthStr))
               .reduce((sum, p) => sum + parseFloat(p.amount_paid), 0);
 
-            const pendingRevenue = payments
+            const pendingSubRevenue = payments
               .filter(p => p.payment_status === 'pending')
               .reduce((sum, p) => sum + parseFloat(p.amount_paid), 0);
+
+            // Store Sales completed
+            const todayStoreRevenue = storeOrders
+              .filter(o => getLocalDateFromISO(o.created_at) === todayStr)
+              .reduce((sum, o) => sum + parseFloat(o.total_amount), 0);
+              
+            const monthStoreRevenue = storeOrders
+              .filter(o => getLocalDateFromISO(o.created_at).startsWith(thisMonthStr))
+              .reduce((sum, o) => sum + parseFloat(o.total_amount), 0);
+
+            // Combined
+            const todayRevenue = todaySubRevenue + todayStoreRevenue;
+            const monthRevenue = monthSubRevenue + monthStoreRevenue;
+            const pendingRevenue = pendingSubRevenue;
 
             return (
               <>
@@ -183,7 +227,7 @@ export default function PaymentsPage() {
                   </div>
                   <div>
                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Today's Revenue</p>
-                    <p className="text-2xl font-black text-white">₹{todayRevenue}</p>
+                    <p className="text-2xl font-black text-white">₹{todayRevenue.toLocaleString()}</p>
                   </div>
                 </div>
                 <div className="glass-card border border-white/5 rounded-2xl p-5 flex items-center gap-4">
@@ -192,7 +236,7 @@ export default function PaymentsPage() {
                   </div>
                   <div>
                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">This Month</p>
-                    <p className="text-2xl font-black text-white">₹{monthRevenue}</p>
+                    <p className="text-2xl font-black text-white">₹{monthRevenue.toLocaleString()}</p>
                   </div>
                 </div>
                 <div className="glass-card border border-white/5 rounded-2xl p-5 flex items-center gap-4">
@@ -201,7 +245,7 @@ export default function PaymentsPage() {
                   </div>
                   <div>
                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Pending Dues</p>
-                    <p className="text-2xl font-black text-white">₹{pendingRevenue}</p>
+                    <p className="text-2xl font-black text-white">₹{pendingRevenue.toLocaleString()}</p>
                   </div>
                 </div>
               </>
@@ -210,37 +254,67 @@ export default function PaymentsPage() {
         </motion.div>
       )}
 
-      {/* Filters and Search */}
+      {/* Tabs and Filters Panel */}
       <div className="space-y-6">
+        {/* Tab Switcher */}
+        <div className="flex bg-white/[0.02] p-1 rounded-xl border border-white/5 self-start overflow-x-auto max-w-full hide-scrollbar">
+          <button
+            onClick={() => { setActiveTab('subscriptions'); setStatusFilter('all'); }}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'subscriptions'
+                ? 'bg-[#3390ec] text-white shadow-lg shadow-[#3390ec]/10'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Receipt className="w-4 h-4" />
+            <span>Subscription Collections</span>
+          </button>
+          <button
+            onClick={() => { setActiveTab('store'); setStatusFilter('all'); }}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'store'
+                ? 'bg-[#3390ec] text-white shadow-lg shadow-[#3390ec]/10'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Store className="w-4 h-4" />
+            <span>Store Sales</span>
+          </button>
+        </div>
+
+        {/* Search */}
         <div className="relative group max-w-2xl">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-[#3390ec] transition-colors" />
           <input
             type="text"
-            placeholder="Search by name or plan…"
+            placeholder={activeTab === 'subscriptions' ? "Search by athlete name or plan…" : "Search by buyer name or product…"}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.03] border border-white/5 text-white placeholder-slate-500 text-sm font-medium focus:outline-none focus:border-[#3390ec]/50 focus:bg-[#3390ec]/[0.02] transition-all"
           />
         </div>
 
-        <div className="flex gap-1.5 overflow-x-auto pb-1 hide-scrollbar">
-          {['all', 'paid', 'pending', 'overdue'].map((status) => {
-            const isActive = statusFilter === status
-            return (
-              <button
-                key={status}
-                onClick={() => setStatusFilter(status)}
-                className={`flex items-center gap-2.5 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all duration-200 ${
-                  isActive
-                    ? 'bg-[#3390ec] text-white shadow-lg shadow-[#3390ec]/10'
-                    : 'bg-white/[0.02] border border-white/5 text-slate-500 hover:text-slate-200 hover:bg-white/5'
-                }`}
-              >
-                {status === 'all' ? 'All Payments' : status}
-              </button>
-            )
-          })}
-        </div>
+        {/* Status Filters (Only for subscriptions since store sales are completed/paid) */}
+        {activeTab === 'subscriptions' && (
+          <div className="flex gap-1.5 overflow-x-auto pb-1 hide-scrollbar">
+            {['all', 'paid', 'pending', 'overdue'].map((status) => {
+              const isActive = statusFilter === status
+              return (
+                <button
+                  key={status}
+                  onClick={() => setStatusFilter(status)}
+                  className={`flex items-center gap-2.5 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all duration-200 ${
+                    isActive
+                      ? 'bg-[#3390ec] text-white shadow-lg shadow-[#3390ec]/10'
+                      : 'bg-white/[0.02] border border-white/5 text-slate-500 hover:text-slate-200 hover:bg-white/5'
+                  }`}
+                >
+                  {status === 'all' ? 'All Payments' : status}
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -263,7 +337,7 @@ export default function PaymentsPage() {
             Try Again
           </button>
         </div>
-      ) : filteredPayments.length === 0 ? (
+      ) : (activeTab === 'subscriptions' ? filteredPayments.length : filteredStoreOrders.length) === 0 ? (
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -276,7 +350,7 @@ export default function PaymentsPage() {
           <p className="text-slate-500 text-xs max-w-sm mx-auto mb-6 font-medium leading-relaxed">
             {searchTerm || statusFilter !== 'all' 
               ? "We couldn't find any transactions matching your filters."
-              : "No transaction history found. Start by recording a payment."}
+              : "No transaction history found."}
           </p>
           {(searchTerm || statusFilter !== 'all') && (
             <button
@@ -290,128 +364,251 @@ export default function PaymentsPage() {
         </motion.div>
       ) : (
         <div className="space-y-6">
-          {/* Desktop Table */}
-          {!isMobile && (
-            <div className="hidden lg:block overflow-hidden rounded-xl border border-white/5 glass-card">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-white/5 bg-white/[0.02]">
-                    <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Athlete</th>
-                    <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Subscription</th>
-                    <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Amount</th>
-                    <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Date</th>
-                    <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Method</th>
-                    <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Status</th>
-                  </tr>
-                </thead>
-                <motion.tbody 
+          {/* Subscription Payments List */}
+          {activeTab === 'subscriptions' && (
+            <>
+              {/* Desktop Table */}
+              {!isMobile && (
+                <div className="hidden lg:block overflow-hidden rounded-xl border border-white/5 glass-card">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/5 bg-white/[0.02]">
+                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Athlete</th>
+                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Subscription</th>
+                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Amount</th>
+                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Date</th>
+                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Method</th>
+                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Status</th>
+                      </tr>
+                    </thead>
+                    <motion.tbody 
+                      variants={containerVariants}
+                      initial="hidden"
+                      animate="show"
+                      className="divide-y divide-white/[0.02]"
+                    >
+                      {visiblePayments.map((payment) => (
+                        <motion.tr 
+                          variants={itemVariants}
+                          key={payment.id} 
+                          className="group hover:bg-white/[0.03] transition-colors duration-200"
+                        >
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-white text-[13px] font-bold uppercase shadow-sm">
+                                {payment.members?.full_name?.slice(0, 1) || '?'}
+                              </div>
+                              <div>
+                                <p className="text-white font-bold text-[14px] group-hover:text-[#3390ec] transition-colors">{payment.members?.full_name || 'Unknown Member'}</p>
+                                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">{payment.members?.phone_number || 'No Phone'}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-slate-300 font-bold text-[12px]">{payment.subscriptions?.plan_name || 'One-time Entry'}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-emerald-400 font-bold text-[13px]">₹{payment.amount_paid}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2 text-slate-400 text-[12px] font-bold">
+                              <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                              {new Date(payment.payment_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.03] border border-white/5 text-slate-400 text-[10px] font-bold uppercase tracking-wider shadow-sm">
+                              {getMethodIcon(payment.payment_method)}
+                              {getMethodText(payment.payment_method)}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <StatusBadge status={payment.payment_status} />
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </motion.tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Mobile Cards */}
+              {isMobile && (
+                <motion.div 
                   variants={containerVariants}
                   initial="hidden"
                   animate="show"
-                  className="divide-y divide-white/[0.02]"
+                  className="lg:hidden space-y-3"
                 >
                   {visiblePayments.map((payment) => (
-                    <motion.tr 
+                    <motion.div 
                       variants={itemVariants}
                       key={payment.id} 
-                      className="group hover:bg-white/[0.03] transition-colors duration-200"
+                      className="bg-white/[0.03] border border-white/5 rounded-xl p-5 active:scale-[0.98] transition-all relative overflow-hidden glass-card"
                     >
-                      <td className="px-6 py-4">
+                      <div className="flex items-start justify-between gap-4 mb-4 relative z-10">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-white text-[13px] font-bold uppercase shadow-sm">
+                          <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-white text-[14px] font-bold shadow-sm">
                             {payment.members?.full_name?.slice(0, 1) || '?'}
                           </div>
                           <div>
-                            <p className="text-white font-bold text-[14px] group-hover:text-[#3390ec] transition-colors">{payment.members?.full_name || 'Unknown Member'}</p>
-                            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">{payment.members?.phone_number || 'No Phone'}</p>
+                            <p className="text-white font-bold text-sm tracking-tight">{payment.members?.full_name || 'Unknown'}</p>
+                            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">
+                              {payment.subscriptions?.plan_name || 'One-time'}
+                            </p>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-slate-300 font-bold text-[12px]">{payment.subscriptions?.plan_name || 'One-time Entry'}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-emerald-400 font-bold text-[13px]">₹{payment.amount_paid}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2 text-slate-400 text-[12px] font-bold">
-                          <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                          {new Date(payment.payment_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.03] border border-white/5 text-slate-400 text-[10px] font-bold uppercase tracking-wider shadow-sm">
-                          {getMethodIcon(payment.payment_method)}
-                          {getMethodText(payment.payment_method)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
                         <StatusBadge status={payment.payment_status} />
-                      </td>
-                    </motion.tr>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-4 border-t border-white/5 relative z-10">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                            <p className="text-slate-400 text-[11px] font-bold">
+                              {new Date(payment.payment_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-slate-500">{getMethodIcon(payment.payment_method)}</span>
+                            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">
+                              {getMethodText(payment.payment_method)}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="text-right">
+                          <p className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-0.5">Paid</p>
+                          <p className="text-lg font-bold text-emerald-400 tracking-tight">₹{payment.amount_paid}</p>
+                        </div>
+                      </div>
+                    </motion.div>
                   ))}
-                </motion.tbody>
-              </table>
-            </div>
+                </motion.div>
+              )}
+            </>
           )}
 
-          {/* Mobile Cards */}
-          {isMobile && (
-            <motion.div 
-              variants={containerVariants}
-              initial="hidden"
-              animate="show"
-              className="lg:hidden space-y-3"
-            >
-              {visiblePayments.map((payment) => (
-                <motion.div 
-                  variants={itemVariants}
-                  key={payment.id} 
-                  className="bg-white/[0.03] border border-white/5 rounded-xl p-5 active:scale-[0.98] transition-all relative overflow-hidden glass-card"
-                >
-                  <div className="flex items-start justify-between gap-4 mb-4 relative z-10">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-white text-[14px] font-bold shadow-sm">
-                        {payment.members?.full_name?.slice(0, 1) || '?'}
-                      </div>
-                      <div>
-                        <p className="text-white font-bold text-sm tracking-tight">{payment.members?.full_name || 'Unknown'}</p>
-                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">
-                          {payment.subscriptions?.plan_name || 'One-time'}
-                        </p>
-                      </div>
-                    </div>
-                    <StatusBadge status={payment.payment_status} />
-                  </div>
+          {/* Store Sales List */}
+          {activeTab === 'store' && (
+            <>
+              {/* Desktop Table */}
+              {!isMobile && (
+                <div className="hidden lg:block overflow-hidden rounded-xl border border-white/5 glass-card">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/5 bg-white/[0.02]">
+                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Buyer / Athlete</th>
+                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Purchased Items</th>
+                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Amount</th>
+                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Date</th>
+                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Status</th>
+                      </tr>
+                    </thead>
+                    <motion.tbody 
+                      variants={containerVariants}
+                      initial="hidden"
+                      animate="show"
+                      className="divide-y divide-white/[0.02]"
+                    >
+                      {visibleStoreOrders.map((order) => (
+                        <motion.tr 
+                          variants={itemVariants}
+                          key={order.id} 
+                          className="group hover:bg-white/[0.03] transition-colors duration-200"
+                        >
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-white text-[13px] font-bold uppercase shadow-sm">
+                                {(order.members?.full_name || 'Guest').slice(0, 1)}
+                              </div>
+                              <div>
+                                <p className="text-white font-bold text-[14px] group-hover:text-[#3390ec] transition-colors">
+                                  {order.members?.full_name || 'Guest / Walk-in'}
+                                </p>
+                                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">
+                                  {order.members?.phone_number || 'Cash Order'}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 max-w-xs">
+                            <p className="text-slate-300 font-medium text-[12px] truncate" title={order.items?.map(i => `${i.name} (x${i.quantity})`).join(', ')}>
+                              {order.items?.map(i => `${i.name} (x${i.quantity})`).join(', ') || 'No Items'}
+                            </p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-emerald-400 font-bold text-[13px]">₹{order.total_amount}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2 text-slate-400 text-[12px] font-bold">
+                              <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                              {new Date(order.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <StatusBadge status="paid" />
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </motion.tbody>
+                  </table>
+                </div>
+              )}
 
-                  <div className="flex items-center justify-between pt-4 border-t border-white/5 relative z-10">
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-3 h-3 text-slate-500" />
-                        <p className="text-slate-400 text-[11px] font-bold">
-                          {new Date(payment.payment_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                        </p>
+              {/* Mobile Cards */}
+              {isMobile && (
+                <motion.div 
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="show"
+                  className="lg:hidden space-y-3"
+                >
+                  {visibleStoreOrders.map((order) => (
+                    <motion.div 
+                      variants={itemVariants}
+                      key={order.id} 
+                      className="bg-white/[0.03] border border-white/5 rounded-xl p-5 active:scale-[0.98] transition-all relative overflow-hidden glass-card"
+                    >
+                      <div className="flex items-start justify-between gap-4 mb-4 relative z-10">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-white text-[14px] font-bold shadow-sm">
+                            {(order.members?.full_name || 'Guest').slice(0, 1)}
+                          </div>
+                          <div>
+                            <p className="text-white font-bold text-sm tracking-tight">{order.members?.full_name || 'Guest / Walk-in'}</p>
+                            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5 truncate max-w-[180px]">
+                              {order.items?.map(i => `${i.name} (x${i.quantity})`).join(', ') || 'Store Order'}
+                            </p>
+                          </div>
+                        </div>
+                        <StatusBadge status="paid" />
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-slate-500">{getMethodIcon(payment.payment_method)}</span>
-                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">
-                          {getMethodText(payment.payment_method)}
-                        </p>
+
+                      <div className="flex items-center justify-between pt-4 border-t border-white/5 relative z-10">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-3 h-3 text-slate-500" />
+                            <p className="text-slate-400 text-[11px] font-bold">
+                              {new Date(order.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="text-right">
+                          <p className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-0.5">Total</p>
+                          <p className="text-lg font-bold text-emerald-400 tracking-tight">₹{order.total_amount}</p>
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="text-right">
-                      <p className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-0.5">Paid</p>
-                      <p className="text-lg font-bold text-emerald-400 tracking-tight">₹{payment.amount_paid}</p>
-                    </div>
-                  </div>
+                    </motion.div>
+                  ))}
                 </motion.div>
-              ))}
-            </motion.div>
+              )}
+            </>
           )}
 
           {/* Sentinel observer target for infinite scroll */}
-          {visibleCount < filteredPayments.length && (
+          {visibleCount < (activeTab === 'subscriptions' ? filteredPayments.length : filteredStoreOrders.length) && (
             <div ref={observerRef} className="h-16 flex items-center justify-center mt-4">
               <div className="w-6 h-6 border-2 border-[#3390ec]/20 border-t-[#3390ec] rounded-full animate-spin" />
             </div>

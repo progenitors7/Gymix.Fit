@@ -37,10 +37,26 @@ export function useDashboardStats() {
       }
       setError(null);
 
-      // Lazy background database status sync for expired members and subscriptions
+      // Lazy background database status sync for expired members and subscriptions (throttled to once every 6 hours)
       const syncDatabaseStatuses = async (gymId) => {
+        const syncCacheKey = `gymix_last_db_sync_${gymId}`;
+        const lastSync = localStorage.getItem(syncCacheKey);
+        const now = Date.now();
+        
+        // Throttling safety: check if 6 hours (21,600,000 ms) have passed
+        if (lastSync && (now - Number(lastSync)) < 21600000) {
+          console.log('[Gymix Sync] DB status sync skipped (throttled).');
+          return;
+        }
+
         try {
-          const todayStr = new Date().toISOString().split('T')[0];
+          const todayObj = new Date();
+          const year = todayObj.getFullYear();
+          const month = String(todayObj.getMonth() + 1).padStart(2, '0');
+          const day = String(todayObj.getDate()).padStart(2, '0');
+          const todayStr = `${year}-${month}-${day}`;
+
+          console.log('[Gymix Sync] Executing database status sync for today:', todayStr);
 
           // 1. Find and update expired members in DB
           const { data: expiredMembers } = await supabase
@@ -73,6 +89,9 @@ export function useDashboardStats() {
               .update({ status: 'expired' })
               .in('id', ids);
           }
+
+          // Mark sync timestamp
+          localStorage.setItem(syncCacheKey, String(now));
         } catch (syncErr) {
           console.error('[Gymix Sync] Error syncing expired statuses in database:', syncErr);
         }
@@ -184,6 +203,15 @@ export function useDashboardStats() {
         return `${year}-${month}-${day}`;
       };
 
+      const getLocalDateFromISO = (isoString) => {
+        if (!isoString) return '';
+        const d = new Date(isoString);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
       const todayStr = getLocalDateString(today);
       const startOfMonth = getLocalDateString(new Date(today.getFullYear(), today.getMonth(), 1));
       
@@ -204,20 +232,16 @@ export function useDashboardStats() {
       if (attendanceError) console.error('Error fetching today attendance:', attendanceError);
       const todayCheckIns = (attendanceToday ?? []).length;
 
-      // --- Fetch Shop/Store Completed Revenue ---
-      let storeRevenue = 0;
+      // --- Fetch Shop/Store Orders (Completed for Revenue, All for other calculations if needed) ---
+      let storeOrdersList = [];
       try {
         const { data: storeOrders, error: storeOrdersError } = await supabase
           .from('store_orders')
-          .select('total_amount, status')
+          .select('total_amount, status, created_at')
           .eq('gym_id', gym.id);
         
         if (!storeOrdersError && storeOrders) {
-          storeOrders.forEach(o => {
-            if (o.status === 'completed') {
-              storeRevenue += Number(o.total_amount);
-            }
-          });
+          storeOrdersList = storeOrders.filter(o => o.status === 'completed');
         }
       } catch (storeErr) {
         console.error('Error computing store stats:', storeErr);
@@ -236,15 +260,15 @@ export function useDashboardStats() {
       const attendanceRate = activeMembersCount > 0 ? Number(((todayCheckIns / activeMembersCount) * 100).toFixed(1)) : 0;
 
       // --- Revenue Metrics ---
-      let totalRevenue = 0;
-      let monthlyRevenue = 0;
-      let todayRevenue = 0;
+      let subTotalRevenue = 0;
+      let subMonthlyRevenue = 0;
+      let subTodayRevenue = 0;
+      let subYearlyRevenue = 0;
       let pendingAmount = 0;
 
       const oneYearAgo = new Date(today);
       oneYearAgo.setFullYear(today.getFullYear() - 1);
       const oneYearAgoStr = getLocalDateString(oneYearAgo);
-      let yearlyRevenue = 0;
 
       // UPI vs Cash split
       let upiVolume = 0;
@@ -255,10 +279,10 @@ export function useDashboardStats() {
       paymentsList.forEach(p => {
         const amount = Number(p.amount_paid);
         if (p.payment_status === 'paid') {
-          totalRevenue += amount;
-          if (p.payment_date >= startOfMonth) monthlyRevenue += amount;
-          if (p.payment_date === todayStr) todayRevenue += amount;
-          if (p.payment_date >= oneYearAgoStr) yearlyRevenue += amount;
+          subTotalRevenue += amount;
+          if (p.payment_date >= startOfMonth) subMonthlyRevenue += amount;
+          if (p.payment_date === todayStr) subTodayRevenue += amount;
+          if (p.payment_date >= oneYearAgoStr) subYearlyRevenue += amount;
 
           // Compute payment method splits
           const method = (p.payment_method || 'cash').toLowerCase();
@@ -274,6 +298,27 @@ export function useDashboardStats() {
         }
       });
 
+      // Sum store order revenue in respective timeframes
+      let storeMonthlyRevenue = 0;
+      let storeTodayRevenue = 0;
+      let storeYearlyRevenue = 0;
+      let storeTotalRevenueCalculated = 0;
+
+      storeOrdersList.forEach(o => {
+        const amount = Number(o.total_amount);
+        const orderDateStr = getLocalDateFromISO(o.created_at);
+        storeTotalRevenueCalculated += amount;
+        if (orderDateStr >= startOfMonth) storeMonthlyRevenue += amount;
+        if (orderDateStr === todayStr) storeTodayRevenue += amount;
+        if (orderDateStr >= oneYearAgoStr) storeYearlyRevenue += amount;
+      });
+
+      // Combined Revenue Metrics
+      const totalRevenue = subTotalRevenue + storeTotalRevenueCalculated;
+      const monthlyRevenue = subMonthlyRevenue + storeMonthlyRevenue;
+      const todayRevenue = subTodayRevenue + storeTodayRevenue;
+      const yearlyRevenue = subYearlyRevenue + storeYearlyRevenue;
+
       const totalPaidCount = upiCount + cashCount;
       const paymentMethods = {
         upiPercent: totalPaidCount > 0 ? Math.round((upiCount / totalPaidCount) * 100) : 0,
@@ -288,7 +333,7 @@ export function useDashboardStats() {
         today: todayRevenue,
         pending: pendingAmount,
         yearly: yearlyRevenue,
-        store: storeRevenue
+        store: storeTotalRevenueCalculated // Store standalone sales for separate display
       };
 
       // --- Membership Tier Distribution ---
@@ -332,7 +377,6 @@ export function useDashboardStats() {
         .slice(0, 5);
 
       // 3. Recent Activity (Mix of new members and recent payments)
-      // Only map the top 8 elements from each pre-sorted list to prevent massive CPU mapping/sorting overhead
       const recentActivity = [
         ...members.slice(0, 8).map(m => ({
           id: m.id,
@@ -352,47 +396,77 @@ export function useDashboardStats() {
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .slice(0, 8); // top 8 activities
 
-      // --- Lightweight Chart Data (Revenue Trend last 7 days) ---
+      // --- 6-Month Monthly Revenue Trend (Combined subscriptions + store sales) ---
       const chartDataMap = {};
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date(today);
-        d.setDate(today.getDate() - i);
-        const dateStr = getLocalDateString(d);
-        const displayLabel = d.toLocaleDateString('en-US', { weekday: 'short' });
-        chartDataMap[dateStr] = { label: displayLabel, date: dateStr, value: 0 };
+      const monthsArray = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const monthKey = d.toISOString().slice(0, 7); // "YYYY-MM"
+        const displayLabel = d.toLocaleDateString('en-US', { month: 'short' }); // "Jan", "Feb" etc.
+        chartDataMap[monthKey] = { label: displayLabel, month: monthKey, value: 0 };
+        monthsArray.push(monthKey);
       }
 
       paymentsList.forEach(p => {
-        if (p.payment_status === 'paid' && chartDataMap[p.payment_date]) {
-          chartDataMap[p.payment_date].value += Number(p.amount_paid);
+        if (p.payment_status === 'paid') {
+          const monthKey = p.payment_date.slice(0, 7); // "YYYY-MM"
+          if (chartDataMap[monthKey]) {
+            chartDataMap[monthKey].value += Number(p.amount_paid);
+          }
         }
       });
 
-      const revenueChartData = Object.values(chartDataMap);
+      storeOrdersList.forEach(o => {
+        const orderDateStr = getLocalDateFromISO(o.created_at);
+        const monthKey = orderDateStr.slice(0, 7); // "YYYY-MM"
+        if (chartDataMap[monthKey]) {
+          chartDataMap[monthKey].value += Number(o.total_amount);
+        }
+      });
 
-      // --- Calculate previous month dates for trends ---
+      const revenueChartData = monthsArray.map(mKey => chartDataMap[mKey]);
+
+      // --- Calculate MTD target date for previous month (e.g. July 8th -> June 8th MTD) ---
+      const getPrevMonthDateMTD = (d) => {
+        const prev = new Date(d.getFullYear(), d.getMonth() - 1, d.getDate());
+        if (prev.getMonth() === d.getMonth()) {
+          return new Date(d.getFullYear(), d.getMonth(), 0);
+        }
+        return prev;
+      };
+
+      const prevMonthMTDDate = getPrevMonthDateMTD(today);
+      const prevMonthMTDStr = getLocalDateString(prevMonthMTDDate);
       const startOfPrevMonth = getLocalDateString(new Date(today.getFullYear(), today.getMonth() - 1, 1));
 
-      // --- Revenue Trends & Growth ---
-      let prevMonthRevenue = 0;
+      // --- Revenue Trends & Growth (MTD Combined) ---
+      let prevMonthCombinedRevenue = 0;
       paymentsList.forEach(p => {
         const amount = Number(p.amount_paid);
         if (p.payment_status === 'paid') {
-          if (p.payment_date >= startOfPrevMonth && p.payment_date < startOfMonth) {
-            prevMonthRevenue += amount;
+          if (p.payment_date >= startOfPrevMonth && p.payment_date <= prevMonthMTDStr) {
+            prevMonthCombinedRevenue += amount;
           }
+        }
+      });
+
+      storeOrdersList.forEach(o => {
+        const amount = Number(o.total_amount);
+        const orderDateStr = getLocalDateFromISO(o.created_at);
+        if (orderDateStr >= startOfPrevMonth && orderDateStr <= prevMonthMTDStr) {
+          prevMonthCombinedRevenue += amount;
         }
       });
       
       let revenueTrendVal = 0;
-      if (prevMonthRevenue > 0) {
-        revenueTrendVal = ((monthlyRevenue - prevMonthRevenue) / prevMonthRevenue) * 100;
+      if (prevMonthCombinedRevenue > 0) {
+        revenueTrendVal = ((monthlyRevenue - prevMonthCombinedRevenue) / prevMonthCombinedRevenue) * 100;
       } else if (monthlyRevenue > 0) {
         revenueTrendVal = 100;
       }
       const revenueTrend = revenueTrendVal >= 0 
-        ? `+${revenueTrendVal.toFixed(1)}% MoM` 
-        : `${revenueTrendVal.toFixed(1)}% MoM`;
+        ? `+${revenueTrendVal.toFixed(1)}% MoM (MTD)` 
+        : `${revenueTrendVal.toFixed(1)}% MoM (MTD)`;
 
       // --- Member Trends & Growth ---
       const thisMonthSignups = members.filter(m => m.join_date >= startOfMonth).length;

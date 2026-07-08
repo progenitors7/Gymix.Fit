@@ -1,10 +1,12 @@
 import { useState, useCallback } from 'react';
 import { paymentService } from '../services/paymentService';
 import { useCurrentGym } from './useCurrentGym';
+import { supabase } from '../lib/supabaseClient';
 
 export function usePayments() {
   const { gym, isReady } = useCurrentGym();
   const [payments, setPayments] = useState([]);
+  const [storeOrders, setStoreOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -17,8 +19,27 @@ export function usePayments() {
     try {
       setLoading(true);
       setError(null);
+      
+      // 1. Fetch Subscription Payments
       const data = await paymentService.getAllPayments(gym?.id);
       setPayments(data ?? []);
+
+      // 2. Fetch Completed Store Orders
+      const { data: orders, error: ordersError } = await supabase
+        .from('store_orders')
+        .select(`
+          *,
+          members (
+            full_name,
+            phone_number
+          )
+        `)
+        .eq('gym_id', gym?.id)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false });
+
+      if (ordersError) throw ordersError;
+      setStoreOrders(orders ?? []);
     } catch (err) {
       console.error('Error fetching payments:', err);
       setError(err.message);
@@ -75,6 +96,7 @@ export function usePayments() {
 
   return {
     payments,
+    storeOrders,
     loading,
     error,
     fetchPayments,
