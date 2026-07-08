@@ -50,18 +50,19 @@ async function getBaileys() {
 /**
  * Get or initialize a WhatsApp session for a gym
  */
-async function getClient(gymId) {
+async function getClient(gymId, pairingPhone = null) {
   if (sessions[gymId]) {
     return sessions[gymId];
   }
 
-  console.log(`[Gymix WA] Initializing new Baileys session for Gym ID: ${gymId}`);
+  console.log(`[Gymix WA] Initializing new Baileys session for Gym ID: ${gymId} (Pairing Phone: ${pairingPhone || 'None'})`);
 
   const sessionData = {
     sock: null,
     status: 'connecting',
     qrCodeUrl: '',
     connectedNumber: '',
+    pairingCode: '',
     expiryTimer: null,
     healthPinger: null,
     reconnectAttempts: 0,
@@ -101,6 +102,24 @@ async function getClient(gymId) {
 
     sessionData.sock = sock;
 
+    // Request pairing code if phone number is provided
+    if (pairingPhone && !sock.authState.creds.registered) {
+      setTimeout(async () => {
+        try {
+          const cleanPhone = pairingPhone.replace(/\D/g, '');
+          console.log(`[Gymix WA] Requesting pairing code for phone: ${cleanPhone}`);
+          const code = await sock.requestPairingCode(cleanPhone);
+          sessionData.status = 'pairing_code_ready';
+          sessionData.pairingCode = code;
+          console.log(`[Gymix WA] Pairing code generated successfully: ${code}`);
+        } catch (err) {
+          console.error(`[Gymix WA] Error requesting pairing code:`, err);
+          sessionData.lastError = 'Failed to generate pairing code. ' + err.message;
+          sessionData.status = 'disconnected';
+        }
+      }, 3000);
+    }
+
     // 60-second guard timeout for initialization
     sessionData.expiryTimer = setTimeout(() => {
       if (sessionData.status === 'connecting') {
@@ -120,8 +139,8 @@ async function getClient(gymId) {
     sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
 
-      // QR Code received
-      if (qr) {
+      // QR Code received (only if not using pairing code)
+      if (qr && !pairingPhone) {
         console.log(`[Gymix WA] QR Code generated for Gym ID: ${gymId}`);
         sessionData.status = 'qr_ready';
         if (sessionData.expiryTimer) {
@@ -268,15 +287,16 @@ app.get('/api/whatsapp/status', (req, res) => {
       getClient(gymId).catch(err => {
         console.error(`[Gymix WA] Auto-restore connection failed for Gym ID: ${gymId}:`, err);
       });
-      return res.json({ status: 'connecting', qrCodeUrl: '', connectedNumber: '' });
+      return res.json({ status: 'connecting', qrCodeUrl: '', connectedNumber: '', pairingCode: '' });
     }
-    return res.json({ status: 'disconnected', connectedNumber: '' });
+    return res.json({ status: 'disconnected', connectedNumber: '', pairingCode: '' });
   }
 
   res.json({
     status: session.status,
     qrCodeUrl: session.qrCodeUrl,
-    connectedNumber: session.connectedNumber
+    connectedNumber: session.connectedNumber,
+    pairingCode: session.pairingCode || ''
   });
 });
 
@@ -310,15 +330,38 @@ app.get('/api/whatsapp/debug', (req, res) => {
  * 2. POST /api/whatsapp/connect
  */
 app.post('/api/whatsapp/connect', async (req, res) => {
-  const { gymId } = req.body;
+  const { gymId, phone } = req.body;
   if (!gymId) return res.status(400).json({ error: 'Missing gymId parameter' });
 
-  const session = await getClient(gymId);
+  // If phone pairing is requested, clean up existing session first
+  if (phone && sessions[gymId]) {
+    try {
+      const existing = sessions[gymId];
+      if (existing.sock) existing.sock.end();
+      if (existing.healthPinger) clearInterval(existing.healthPinger);
+      if (existing.expiryTimer) clearTimeout(existing.expiryTimer);
+    } catch(e) {}
+    delete sessions[gymId];
+    
+    // Clear credentials folder to allow clean re-pairing
+    const authDir = path.join(__dirname, '.baileys_auth', `session_${gymId}`);
+    try {
+      if (fs.existsSync(authDir)) {
+        fs.rmSync(authDir, { recursive: true, force: true });
+        console.log(`[Gymix WA] Cleared auth credentials at ${authDir} for new phone pairing`);
+      }
+    } catch (e) {
+      console.warn(`[Gymix WA] Failed to clear auth directory:`, e);
+    }
+  }
+
+  const session = await getClient(gymId, phone);
 
   res.json({
     status: session.status,
     qrCodeUrl: session.qrCodeUrl,
-    connectedNumber: session.connectedNumber
+    connectedNumber: session.connectedNumber,
+    pairingCode: session.pairingCode || ''
   });
 });
 

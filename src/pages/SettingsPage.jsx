@@ -355,6 +355,9 @@ export default function SettingsPage() {
   const [sendingTestMessage, setSendingTestMessage] = useState(false);
   const [waQrImage, setWaQrImage] = useState('');
   const [isRealBackend, setIsRealBackend] = useState(false);
+  const [waPairingMethod, setWaPairingMethod] = useState('code'); // 'code' | 'qr'
+  const [waPairingPhone, setWaPairingPhone] = useState('');
+  const [waPairingCode, setWaPairingCode] = useState('');
 
   const WA_BACKEND_URL = import.meta.env.VITE_WA_BACKEND_URL || 'http://localhost:5000';
 
@@ -483,8 +486,8 @@ export default function SettingsPage() {
       }, 1000);
     }
 
-    // 2. Active status polling from the backend (runs in connecting or qr_ready)
-    if ((waSessionState === 'connecting' || waSessionState === 'qr_ready') && isRealBackend) {
+    // 2. Active status polling from the backend (runs in connecting, qr_ready, or pairing_code_ready)
+    if ((waSessionState === 'connecting' || waSessionState === 'qr_ready' || waSessionState === 'pairing_code_ready') && isRealBackend) {
       pollInterval = setInterval(async () => {
         try {
           const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${gymId}`);
@@ -503,6 +506,7 @@ export default function SettingsPage() {
               localStorage.setItem(`gym_settings_${gymId}`, JSON.stringify(updatedSettings));
               setWaSessionState('connected');
               setWaQrImage('');
+              setWaPairingCode('');
               showToast(`WhatsApp Linked successfully! Connected as ${updatedSettings.waConnectedNumber} 🟢`);
             } 
             else if (data.status === 'qr_ready' && data.qrCodeUrl) {
@@ -511,11 +515,16 @@ export default function SettingsPage() {
                 setWaQrImage(data.qrCodeUrl);
               }
             } 
+            else if (data.status === 'pairing_code_ready' && data.pairingCode) {
+              setWaSessionState('pairing_code_ready');
+              setWaPairingCode(data.pairingCode);
+            }
             else if (data.status === 'disconnected') {
               clearInterval(pollInterval);
               if (countdownInterval) clearInterval(countdownInterval);
               setWaSessionState('disconnected');
               setWaQrImage('');
+              setWaPairingCode('');
               showToast('WhatsApp initialization failed. Check server logs.', 'error');
             }
           }
@@ -529,26 +538,34 @@ export default function SettingsPage() {
       if (countdownInterval) clearInterval(countdownInterval);
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [waSessionState, globalSettings, gymId, isRealBackend, waQrImage]);
+  }, [waSessionState, globalSettings, gymId, isRealBackend, waQrImage, WA_BACKEND_URL]);
 
-  const handleStartWaSession = async () => {
+  const handleStartWaSession = async (phoneNumberToPair = null) => {
     if (!isRealBackend) {
       return showToast('WhatsApp Server Gateway is currently offline. Please start the server.', 'error');
     }
 
     setWaSessionState('connecting');
     setWaQrImage('');
+    setWaPairingCode('');
 
     try {
       const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/connect`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gymId })
+        body: JSON.stringify({ 
+          gymId,
+          phone: phoneNumberToPair ? phoneNumberToPair.replace(/\D/g, '') : undefined
+        })
       });
       if (res.ok) {
         const data = await res.json();
         setWaCountdown(45);
-        if (data.qrCodeUrl) {
+        if (data.pairingCode) {
+          setWaPairingCode(data.pairingCode);
+          setWaSessionState('pairing_code_ready');
+          showToast('WhatsApp Pairing Code generated! Link on your phone.');
+        } else if (data.qrCodeUrl) {
           setWaQrImage(data.qrCodeUrl);
           setWaSessionState('qr_ready');
           showToast('Dynamic WhatsApp Web QR generated. Scan with your phone.');
@@ -1324,24 +1341,77 @@ export default function SettingsPage() {
                 
                 {/* STATE 1: Disconnected */}
                 {waSessionState === 'disconnected' && (
-                  <div className="flex flex-col items-center text-center py-6 space-y-4">
+                  <div className="flex flex-col items-center py-6 space-y-5">
                     <div className="w-14 h-14 bg-white/[0.02] border border-white/5 text-gray-500 rounded-2xl flex items-center justify-center shadow-inner">
                       <Smartphone className="w-7 h-7" />
                     </div>
-                    <div className="space-y-1">
-                      <h4 className="text-sm font-bold text-white">No Connected WhatsApp Device</h4>
-                      <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed font-medium">
-                        Link your phone using a standard WhatsApp Web QR scan to enable background automation. No message fees, 100% direct client delivery.
-                      </p>
+                    
+                    {/* Method Selector Tabs */}
+                    <div className="flex items-center bg-[#1A1F2B] p-1.5 rounded-xl border border-white/5 w-full max-w-xs mx-auto">
+                      <button
+                        type="button"
+                        onClick={() => setWaPairingMethod('code')}
+                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${waPairingMethod === 'code' ? 'bg-[#3390ec] text-white' : 'text-gray-400 hover:text-white'}`}
+                      >
+                        Pairing Code
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setWaPairingMethod('qr')}
+                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${waPairingMethod === 'qr' ? 'bg-[#3390ec] text-white' : 'text-gray-400 hover:text-white'}`}
+                      >
+                        QR Code
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleStartWaSession}
-                      className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-black text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/10"
-                    >
-                      <Scan className="w-4 h-4" />
-                      Link WhatsApp Account
-                    </button>
+
+                    {waPairingMethod === 'code' ? (
+                      <div className="space-y-4 w-full max-w-sm">
+                        <div className="space-y-1 text-center">
+                          <h4 className="text-sm font-bold text-white">Link with Phone Number</h4>
+                          <p className="text-[11px] text-gray-400 leading-relaxed font-medium">
+                            Recommended for same phone! Enter your WhatsApp phone number (with country code, e.g. 919876543210) to get a secure linkage code.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="tel"
+                            placeholder="e.g. 919876543210"
+                            value={waPairingPhone}
+                            onChange={(e) => setWaPairingPhone(e.target.value)}
+                            className="flex-1 bg-black/50 border border-white/10 px-4 py-2.5 rounded-xl text-sm font-bold text-white placeholder-gray-600 focus:outline-none focus:border-[#3390ec]"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!waPairingPhone || waPairingPhone.trim().length < 8) {
+                                return showToast('Please enter a valid phone number with country code.', 'error');
+                              }
+                              handleStartWaSession(waPairingPhone);
+                            }}
+                            className="px-5 py-2.5 bg-[#3390ec] hover:bg-[#2b7ad2] active:scale-95 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                          >
+                            Get Code
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4 text-center">
+                        <div className="space-y-1">
+                          <h4 className="text-sm font-bold text-white">Link with QR Code</h4>
+                          <p className="text-[11px] text-gray-400 leading-relaxed font-medium max-w-sm mx-auto">
+                            Link by scanning a QR code with WhatsApp on another device (tablet/computer/second phone).
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleStartWaSession(null)}
+                          className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-black text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/10 mx-auto"
+                        >
+                          <Scan className="w-4 h-4" />
+                          Generate QR Code
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1349,7 +1419,7 @@ export default function SettingsPage() {
                 {waSessionState === 'connecting' && (
                   <div className="flex flex-col items-center text-center py-10 space-y-4">
                     <div className="relative">
-                      <div className="w-14 h-14 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin flex items-center justify-center" />
+                      <div className="w-14 h-14 border-2 border-[#3390ec]/20 border-t-[#3390ec] rounded-full animate-spin flex items-center justify-center" />
                       <svg viewBox="0 0 175.216 175.552" className="w-6 h-6 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex-shrink-0">
                         <path fill="#FFF" d="M90.134 162.138c-12.084 0-23.941-3.142-34.404-9.083L14.316 163.66l10.829-39.517c-6.523-11.309-9.957-24.15-9.953-37.309C15.209 46.262 48.7 12.766 89.28 12.766c19.664 0 38.15 7.66 52.039 21.558 13.889 13.896 21.539 32.388 21.531 52.046-.017 40.579-33.518 73.768-72.716 75.768z" />
                         <path fill="#25D366" d="M90.134 23.99c-33.82 0-61.341 27.525-61.353 61.347a61.1 61.1 0 0 0 9.37 32.61l1.458 2.318-6.195 22.61 23.136-6.068 2.241 1.33A61.05 61.05 0 0 0 89.92 146.47h.023c33.81 0 61.332-27.524 61.348-61.348a61.13 61.13 0 0 0-17.951-43.375C121.849 30.197 106.524 23.99 90.134 23.99z" />
@@ -1366,6 +1436,36 @@ export default function SettingsPage() {
                       type="button"
                       onClick={handleDisconnectWa}
                       className="px-4 py-2 mt-2 bg-white/5 hover:bg-white/10 active:scale-95 text-gray-400 hover:text-white text-[10px] font-bold uppercase tracking-wider rounded-lg border border-white/5 transition-all cursor-pointer"
+                    >
+                      Cancel & Reset Connection
+                    </button>
+                  </div>
+                )}
+
+                {/* STATE 4: Pairing Code Ready */}
+                {waSessionState === 'pairing_code_ready' && (
+                  <div className="flex flex-col items-center text-center py-6 space-y-6">
+                    <div className="space-y-2">
+                      <h4 className="text-base font-extrabold text-white">Enter This Pairing Code</h4>
+                      <p className="text-xs text-gray-400 max-w-sm leading-relaxed font-medium">
+                        Open WhatsApp on your phone &rarr; **Linked Devices** &rarr; **Link a device** &rarr; Tap **Link with phone number instead** at the bottom, and enter:
+                      </p>
+                    </div>
+
+                    {/* Massive Bold Code Box */}
+                    <div className="bg-[#1A1F2B] px-8 py-5 rounded-3xl border border-[#3390ec]/30 flex items-center justify-center select-all shadow-xl shadow-[#3390ec]/5">
+                      <span className="text-[#3390ec] font-mono text-4xl font-black tracking-widest uppercase">{waPairingCode}</span>
+                    </div>
+
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-wider animate-pulse">
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '3s' }} />
+                      Waiting for linking confirmation...
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleDisconnectWa}
+                      className="px-4 py-2 bg-white/5 hover:bg-white/10 active:scale-95 text-gray-400 hover:text-white text-[10px] font-bold uppercase tracking-wider rounded-lg border border-white/5 transition-all cursor-pointer"
                     >
                       Cancel & Reset Connection
                     </button>
