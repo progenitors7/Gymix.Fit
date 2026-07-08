@@ -30,13 +30,14 @@ function enrichBillingState(gym, latestSubscription) {
     ? Math.ceil((new Date(expiresAt) - new Date()) / (1000 * 60 * 60 * 24))
     : null
 
-  const isExpired = daysLeft !== null && daysLeft < 0
+  // It is expired if it's explicitly expired in status OR the period end date has passed
+  const isExpired = (latestSubscription?.status === 'expired') || (daysLeft !== null && daysLeft < 0)
 
   // Billing status priority: pending (never paid) > expired > active
   let billingStatus
   if (isPending && !latestSubscription) {
     billingStatus = 'pending'
-  } else if (isExpired) {
+  } else if (isExpired || (!latestSubscription && gym.status === 'active')) {
     billingStatus = 'expired'
   } else {
     billingStatus = 'active'
@@ -75,7 +76,6 @@ export async function getMyGym(userId) {
     .from('saas_subscriptions')
     .select('*')
     .eq('gym_id', data.id)
-    .eq('status', 'active')
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
