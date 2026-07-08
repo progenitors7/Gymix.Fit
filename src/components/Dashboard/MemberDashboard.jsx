@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X } from 'lucide-react'
+import { X, BellRing } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../lib/supabaseClient'
 import { connectionService } from '../../services/connectionService'
 import Logo from '../UI/Logo'
+import { toast } from 'react-hot-toast'
+import { pushNotificationService } from '../../services/pushNotificationService'
 
 // Modular Member Portal Subcomponents
 import MemberSidebar from '../MemberPortal/MemberSidebar'
@@ -26,6 +28,7 @@ export default function MemberDashboard() {
   // Navigation & View tab: 'pass' | 'notifications' | 'attendance' | 'streaks' | 'leaderboard' | 'progress' | 'profile'
   const [activeTab, setActiveTab] = useState('pass')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [showNotificationBanner, setShowNotificationBanner] = useState(false)
   const [showPwaBanner, setShowPwaBanner] = useState(false)
 
   useEffect(() => {
@@ -37,6 +40,89 @@ export default function MemberDashboard() {
       setShowPwaBanner(true)
     }
   }, [])
+
+  useEffect(() => {
+    const checkNotificationPermission = async () => {
+      if (localStorage.getItem('gymix_dismiss_push_banner') === 'true') return
+      const status = await pushNotificationService.checkPermissionStatus()
+      if (status === 'prompt' || status === 'denied' || status === 'default') {
+        setShowNotificationBanner(true)
+      }
+    }
+    const timer = setTimeout(checkNotificationPermission, 1500)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const handleEnableNotifications = async () => {
+    try {
+      const status = await pushNotificationService.checkPermissionStatus()
+      if (status === 'denied') {
+        toast.error(
+          "Notifications are blocked in settings. Please enable them in Settings > Apps > Gymix > Notifications.",
+          { duration: 6000 }
+        )
+      } else {
+        await pushNotificationService.initialize(
+          profile?.id,
+          (notification) => {
+            const title = notification.title || 'Gymix'
+            const body = notification.body || ''
+            toast(body ? `${title}: ${body}` : title, {
+              icon: '🔔',
+              duration: 5000,
+            })
+          }
+        )
+        setTimeout(async () => {
+          const newStatus = await pushNotificationService.checkPermissionStatus()
+          if (newStatus === 'granted') {
+            toast.success("Notifications enabled successfully!")
+            setShowNotificationBanner(false)
+          }
+        }, 1200)
+      }
+    } catch (err) {
+      console.error('[Push] Error requesting notifications:', err)
+    }
+  }
+
+  const handleDismissNotificationBanner = () => {
+    localStorage.setItem('gymix_dismiss_push_banner', 'true')
+    setShowNotificationBanner(false)
+  }
+
+  const renderNotificationBanner = () => {
+    if (!showNotificationBanner) return null
+    return (
+      <div className="mb-6 rounded-[2rem] border border-[#3390ec]/20 bg-[#3390ec]/10 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-[#3390ec]/10 border border-[#3390ec]/20 flex items-center justify-center text-[#3390ec]">
+            <BellRing className="w-5 h-5 animate-pulse" />
+          </div>
+          <div className="text-left">
+            <p className="text-blue-200 text-xs font-bold">Stay Updated with Real-Time Alerts</p>
+            <p className="text-slate-400 text-[11px] font-medium mt-0.5">
+              Enable notifications to get plan expiry reminders and fitness rewards instantly.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={handleEnableNotifications}
+            className="px-4 py-2.5 rounded-xl bg-[#3390ec] hover:bg-[#3390ec]/90 text-white text-[10px] font-black uppercase tracking-widest text-center shadow-lg shadow-[#3390ec]/10 transition-all active:scale-95 whitespace-nowrap cursor-pointer"
+          >
+            Enable Alerts
+          </button>
+          <button
+            onClick={handleDismissNotificationBanner}
+            className="px-3 py-2.5 rounded-xl border border-white/10 hover:bg-white/[0.05] text-[#94A3B8] hover:text-white text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer"
+          >
+            Later
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const getMobileOS = () => {
     const userAgent = navigator.userAgent || window.opera
@@ -827,6 +913,7 @@ export default function MemberDashboard() {
 
         <main className="flex-1 p-6 lg:p-8 pb-28 lg:pb-8 max-w-6xl w-full mx-auto overflow-y-auto">
           {renderPwaBanner()}
+          {renderNotificationBanner()}
           {!membership ? (
             <MemberConnectionPanel
               gymCode={gymCode}
