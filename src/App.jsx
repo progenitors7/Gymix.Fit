@@ -12,6 +12,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from './hooks/useAuth'
 import { Toaster, toast } from 'react-hot-toast'
 import { pushNotificationService } from './services/pushNotificationService'
+import AppUpdateChecker from './components/Common/AppUpdateChecker'
 
 
 const LandingPage = React.lazy(() => import('./pages/LandingPage'))
@@ -297,6 +298,7 @@ export default function App() {
       <AuthProvider>
         <GymProvider>
           <DeepLinkHandler />
+          <AppUpdateChecker />
           <Suspense fallback={<div className="h-screen flex items-center justify-center bg-[#1c1c1c]"><LoadingScreen /></div>}>
             <Routes>
               {/* ── Public ── */}

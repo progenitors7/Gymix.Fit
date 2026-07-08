@@ -21,6 +21,26 @@ export default function NotificationsPage() {
   const [filter, setFilter] = useState('all');
   const navigate = useNavigate();
 
+  const [updateConfig, setUpdateConfig] = useState(null);
+  const [currentVersion, setCurrentVersion] = useState(0);
+
+  useEffect(() => {
+    try {
+      const cachedConfig = localStorage.getItem('gymix_latest_version_config');
+      const cachedCurrent = localStorage.getItem('gymix_current_version_code');
+      if (cachedConfig) {
+        setUpdateConfig(JSON.parse(cachedConfig));
+      }
+      if (cachedCurrent) {
+        setCurrentVersion(parseInt(cachedCurrent, 10));
+      }
+    } catch (e) {
+      console.error('[NotificationsPage] Error reading cached update config:', e);
+    }
+  }, []);
+
+  const hasUpdate = updateConfig && currentVersion > 0 && currentVersion < updateConfig.latest_version_code;
+
   const filteredNotifications = notifications.filter(n => {
     if (filter === 'unread') return !n.is_read;
     if (filter === 'payments') return n.type?.includes('payment');
@@ -163,6 +183,38 @@ export default function NotificationsPage() {
 
       {/* Notification List */}
       <div className="space-y-3">
+        {hasUpdate && (
+          <div className="bg-[#1A1F2B] border border-[#863BFF]/30 rounded-2xl p-5 shadow-lg shadow-[#863BFF]/5 relative overflow-hidden mb-2">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[#863BFF]/5 blur-[40px] rounded-full pointer-events-none" />
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 bg-[#863BFF]/10 text-[#863BFF]">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <h4 className="font-bold text-sm sm:text-base tracking-tight text-white flex items-center gap-2">
+                    🚀 New Update Available!
+                    <span className="px-2 py-0.5 rounded-full bg-[#863BFF]/20 text-[10px] font-bold text-[#A855F7] border border-[#863BFF]/30">
+                      v{updateConfig.latest_version_name}
+                    </span>
+                  </h4>
+                  <span className="text-[10px] text-gray-500 whitespace-nowrap">System Alert</span>
+                </div>
+                <p className="text-slate-300 text-xs sm:text-sm mb-4 leading-relaxed">
+                  A new version of Gymix is available on the Google Play Store. Update now to experience new updates, bug fixes, and performance enhancements.
+                </p>
+                <button
+                  onClick={() => window.open(updateConfig.play_store_url || 'market://details?id=com.gymix.fit', '_system')}
+                  className="px-4 py-2 bg-[#863BFF] hover:bg-[#722EE5] text-white rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md shadow-[#863BFF]/15 cursor-pointer"
+                >
+                  <span>Update Now</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {filteredNotifications.length === 0 ? (
           <div className="bg-[#212121] border border-white/5 rounded-xl p-16 text-center">
              <div className="w-16 h-16 bg-[#1c1c1c] rounded-2xl flex items-center justify-center mx-auto mb-6">
