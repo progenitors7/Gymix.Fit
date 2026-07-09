@@ -261,8 +261,19 @@ function DeepLinkHandler() {
 export default function App() {
   // Detect if app is launched via Google Play Store (appended query params)
   const params = new URLSearchParams(window.location.search);
-  if (params.get('utm_source') === 'playstore' || params.get('mode') === 'android_app') {
+  const isPlaystoreURL = params.get('utm_source') === 'playstore' || params.get('mode') === 'android_app';
+  
+  // Check if launched as a standalone PWA or native app
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                        window.navigator.standalone === true || 
+                        window.Capacitor !== undefined;
+
+  if (isPlaystoreURL) {
     localStorage.setItem('is_playstore_app', 'true');
+  } else if (!isStandalone) {
+    // If opened in a regular web browser tab without playstore query parameters, 
+    // clear any stale playstore flag to prevent browser users from being locked out.
+    localStorage.removeItem('is_playstore_app');
   }
 
   // Push notification initialization is handled inside DeepLinkHandler
