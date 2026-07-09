@@ -259,14 +259,15 @@ function DeepLinkHandler() {
 }
 
 export default function App() {
+  // ── MIGRATION CLEANUP ──
+  // Previous versions stored this flag in localStorage (persistent across tabs/sessions).
+  // This caused browser users to be incorrectly identified as Play Store app users.
+  // We now use sessionStorage (per-tab, non-persistent). Remove any stale localStorage key.
+  localStorage.removeItem('is_playstore_app');
+
   // Detect if app is launched via Google Play Store (appended query params)
   const params = new URLSearchParams(window.location.search);
   const isPlaystoreURL = params.get('utm_source') === 'playstore' || params.get('mode') === 'android_app';
-  
-  // Check if launched as a standalone PWA or native app
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                        window.navigator.standalone === true || 
-                        window.Capacitor !== undefined;
 
   if (isPlaystoreURL) {
     sessionStorage.setItem('is_playstore_app', 'true');
