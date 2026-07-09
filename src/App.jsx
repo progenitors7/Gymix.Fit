@@ -13,6 +13,7 @@ import { useAuth } from './hooks/useAuth'
 import { Toaster, toast } from 'react-hot-toast'
 import { pushNotificationService } from './services/pushNotificationService'
 import AppUpdateChecker from './components/Common/AppUpdateChecker'
+import { isNativeCapacitorApp } from './utils/platform'
 
 
 const LandingPage = React.lazy(() => import('./pages/LandingPage'))
@@ -92,7 +93,7 @@ function RootRoute() {
   const forceLanding = params.get('landing') === 'true' || params.get('home') === 'true'
 
   const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true';
-  const isNativeApp = window.Capacitor !== undefined;
+  const isNativeApp = isNativeCapacitorApp();
 
   if (loading) {
     return (
@@ -127,7 +128,7 @@ function DeepLinkHandler() {
 
   // ── 1. Native deep link handler (com.gymix.fit://) ──
   useEffect(() => {
-    if (window.Capacitor) {
+    if (isNativeCapacitorApp()) {
       import('@capacitor/app').then(({ App }) => {
         const handler = App.addListener('appUrlOpen', (event) => {
           console.log('[DeepLinkHandler] App opened with URL:', event.url)
@@ -165,7 +166,7 @@ function DeepLinkHandler() {
   // ── 2. Clipboard gym code bridge (after Play Store install) ──
   useEffect(() => {
     const checkClipboardForGymCode = async () => {
-      if (!window.Capacitor) return
+      if (!isNativeCapacitorApp()) return
       try {
         const text = await navigator.clipboard.readText()
         if (text && text.trim().startsWith('gymix-connect:')) {
@@ -189,7 +190,7 @@ function DeepLinkHandler() {
 
   // ── 3. Hardware back button (Android) ──
   useEffect(() => {
-    if (window.Capacitor) {
+    if (isNativeCapacitorApp()) {
       import('@capacitor/app').then(({ App }) => {
         const handler = App.addListener('backButton', (data) => {
           console.log('[DeepLinkHandler] Hardware back button pressed. Can go back:', data.canGoBack)

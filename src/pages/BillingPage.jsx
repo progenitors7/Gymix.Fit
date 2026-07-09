@@ -14,6 +14,7 @@ import { useCurrentGym } from '../hooks/useCurrentGym';
 import { supabase } from '../lib/supabaseClient';
 import { razorpayService } from '../services/razorpayService';
 import Toast from '../components/UI/Toast';
+import { isNativeCapacitorApp } from '../utils/platform';
 
 const PRO_PLAN_ID = '770f855a-535c-44f1-9604-0ba7a74c6f59';
 const BILLING_FUNCTION = 'razorpay-subscription-v2';
@@ -26,7 +27,7 @@ const DURATIONS = [
 ];
 
 export default function BillingPage() {
-  const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined;
+  const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || isNativeCapacitorApp();
   const { gym, gymName, ownerEmail, isReady, refreshGym } = useCurrentGym();
   const [processing, setProcessing] = useState(false);
   const [toastState, setToastState] = useState({ message: '', type: 'success' });

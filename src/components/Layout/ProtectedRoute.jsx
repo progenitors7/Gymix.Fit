@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useCurrentGym } from '../../hooks/useCurrentGym'
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabaseClient'
+import { isNativeCapacitorApp } from '../../utils/platform'
 
 /**
  * ProtectedRoute — Clean state machine guard.
@@ -78,7 +79,7 @@ export default function ProtectedRoute({ children }) {
   const isSuperAdmin = location.pathname.startsWith('/super-admin')
   const isAdminPage = isBillingPage || isSettingsPage || isSuperAdmin
 
-  const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined;
+  const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || isNativeCapacitorApp();
 
   // Anti-Steering: Prevent loading billing page inside the native Play Store app
   if (isPlaystoreApp && isBillingPage) {

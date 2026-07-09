@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { AuthContext } from './AuthContext'
+import { isNativeCapacitorApp } from '../utils/platform'
 
 /**
  * Deduplication cache: prevents parallel syncProfile calls for the same user
@@ -261,7 +262,7 @@ export function AuthProvider({ children }) {
     })
 
       // Listen for native deep link events (com.gymix.fit://) to capture Supabase OAuth tokens
-      if (window.Capacitor) {
+      if (isNativeCapacitorApp()) {
         import('@capacitor/app').then(({ App }) => {
           App.addListener('appUrlOpen', async (event) => {
             console.log('[Capacitor Auth] App opened with URL:', event.url);
@@ -375,7 +376,7 @@ export function AuthProvider({ children }) {
       localStorage.removeItem('oauth_signup_role')
     }
 
-    const isNative = window.Capacitor !== undefined;
+    const isNative = isNativeCapacitorApp();
     let redirectUrl = isNative ? 'com.gymix.fit://' : `${window.location.origin}`;
     if (role) {
       redirectUrl += `?role=${role}`;

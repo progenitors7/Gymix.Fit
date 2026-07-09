@@ -27,6 +27,7 @@ import {
   User
 } from 'lucide-react'
 import Logo from '../UI/Logo'
+import { isNativeCapacitorApp } from '../../utils/platform'
 
 // Utility for cleaner class merging
 function cn(...inputs) {
@@ -111,7 +112,7 @@ function SidebarContent({ onClose, isMobile }) {
 
   const hasAdminAccess = isSuperAdmin(user?.email)
   const isPaywalled = gym?.status === 'pending' || gym?.billing_status === 'expired'
-  const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined
+  const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || isNativeCapacitorApp()
 
   const baseNavItems = NAV_ITEMS.map(item => {
     if (isPlaystoreApp && item.path === '/billing') {
@@ -251,7 +252,7 @@ function BottomNav() {
   const isPaywalled = gym?.status === 'pending' || gym?.billing_status === 'expired'
 
   const ownerBottomNavPaths = ['/dashboard', '/scanner', '/members', '/subscriptions', '/payments']
-  const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined
+  const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || isNativeCapacitorApp()
   const baseNavItems = NAV_ITEMS.map(item => {
     if (isPlaystoreApp && item.path === '/billing') {
       return { ...item, label: 'Subscription', path: '/subscription-status' };
@@ -326,7 +327,7 @@ export default function AppLayout({ children }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
   const { gym } = useGym()
-  const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined
+  const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || isNativeCapacitorApp()
   const showBillingReminder =
     !isPlaystoreApp &&
     location.pathname !== '/billing' &&

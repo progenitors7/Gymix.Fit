@@ -30,6 +30,7 @@ import { useCurrentGym } from '../../hooks/useCurrentGym';
 import StatusBadge from '../UI/StatusBadge';
 import ConfirmModal from '../UI/ConfirmModal';
 import { DEFAULT_EXPIRY_SOON_TEMPLATE, DEFAULT_EXPIRED_TEMPLATE } from '../../config/whatsappTemplates';
+import { isNativeCapacitorApp } from '../../utils/platform';
 
 const STATUS_TABS = [
   { key: 'all', label: 'All' },
@@ -267,7 +268,7 @@ export default function MembersPage() {
     } else {
       // Fall back to direct WhatsApp Click-to-Chat
       const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-      const target = window.Capacitor ? '_system' : '_blank';
+      const target = isNativeCapacitorApp() ? '_system' : '_blank';
       window.open(url, target);
     }
   };
@@ -294,7 +295,7 @@ export default function MembersPage() {
     return { all, active, expiring_soon, expired, left };
   }, [filteredMembers]);
 
-  const isNativeApp = window.Capacitor !== undefined || window.matchMedia('(display-mode: standalone)').matches;
+  const isNativeApp = isNativeCapacitorApp() || window.matchMedia('(display-mode: standalone)').matches;
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -723,7 +724,7 @@ export default function MembersPage() {
                   onClick={() => {
                     const phone = waSendingInfo.phoneNumber.replace(/\D/g, '');
                     const url = `https://wa.me/${phone}?text=${encodeURIComponent(waSendingInfo.messageText)}`;
-                    const target = window.Capacitor ? '_system' : '_blank';
+                    const target = isNativeCapacitorApp() ? '_system' : '_blank';
                     window.open(url, target);
                     setWaSendingInfo(null);
                   }}

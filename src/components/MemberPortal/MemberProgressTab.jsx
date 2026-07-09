@@ -3,6 +3,7 @@ import { Sparkles, Send, Copy, X, Check, Trash2, Camera, Upload, Building, Clock
 import { supabase } from '../../lib/supabaseClient'
 import Logo from '../UI/Logo'
 import { toast } from 'react-hot-toast'
+import { isNativeCapacitorApp } from '../../utils/platform'
 
 export default function MemberProgressTab({
   profile,
@@ -416,7 +417,7 @@ export default function MemberProgressTab({
     if (!canvas) return
     
     const caption = `💪 Verified Lift: I just smashed a new ${activeShareLog.exercise_name} PR of ${activeShareLog.value} kg at ${membership?.gyms?.gym_name || 'My Gym'} on Gymix! Consistency Streak: ${streakCount} Days! 🔥 #Gymix #FitnessGoal`
-    const target = window.Capacitor ? '_system' : '_blank'
+    const target = isNativeCapacitorApp() ? '_system' : '_blank'
     
     try {
       if (navigator.share && navigator.canShare) {

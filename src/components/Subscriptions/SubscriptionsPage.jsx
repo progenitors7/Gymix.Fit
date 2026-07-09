@@ -8,8 +8,9 @@ import {
 import { useSubscriptions } from '../../hooks/useSubscriptions';
 import { subscriptionService } from '../../services/subscriptionService';
 import StatusBadge from '../UI/StatusBadge';
+import { isNativeCapacitorApp } from '../../utils/platform';
 
-const isNativeApp = window.Capacitor !== undefined || window.matchMedia('(display-mode: standalone)').matches;
+const isNativeApp = isNativeCapacitorApp() || window.matchMedia('(display-mode: standalone)').matches;
 
 const containerVariants = {
   hidden: { opacity: 0 },

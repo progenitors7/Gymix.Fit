@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowUpRight, Sparkles, AlertTriangle, ShieldCheck } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
+import { isNativeCapacitorApp } from '../../utils/platform'
 
 export default function AppUpdateChecker() {
   const [showModal, setShowModal] = useState(false)
@@ -30,7 +31,7 @@ export default function AppUpdateChecker() {
         localStorage.setItem('gymix_latest_version_config', JSON.stringify(appConfig))
 
         // 2. Identify if running in native app (Capacitor)
-        const isNative = window.Capacitor !== undefined
+        const isNative = isNativeCapacitorApp()
         if (!isNative) {
           // If we are on web browser, updates are live automatically
           return

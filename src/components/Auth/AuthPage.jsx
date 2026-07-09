@@ -9,6 +9,7 @@ import SignupForm from './SignupForm'
 import ForgotPasswordForm from './ForgotPasswordForm'
 import AppConnectionBridge from './AppConnectionBridge'
 import { supabase } from '../../lib/supabaseClient'
+import { isNativeCapacitorApp } from '../../utils/platform'
 
 export default function AuthPage() {
   const { user, loading } = useAuth()
@@ -39,7 +40,7 @@ export default function AuthPage() {
   // Detect mobile browser scan connection bridge
   useEffect(() => {
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-    const isNative = window.Capacitor !== undefined
+    const isNative = isNativeCapacitorApp()
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
 
     if (isMobile && !isNative && !isStandalone && normalizedGymParam && location.pathname === '/signup' && !bypassBridge) {

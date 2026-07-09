@@ -38,8 +38,9 @@ import {
   RefreshCw
 } from 'lucide-react'
 import Logo from '../UI/Logo'
+import { isNativeCapacitorApp } from '../../utils/platform'
 
-const isNativeApp = window.Capacitor !== undefined || window.matchMedia('(display-mode: standalone)').matches;
+const isNativeApp = isNativeCapacitorApp() || window.matchMedia('(display-mode: standalone)').matches;
 
 // Animation variants for staggered load
 const containerVariants = {
@@ -240,7 +241,7 @@ export default function Dashboard() {
     };
   }, [gym?.id, fetchStats]);
 
-  const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined;
+  const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || isNativeCapacitorApp();
   const daysLeft = gym?.billing_days_left;
   const isExpiringSoon = Number.isFinite(daysLeft) && daysLeft >= 0 && daysLeft <= 7;
 
@@ -417,7 +418,7 @@ export default function Dashboard() {
       : 'https://gymix.fit'
     const scanUrl = `${originFallback}/join/${gym?.unique_code}`
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(scanUrl)}`
-    const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined
+    const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || isNativeCapacitorApp()
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">

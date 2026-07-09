@@ -7,6 +7,7 @@ import { connectionService } from '../../services/connectionService'
 import Logo from '../UI/Logo'
 import { toast } from 'react-hot-toast'
 import { pushNotificationService } from '../../services/pushNotificationService'
+import { isNativeCapacitorApp } from '../../utils/platform'
 
 // Modular Member Portal Subcomponents
 import MemberSidebar from '../MemberPortal/MemberSidebar'
@@ -33,7 +34,7 @@ export default function MemberDashboard() {
 
   useEffect(() => {
     const isDismissed = localStorage.getItem('gymix_pwa_banner_dismissed') === 'true'
-    const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined
+    const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || isNativeCapacitorApp()
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
     
     if (!isDismissed && !isPlaystoreApp && isMobile) {

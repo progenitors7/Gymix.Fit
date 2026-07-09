@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
 import { toast } from 'react-hot-toast'
+import { isNativeCapacitorApp } from '../../utils/platform'
 
 export default function MemberStoreTab({ profile, membership, setActiveTab }) {
   const [products, setProducts] = useState([])
@@ -190,7 +191,7 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
 
       if (formattedPhone) {
         const waUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(messageText)}`
-        const target = window.Capacitor ? '_system' : '_blank'
+        const target = isNativeCapacitorApp() ? '_system' : '_blank'
         window.open(waUrl, target)
       }
 
@@ -241,7 +242,7 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
 
       if (formattedPhone) {
         const waUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(messageText)}`
-        const target = window.Capacitor ? '_system' : '_blank'
+        const target = isNativeCapacitorApp() ? '_system' : '_blank'
         window.open(waUrl, target)
       } else {
         navigator.clipboard.writeText(messageText)
@@ -719,7 +720,7 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
                     <button
                       onClick={() => {
                         const waUrl = `https://wa.me/${orderSuccess.phone}?text=${encodeURIComponent(orderSuccess.message)}`
-                        const target = window.Capacitor ? '_system' : '_blank'
+                        const target = isNativeCapacitorApp() ? '_system' : '_blank'
                         window.open(waUrl, target)
                       }}
                       className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white text-[9px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95"
