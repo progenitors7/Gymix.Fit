@@ -91,7 +91,7 @@ function RootRoute() {
   const params = new URLSearchParams(window.location.search)
   const forceLanding = params.get('landing') === 'true' || params.get('home') === 'true'
 
-  const isPlaystoreApp = localStorage.getItem('is_playstore_app') === 'true';
+  const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true';
   const isNativeApp = window.Capacitor !== undefined;
 
   if (loading) {
@@ -269,11 +269,7 @@ export default function App() {
                         window.Capacitor !== undefined;
 
   if (isPlaystoreURL) {
-    localStorage.setItem('is_playstore_app', 'true');
-  } else if (!isStandalone) {
-    // If opened in a regular web browser tab without playstore query parameters, 
-    // clear any stale playstore flag to prevent browser users from being locked out.
-    localStorage.removeItem('is_playstore_app');
+    sessionStorage.setItem('is_playstore_app', 'true');
   }
 
   // Push notification initialization is handled inside DeepLinkHandler

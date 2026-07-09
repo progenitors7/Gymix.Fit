@@ -78,7 +78,7 @@ export default function ProtectedRoute({ children }) {
   const isSuperAdmin = location.pathname.startsWith('/super-admin')
   const isAdminPage = isBillingPage || isSettingsPage || isSuperAdmin
 
-  const isPlaystoreApp = localStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined;
+  const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined;
 
   // Anti-Steering: Prevent loading billing page inside the native Play Store app
   if (isPlaystoreApp && isBillingPage) {

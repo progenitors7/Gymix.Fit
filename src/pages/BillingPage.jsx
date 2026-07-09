@@ -26,7 +26,7 @@ const DURATIONS = [
 ];
 
 export default function BillingPage() {
-  const isPlaystoreApp = localStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined;
+  const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || window.Capacitor !== undefined;
   const { gym, gymName, ownerEmail, isReady, refreshGym } = useCurrentGym();
   const [processing, setProcessing] = useState(false);
   const [toastState, setToastState] = useState({ message: '', type: 'success' });
