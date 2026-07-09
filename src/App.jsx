@@ -91,10 +91,8 @@ function RootRoute() {
   const params = new URLSearchParams(window.location.search)
   const forceLanding = params.get('landing') === 'true' || params.get('home') === 'true'
 
-  // Check if launched as a standalone PWA or native app
-  const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
-                window.navigator.standalone === true || 
-                window.Capacitor !== undefined;
+  const isPlaystoreApp = localStorage.getItem('is_playstore_app') === 'true';
+  const isNativeApp = window.Capacitor !== undefined;
 
   if (loading) {
     return (
@@ -108,7 +106,9 @@ function RootRoute() {
     return <LandingPage />
   }
 
-  if (isPWA) {
+  // Only force direct login/dashboard navigation for native apps or Play Store wrappers.
+  // Standard web browser users (including desktop/mobile PWA) should see the Landing Page if logged out.
+  if (isNativeApp || isPlaystoreApp) {
     return user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
   }
 
