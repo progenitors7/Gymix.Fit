@@ -17,9 +17,9 @@ export const notificationService = {
         
       if (membersError) throw membersError;
 
-      // 2. Fetch recent notifications to avoid duplicates (last 7 days)
+      // 2. Fetch recent notifications to avoid duplicates (last 24 hours)
       const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 1); // 7 days → 1 day to avoid missing daily alerts
       
       const { data: recentNotifs, error: notifsError } = await supabase
         .from('notifications')
@@ -115,6 +115,48 @@ export const notificationService = {
           .insert(newNotifications);
           
         if (insertError) throw insertError;
+
+        // 5. Fetch gym owner's user_id to send FCM push notification
+        try {
+          const { data: gymData, error: gymErr } = await supabase
+            .from('gyms')
+            .select('owner_user_id')
+            .eq('id', gymId)
+            .maybeSingle();
+
+          if (!gymErr && gymData?.owner_user_id) {
+            const ownerUserId = gymData.owner_user_id;
+
+            // Send one FCM push per new notification (batched to owner's device)
+            for (const notif of newNotifications) {
+              try {
+                await supabase.functions.invoke('send-push-notification', {
+                  body: {
+                    userIds: [ownerUserId],
+                    title: notif.title,
+                    body: notif.message,
+                    gymId: gymId,
+                    type: notif.type,
+                    relatedMemberId: notif.related_member_id,
+                    data: {
+                      route: '/notifications',
+                      type: notif.type,
+                      gymId: gymId,
+                    },
+                  },
+                });
+                console.log('[Notifications] FCM push sent for:', notif.type, notif.title);
+              } catch (pushErr) {
+                // Non-fatal: DB notification already inserted, push is best-effort
+                console.warn('[Notifications] FCM push failed (non-fatal):', pushErr);
+              }
+            }
+          } else {
+            console.warn('[Notifications] Could not fetch owner_user_id for gym:', gymId, gymErr);
+          }
+        } catch (ownerFetchErr) {
+          console.warn('[Notifications] Failed to fetch gym owner for push:', ownerFetchErr);
+        }
       }
 
       return { success: true, count: newNotifications.length };
