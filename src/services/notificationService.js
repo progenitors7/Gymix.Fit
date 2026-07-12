@@ -17,21 +17,18 @@ export const notificationService = {
         
       if (membersError) throw membersError;
 
-      // 2. Fetch recent notifications to avoid duplicates (last 24 hours)
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 1); // 7 days → 1 day to avoid missing daily alerts
+      // 2. Fetch recent notifications to avoid duplicates (last 90 days)
+      const ninetyDaysAgo = new Date();
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
       
       const { data: recentNotifs, error: notifsError } = await supabase
         .from('notifications')
-        .select('type, related_member_id')
+        .select('type, related_member_id, created_at')
         .eq('gym_id', gymId)
-        .gte('created_at', sevenDaysAgo.toISOString());
+        .in('type', ['trial_ending', 'trial_expired', 'membership_expired', 'membership_expiring'])
+        .gte('created_at', ninetyDaysAgo.toISOString());
 
       if (notifsError) throw notifsError;
-
-      const existingSet = new Set(
-        recentNotifs.map(n => `${n.type}_${n.related_member_id}`)
-      );
 
       const newNotifications = [];
 
@@ -47,11 +44,24 @@ export const notificationService = {
         
         const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
         
+        const hasExistingNotif = (type, sinceDate) => {
+          const existsInDb = (recentNotifs || []).some(n => 
+            n.related_member_id === m.id && 
+            n.type === type && 
+            new Date(n.created_at) >= sinceDate
+          );
+          if (existsInDb) return true;
+
+          return newNotifications.some(n => 
+            n.related_member_id === m.id && 
+            n.type === type
+          );
+        };
+
         // --- Trial logic ---
         if (m.status === 'trial') {
           if (diffDays === 0) {
-            const key = `trial_ending_${m.id}`;
-            if (!existingSet.has(key)) {
+            if (!hasExistingNotif('trial_ending', expiry)) {
               newNotifications.push({
                 gym_id: gymId,
                 related_member_id: m.id,
@@ -60,11 +70,9 @@ export const notificationService = {
                 message: `${m.full_name}'s trial ends today. Reach out to convert them!`,
                 is_read: false
               });
-              existingSet.add(key); // prevent multiple in same run
             }
           } else if (diffDays < 0) {
-            const key = `trial_expired_${m.id}`;
-            if (!existingSet.has(key)) {
+            if (!hasExistingNotif('trial_expired', expiry)) {
               newNotifications.push({
                 gym_id: gymId,
                 related_member_id: m.id,
@@ -73,15 +81,13 @@ export const notificationService = {
                 message: `${m.full_name}'s trial has expired.`,
                 is_read: false
               });
-              existingSet.add(key);
             }
           }
         }
         
         // --- Active/Expired logic ---
         if (m.status === 'expired' || diffDays < 0) {
-          const key = `membership_expired_${m.id}`;
-          if (!existingSet.has(key) && m.status !== 'trial') {
+          if (m.status !== 'trial' && !hasExistingNotif('membership_expired', expiry)) {
             newNotifications.push({
               gym_id: gymId,
               related_member_id: m.id,
@@ -90,11 +96,12 @@ export const notificationService = {
               message: `${m.full_name}'s ${m.membership_plan || 'plan'} has expired.`,
               is_read: false
             });
-            existingSet.add(key);
           }
         } else if (m.status === 'expiring_soon' || (diffDays >= 0 && diffDays <= 3 && m.status !== 'trial')) {
-          const key = `membership_expiring_${m.id}`;
-          if (!existingSet.has(key)) {
+          const expiringSince = new Date(expiry);
+          expiringSince.setDate(expiringSince.getDate() - 3);
+          
+          if (!hasExistingNotif('membership_expiring', expiringSince)) {
             newNotifications.push({
               gym_id: gymId,
               related_member_id: m.id,
@@ -103,7 +110,6 @@ export const notificationService = {
               message: `${m.full_name}'s ${m.membership_plan || 'plan'} expires in ${diffDays} days.`,
               is_read: false
             });
-            existingSet.add(key);
           }
         }
       });
