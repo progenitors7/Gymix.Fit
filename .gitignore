@@ -26,3 +26,5 @@ workbox-*.js
 # WhatsApp Web Session Cache
 .wwebjs_auth/
 .wwebjs_cache/
+.baileys_auth/
+auth_failures.json

@@ -5,6 +5,7 @@ import {
   Lock, Building, Copy, Check, CheckCircle2, ShieldAlert, X, ChevronRight
 } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
+import { waFetch } from '../../lib/waFetch'
 import ConfirmModal from '../UI/ConfirmModal'
 
 export function MemberProfileTab({
@@ -313,11 +314,10 @@ export function MemberProfileTab({
         try {
           const saved = localStorage.getItem(`gym_settings_${membership.gym_id}`);
           const parsed = saved ? JSON.parse(saved) : {};
-          const WA_BACKEND_URL = import.meta.env.VITE_WA_BACKEND_URL || 'http://localhost:5000';
 
           const sendGoodbye = async () => {
             try {
-              const statusRes = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${membership.gym_id}`);
+              const statusRes = await waFetch(`/api/whatsapp/status?gymId=${membership.gym_id}`);
               if (!statusRes.ok) return;
               const statusData = await statusRes.json();
 
@@ -333,9 +333,8 @@ export function MemberProfileTab({
                   .replace(/{{plan}}/g, membership.membership_plan || 'Plan')
                   .replace(/{{date}}/g, membership.expiry_date ? new Date(membership.expiry_date).toLocaleDateString() : 'soon');
 
-                await fetch(`${WA_BACKEND_URL}/api/whatsapp/send`, {
+                await waFetch('/api/whatsapp/send', {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     gymId: membership.gym_id,
                     phone: membership.phone_number,

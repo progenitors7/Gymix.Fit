@@ -41,6 +41,8 @@ export const connectionService = {
   async getConnectionStatus(profileId) {
     if (!profileId) throw new Error('Profile ID is required')
 
+    // BUG #15 FIX: .maybeSingle() throws PGRST116 if a member has multiple rows
+    // (e.g. pending requests to multiple gyms). Use limit(1) + array destructure instead.
     const { data, error } = await supabase
       .from('connection_requests')
       .select(`
@@ -55,10 +57,11 @@ export const connectionService = {
         )
       `)
       .eq('profile_id', profileId)
-      .maybeSingle()
+      .order('created_at', { ascending: false })
+      .limit(1)
 
     if (error) throw error
-    return data
+    return (data && data.length > 0) ? data[0] : null
   },
 
   /**
@@ -397,11 +400,7 @@ export const connectionService = {
 
           const allLogs = [{ check_in_time: attendance.check_in_time }, ...(logs || [])];
 
-          // local streak calculation (skipping Sundays)
-          let streak = 0;
-          let checkDate = new Date();
-          checkDate.setHours(0, 0, 0, 0);
-
+          // Helper: format a Date object to local YYYY-MM-DD string
           const getLocalDateStr = (d) => {
             const y = d.getFullYear();
             const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -413,28 +412,28 @@ export const connectionService = {
             allLogs.map(log => getLocalDateStr(new Date(log.check_in_time)))
           );
 
-          let tempDate = new Date(checkDate);
-          while (true) {
-            const dateStr = getLocalDateStr(tempDate);
-            if (checkInDates.has(dateStr)) {
-              break;
-            }
-            if (tempDate.getDay() !== 0) break; // Missed a active day
-            tempDate.setDate(tempDate.getDate() - 1);
-          }
+          // BUG #8 FIX: The original code had a redundant first while-loop that was
+          // effectively dead code (today always has a check-in since we just inserted it).
+          // Removed it. The streak is now counted directly from today going backward,
+          // correctly skipping Sundays (rest days) without breaking the streak.
+          let streak = 0;
+          let checkDate = new Date();
+          checkDate.setHours(0, 0, 0, 0);
 
-          checkDate = new Date(tempDate);
           while (true) {
             const dateStr = getLocalDateStr(checkDate);
             const hasCheckedIn = checkInDates.has(dateStr);
             const isSunday = checkDate.getDay() === 0;
 
             if (hasCheckedIn) {
+              // Counted a day with a check-in, go further back
               streak++;
               checkDate.setDate(checkDate.getDate() - 1);
             } else if (isSunday) {
+              // Sundays are rest days — skip without breaking the streak
               checkDate.setDate(checkDate.getDate() - 1);
             } else {
+              // Missed a non-Sunday day — streak is broken
               break;
             }
           }

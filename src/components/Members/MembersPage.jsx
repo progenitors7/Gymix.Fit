@@ -25,6 +25,8 @@ import {
   X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '../../lib/supabaseClient';
+import { waFetch } from '../../lib/waFetch';
 import { useMembers } from '../../hooks/useMembers';
 import { useCurrentGym } from '../../hooks/useCurrentGym';
 import StatusBadge from '../UI/StatusBadge';
@@ -240,9 +242,8 @@ export default function MembersPage() {
       
       const sendPromise = async () => {
         try {
-          const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/send`, {
+          const res = await waFetch('/api/whatsapp/send', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               gymId: gym.id,
               phone: member.phone_number,

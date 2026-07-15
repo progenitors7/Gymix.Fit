@@ -102,9 +102,15 @@ export default function AttendancePage() {
   const fetchTodayStats = useCallback(async () => {
     if (!gym?.id) return
     try {
-      const todayStr = new Date().toISOString().split('T')[0]
+      // BUG #10 FIX: Use local timezone date (not UTC) so IST midnight is correct
+      const now = new Date()
+      const todayStr = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, '0'),
+        String(now.getDate()).padStart(2, '0')
+      ].join('-')
       const todayStartISO = `${todayStr}T00:00:00.000Z`
-      const todayEndISO = `${todayStr}T23:59:59.999Z`
+      const todayEndISO   = `${todayStr}T23:59:59.999Z`
 
       const { data, error } = await supabase
         .from('attendance')

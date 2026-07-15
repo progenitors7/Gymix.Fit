@@ -7,6 +7,7 @@ import { getMembers, createMember, updateMember, deleteMember, filterMembers } f
 import { useCurrentGym } from './useCurrentGym'
 import { unifiedService } from '../services/unifiedService'
 import { DEFAULT_WELCOME_TEMPLATE, DEFAULT_LEFT_TEMPLATE } from '../config/whatsappTemplates'
+import { waFetch } from '../lib/waFetch'
 
 export function useMembers() {
   const { gym, gymId, isReady } = useCurrentGym()
@@ -112,12 +113,11 @@ export function useMembers() {
         try {
           const saved = localStorage.getItem(`gym_settings_${gymId}`);
           const parsed = saved ? JSON.parse(saved) : {};
-          const WA_BACKEND_URL = import.meta.env.VITE_WA_BACKEND_URL || 'http://localhost:5000';
 
           // First verify live server connection, then send
           const statusCheck = async () => {
             try {
-              const statusRes = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${gym.id}`);
+              const statusRes = await waFetch(`/api/whatsapp/status?gymId=${gym.id}`);
               if (!statusRes.ok) return;
               const statusData = await statusRes.json();
 
@@ -140,9 +140,8 @@ export function useMembers() {
                   .replace(/{{plan}}/g, newMember.membership_plan || 'Plan')
                   .replace(/{{date}}/g, expiry);
 
-                  const sendRes = await fetch(`${WA_BACKEND_URL}/api/whatsapp/send`, {
+                  const sendRes = await waFetch('/api/whatsapp/send', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                       gymId: gym.id,
                       phone: newMember.phone_number,
@@ -199,12 +198,11 @@ export function useMembers() {
     try {
       const saved = localStorage.getItem(`gym_settings_${gymId}`);
       const parsed = saved ? JSON.parse(saved) : {};
-      const WA_BACKEND_URL = import.meta.env.VITE_WA_BACKEND_URL || 'http://localhost:5000';
 
       const sendGoodbye = async () => {
         try {
           // Verify live server connection first
-          const statusRes = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${gymId}`);
+          const statusRes = await waFetch(`/api/whatsapp/status?gymId=${gymId}`);
           if (!statusRes.ok) return;
           const statusData = await statusRes.json();
 
@@ -219,9 +217,8 @@ export function useMembers() {
               .replace(/{{plan}}/g, member.membership_plan || 'Plan')
               .replace(/{{date}}/g, member.expiry_date ? new Date(member.expiry_date).toLocaleDateString() : 'soon');
 
-            const sendRes = await fetch(`${WA_BACKEND_URL}/api/whatsapp/send`, {
+            const sendRes = await waFetch('/api/whatsapp/send', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 gymId: gymId,
                 phone: member.phone_number,

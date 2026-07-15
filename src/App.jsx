@@ -125,41 +125,59 @@ function DeepLinkHandler() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const pushInitialized = useRef(false)
+  // Store listener handles so we can properly remove them on cleanup
+  const deepLinkHandleRef = useRef(null)
+  const backButtonHandleRef = useRef(null)
 
   // ── 1. Native deep link handler (com.gymix.fit://) ──
   useEffect(() => {
-    if (isNativeCapacitorApp()) {
-      import('@capacitor/app').then(({ App }) => {
-        const handler = App.addListener('appUrlOpen', (event) => {
-          console.log('[DeepLinkHandler] App opened with URL:', event.url)
-          try {
-            const urlStr = event.url
-            if (urlStr.includes('://signup') || urlStr.includes('://login') || urlStr.includes('://forgot-password') || urlStr.includes('://billing-success') || urlStr.includes('://dashboard')) {
-              const match = urlStr.match(/:\/\/(signup|login|forgot-password|billing-success|dashboard)(\?.*)?/)
-              if (match) {
-                const path = match[1]
-                const search = match[2] || ''
-                const params = new URLSearchParams(search)
-                const gym = params.get('gym')
-                if (gym) {
-                  localStorage.setItem('scanned_gym_code', gym.trim().toUpperCase())
-                }
-                if (path === 'billing-success' || path === 'dashboard') {
-                  navigate('/dashboard', { replace: true })
-                  window.location.reload()
-                } else {
-                  navigate(`/${path}${search}`, { replace: true })
-                }
+    if (!isNativeCapacitorApp()) return
+
+    let cancelled = false
+
+    import('@capacitor/app').then(({ App }) => {
+      if (cancelled) return
+      // App.addListener returns a Promise<PluginListenerHandle>
+      App.addListener('appUrlOpen', (event) => {
+        console.log('[DeepLinkHandler] App opened with URL:', event.url)
+        try {
+          const urlStr = event.url
+          if (urlStr.includes('://signup') || urlStr.includes('://login') || urlStr.includes('://forgot-password') || urlStr.includes('://billing-success') || urlStr.includes('://dashboard')) {
+            const match = urlStr.match(/:\/\/(signup|login|forgot-password|billing-success|dashboard)(\?.*)?/)
+            if (match) {
+              const path = match[1]
+              const search = match[2] || ''
+              const params = new URLSearchParams(search)
+              const gym = params.get('gym')
+              if (gym) {
+                localStorage.setItem('scanned_gym_code', gym.trim().toUpperCase())
+              }
+              if (path === 'billing-success' || path === 'dashboard') {
+                navigate('/dashboard', { replace: true })
+                window.location.reload()
+              } else {
+                navigate(`/${path}${search}`, { replace: true })
               }
             }
-          } catch (e) {
-            console.error('[DeepLinkHandler] Error parsing deep link:', e)
           }
-        })
-        return () => {
-          handler.then(h => h.remove())
+        } catch (e) {
+          console.error('[DeepLinkHandler] Error parsing deep link:', e)
         }
+      }).then(handle => {
+        if (cancelled) {
+          handle.remove()
+          return
+        }
+        deepLinkHandleRef.current = handle
       })
+    })
+
+    return () => {
+      cancelled = true
+      if (deepLinkHandleRef.current) {
+        deepLinkHandleRef.current.remove()
+        deepLinkHandleRef.current = null
+      }
     }
   }, [navigate])
 
@@ -190,25 +208,39 @@ function DeepLinkHandler() {
 
   // ── 3. Hardware back button (Android) ──
   useEffect(() => {
-    if (isNativeCapacitorApp()) {
-      import('@capacitor/app').then(({ App }) => {
-        const handler = App.addListener('backButton', (data) => {
-          console.log('[DeepLinkHandler] Hardware back button pressed. Can go back:', data.canGoBack)
-          const backEvent = new CustomEvent('hardwareBack', { cancelable: true })
-          const defaultPrevented = !window.dispatchEvent(backEvent)
-          if (defaultPrevented) return
-          const currentPath = window.location.pathname
-          const exitRoutes = ['/dashboard', '/login', '/signup', '/']
-          if (exitRoutes.includes(currentPath)) {
-            App.exitApp()
-          } else {
-            navigate(-1)
-          }
-        })
-        return () => {
-          handler.then(h => h.remove())
+    if (!isNativeCapacitorApp()) return
+
+    let cancelled = false
+
+    import('@capacitor/app').then(({ App }) => {
+      if (cancelled) return
+      App.addListener('backButton', (data) => {
+        console.log('[DeepLinkHandler] Hardware back button pressed. Can go back:', data.canGoBack)
+        const backEvent = new CustomEvent('hardwareBack', { cancelable: true })
+        const defaultPrevented = !window.dispatchEvent(backEvent)
+        if (defaultPrevented) return
+        const currentPath = window.location.pathname
+        const exitRoutes = ['/dashboard', '/login', '/signup', '/']
+        if (exitRoutes.includes(currentPath)) {
+          App.exitApp()
+        } else {
+          navigate(-1)
         }
+      }).then(handle => {
+        if (cancelled) {
+          handle.remove()
+          return
+        }
+        backButtonHandleRef.current = handle
       })
+    })
+
+    return () => {
+      cancelled = true
+      if (backButtonHandleRef.current) {
+        backButtonHandleRef.current.remove()
+        backButtonHandleRef.current = null
+      }
     }
   }, [navigate])
 
@@ -260,19 +292,22 @@ function DeepLinkHandler() {
 }
 
 export default function App() {
-  // ── MIGRATION CLEANUP ──
-  // Previous versions stored this flag in localStorage (persistent across tabs/sessions).
-  // This caused browser users to be incorrectly identified as Play Store app users.
-  // We now use sessionStorage (per-tab, non-persistent). Remove any stale localStorage key.
-  localStorage.removeItem('is_playstore_app');
+  // BUG #7 FIX: These side effects were running on every render.
+  // Moved to useEffect so they run exactly once on mount.
+  useEffect(() => {
+    // ── MIGRATION CLEANUP ──
+    // Previous versions stored this flag in localStorage (persistent across tabs/sessions).
+    // This caused browser users to be incorrectly identified as Play Store app users.
+    // We now use sessionStorage (per-tab, non-persistent). Remove any stale localStorage key.
+    localStorage.removeItem('is_playstore_app')
 
-  // Detect if app is launched via Google Play Store (appended query params)
-  const params = new URLSearchParams(window.location.search);
-  const isPlaystoreURL = params.get('utm_source') === 'playstore' || params.get('mode') === 'android_app';
-
-  if (isPlaystoreURL) {
-    sessionStorage.setItem('is_playstore_app', 'true');
-  }
+    // Detect if app is launched via Google Play Store (appended query params)
+    const params = new URLSearchParams(window.location.search)
+    const isPlaystoreURL = params.get('utm_source') === 'playstore' || params.get('mode') === 'android_app'
+    if (isPlaystoreURL) {
+      sessionStorage.setItem('is_playstore_app', 'true')
+    }
+  }, [])
 
   // Push notification initialization is handled inside DeepLinkHandler
   // after user auth state is confirmed (to associate the FCM token with the user).

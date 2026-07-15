@@ -43,6 +43,7 @@ import {
   DEFAULT_EXPIRED_TEMPLATE,
   DEFAULT_LEFT_TEMPLATE
 } from '../config/whatsappTemplates';
+import { waFetch } from '../lib/waFetch';
 
 const WA_PRESETS = [
   { label: 'Professional Reminder', text: 'Hello {{name}}, this is a friendly reminder that your {{plan}} plan expires on {{date}}. Please renew to avoid interruption.' },
@@ -359,7 +360,7 @@ export default function SettingsPage() {
   const [waPairingPhone, setWaPairingPhone] = useState('');
   const [waPairingCode, setWaPairingCode] = useState('');
 
-  const WA_BACKEND_URL = import.meta.env.VITE_WA_BACKEND_URL || 'http://localhost:5000';
+  // WA_BACKEND_URL is now handled by the authenticated waFetch() helper in lib/waFetch.js
 
   // Check server connection and status on mount
   useEffect(() => {
@@ -391,7 +392,7 @@ export default function SettingsPage() {
     // Query active server status
     const checkServerStatus = async () => {
       try {
-        const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${gymId}`);
+        const res = await waFetch(`/api/whatsapp/status?gymId=${gymId}`);
         if (res.ok) {
           const data = await res.json();
           setIsRealBackend(true);
@@ -434,7 +435,7 @@ export default function SettingsPage() {
 
     const healthCheck = setInterval(async () => {
       try {
-        const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${gymId}`);
+        const res = await waFetch(`/api/whatsapp/status?gymId=${gymId}`);
         if (res.ok) {
           const data = await res.json();
           if (data.status === 'connected') {
@@ -464,7 +465,7 @@ export default function SettingsPage() {
     }, 30000); // Every 30 seconds
 
     return () => clearInterval(healthCheck);
-  }, [waSessionState, gymId, isRealBackend, WA_BACKEND_URL]);
+  }, [waSessionState, gymId, isRealBackend]);
 
   // Real-time server polling
   useEffect(() => {
@@ -490,7 +491,7 @@ export default function SettingsPage() {
     if ((waSessionState === 'connecting' || waSessionState === 'qr_ready' || waSessionState === 'pairing_code_ready') && isRealBackend) {
       pollInterval = setInterval(async () => {
         try {
-          const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/status?gymId=${gymId}`);
+          const res = await waFetch(`/api/whatsapp/status?gymId=${gymId}`);
           if (res.ok) {
             const data = await res.json();
             
@@ -538,7 +539,7 @@ export default function SettingsPage() {
       if (countdownInterval) clearInterval(countdownInterval);
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [waSessionState, globalSettings, gymId, isRealBackend, waQrImage, WA_BACKEND_URL]);
+  }, [waSessionState, globalSettings, gymId, isRealBackend, waQrImage]);
 
   const handleStartWaSession = async (phoneNumberToPair = null) => {
     if (!isRealBackend) {
@@ -550,9 +551,8 @@ export default function SettingsPage() {
     setWaPairingCode('');
 
     try {
-      const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/connect`, {
+      const res = await waFetch('/api/whatsapp/connect', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           gymId,
           phone: phoneNumberToPair ? phoneNumberToPair.replace(/\D/g, '') : undefined
@@ -596,9 +596,8 @@ export default function SettingsPage() {
 
     if (isRealBackend) {
       try {
-        await fetch(`${WA_BACKEND_URL}/api/whatsapp/disconnect`, {
+        await waFetch('/api/whatsapp/disconnect', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ gymId })
         });
       } catch (err) {
@@ -617,9 +616,8 @@ export default function SettingsPage() {
 
     if (isRealBackend) {
       try {
-        const res = await fetch(`${WA_BACKEND_URL}/api/whatsapp/send`, {
+        const res = await waFetch('/api/whatsapp/send', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             gymId,
             phone: testPhone,

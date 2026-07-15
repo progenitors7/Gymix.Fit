@@ -27,6 +27,8 @@ export default defineConfig({
     }),
   ],
   esbuild: {
-    drop: ['console', 'debugger'],
+    // Only strip debugger statements in production — keep console.error/warn so
+    // failures remain visible. Removing 'console' was silencing all catch blocks.
+    drop: ['debugger'],
   },
 })

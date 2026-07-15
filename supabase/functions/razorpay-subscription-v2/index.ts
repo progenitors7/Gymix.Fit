@@ -437,11 +437,30 @@ serve(async (req: Request) => {
     throw new Error('Invalid action')
 
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'An unknown error occurred';
-    console.error('EDGE_FUNCTION_CATCH_ERROR:', message)
-    return new Response(JSON.stringify({ error: message }), {
+    // Log full error stack details to Deno Edge runtime logs for developer debugging
+    console.error('EDGE_FUNCTION_CATCH_ERROR:', error instanceof Error ? error.stack : error);
+
+    let clientMessage = 'An unexpected error occurred. Please try again later.';
+    if (error instanceof Error) {
+      const msg = error.message.toLowerCase();
+      // Permit only safe, non-internal semantic messages
+      const isSafe =
+        msg.includes('invalid or expired promo code') ||
+        msg.includes('usage limit') ||
+        msg.includes('expired') ||
+        msg.includes('invalid') ||
+        msg.includes('not authenticated') ||
+        msg.includes('not found') ||
+        msg.includes('already active');
+
+      if (isSafe) {
+        clientMessage = error.message;
+      }
+    }
+
+    return new Response(JSON.stringify({ error: clientMessage }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
-    })
+    });
   }
 })

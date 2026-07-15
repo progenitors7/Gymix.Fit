@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { AuthContext } from './AuthContext'
 import { isNativeCapacitorApp } from '../utils/platform'
+import { WA_BACKEND_URL } from '../lib/waFetch'
 
 /**
  * Deduplication cache: prevents parallel syncProfile calls for the same user
@@ -14,14 +15,9 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Capture role from URL query param if present and save to localStorage
-  if (typeof window !== 'undefined' && window.location) {
-    const params = new URLSearchParams(window.location.search)
-    const urlRole = params.get('role')
-    if (urlRole) {
-      localStorage.setItem('oauth_signup_role', urlRole)
-    }
-  }
+  // NOTE (BUG #6 FIX): URL role capture was previously in the component body (ran
+  // on every render). It is now inside checkHashParamsAndInit() which runs only once
+  // on mount, preventing stale localStorage writes on re-renders.
 
   const fetchProfile = async (uid) => {
     if (!uid) return null
@@ -170,11 +166,20 @@ export function AuthProvider({ children }) {
               access_token: accessToken,
               refresh_token: refreshToken
             })
-            // Clean up the hash from the URL bar to keep it tidy
-            window.history.replaceState(null, null, ' ');
+            // Clean up the hash from the URL bar
+            window.history.replaceState(null, '', window.location.pathname)
           } catch (e) {
             console.error('[AuthProvider] Failed to set session from hash:', e)
           }
+        }
+      }
+
+      // BUG #6 FIX: Capture ?role= from URL here (on mount only, not on every render)
+      if (typeof window !== 'undefined' && window.location.search) {
+        const searchParams = new URLSearchParams(window.location.search)
+        const urlRole = searchParams.get('role')
+        if (urlRole) {
+          localStorage.setItem('oauth_signup_role', urlRole)
         }
       }
 
@@ -307,40 +312,94 @@ export function AuthProvider({ children }) {
     }, [])
 
   const signUp = async (email, password, role = 'member', fullName = '', gymName = '') => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          role,
-          full_name: fullName,
-          gym_name: gymName
-        }
+    try {
+      const res = await fetch(`${WA_BACKEND_URL}/api/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, role, fullName, gymName })
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result.error || 'Signup failed via backend gateway');
       }
-    })
-    if (error) throw error
-    
-    // Only establish a local session if the server actually returned one (meaning email confirmation is off)
-    if (data?.session && data?.user) {
-      setUser(data.user)
-      await syncProfile(data.user)
-    } else {
-      // If email confirmation is required, keep user logged out locally.
-      // This allows them to see the verification alert on the signup page instead of being routed to a locked dashboard.
-      setUser(null)
-      setProfile(null)
+
+      // If backend returns a valid session, set it locally
+      if (result?.session) {
+        const { data, error } = await supabase.auth.setSession(result.session);
+        if (error) throw error;
+        if (data?.user) {
+          setUser(data.user);
+          await syncProfile(data.user);
+        }
+        return data;
+      }
+      return result;
+    } catch (err) {
+      // Robust fallback to direct Supabase Auth in case backend is down or returned rate limit / other errors that we want to bypass/fallback for network failure
+      const isNetworkError = err.message.includes('Failed to fetch') || err.message.includes('NetworkError');
+      if (isNetworkError || err.message.includes('Signup failed via backend gateway')) {
+        console.warn('[AuthFallback] Backend signup failed/unreachable. Falling back to direct Supabase Auth.', err);
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              role,
+              full_name: fullName,
+              gym_name: gymName
+            }
+          }
+        });
+        if (error) throw error;
+        if (data?.session && data?.user) {
+          setUser(data.user);
+          await syncProfile(data.user);
+        } else {
+          setUser(null);
+          setProfile(null);
+        }
+        return data;
+      }
+      throw err;
     }
-    return data
   }
 
   const signIn = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
-    if (data?.user) {
-      setUser(data.user)
-      await syncProfile(data.user)
+    try {
+      const res = await fetch(`${WA_BACKEND_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result.error || 'Login failed via backend gateway');
+      }
+
+      // Set the session received from the backend
+      const { data, error } = await supabase.auth.setSession(result.session);
+      if (error) throw error;
+
+      if (data?.user) {
+        setUser(data.user);
+        await syncProfile(data.user);
+      }
+      return data;
+    } catch (err) {
+      // Robust fallback to direct Supabase Auth in case of network errors
+      const isNetworkError = err.message.includes('Failed to fetch') || err.message.includes('NetworkError');
+      if (isNetworkError || err.message.includes('Login failed via backend gateway')) {
+        console.warn('[AuthFallback] Backend login failed/unreachable. Falling back to direct Supabase Auth.', err);
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        if (data?.user) {
+          setUser(data.user);
+          await syncProfile(data.user);
+        }
+        return data;
+      }
+      throw err;
     }
-    return data
   }
 
   const signOut = async () => {
@@ -358,10 +417,30 @@ export function AuthProvider({ children }) {
   }
 
   const resetPasswordForEmail = async (email) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
-    if (error) throw error
+    const redirectTo = `${window.location.origin}/reset-password`;
+    try {
+      const res = await fetch(`${WA_BACKEND_URL}/api/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, redirectTo })
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result.error || 'Password reset request failed via backend gateway');
+      }
+      return result;
+    } catch (err) {
+      const isNetworkError = err.message.includes('Failed to fetch') || err.message.includes('NetworkError');
+      if (isNetworkError || err.message.includes('Password reset request failed via backend gateway')) {
+        console.warn('[AuthFallback] Backend password reset failed/unreachable. Falling back to direct Supabase Auth.', err);
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo,
+        });
+        if (error) throw error;
+        return { success: true };
+      }
+      throw err;
+    }
   }
 
   const updatePassword = async (newPassword) => {
@@ -399,6 +478,10 @@ export function AuthProvider({ children }) {
     if (user) {
       const p = await fetchProfile(user.id)
       setProfile(p)
+      // BUG #16 FIX: Also update the localStorage cache so reloads show fresh data
+      if (p) {
+        localStorage.setItem(`profile_cache_${user.id}`, JSON.stringify(p))
+      }
       return p
     }
     return null

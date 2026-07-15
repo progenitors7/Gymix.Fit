@@ -17,8 +17,18 @@ export function NotificationProvider({ children }) {
     setLoading(true);
     
     try {
-      // First, ask DB to sync/generate new ones
-      await notificationService.syncNotifications(gym.id);
+      // BUG #13 FIX: syncNotifications is a heavy pipeline (fetches all members,
+      // checks 90 days of notifications, calls FCM Edge Functions). Throttle it to
+      // once per 30 minutes per gym to prevent hammering the DB on every page load.
+      const syncKey = `notifications_sync_ts_${gym.id}`;
+      const lastSync = localStorage.getItem(syncKey);
+      const THROTTLE_MS = 30 * 60 * 1000; // 30 minutes
+      const shouldSync = !lastSync || (Date.now() - Number(lastSync)) > THROTTLE_MS;
+
+      if (shouldSync) {
+        await notificationService.syncNotifications(gym.id);
+        localStorage.setItem(syncKey, String(Date.now()));
+      }
       
       // Then fetch
       const { data, error } = await notificationService.getNotifications(gym.id);

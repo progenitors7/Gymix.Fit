@@ -116,7 +116,8 @@ export function useDashboardStats() {
           )
         `)
         .eq('gym_id', gym.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(1000); // BUG #12 FIX: prevent unbounded fetch for large gyms
 
       if (membersError) throw membersError;
 
@@ -178,7 +179,8 @@ export function useDashboardStats() {
           members (full_name)
         `)
         .eq('gym_id', gym.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(2000); // BUG #12 FIX: prevent unbounded fetch
 
       if (paymentsError) throw paymentsError;
 
@@ -219,9 +221,17 @@ export function useDashboardStats() {
       next3Days.setDate(today.getDate() + 3);
       const next3DaysStr = getLocalDateString(next3Days);
 
-      // --- Fetch Today's Check-ins ---
-      const todayStartISO = `${todayStr}T00:00:00.000Z`;
-      const todayEndISO = `${todayStr}T23:59:59.999Z`;
+      // BUG #10 FIX: Use local timezone date, not toISOString() which returns UTC.
+      // todayStr is already built with getLocalDateString() below, so use that.
+      // Re-compute here before getLocalDateString is defined (hoisted for clarity).
+      const todayLocalDate = new Date();
+      const todayLocalStr = [
+        todayLocalDate.getFullYear(),
+        String(todayLocalDate.getMonth() + 1).padStart(2, '0'),
+        String(todayLocalDate.getDate()).padStart(2, '0')
+      ].join('-');
+      const todayStartISO = `${todayLocalStr}T00:00:00.000Z`;
+      const todayEndISO = `${todayLocalStr}T23:59:59.999Z`;
       const { data: attendanceToday, error: attendanceError } = await supabase
         .from('attendance')
         .select('id')

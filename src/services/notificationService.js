@@ -211,6 +211,15 @@ export const notificationService = {
           console.error('LocalStorage error:', e);
         }
 
+        // BUG #21 FIX: Prune stale dismissed IDs whose broadcasts no longer exist in DB.
+        // Without this, the array grew indefinitely causing localStorage bloat.
+        const validBroadcastIds = new Set((broadcasts || []).map(b => b.id));
+        const cleanedDismissed = dismissedIds.filter(id => validBroadcastIds.has(id));
+        if (cleanedDismissed.length !== dismissedIds.length) {
+          localStorage.setItem('dismissed_broadcasts', JSON.stringify(cleanedDismissed));
+          dismissedIds = cleanedDismissed;
+        }
+
         broadcastNotifs = (broadcasts || []).map(b => ({
           id: b.id,
           type: 'system_broadcast',

@@ -85,9 +85,12 @@ export const superAdminService = {
     if (gymsError) throw gymsError;
 
     try {
+      // NOTE (BUG #4): This query relies on Supabase RLS allowing super-admin role
+      // to read all profiles. Ensure your RLS policy is correctly restricted.
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('*');
+        .select('id, full_name, email, avatar_url, role')
+        .limit(500); // Safety cap — prevents fetching unlimited rows
       
       const profileMap = {};
       profiles?.forEach(p => {
@@ -421,14 +424,23 @@ export const superAdminService = {
       .eq('id', memberId)
       .maybeSingle();
 
-    // 2. Cascade delete dependent logs to avoid constraint failures
-    await supabase.from('member_coins_transactions').delete().eq('member_id', memberId);
-    await supabase.from('member_progress_logs').delete().eq('member_id', memberId);
-    await supabase.from('member_xp_transactions').delete().eq('member_id', memberId);
-    await supabase.from('leaderboard_season_history').delete().eq('member_id', memberId);
-    await supabase.from('payments').delete().eq('member_id', memberId);
-    await supabase.from('subscriptions').delete().eq('member_id', memberId);
-    await supabase.from('attendance').delete().eq('member_id', memberId);
+    // 2. BUG #18 FIX: Check each delete result — prevents silent partial deletions
+    //    that leave orphaned rows in the database.
+    const cascadeDeletes = [
+      supabase.from('member_coins_transactions').delete().eq('member_id', memberId),
+      supabase.from('member_progress_logs').delete().eq('member_id', memberId),
+      supabase.from('member_xp_transactions').delete().eq('member_id', memberId),
+      supabase.from('leaderboard_season_history').delete().eq('member_id', memberId),
+      supabase.from('payments').delete().eq('member_id', memberId),
+      supabase.from('subscriptions').delete().eq('member_id', memberId),
+      supabase.from('attendance').delete().eq('member_id', memberId),
+    ];
+
+    const results = await Promise.all(cascadeDeletes);
+    const failedStep = results.find(r => r.error);
+    if (failedStep) {
+      throw new Error(`[superAdminService] Cascade delete failed: ${failedStep.error.message}`);
+    }
     
     // 3. Delete member
     const { error: memberError } = await supabase

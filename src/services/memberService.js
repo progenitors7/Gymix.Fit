@@ -90,29 +90,40 @@ export async function getMembers(gymId) {
 
   if (error) throw error
 
-  const allMembers = (data ?? []).map(syncMemberFromLatestSubscription)
+  return (data ?? []).map(syncMemberFromLatestSubscription)
+}
 
-  // 30-day auto-purge: permanently delete "left" members whose left_at > 30 days ago
+/**
+ * Permanently delete "left" members whose left_at date is older than 30 days.
+ * Must be called EXPLICITLY (e.g. from a Settings > Cleanup button).
+ * Never called automatically — silent auto-purge was removed to prevent accidental data loss.
+ */
+export async function purgeExpiredLeftMembers(gymId) {
+  if (!gymId) throw new Error('Gym ID is required')
+
   const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
   const now = Date.now()
-  const expiredLeftMembers = allMembers.filter(m => {
-    if (m.status !== 'left' || !m.left_at) return false
+
+  const { data, error } = await supabase
+    .from('members')
+    .select('id, left_at')
+    .eq('gym_id', gymId)
+    .eq('status', 'left')
+    .not('left_at', 'is', null)
+
+  if (error) throw error
+
+  const idsToPurge = (data ?? []).filter(m => {
     const leftTime = new Date(m.left_at).getTime()
     return (now - leftTime) > THIRTY_DAYS_MS
-  })
+  }).map(m => m.id)
 
-  if (expiredLeftMembers.length > 0) {
-    // Fire-and-forget background batch purge in a single network request
-    const idsToPurge = expiredLeftMembers.map(m => m.id)
-    deleteMembersBatch(idsToPurge).catch(err => {
-      console.error('[Gymix] Auto-purge failed for expired left members:', err)
-    })
-    console.log(`[Gymix] Auto-purging ${expiredLeftMembers.length} left member(s) older than 30 days`)
+  if (idsToPurge.length > 0) {
+    await deleteMembersBatch(idsToPurge)
+    console.log(`[Gymix] Manually purged ${idsToPurge.length} left member(s) older than 30 days`)
   }
 
-  // Return all members except the ones being purged
-  const purgeIds = new Set(expiredLeftMembers.map(m => m.id))
-  return allMembers.filter(m => !purgeIds.has(m.id))
+  return idsToPurge.length
 }
 
 /**

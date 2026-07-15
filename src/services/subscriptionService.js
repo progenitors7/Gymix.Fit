@@ -84,22 +84,24 @@ export const subscriptionService = {
 
   // Calculate Expiry Date based on Start Date and Duration
   calculateExpiryDate(startDate, durationType) {
-    const date = new Date(startDate);
+    const date = new Date(startDate)
     switch (durationType) {
       case 'monthly':
-        date.setDate(date.getDate() + 30);
-        break;
+        // Use calendar months, not +30 days, so Jan 31 → Feb 28/29 correctly
+        date.setMonth(date.getMonth() + 1)
+        break
       case 'quarterly':
-        date.setDate(date.getDate() + 90);
-        break;
+        date.setMonth(date.getMonth() + 3)
+        break
       case 'yearly':
-        date.setDate(date.getDate() + 365);
-        break;
+        // Use setFullYear so leap years are handled correctly
+        date.setFullYear(date.getFullYear() + 1)
+        break
       // 'custom' handles its own date logic in the form
       default:
-        break;
+        break
     }
-    return formatDate(date);
+    return formatDate(date)
   },
 
   // Create a new subscription
