@@ -43,10 +43,17 @@ loadEnv();
 const { createClient } = require('@supabase/supabase-js');
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.warn('[Gymix WA] WARNING: Supabase URL or Anon Key is missing. Auth routes may fail.');
+
+let supabase = null;
+if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+  try {
+    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } catch (err) {
+    console.error('[Gymix WA] CRITICAL: Failed to initialize Supabase client:', err.message);
+  }
+} else {
+  console.warn('[Gymix WA] WARNING: SUPABASE_URL or SUPABASE_ANON_KEY is missing. Auth routes and token verification will fail until environment variables are set.');
 }
-const supabase = createClient(SUPABASE_URL || '', SUPABASE_ANON_KEY || '');
 
 // ─── RATE LIMIT CONFIGURATION (Configurable via Environment Variables) ──────
 const AUTH_IP_THRESHOLD = parseInt(process.env.RATE_LIMIT_AUTH_IP_THRESHOLD || '5', 10);
@@ -442,6 +449,9 @@ async function requireAuth(req, res, next) {
   // 2. Check for Supabase JWT (Authorization Bearer token) - used for frontend client calls
   const authHeader = req.headers['authorization'];
   if (authHeader && authHeader.startsWith('Bearer ')) {
+    if (!supabase) {
+      return res.status(503).json({ error: 'Authentication service is unconfigured on this server.' });
+    }
     const token = authHeader.substring(7);
     try {
       const { data: { user }, error } = await supabase.auth.getUser(token);
@@ -464,6 +474,10 @@ async function requireAuth(req, res, next) {
 
 // ─── AUTHENTICATION PROXY ROUTES (Stricter limits + IP & Account backoff) ───
 app.post('/api/auth/login', validateSchema('login'), authRateLimiter, async (req, res) => {
+  if (!supabase) {
+    return res.status(503).json({ error: 'Authentication service is unconfigured on this server.' });
+  }
+
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
@@ -485,6 +499,10 @@ app.post('/api/auth/login', validateSchema('login'), authRateLimiter, async (req
 });
 
 app.post('/api/auth/signup', validateSchema('signup'), authRateLimiter, async (req, res) => {
+  if (!supabase) {
+    return res.status(503).json({ error: 'Authentication service is unconfigured on this server.' });
+  }
+
   const { email, password, role, fullName, gymName } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
@@ -514,6 +532,10 @@ app.post('/api/auth/signup', validateSchema('signup'), authRateLimiter, async (r
 });
 
 app.post('/api/auth/reset-password', validateSchema('resetPassword'), authRateLimiter, async (req, res) => {
+  if (!supabase) {
+    return res.status(503).json({ error: 'Authentication service is unconfigured on this server.' });
+  }
+
   const { email, redirectTo } = req.body;
   if (!email) {
     return res.status(400).json({ error: 'Email is required' });
