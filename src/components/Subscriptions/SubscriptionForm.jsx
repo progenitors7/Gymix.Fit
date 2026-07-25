@@ -4,6 +4,7 @@ import { Calendar, User, Tag, AlertTriangle } from 'lucide-react';
 import { useMembers } from '../../hooks/useMembers';
 import DatePicker from '../UI/DatePicker';
 import { planService } from '../../services/planService';
+import { subscriptionService } from '../../services/subscriptionService';
 import { useCurrentGym } from '../../hooks/useCurrentGym';
 
 export default function SubscriptionForm({ onSubmit, initialData = null, isSubmitting = false }) {
@@ -71,11 +72,7 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
       // Auto-calculate expiry if duration_type changes
       if (name === 'duration_type') {
         if (value !== 'custom') {
-          const date = new Date(prev.start_date);
-          if (value === 'monthly') date.setDate(date.getDate() + 30);
-          else if (value === 'quarterly') date.setDate(date.getDate() + 90);
-          else if (value === 'yearly') date.setDate(date.getDate() + 365);
-          next.expiry_date = date.toISOString().split('T')[0];
+          next.expiry_date = subscriptionService.calculateExpiryDate(prev.start_date, value);
         }
       }
 
@@ -113,11 +110,7 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
     setFormData(prev => {
       const next = { ...prev, start_date: nextDayStr };
       if (prev.duration_type && prev.duration_type !== 'custom') {
-        const date = new Date(nextDayStr);
-        if (prev.duration_type === 'monthly') date.setDate(date.getDate() + 30);
-        else if (prev.duration_type === 'quarterly') date.setDate(date.getDate() + 90);
-        else if (prev.duration_type === 'yearly') date.setDate(date.getDate() + 365);
-        next.expiry_date = date.toISOString().split('T')[0];
+        next.expiry_date = subscriptionService.calculateExpiryDate(nextDayStr, prev.duration_type);
       } else {
         const matchedPlan = plans.find(p => p.name === prev.plan_name);
         if (matchedPlan) {
@@ -256,11 +249,7 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
               setFormData(prev => {
                 const next = { ...prev, start_date: val };
                 if (prev.duration_type && prev.duration_type !== 'custom') {
-                  const date = new Date(val);
-                  if (prev.duration_type === 'monthly') date.setDate(date.getDate() + 30);
-                  else if (prev.duration_type === 'quarterly') date.setDate(date.getDate() + 90);
-                  else if (prev.duration_type === 'yearly') date.setDate(date.getDate() + 365);
-                  next.expiry_date = date.toISOString().split('T')[0];
+                  next.expiry_date = subscriptionService.calculateExpiryDate(val, prev.duration_type);
                 } else {
                   // custom plan matched auto-recalculate
                   const matchedPlan = plans.find(p => p.name === prev.plan_name);

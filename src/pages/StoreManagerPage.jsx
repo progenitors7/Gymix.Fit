@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Store, Plus, Edit, Eye, EyeOff, Trash2, 
@@ -29,6 +29,7 @@ export default function StoreManagerPage() {
   const [processingProduct, setProcessingProduct] = useState(false)
   const [compressedSizeKB, setCompressedSizeKB] = useState(null)
 
+
   // Orders states
   const [orders, setOrders] = useState([])
   const [ordersLoading, setOrdersLoading] = useState(true)
@@ -38,7 +39,7 @@ export default function StoreManagerPage() {
   const PRODUCT_LIMIT = 15
 
   // Fetch inventory products
-  const fetchInventory = async () => {
+  const fetchInventory = useCallback(async () => {
     if (!gym?.id) return
     setProductsLoading(true)
     try {
@@ -56,10 +57,10 @@ export default function StoreManagerPage() {
     } finally {
       setProductsLoading(false)
     }
-  }
+  }, [gym])
 
   // Fetch orders log
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     if (!gym?.id) return
     setOrdersLoading(true)
     try {
@@ -84,7 +85,7 @@ export default function StoreManagerPage() {
     } finally {
       setOrdersLoading(false)
     }
-  }
+  }, [gym])
 
   useEffect(() => {
     if (gym?.id) {
@@ -92,7 +93,7 @@ export default function StoreManagerPage() {
       fetchOrders()
     }
     localStorage.setItem('gymix_store_visited', 'true');
-  }, [gym?.id])
+  }, [gym?.id, fetchInventory, fetchOrders])
 
   // Client-side canvas image compression to under 50KB base64
   const handleImageChange = async (e) => {

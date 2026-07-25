@@ -9,7 +9,7 @@
  */
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { User, Phone, Activity, Award, Calendar, FileText, CreditCard, Sparkles } from 'lucide-react'
+import { User, Phone, Activity, Award, FileText, CreditCard, Sparkles } from 'lucide-react'
 import DatePicker from '../UI/DatePicker'
 import { useCurrentGym } from '../../hooks/useCurrentGym'
 import { supabase } from '../../lib/supabaseClient'
@@ -68,12 +68,6 @@ const compressImage = (src, callback) => {
   img.src = src
 }
 
-const getBase64SizeKB = (base64String) => {
-  if (!base64String) return '0.0'
-  const padding = base64String.endsWith('==') ? 2 : base64String.endsWith('=') ? 1 : 0
-  const bytes = (base64String.length * 3) / 4 - padding
-  return (bytes / 1024).toFixed(1)
-}
 
 export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mode = 'add' }) {
   const [form, setForm] = useState({ ...DEFAULTS, ...initialValues })
@@ -263,7 +257,13 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
       // Create Member and all related subscription/payment details
       await onSubmit(payload)
     } catch (err) {
-      setGlobalError(err.message || 'Something went wrong.')
+      const errMsg = err.message || 'Something went wrong.'
+      if (errMsg.includes('23505') || errMsg.toLowerCase().includes('unique') || errMsg.toLowerCase().includes('phone_number')) {
+        setErrors({ phone_number: 'A member with this phone number is already registered.' })
+        setGlobalError('A member with this phone number already exists.')
+      } else {
+        setGlobalError(errMsg)
+      }
     } finally {
       setSubmitting(false)
     }

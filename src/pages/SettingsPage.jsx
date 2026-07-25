@@ -722,17 +722,36 @@ export default function SettingsPage() {
     }
     setLoadingPlans(true);
     try {
+      const trimmedName = planForm.name.trim();
+
       if (editingPlan) {
+        // Prevent duplicate plan name when editing a different plan
+        const isDuplicate = plans.some(
+          p => p.id !== editingPlan.id && p.name.toLowerCase().trim() === trimmedName.toLowerCase()
+        );
+        if (isDuplicate) {
+          setLoadingPlans(false);
+          return showToast('A plan with this name already exists in your gym', 'error');
+        }
+
         const updateData = {
-          name: planForm.name,
+          name: trimmedName,
           duration_days: parseInt(planForm.duration_days),
           price: parseFloat(planForm.price)
         };
-        await planService.updatePlan(editingPlan.id, updateData);
+        await planService.updatePlan(editingPlan.id, updateData, gym?.id);
         showToast('Plan updated successfully!');
       } else {
+        const isDuplicate = plans.some(
+          p => p.name.toLowerCase().trim() === trimmedName.toLowerCase()
+        );
+        if (isDuplicate) {
+          setLoadingPlans(false);
+          return showToast('A plan with this name already exists in your gym', 'error');
+        }
+
         const createData = {
-          name: planForm.name,
+          name: trimmedName,
           duration_days: parseInt(planForm.duration_days),
           price: parseFloat(planForm.price)
         };
@@ -742,7 +761,7 @@ export default function SettingsPage() {
       setShowPlanModal(false);
       fetchPlans();
     } catch (err) {
-      showToast(err.message, 'error');
+      showToast(err.message || 'Failed to save plan', 'error');
     } finally {
       setLoadingPlans(false);
     }

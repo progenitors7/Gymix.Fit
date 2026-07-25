@@ -37,7 +37,8 @@ export function usePayments() {
         `)
         .eq('gym_id', gym?.id)
         .eq('status', 'completed')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(5000);
 
       if (ordersError) throw ordersError;
       setStoreOrders(orders ?? []);
@@ -47,7 +48,7 @@ export function usePayments() {
     } finally {
       setLoading(false);
     }
-  }, [isReady, gym?.id]);
+  }, [isReady, gym]);
 
   const addPayment = async (paymentData) => {
     try {

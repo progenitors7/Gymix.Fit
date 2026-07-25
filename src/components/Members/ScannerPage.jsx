@@ -26,7 +26,6 @@ export default function ScannerPage() {
 
   // Scanned feedback state overlay
   const [scanResult, setScanResult] = useState(null) // { success: boolean, message: string, member: object }
-  const [isProcessing, setIsProcessing] = useState(false)
 
   // Refs for race-condition-safe access inside callbacks and timers
   const html5QrCodeRef = useRef(null)

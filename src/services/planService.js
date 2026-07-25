@@ -36,7 +36,13 @@ export const planService = {
     return data;
   },
 
-  async updatePlan(id, planData) {
+  async updatePlan(id, planData, gymId = null) {
+    if (id === 'trial_default') {
+      const targetGymId = gymId || planData.gym_id;
+      if (!targetGymId) throw new Error('Gym ID is required to customize trial plan');
+      return this.createPlan(targetGymId, planData);
+    }
+
     const { data, error } = await supabase
       .from('membership_plans')
       .update(planData)
@@ -49,6 +55,10 @@ export const planService = {
   },
 
   async deletePlan(id) {
+    if (id === 'trial_default') {
+      return true;
+    }
+
     const { error } = await supabase
       .from('membership_plans')
       .delete()

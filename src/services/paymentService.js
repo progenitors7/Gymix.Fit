@@ -19,7 +19,8 @@ export const paymentService = {
       `)
       .eq('gym_id', gymId)
       .order('payment_date', { ascending: false })
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(5000);
 
     if (error) throw error;
     return data;

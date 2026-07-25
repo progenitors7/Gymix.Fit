@@ -94,7 +94,7 @@ export function useDashboardStats() {
             .from('members')
             .select('id')
             .eq('gym_id', gymId)
-            .eq('status', 'active')
+            .in('status', ['active', 'expiring_soon'])
             .lt('expiry_date', todayStr);
 
           if (expiredMembers && expiredMembers.length > 0) {
@@ -148,7 +148,7 @@ export function useDashboardStats() {
         `)
         .eq('gym_id', gym.id)
         .order('created_at', { ascending: false })
-        .limit(1000); // BUG #12 FIX: prevent unbounded fetch for large gyms
+        .limit(5000);
 
       if (membersError) throw membersError;
 
@@ -183,7 +183,10 @@ export function useDashboardStats() {
         const latest = getLatestSubscription(cleanMember.subscriptions);
         if (!latest) {
           delete cleanMember.subscriptions;
-          return cleanMember;
+          return {
+            ...cleanMember,
+            status: getStatusFromExpiry(cleanMember.expiry_date),
+          };
         }
 
         delete cleanMember.subscriptions;
@@ -211,7 +214,7 @@ export function useDashboardStats() {
         `)
         .eq('gym_id', gym.id)
         .order('created_at', { ascending: false })
-        .limit(2000); // BUG #12 FIX: prevent unbounded fetch
+        .limit(5000);
 
       if (paymentsError) throw paymentsError;
 
@@ -236,10 +239,12 @@ export function useDashboardStats() {
       next3Days.setDate(today.getDate() + 3);
       const next3DaysStr = toLocalDateStr(next3Days);
 
-      const todayLocalDate = new Date();
-      const todayLocalStr = toLocalDateStr(todayLocalDate);
-      const todayStartISO = `${todayLocalStr}T00:00:00.000Z`;
-      const todayEndISO = `${todayLocalStr}T23:59:59.999Z`;
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const endOfToday = new Date();
+      endOfToday.setHours(23, 59, 59, 999);
+      const todayStartISO = startOfToday.toISOString();
+      const todayEndISO = endOfToday.toISOString();
       const { data: attendanceToday, error: attendanceError } = await supabase
         .from('attendance')
         .select('id')

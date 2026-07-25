@@ -43,30 +43,31 @@ const getLatestSubscription = (subscriptions = []) => {
 const syncMemberFromLatestSubscription = (member) => {
   if (!member) return null
 
+  const cleanMember = { ...member }
+  delete cleanMember.subscriptions
+
   if (!member.subscriptions || member.subscriptions.length === 0) {
-    if (member.status === 'left') {
-      const { subscriptions, ...cleanMember } = member
+    if (cleanMember.status === 'left') {
       return cleanMember
     }
-    const { subscriptions, ...cleanMember } = member
     return {
       ...cleanMember,
       status: getStatusFromExpiry(cleanMember.expiry_date)
     }
   }
 
-  if (member.status === 'left') {
-    const { subscriptions, ...cleanMember } = member
+  if (cleanMember.status === 'left') {
     return cleanMember
   }
 
   const latest = getLatestSubscription(member.subscriptions)
   if (!latest) {
-    const { subscriptions, ...cleanMember } = member
-    return cleanMember
+    return {
+      ...cleanMember,
+      status: getStatusFromExpiry(cleanMember.expiry_date)
+    }
   }
 
-  const { subscriptions, ...cleanMember } = member
   return {
     ...cleanMember,
     membership_plan: latest.plan_name || cleanMember.membership_plan,
@@ -84,7 +85,7 @@ export async function getMembers(gymId) {
 
   const { data, error } = await supabase
     .from('members')
-    .select(MEMBER_FIELDS)
+    .select(MEMBER_WITH_SUBSCRIPTIONS)
     .eq('gym_id', gymId)
     .order('created_at', { ascending: false })
 
