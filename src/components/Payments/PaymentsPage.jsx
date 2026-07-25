@@ -195,25 +195,26 @@ export default function PaymentsPage() {
             
             // Subscriptions paid
             const todaySubRevenue = payments
-              .filter(p => p.payment_status === 'paid' && p.payment_date === todayStr)
-              .reduce((sum, p) => sum + parseFloat(p.amount_paid), 0);
+              .filter(p => p.payment_status === 'paid' && getLocalDateFromISO(p.payment_date || p.created_at) === todayStr)
+              .reduce((sum, p) => sum + (parseFloat(p.amount_paid) || 0), 0);
               
             const monthSubRevenue = payments
-              .filter(p => p.payment_status === 'paid' && p.payment_date.startsWith(thisMonthStr))
-              .reduce((sum, p) => sum + parseFloat(p.amount_paid), 0);
+              .filter(p => p.payment_status === 'paid' && getLocalDateFromISO(p.payment_date || p.created_at).startsWith(thisMonthStr))
+              .reduce((sum, p) => sum + (parseFloat(p.amount_paid) || 0), 0);
 
+            // FIX: Count BOTH 'pending' AND 'overdue' payment statuses to match Dashboard statistics
             const pendingSubRevenue = payments
-              .filter(p => p.payment_status === 'pending')
-              .reduce((sum, p) => sum + parseFloat(p.amount_paid), 0);
+              .filter(p => p.payment_status === 'pending' || p.payment_status === 'overdue')
+              .reduce((sum, p) => sum + (parseFloat(p.amount_paid) || 0), 0);
 
             // Store Sales completed
             const todayStoreRevenue = storeOrders
               .filter(o => getLocalDateFromISO(o.created_at) === todayStr)
-              .reduce((sum, o) => sum + parseFloat(o.total_amount), 0);
+              .reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
               
             const monthStoreRevenue = storeOrders
               .filter(o => getLocalDateFromISO(o.created_at).startsWith(thisMonthStr))
-              .reduce((sum, o) => sum + parseFloat(o.total_amount), 0);
+              .reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
 
             // Combined
             const todayRevenue = todaySubRevenue + todayStoreRevenue;

@@ -1,6 +1,7 @@
 import { subscriptionService } from './subscriptionService';
 import { paymentService } from './paymentService';
 import { updateMember } from './memberService';
+import { invalidateDashboardStatsCache } from '../hooks/useDashboardStats';
 
 const today = () => new Date().toISOString().split('T')[0];
 
@@ -86,6 +87,9 @@ export const unifiedService = {
         membership_plan: planData.plan_name,
         status: getStatusFromExpiry(expiryDate)
       });
+
+      // 4. Invalidate stale dashboard stats cache
+      invalidateDashboardStatsCache(gymId);
 
       return { success: true, subscription };
     } catch (error) {

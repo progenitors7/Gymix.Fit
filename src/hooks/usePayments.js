@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { paymentService } from '../services/paymentService';
 import { useCurrentGym } from './useCurrentGym';
 import { supabase } from '../lib/supabaseClient';
+import { invalidateDashboardStatsCache } from './useDashboardStats';
 
 export function usePayments() {
   const { gym, isReady } = useCurrentGym();
@@ -53,6 +54,7 @@ export function usePayments() {
       setLoading(true);
       setError(null);
       const newPayment = await paymentService.createPayment(gym.id, paymentData);
+      invalidateDashboardStatsCache(gym?.id);
       await fetchPayments();
       return newPayment;
     } catch (err) {
@@ -69,6 +71,7 @@ export function usePayments() {
       setLoading(true);
       setError(null);
       await paymentService.updatePayment(id, paymentData);
+      invalidateDashboardStatsCache(gym?.id);
       await fetchPayments();
     } catch (err) {
       console.error('Error updating payment:', err);
@@ -84,6 +87,7 @@ export function usePayments() {
       setLoading(true);
       setError(null);
       await paymentService.deletePayment(id);
+      invalidateDashboardStatsCache(gym?.id);
       setPayments(prev => prev.filter(p => p.id !== id));
     } catch (err) {
       console.error('Error deleting payment:', err);

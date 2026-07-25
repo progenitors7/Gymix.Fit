@@ -2,6 +2,37 @@ import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useGym } from './useGym';
 
+export const toLocalDateStr = (val) => {
+  if (!val) return '';
+  if (val instanceof Date) {
+    const y = val.getFullYear();
+    const m = String(val.getMonth() + 1).padStart(2, '0');
+    const d = String(val.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  const str = String(val).trim();
+  if (str.length >= 10 && str.charAt(4) === '-' && str.charAt(7) === '-') {
+    return str.slice(0, 10);
+  }
+  const parsedDate = new Date(str);
+  if (!isNaN(parsedDate.getTime())) {
+    const y = parsedDate.getFullYear();
+    const m = String(parsedDate.getMonth() + 1).padStart(2, '0');
+    const d = String(parsedDate.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  return '';
+};
+
+export function invalidateDashboardStatsCache(gymId) {
+  if (!gymId) return;
+  try {
+    localStorage.removeItem(`gym_dashboard_stats_cache_${gymId}`);
+  } catch (e) {
+    console.error('Error clearing stats cache:', e);
+  }
+}
+
 export function useDashboardStats() {
   const { gym } = useGym();
   const [loading, setLoading] = useState(true);
@@ -196,40 +227,17 @@ export function useDashboardStats() {
       if (requestsError) throw requestsError;
 
       // Calculate Dates in local timezone to prevent UTC timezone-shifting bugs
+      // Calculate Dates in local timezone to prevent UTC timezone-shifting bugs
       const today = new Date();
-      
-      const getLocalDateString = (d) => {
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      };
-
-      const getLocalDateFromISO = (isoString) => {
-        if (!isoString) return '';
-        const d = new Date(isoString);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      };
-
-      const todayStr = getLocalDateString(today);
-      const startOfMonth = getLocalDateString(new Date(today.getFullYear(), today.getMonth(), 1));
+      const todayStr = toLocalDateStr(today);
+      const startOfMonth = toLocalDateStr(new Date(today.getFullYear(), today.getMonth(), 1));
       
       const next3Days = new Date(today);
       next3Days.setDate(today.getDate() + 3);
-      const next3DaysStr = getLocalDateString(next3Days);
+      const next3DaysStr = toLocalDateStr(next3Days);
 
-      // BUG #10 FIX: Use local timezone date, not toISOString() which returns UTC.
-      // todayStr is already built with getLocalDateString() below, so use that.
-      // Re-compute here before getLocalDateString is defined (hoisted for clarity).
       const todayLocalDate = new Date();
-      const todayLocalStr = [
-        todayLocalDate.getFullYear(),
-        String(todayLocalDate.getMonth() + 1).padStart(2, '0'),
-        String(todayLocalDate.getDate()).padStart(2, '0')
-      ].join('-');
+      const todayLocalStr = toLocalDateStr(todayLocalDate);
       const todayStartISO = `${todayLocalStr}T00:00:00.000Z`;
       const todayEndISO = `${todayLocalStr}T23:59:59.999Z`;
       const { data: attendanceToday, error: attendanceError } = await supabase
@@ -278,27 +286,38 @@ export function useDashboardStats() {
 
       const oneYearAgo = new Date(today);
       oneYearAgo.setFullYear(today.getFullYear() - 1);
-      const oneYearAgoStr = getLocalDateString(oneYearAgo);
+      const oneYearAgoStr = toLocalDateStr(oneYearAgo);
 
-      // UPI vs Cash split
+      // Payment Method classification
       let upiVolume = 0;
       let cashVolume = 0;
+      let cardVolume = 0;
+      let bankVolume = 0;
       let upiCount = 0;
       let cashCount = 0;
+      let cardCount = 0;
+      let bankCount = 0;
 
       paymentsList.forEach(p => {
-        const amount = Number(p.amount_paid);
+        const amount = Number(p.amount_paid) || 0;
         if (p.payment_status === 'paid') {
+          const pDateStr = toLocalDateStr(p.payment_date || p.created_at);
           subTotalRevenue += amount;
-          if (p.payment_date >= startOfMonth) subMonthlyRevenue += amount;
-          if (p.payment_date === todayStr) subTodayRevenue += amount;
-          if (p.payment_date >= oneYearAgoStr) subYearlyRevenue += amount;
+          if (pDateStr >= startOfMonth) subMonthlyRevenue += amount;
+          if (pDateStr === todayStr) subTodayRevenue += amount;
+          if (pDateStr >= oneYearAgoStr) subYearlyRevenue += amount;
 
-          // Compute payment method splits
+          // Compute payment method splits cleanly
           const method = (p.payment_method || 'cash').toLowerCase();
           if (method.includes('upi') || method.includes('gpay') || method.includes('phonepe') || method.includes('online')) {
             upiVolume += amount;
             upiCount++;
+          } else if (method.includes('card') || method.includes('debit') || method.includes('credit')) {
+            cardVolume += amount;
+            cardCount++;
+          } else if (method.includes('bank') || method.includes('transfer') || method.includes('netbanking')) {
+            bankVolume += amount;
+            bankCount++;
           } else {
             cashVolume += amount;
             cashCount++;
@@ -308,15 +327,15 @@ export function useDashboardStats() {
         }
       });
 
-      // Sum store order revenue in respective timeframes
+      // Sum store order revenue in respective timeframes using toLocalDateStr
       let storeMonthlyRevenue = 0;
       let storeTodayRevenue = 0;
       let storeYearlyRevenue = 0;
       let storeTotalRevenueCalculated = 0;
 
       storeOrdersList.forEach(o => {
-        const amount = Number(o.total_amount);
-        const orderDateStr = getLocalDateFromISO(o.created_at);
+        const amount = Number(o.total_amount) || 0;
+        const orderDateStr = toLocalDateStr(o.created_at);
         storeTotalRevenueCalculated += amount;
         if (orderDateStr >= startOfMonth) storeMonthlyRevenue += amount;
         if (orderDateStr === todayStr) storeTodayRevenue += amount;
@@ -329,12 +348,16 @@ export function useDashboardStats() {
       const todayRevenue = subTodayRevenue + storeTodayRevenue;
       const yearlyRevenue = subYearlyRevenue + storeYearlyRevenue;
 
-      const totalPaidCount = upiCount + cashCount;
+      const totalPaidCount = upiCount + cashCount + cardCount + bankCount;
       const paymentMethods = {
         upiPercent: totalPaidCount > 0 ? Math.round((upiCount / totalPaidCount) * 100) : 0,
         cashPercent: totalPaidCount > 0 ? Math.round((cashCount / totalPaidCount) * 100) : 0,
+        cardPercent: totalPaidCount > 0 ? Math.round((cardCount / totalPaidCount) * 100) : 0,
+        bankPercent: totalPaidCount > 0 ? Math.round((bankCount / totalPaidCount) * 100) : 0,
         upiVolume,
-        cashVolume
+        cashVolume,
+        cardVolume,
+        bankVolume
       };
 
       const revenueStats = {
@@ -411,7 +434,7 @@ export function useDashboardStats() {
       const monthsArray = [];
       for (let i = 5; i >= 0; i--) {
         const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-        const monthKey = d.toISOString().slice(0, 7); // "YYYY-MM"
+        const monthKey = toLocalDateStr(d).slice(0, 7); // "YYYY-MM"
         const displayLabel = d.toLocaleDateString('en-US', { month: 'short' }); // "Jan", "Feb" etc.
         chartDataMap[monthKey] = { label: displayLabel, month: monthKey, value: 0 };
         monthsArray.push(monthKey);
@@ -419,18 +442,18 @@ export function useDashboardStats() {
 
       paymentsList.forEach(p => {
         if (p.payment_status === 'paid') {
-          const monthKey = p.payment_date.slice(0, 7); // "YYYY-MM"
+          const monthKey = toLocalDateStr(p.payment_date || p.created_at).slice(0, 7); // "YYYY-MM"
           if (chartDataMap[monthKey]) {
-            chartDataMap[monthKey].value += Number(p.amount_paid);
+            chartDataMap[monthKey].value += Number(p.amount_paid) || 0;
           }
         }
       });
 
       storeOrdersList.forEach(o => {
-        const orderDateStr = getLocalDateFromISO(o.created_at);
+        const orderDateStr = toLocalDateStr(o.created_at);
         const monthKey = orderDateStr.slice(0, 7); // "YYYY-MM"
         if (chartDataMap[monthKey]) {
-          chartDataMap[monthKey].value += Number(o.total_amount);
+          chartDataMap[monthKey].value += Number(o.total_amount) || 0;
         }
       });
 
@@ -446,23 +469,24 @@ export function useDashboardStats() {
       };
 
       const prevMonthMTDDate = getPrevMonthDateMTD(today);
-      const prevMonthMTDStr = getLocalDateString(prevMonthMTDDate);
-      const startOfPrevMonth = getLocalDateString(new Date(today.getFullYear(), today.getMonth() - 1, 1));
+      const prevMonthMTDStr = toLocalDateStr(prevMonthMTDDate);
+      const startOfPrevMonth = toLocalDateStr(new Date(today.getFullYear(), today.getMonth() - 1, 1));
 
       // --- Revenue Trends & Growth (MTD Combined) ---
       let prevMonthCombinedRevenue = 0;
       paymentsList.forEach(p => {
-        const amount = Number(p.amount_paid);
+        const amount = Number(p.amount_paid) || 0;
         if (p.payment_status === 'paid') {
-          if (p.payment_date >= startOfPrevMonth && p.payment_date <= prevMonthMTDStr) {
+          const pDate = toLocalDateStr(p.payment_date || p.created_at);
+          if (pDate >= startOfPrevMonth && pDate <= prevMonthMTDStr) {
             prevMonthCombinedRevenue += amount;
           }
         }
       });
 
       storeOrdersList.forEach(o => {
-        const amount = Number(o.total_amount);
-        const orderDateStr = getLocalDateFromISO(o.created_at);
+        const amount = Number(o.total_amount) || 0;
+        const orderDateStr = toLocalDateStr(o.created_at);
         if (orderDateStr >= startOfPrevMonth && orderDateStr <= prevMonthMTDStr) {
           prevMonthCombinedRevenue += amount;
         }
