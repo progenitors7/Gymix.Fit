@@ -202,25 +202,26 @@ export const superAdminService = {
     if (error) throw error;
 
     // 2. Insert an active saas_subscriptions record so getMyGym billing guard recognizes it
-    try {
-      const { error: subErr } = await supabase
-        .from('saas_subscriptions')
-        .insert([{
-          gym_id: gymId,
-          plan_id: planId || null,
-          status: 'active',
-          amount: 0,
-          currency: 'INR',
-          payment_status: 'completed',
-          current_period_start: now.toISOString(),
-          current_period_end: periodEnd.toISOString(),
-          duration_months: Math.max(1, Math.ceil(days / 30))
-        }]);
-      if (subErr) {
-        console.warn('[superAdminService] saas_subscriptions insert note:', subErr.message);
-      }
-    } catch (subErr) {
-      console.warn('[superAdminService] saas_subscriptions insert exception:', subErr);
+    const DEFAULT_PLAN_ID = '770f855a-535c-44f1-9604-0ba7a74c6f59'; // Fallback: 1 Month Pro Plan
+    const safePlanId = planId || DEFAULT_PLAN_ID;
+
+    const { error: subErr } = await supabase
+      .from('saas_subscriptions')
+      .insert([{
+        gym_id: gymId,
+        plan_id: safePlanId,
+        status: 'active',
+        amount: 0,
+        currency: 'INR',
+        payment_status: 'completed',
+        current_period_start: now.toISOString(),
+        current_period_end: periodEnd.toISOString(),
+        duration_months: Math.max(1, Math.ceil(days / 30))
+      }]);
+
+    if (subErr) {
+      console.error('[superAdminService] CRITICAL: saas_subscriptions insert failed:', subErr.message);
+      throw new Error(`Gym status updated but subscription record failed to save: ${subErr.message}`);
     }
 
     return data;
@@ -258,22 +259,26 @@ export const superAdminService = {
     if (gymErr) throw gymErr;
 
     // 2. Insert subscription with exact dates
-    try {
-      await supabase
-        .from('saas_subscriptions')
-        .insert([{
-          gym_id: gymId,
-          plan_id: planId || null,
-          status: 'active',
-          amount: Number(amount) || 0,
-          currency: 'INR',
-          payment_status: 'completed',
-          current_period_start: startIso,
-          current_period_end: endIso,
-          duration_months: 1
-        }]);
-    } catch (subErr) {
-      console.warn('[superAdminService] saas_subscriptions insert note:', subErr);
+    const DEFAULT_PLAN_ID = '770f855a-535c-44f1-9604-0ba7a74c6f59'; // Fallback: 1 Month Pro Plan
+    const safePlanId = planId || DEFAULT_PLAN_ID;
+
+    const { error: subErr } = await supabase
+      .from('saas_subscriptions')
+      .insert([{
+        gym_id: gymId,
+        plan_id: safePlanId,
+        status: 'active',
+        amount: Number(amount) || 0,
+        currency: 'INR',
+        payment_status: 'completed',
+        current_period_start: startIso,
+        current_period_end: endIso,
+        duration_months: 1
+      }]);
+
+    if (subErr) {
+      console.error('[superAdminService] CRITICAL: saas_subscriptions insert failed:', subErr.message);
+      throw new Error(`Gym status updated but subscription record failed to save: ${subErr.message}`);
     }
 
     return gym;
