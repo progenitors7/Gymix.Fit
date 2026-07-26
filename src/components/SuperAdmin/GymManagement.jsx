@@ -268,9 +268,10 @@ export default function GymManagement() {
                 className="w-full sm:w-auto appearance-none bg-[#14151b] border border-white/5 rounded-2xl pl-5 pr-10 py-4 text-xs font-black uppercase tracking-wider text-slate-400 hover:text-white transition-all focus:outline-none focus:border-[#3390ec]/60 cursor-pointer"
               >
                 <option value="all">All SaaS Status</option>
-                <option value="active">Active</option>
-                <option value="blocked">Blocked</option>
+                <option value="active">Active Plan</option>
+                <option value="expired">Expired Plan</option>
                 <option value="pending">Pending</option>
+                <option value="blocked">Blocked</option>
               </select>
               <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
             </div>
@@ -372,11 +373,13 @@ export default function GymManagement() {
                       <td className="px-7 py-5">
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
                           gym.status === 'active' ? 'bg-emerald-400/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_rgba(52,211,153,0.05)]' : 
+                          gym.status === 'expired' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.05)]' : 
                           gym.status === 'blocked' ? 'bg-red-400/10 text-red-400 border border-red-500/20 shadow-[0_0_15px_rgba(248,113,113,0.05)]' : 
                           'bg-amber-400/10 text-amber-400 border border-amber-500/20 shadow-[0_0_15px_rgba(251,191,36,0.05)]'
                         }`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${
                             gym.status === 'active' ? 'bg-emerald-400' : 
+                            gym.status === 'expired' ? 'bg-rose-400' : 
                             gym.status === 'blocked' ? 'bg-red-400' : 
                             'bg-amber-400'
                           }`} />
@@ -410,7 +413,7 @@ export default function GymManagement() {
                                       className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-emerald-400 hover:bg-emerald-400/10 transition-all text-left"
                                     >
                                       <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                                      Activate Account
+                                      {gym.status === 'expired' ? 'Renew / Extend Plan' : 'Activate Account'}
                                     </button>
                                   ) : (
                                     <button 

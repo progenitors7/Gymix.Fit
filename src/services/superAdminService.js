@@ -123,8 +123,23 @@ export const superAdminService = {
           daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
         }
 
+        // Real-time status logic:
+        // Priority: blocked > expired > pending > active
+        let computedStatus = gym.status || 'pending';
+        if (gym.status === 'blocked') {
+          computedStatus = 'blocked';
+        } else if (daysLeft !== null && daysLeft < 0) {
+          computedStatus = 'expired';
+        } else if (gym.status === 'pending' && (!latestSub || latestSub.status !== 'active')) {
+          computedStatus = 'pending';
+        } else {
+          computedStatus = 'active';
+        }
+
         return {
           ...gym,
+          status: computedStatus,
+          raw_status: gym.status,
           owner_profile: profileMap[gym.owner_user_id] || null,
           expires_at: expiresAt ? expiresAt.toISOString() : null,
           days_left: daysLeft
