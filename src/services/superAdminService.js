@@ -160,10 +160,12 @@ export const superAdminService = {
         .from('saas_subscriptions')
         .insert([{
           gym_id: gymId,
-          saas_plan_id: planId || null,
+          plan_id: planId || null,
           status: 'active',
           amount: 0,
+          currency: 'INR',
           payment_status: 'completed',
+          current_period_start: now.toISOString(),
           current_period_end: periodEnd.toISOString(),
           duration_months: Math.max(1, Math.ceil(days / 30))
         }]);
