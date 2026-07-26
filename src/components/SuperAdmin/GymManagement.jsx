@@ -19,8 +19,13 @@ import {
   Mail,
   User,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  Edit2,
+  Sliders,
+  ToggleLeft,
+  ToggleRight
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { superAdminService } from '../../services/superAdminService';
 import Toast from '../UI/Toast';
 import ConfirmModal from '../UI/ConfirmModal';
@@ -42,6 +47,7 @@ export default function GymManagement() {
   const [membersStatusFilter, setMembersStatusFilter] = useState('all');
 
   // Shared Action States
+  const navigate = useNavigate();
   const [updatingId, setUpdatingId] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [toast, setToast] = useState({ message: '', type: 'success' });
@@ -49,6 +55,9 @@ export default function GymManagement() {
   const [activationModal, setActivationModal] = useState({ isOpen: false, gymId: null, gymName: '' });
   const [selectedPlan, setSelectedPlan] = useState('');
   const [activationDays, setActivationDays] = useState(30);
+  const [exactEndDate, setExactEndDate] = useState('');
+  const [useExactDate, setUseExactDate] = useState(false);
+  const [editMemberModal, setEditMemberModal] = useState({ isOpen: false, member: null });
   const [confirmState, setConfirmState] = useState({ isOpen: false, title: '', message: '', confirmLabel: '', onConfirm: () => {} });
 
   const triggerConfirm = (title, message, confirmLabel, onConfirm) => {
@@ -157,8 +166,19 @@ export default function GymManagement() {
   async function handleActivateSubmit() {
     try {
       setUpdatingId(activationModal.gymId);
-      const days = parseInt(activationDays, 10) || 30;
-      await superAdminService.activateGym(activationModal.gymId, selectedPlan, days);
+      if (useExactDate && exactEndDate) {
+        await superAdminService.activateGymWithExactDates(
+          activationModal.gymId,
+          selectedPlan,
+          new Date().toISOString().split('T')[0],
+          exactEndDate
+        );
+        showToast(`Gym account activated until ${exactEndDate}!`);
+      } else {
+        const days = parseInt(activationDays, 10) || 30;
+        await superAdminService.activateGym(activationModal.gymId, selectedPlan, days);
+        showToast(`Gym account activated for ${days} days!`);
+      }
       const selectedPlanData = saasPlans.find(p => p.id === selectedPlan);
       
       setGyms(prev => prev.map(g => g.id === activationModal.gymId ? { 
@@ -167,12 +187,33 @@ export default function GymManagement() {
         saas_plans: selectedPlanData || g.saas_plans
       } : g));
       
-      showToast(`Gym account activated for ${days} days!`);
       setActivationModal({ isOpen: false, gymId: null, gymName: '' });
       fetchGyms();
     } catch (err) {
       console.error('[GymManagement] Activation failed:', err);
       showToast('Failed to activate gym: ' + (err.message || 'Unknown error'), 'error');
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  async function handleMemberEditSubmit(e) {
+    e.preventDefault();
+    if (!editMemberModal.member) return;
+    try {
+      setUpdatingId(editMemberModal.member.id);
+      await superAdminService.updateMemberBySuperAdmin(editMemberModal.member.id, {
+        full_name: editMemberModal.member.full_name,
+        phone_number: editMemberModal.member.phone_number,
+        membership_plan: editMemberModal.member.membership_plan,
+        expiry_date: editMemberModal.member.expiry_date,
+        status: editMemberModal.member.status
+      });
+      showToast('Athlete details & expiry date updated!');
+      setEditMemberModal({ isOpen: false, member: null });
+      fetchMembers();
+    } catch (err) {
+      showToast('Failed to update athlete details: ' + err.message, 'error');
     } finally {
       setUpdatingId(null);
     }
@@ -498,6 +539,19 @@ export default function GymManagement() {
 
                                   <button 
                                     onClick={() => {
+                                      localStorage.setItem('selected_gym_id', gym.id);
+                                      showToast(`Switching context to ${gym.gym_name}...`);
+                                      setTimeout(() => navigate('/dashboard'), 500);
+                                      setOpenMenuId(null);
+                                    }}
+                                    className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-sky-400 hover:bg-sky-400/10 transition-all text-left border-t border-white/5"
+                                  >
+                                    <ExternalLink className="w-4 h-4 text-sky-400" />
+                                    Ghost Mode (Inspect Dashboard)
+                                  </button>
+
+                                  <button 
+                                    onClick={() => {
                                       triggerConfirm(
                                         'Delete Gym Account',
                                         `Are you sure you want to PERMANENTLY delete ${gym.gym_name}? This will completely erase all gyms, attendance sheets, payments, AND the owner's authentication profile.`,
@@ -657,14 +711,23 @@ export default function GymManagement() {
                           </span>
                         </td>
                         <td className="px-7 py-5 text-right">
-                          <button
-                            onClick={() => handleDeleteMember(member.id)}
-                            disabled={updatingId === member.id}
-                            className="p-3 bg-rose-500/5 hover:bg-rose-500/15 border border-rose-500/10 hover:border-rose-500/30 text-rose-400 hover:text-rose-500 rounded-xl transition-all cursor-pointer inline-flex shadow-lg shadow-rose-500/5 active:scale-95 disabled:opacity-50"
-                            title="Delete Athlete Record & Auth Profile"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => setEditMemberModal({ isOpen: true, member: { ...member } })}
+                              className="p-3 bg-sky-500/5 hover:bg-sky-500/15 border border-sky-500/10 hover:border-sky-500/30 text-sky-400 hover:text-sky-500 rounded-xl transition-all cursor-pointer inline-flex shadow-lg shadow-sky-500/5 active:scale-95"
+                              title="Edit Athlete Details & Expiry Date"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteMember(member.id)}
+                              disabled={updatingId === member.id}
+                              className="p-3 bg-rose-500/5 hover:bg-rose-500/15 border border-rose-500/10 hover:border-rose-500/30 text-rose-400 hover:text-rose-500 rounded-xl transition-all cursor-pointer inline-flex shadow-lg shadow-rose-500/5 active:scale-95 disabled:opacity-50"
+                              title="Delete Athlete Record & Auth Profile"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -713,28 +776,161 @@ export default function GymManagement() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2.5">Activation Duration (Days)</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="3650"
-                  value={activationDays}
-                  onChange={(e) => setActivationDays(e.target.value)}
-                  placeholder="e.g. 20, 30, 90, 365"
-                  className="w-full bg-[#1c1d24] border border-white/5 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-[#3390ec]/60 transition-all font-bold text-white"
-                />
-                <p className="text-[10px] text-slate-400 mt-1">Specify how many days the gym access remains active (e.g. enter 20 for 20 days).</p>
+              {/* Toggle exact date vs quick duration */}
+              <div className="flex bg-white/5 rounded-xl p-1 gap-1 border border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setUseExactDate(false)}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                    !useExactDate ? 'bg-[#3390ec] text-white shadow' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Quick Duration (Days)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUseExactDate(true)}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                    useExactDate ? 'bg-[#3390ec] text-white shadow' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Calendar Date Picker
+                </button>
               </div>
+
+              {!useExactDate ? (
+                <div>
+                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2.5">Activation Duration (Days)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    value={activationDays}
+                    onChange={(e) => setActivationDays(e.target.value)}
+                    placeholder="e.g. 20, 30, 90, 365"
+                    className="w-full bg-[#1c1d24] border border-white/5 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-[#3390ec]/60 transition-all font-bold text-white"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">Specify how many days the gym access remains active (e.g. enter 20 for 20 days).</p>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2.5">Exact Expiry Date</label>
+                  <input
+                    type="date"
+                    value={exactEndDate}
+                    onChange={(e) => setExactEndDate(e.target.value)}
+                    className="w-full bg-[#1c1d24] border border-white/5 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-[#3390ec]/60 transition-all font-bold text-white"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">Select the exact calendar date when this gym's SaaS plan will expire.</p>
+                </div>
+              )}
 
               <button 
                 onClick={handleActivateSubmit}
                 disabled={updatingId === activationModal.gymId}
                 className="w-full py-4.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black font-extrabold text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/15 active:scale-95 transition-all duration-300 disabled:opacity-50 cursor-pointer mt-2"
               >
-                {updatingId === activationModal.gymId ? 'Activating...' : `Activate for ${activationDays || 30} Days`}
+                {updatingId === activationModal.gymId ? 'Activating...' : (useExactDate && exactEndDate ? `Activate Until ${exactEndDate}` : `Activate for ${activationDays || 30} Days`)}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Athlete / Member Modal */}
+      {editMemberModal.isOpen && editMemberModal.member && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#121319] border border-white/10 rounded-[2rem] p-8 w-full max-w-md shadow-2xl relative zoom-in-95 animate-in duration-200">
+            <button 
+              onClick={() => setEditMemberModal({ isOpen: false, member: null })}
+              className="absolute top-5 right-5 p-2 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="w-14 h-14 bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 rounded-2xl mb-6 shadow-inner">
+              <Edit2 className="w-7 h-7" />
+            </div>
+            <h3 className="text-xl font-black text-white uppercase italic tracking-tight mb-2">Edit Athlete Details</h3>
+            <p className="text-slate-400 text-sm mb-6">Modify member record and plan expiry date across the platform.</p>
+            
+            <form onSubmit={handleMemberEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Full Name</label>
+                <input
+                  type="text"
+                  value={editMemberModal.member.full_name || ''}
+                  onChange={(e) => setEditMemberModal({
+                    ...editMemberModal,
+                    member: { ...editMemberModal.member, full_name: e.target.value }
+                  })}
+                  className="w-full bg-[#1c1d24] border border-white/5 rounded-2xl px-5 py-3.5 text-sm text-white font-bold"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Phone Number</label>
+                <input
+                  type="text"
+                  value={editMemberModal.member.phone_number || ''}
+                  onChange={(e) => setEditMemberModal({
+                    ...editMemberModal,
+                    member: { ...editMemberModal.member, phone_number: e.target.value }
+                  })}
+                  className="w-full bg-[#1c1d24] border border-white/5 rounded-2xl px-5 py-3.5 text-sm text-white font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Membership Plan Name</label>
+                <input
+                  type="text"
+                  value={editMemberModal.member.membership_plan || ''}
+                  onChange={(e) => setEditMemberModal({
+                    ...editMemberModal,
+                    member: { ...editMemberModal.member, membership_plan: e.target.value }
+                  })}
+                  className="w-full bg-[#1c1d24] border border-white/5 rounded-2xl px-5 py-3.5 text-sm text-white font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Plan Expiry Date</label>
+                <input
+                  type="date"
+                  value={editMemberModal.member.expiry_date ? new Date(editMemberModal.member.expiry_date).toISOString().split('T')[0] : ''}
+                  onChange={(e) => setEditMemberModal({
+                    ...editMemberModal,
+                    member: { ...editMemberModal.member, expiry_date: e.target.value }
+                  })}
+                  className="w-full bg-[#1c1d24] border border-white/5 rounded-2xl px-5 py-3.5 text-sm text-white font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Member Status</label>
+                <select
+                  value={editMemberModal.member.status || 'active'}
+                  onChange={(e) => setEditMemberModal({
+                    ...editMemberModal,
+                    member: { ...editMemberModal.member, status: e.target.value }
+                  })}
+                  className="w-full bg-[#1c1d24] border border-white/5 rounded-2xl px-5 py-3.5 text-sm text-white font-bold cursor-pointer"
+                >
+                  <option value="active">Active Pass</option>
+                  <option value="expired">Expired Pass</option>
+                  <option value="left">Left / Inactive</option>
+                </select>
+              </div>
+
+              <button 
+                type="submit"
+                disabled={updatingId === editMemberModal.member.id}
+                className="w-full py-4 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-extrabold text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-sky-500/15 active:scale-95 transition-all duration-300 disabled:opacity-50 cursor-pointer mt-4"
+              >
+                {updatingId === editMemberModal.member.id ? 'Saving Changes...' : 'Save Athlete Changes'}
+              </button>
+            </form>
           </div>
         </div>
       )}

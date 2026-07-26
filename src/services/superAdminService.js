@@ -212,6 +212,78 @@ export const superAdminService = {
   },
 
   /**
+   * Activate or renew a gym subscription with EXACT start date and end date from date pickers.
+   */
+  async activateGymWithExactDates(gymId, planId, startDateStr, endDateStr, amount = 0, notes = '') {
+    const startIso = startDateStr ? new Date(startDateStr).toISOString() : new Date().toISOString();
+    const endIso = endDateStr ? new Date(endDateStr).toISOString() : new Date(Date.now() + 30*24*60*60*1000).toISOString();
+
+    // 1. Update Gym status and plan
+    const { data: gym, error: gymErr } = await supabase
+      .from('gyms')
+      .update({
+        status: 'active',
+        saas_plan_id: planId || null
+      })
+      .eq('id', gymId)
+      .select()
+      .single();
+
+    if (gymErr) throw gymErr;
+
+    // 2. Insert subscription with exact dates
+    const { error: subErr } = await supabase
+      .from('saas_subscriptions')
+      .insert([{
+        gym_id: gymId,
+        plan_id: planId || null,
+        status: 'active',
+        amount: Number(amount) || 0,
+        currency: 'INR',
+        payment_status: 'completed',
+        current_period_start: startIso,
+        current_period_end: endIso,
+        duration_months: 1
+      }]);
+
+    if (subErr) {
+      console.warn('[superAdminService] saas_subscriptions insert error:', subErr.message);
+    }
+
+    return gym;
+  },
+
+  /**
+   * Update gym module features and flags (WhatsApp Autopilot, Coins Engine, Biometrics, etc.)
+   */
+  async updateGymFeatureToggles(gymId, featureFlags) {
+    const { data, error } = await supabase
+      .from('gyms')
+      .update(featureFlags)
+      .eq('id', gymId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Update any member/athlete details across the platform by SuperAdmin.
+   */
+  async updateMemberBySuperAdmin(memberId, payload) {
+    const { data, error } = await supabase
+      .from('members')
+      .update(payload)
+      .eq('id', memberId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
    * Create a new platform-wide broadcast announcement.
    */
   async createBroadcast(broadcast) {
