@@ -8,50 +8,29 @@ export const superAdminService = {
    */
   async getPlatformStats() {
     try {
-      // 1. Total Gyms
-      const { count: gymCount, error: gymError } = await supabase
-        .from('gyms')
-        .select('*', { count: 'exact', head: true });
+      const allGyms = await this.getAllGyms();
       
-      if (gymError) throw gymError;
-
-      // 2. Total Members (across all gyms)
-      const { count: memberCount, error: memberError } = await supabase
+      const { count: memberCount } = await supabase
         .from('members')
         .select('*', { count: 'exact', head: true });
-      
-      if (memberError) throw memberError;
 
-      // 3. Total SaaS Revenue (sum of all SaaS subscriptions)
-      const { data: saasPayments, error: saasError } = await supabase
+      const { data: saasPayments } = await supabase
         .from('saas_subscriptions')
         .select('amount')
         .not('amount', 'is', null);
-      
-      if (saasError) throw saasError;
 
-      const totalRevenue = saasPayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+      const totalRevenue = (saasPayments || []).reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
 
-
-      // 4. Monthly Gym Signups & Growth Rate
-      const { data: gymData, error: growthError } = await supabase
-        .from('gyms')
-        .select('created_at');
-      
-      if (growthError) throw growthError;
-
-      // Basic growth calculation (last 30 days vs previous 30 days)
       const now = new Date();
       const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
       const sixtyDaysAgo = new Date(now.getTime() - (60 * 24 * 60 * 60 * 1000));
 
-      const recentGymsCount = gymData?.filter(g => new Date(g.created_at) >= thirtyDaysAgo).length || 0;
-      const previousGymsCount = gymData?.filter(g => {
+      const recentGymsCount = allGyms.filter(g => new Date(g.created_at) >= thirtyDaysAgo).length;
+      const previousGymsCount = allGyms.filter(g => {
         const d = new Date(g.created_at);
         return d >= sixtyDaysAgo && d < thirtyDaysAgo;
-      }).length || 0;
+      }).length;
 
-      // Calculate growth rate percentage
       let growthRate = 0;
       if (previousGymsCount === 0) {
         growthRate = recentGymsCount > 0 ? 100 : 0;
@@ -59,13 +38,22 @@ export const superAdminService = {
         growthRate = Math.round(((recentGymsCount - previousGymsCount) / previousGymsCount) * 100);
       }
 
+      const activeGyms = allGyms.filter(g => g.status === 'active').length;
+      const expiredGyms = allGyms.filter(g => g.status === 'expired').length;
+      const pendingGyms = allGyms.filter(g => g.status === 'pending').length;
+      const blockedGyms = allGyms.filter(g => g.status === 'blocked').length;
+
       return {
-        totalGyms: gymCount || 0,
+        totalGyms: allGyms.length,
+        activeGyms,
+        expiredGyms,
+        pendingGyms,
+        blockedGyms,
         totalMembers: memberCount || 0,
         totalRevenue,
         recentGyms: recentGymsCount,
         growthRate,
-        allGyms: gymData || []
+        allGyms
       };
     } catch (error) {
       console.error('SuperAdmin Stats Error:', error);

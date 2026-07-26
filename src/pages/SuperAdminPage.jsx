@@ -190,14 +190,21 @@ export default function SuperAdminPage() {
               {/* Platform Stats */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard 
-                  title="Registered Gyms"
+                  title="Total Gym Accounts"
                   value={stats?.totalGyms || 0}
                   icon={<Building2 className="w-5 h-5" />}
                   trend={stats?.growthRate >= 0 ? `+${stats.growthRate}%` : `${stats.growthRate}%`}
-                  subtext="Total gym accounts"
+                  subtext={`Active: ${stats?.activeGyms || 0} | Pending: ${stats?.pendingGyms || 0}`}
                 />
                 <StatCard 
-                  title="Active Members"
+                  title="Expired SaaS Plans"
+                  value={stats?.expiredGyms || 0}
+                  icon={<Building2 className="w-5 h-5 text-rose-400" />}
+                  trend={stats?.expiredGyms > 0 ? "Action Required" : "All Good"}
+                  subtext="Gyms needing plan renewal"
+                />
+                <StatCard 
+                  title="Active Athletes / Members"
                   value={stats?.totalMembers || 0}
                   icon={<Users className="w-5 h-5" />}
                   subtext="Aggregated across platform"
@@ -207,13 +214,6 @@ export default function SuperAdminPage() {
                   value={`₹${(stats?.totalRevenue || 0).toLocaleString()}`}
                   icon={<IndianRupee className="w-5 h-5" />}
                   subtext="Total SaaS Earnings"
-                />
-                <StatCard 
-                  title="System Growth"
-                  value={`${stats?.growthRate || 0}%`}
-                  icon={<BarChart3 className="w-5 h-5" />}
-                  trend={stats?.growthRate >= 0 ? `+${stats.growthRate}%` : `${stats.growthRate}%`}
-                  subtext="Month-over-month increase"
                 />
               </div>
 

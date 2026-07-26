@@ -249,6 +249,69 @@ export default function GymManagement() {
       {/* OWNERS TAB VIEW */}
       {activeSubTab === 'owners' && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          {/* Quick Status Filter Summary Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                statusFilter === 'all'
+                  ? 'bg-[#3390ec]/15 border-[#3390ec]/50 text-white shadow-lg shadow-[#3390ec]/10'
+                  : 'bg-[#14151b]/40 border-white/5 text-slate-400 hover:bg-white/[0.03] hover:text-white'
+              }`}
+            >
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">All Gyms</p>
+              <p className="text-xl font-black text-white mt-1">{gyms.length}</p>
+            </button>
+            
+            <button
+              onClick={() => setStatusFilter('active')}
+              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                statusFilter === 'active'
+                  ? 'bg-emerald-500/15 border-emerald-500/50 text-white shadow-lg shadow-emerald-500/10'
+                  : 'bg-[#14151b]/40 border-white/5 text-slate-400 hover:bg-white/[0.03] hover:text-white'
+              }`}
+            >
+              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Active Plans</p>
+              <p className="text-xl font-black text-emerald-400 mt-1">{gyms.filter(g => g.status === 'active').length}</p>
+            </button>
+
+            <button
+              onClick={() => setStatusFilter('expired')}
+              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                statusFilter === 'expired'
+                  ? 'bg-rose-500/15 border-rose-500/50 text-white shadow-lg shadow-rose-500/10'
+                  : 'bg-[#14151b]/40 border-white/5 text-slate-400 hover:bg-white/[0.03] hover:text-white'
+              }`}
+            >
+              <p className="text-[10px] font-black uppercase tracking-widest text-rose-400">Expired Plans</p>
+              <p className="text-xl font-black text-rose-400 mt-1">{gyms.filter(g => g.status === 'expired').length}</p>
+            </button>
+
+            <button
+              onClick={() => setStatusFilter('pending')}
+              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                statusFilter === 'pending'
+                  ? 'bg-amber-500/15 border-amber-500/50 text-white shadow-lg shadow-amber-500/10'
+                  : 'bg-[#14151b]/40 border-white/5 text-slate-400 hover:bg-white/[0.03] hover:text-white'
+              }`}
+            >
+              <p className="text-[10px] font-black uppercase tracking-widest text-amber-400">Pending</p>
+              <p className="text-xl font-black text-amber-400 mt-1">{gyms.filter(g => g.status === 'pending').length}</p>
+            </button>
+
+            <button
+              onClick={() => setStatusFilter('blocked')}
+              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                statusFilter === 'blocked'
+                  ? 'bg-red-500/15 border-red-500/50 text-white shadow-lg shadow-red-500/10'
+                  : 'bg-[#14151b]/40 border-white/5 text-slate-400 hover:bg-white/[0.03] hover:text-white'
+              }`}
+            >
+              <p className="text-[10px] font-black uppercase tracking-widest text-red-400">Blocked</p>
+              <p className="text-xl font-black text-red-400 mt-1">{gyms.filter(g => g.status === 'blocked').length}</p>
+            </button>
+          </div>
+
           {/* Filters & Search */}
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
             <div className="relative w-full sm:w-[28rem] group">
