@@ -18,26 +18,23 @@ function enrichBillingState(gym, latestSubscription) {
   // If gym has never been activated (no payment ever made), it's 'pending'
   const isPending = gym.status === 'pending'
 
-  // Prefer the explicit period end date stored by the edge function,
-  // fall back to the old created_at + duration_months calculation
+  // Prefer current_period_end, fallback to sub duration, fallback to created_at + 3 months
   const expiresAt = latestSubscription?.current_period_end
     ? latestSubscription.current_period_end
     : (latestSubscription?.created_at && latestSubscription?.duration_months
         ? addMonths(latestSubscription.created_at, latestSubscription.duration_months)
-        : null)
+        : (gym?.created_at ? addMonths(gym.created_at, 3) : null))
 
   const daysLeft = expiresAt
     ? Math.ceil((new Date(expiresAt) - new Date()) / (1000 * 60 * 60 * 24))
-    : null
+    : 30
 
-  // It is expired if it's explicitly expired in status OR the period end date has passed
   const isExpired = (latestSubscription?.status === 'expired') || (daysLeft !== null && daysLeft < 0)
 
-  // Billing status priority: pending (never paid) > expired > active
   let billingStatus
   if (isPending && !latestSubscription) {
     billingStatus = 'pending'
-  } else if (isExpired || (!latestSubscription && gym.status === 'active')) {
+  } else if (isExpired) {
     billingStatus = 'expired'
   } else {
     billingStatus = 'active'

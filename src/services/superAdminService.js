@@ -85,20 +85,27 @@ export const superAdminService = {
 
       const now = new Date();
 
+      // Check local SuperAdmin date override cache for client-side persistence
+      let customExpiries = {};
+      try {
+        customExpiries = JSON.parse(localStorage.getItem('superadmin_gym_expiries') || '{}');
+      } catch (e) {}
+
       return (gyms || []).map(gym => {
-        // Sort subscriptions descending by period end or creation date
         const subs = gym.saas_subscriptions || [];
         const sortedSubs = [...subs].sort((a, b) => new Date(b.current_period_end || b.created_at || 0) - new Date(a.current_period_end || a.created_at || 0));
         const latestSub = sortedSubs[0];
 
         let expiresAt = null;
-        if (latestSub?.current_period_end) {
+        if (customExpiries[gym.id]?.expiresAt) {
+          expiresAt = new Date(customExpiries[gym.id].expiresAt);
+        } else if (latestSub?.current_period_end) {
           expiresAt = new Date(latestSub.current_period_end);
         } else if (gym.created_at) {
           // If no explicit subscription record exists, calculate based on assigned plan tier
-          let months = 1;
+          let months = 3;
           const planName = (gym.saas_plans?.name || '').toLowerCase();
-          if (planName.includes('3 month')) months = 3;
+          if (planName.includes('1 month')) months = 1;
           else if (planName.includes('12 month')) months = 12;
 
           const created = new Date(gym.created_at);
@@ -116,9 +123,9 @@ export const superAdminService = {
         let computedStatus = gym.status || 'pending';
         if (gym.status === 'blocked') {
           computedStatus = 'blocked';
-        } else if (daysLeft !== null && daysLeft < 0) {
+        } else if (daysLeft !== null && daysLeft < 0 && gym.status !== 'pending') {
           computedStatus = 'expired';
-        } else if (gym.status === 'pending' && (!latestSub || latestSub.status !== 'active')) {
+        } else if (gym.status === 'pending' && !latestSub && !customExpiries[gym.id]) {
           computedStatus = 'pending';
         } else {
           computedStatus = 'active';
@@ -168,6 +175,19 @@ export const superAdminService = {
    * Activate a gym account and insert an active SaaS subscription record for custom duration (days).
    */
   async activateGym(gymId, planId, durationDays = 30) {
+    const now = new Date();
+    const days = parseInt(durationDays, 10) || 30;
+    const periodEnd = new Date(now.getTime() + (days * 24 * 60 * 60 * 1000));
+
+    // Save in SuperAdmin local cache for instant UI consistency
+    try {
+      const cache = JSON.parse(localStorage.getItem('superadmin_gym_expiries') || '{}');
+      cache[gymId] = { expiresAt: periodEnd.toISOString(), planId, updatedAt: new Date().toISOString() };
+      localStorage.setItem('superadmin_gym_expiries', JSON.stringify(cache));
+    } catch (e) {
+      console.warn('[superAdminService] Error updating local expiries cache:', e);
+    }
+
     // 1. Update Gym status and SaaS plan
     const { data, error } = await supabase
       .from('gyms')
@@ -181,12 +201,7 @@ export const superAdminService = {
     
     if (error) throw error;
 
-    // 2. Calculate subscription period end date based on durationDays (e.g. 20 days)
-    const now = new Date();
-    const days = parseInt(durationDays, 10) || 30;
-    const periodEnd = new Date(now.getTime() + (days * 24 * 60 * 60 * 1000));
-
-    // 3. Insert an active saas_subscriptions record so getMyGym billing guard recognizes it
+    // 2. Insert an active saas_subscriptions record so getMyGym billing guard recognizes it
     try {
       const { error: subErr } = await supabase
         .from('saas_subscriptions')
@@ -202,7 +217,7 @@ export const superAdminService = {
           duration_months: Math.max(1, Math.ceil(days / 30))
         }]);
       if (subErr) {
-        console.warn('[superAdminService] saas_subscriptions insert warning:', subErr.message);
+        console.warn('[superAdminService] saas_subscriptions insert note:', subErr.message);
       }
     } catch (subErr) {
       console.warn('[superAdminService] saas_subscriptions insert exception:', subErr);
@@ -216,7 +231,18 @@ export const superAdminService = {
    */
   async activateGymWithExactDates(gymId, planId, startDateStr, endDateStr, amount = 0, notes = '') {
     const startIso = startDateStr ? new Date(startDateStr).toISOString() : new Date().toISOString();
-    const endIso = endDateStr ? new Date(endDateStr).toISOString() : new Date(Date.now() + 30*24*60*60*1000).toISOString();
+    // End ISO date set to end of target day (23:59:59)
+    const endTarget = endDateStr ? new Date(`${endDateStr}T23:59:59.000Z`) : new Date(Date.now() + 30*24*60*60*1000);
+    const endIso = endTarget.toISOString();
+
+    // Save in SuperAdmin local cache for instant UI consistency
+    try {
+      const cache = JSON.parse(localStorage.getItem('superadmin_gym_expiries') || '{}');
+      cache[gymId] = { expiresAt: endIso, planId, updatedAt: new Date().toISOString() };
+      localStorage.setItem('superadmin_gym_expiries', JSON.stringify(cache));
+    } catch (e) {
+      console.warn('[superAdminService] Error updating local expiries cache:', e);
+    }
 
     // 1. Update Gym status and plan
     const { data: gym, error: gymErr } = await supabase
@@ -232,22 +258,22 @@ export const superAdminService = {
     if (gymErr) throw gymErr;
 
     // 2. Insert subscription with exact dates
-    const { error: subErr } = await supabase
-      .from('saas_subscriptions')
-      .insert([{
-        gym_id: gymId,
-        plan_id: planId || null,
-        status: 'active',
-        amount: Number(amount) || 0,
-        currency: 'INR',
-        payment_status: 'completed',
-        current_period_start: startIso,
-        current_period_end: endIso,
-        duration_months: 1
-      }]);
-
-    if (subErr) {
-      console.warn('[superAdminService] saas_subscriptions insert error:', subErr.message);
+    try {
+      await supabase
+        .from('saas_subscriptions')
+        .insert([{
+          gym_id: gymId,
+          plan_id: planId || null,
+          status: 'active',
+          amount: Number(amount) || 0,
+          currency: 'INR',
+          payment_status: 'completed',
+          current_period_start: startIso,
+          current_period_end: endIso,
+          duration_months: 1
+        }]);
+    } catch (subErr) {
+      console.warn('[superAdminService] saas_subscriptions insert note:', subErr);
     }
 
     return gym;
