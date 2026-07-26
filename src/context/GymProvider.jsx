@@ -17,6 +17,41 @@ export function GymProvider({ children }) {
       return
     }
 
+    // Check if Ghost Mode (SuperAdmin Impersonation) is active
+    const ghostGymId = localStorage.getItem('ghost_mode_gym_id') || localStorage.getItem('selected_gym_id');
+    if (ghostGymId) {
+      try {
+        const { data: ghostGym } = await supabase
+          .from('gyms')
+          .select('*, saas_plans(*)')
+          .eq('id', ghostGymId)
+          .maybeSingle();
+
+        if (ghostGym) {
+          const { data: latestSub } = await supabase
+            .from('saas_subscriptions')
+            .select('*')
+            .eq('gym_id', ghostGym.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          setGym({
+            ...ghostGym,
+            latest_saas_subscription: latestSub || null,
+            subscription_expires_at: latestSub?.current_period_end || null,
+            billing_days_left: latestSub?.current_period_end ? Math.ceil((new Date(latestSub.current_period_end) - new Date()) / (1000*60*60*24)) : 30,
+            billing_status: 'active',
+            is_ghost_mode: true
+          });
+          setGymLoading(false);
+          return;
+        }
+      } catch (ghostErr) {
+        console.error('[GymContext] Error loading ghost mode gym:', ghostErr);
+      }
+    }
+
     // Try to load from cache first for instant UX
     const cacheKey = `gym_cache_${targetUser.id}`
     const cached = localStorage.getItem(cacheKey)

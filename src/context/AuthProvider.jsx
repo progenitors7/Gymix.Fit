@@ -10,14 +10,12 @@ import { WA_BACKEND_URL } from '../lib/waFetch'
  */
 const syncPromiseCache = new Map()
 
+import { isSuperAdmin } from '../config/admins'
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
-
-  // NOTE (BUG #6 FIX): URL role capture was previously in the component body (ran
-  // on every render). It is now inside checkHashParamsAndInit() which runs only once
-  // on mount, preventing stale localStorage writes on re-renders.
 
   const fetchProfile = async (uid) => {
     if (!uid) return null
@@ -44,11 +42,12 @@ export function AuthProvider({ children }) {
       }
     }
     const savedRole = localStorage.getItem('oauth_signup_role') || currUser.user_metadata?.role || 'member'
+    const isAdmin = isSuperAdmin(currUser.email)
     return {
       id: currUser.id,
       full_name: currUser.user_metadata?.full_name || currUser.user_metadata?.name || 'New Member',
       email: currUser.email,
-      role: savedRole
+      role: isAdmin ? 'super_admin' : savedRole
     }
   }
 
@@ -58,7 +57,6 @@ export function AuthProvider({ children }) {
       return null
     }
 
-    // Deduplicate: if a sync for this user is already in-flight, reuse it
     if (syncPromiseCache.has(currUser.id)) {
       return syncPromiseCache.get(currUser.id)
     }
@@ -67,7 +65,8 @@ export function AuthProvider({ children }) {
       try {
         let p = await fetchProfile(currUser.id)
         const savedRole = localStorage.getItem('oauth_signup_role')
-        const targetRole = savedRole || currUser.user_metadata?.role || 'member'
+        const isAdmin = isSuperAdmin(currUser.email)
+        const targetRole = isAdmin ? 'super_admin' : (savedRole || currUser.user_metadata?.role || 'member')
 
         if (!p) {
           const { data, error } = await supabase
@@ -84,45 +83,29 @@ export function AuthProvider({ children }) {
           if (error) {
             console.error('[AuthProvider] Profile upsert failed:', error)
             p = buildFallbackProfile(currUser)
-            p.role = targetRole // Ensure fallback matches target role
+            p.role = targetRole
           } else {
             p = data || buildFallbackProfile(currUser)
           }
         } else {
-          // Profile exists in the database.
-          // We only upgrade the profile role from 'member' to 'owner' if:
-          // 1. The database profile currently has a 'member' role.
-          // 2. The intended role (requested via signup role parameter or metadata) is 'owner'.
-          // We NEVER downgrade an existing 'owner' to 'member'.
-          if (p.role === 'member' && targetRole === 'owner') {
-            console.log(`[AuthProvider] Role mismatch detected. Upgrading profile role from 'member' to 'owner'`)
+          // Upgrade role to super_admin or owner if targetRole differs
+          if (p.role !== targetRole && (isAdmin || (p.role === 'member' && targetRole === 'owner'))) {
+            console.log(`[AuthProvider] Upgrading profile role to '${targetRole}'`)
             const { data: updatedData, error: updateError } = await supabase
               .from('profiles')
-              .update({ role: 'owner' })
+              .update({ role: targetRole })
               .eq('id', currUser.id)
               .select()
               .maybeSingle()
             
-            if (updateError) {
-              console.error('[AuthProvider] Sync profile role update failed:', updateError)
-            } else if (updatedData) {
+            if (!updateError && updatedData) {
               p = updatedData
             }
           }
         }
         
-        // Cache the profile in local storage for instant loading next time
         localStorage.setItem(`profile_cache_${currUser.id}`, JSON.stringify(p))
-        
-        // Clear cached role once profile resolution has settled
         localStorage.removeItem('oauth_signup_role')
-        if (typeof window !== 'undefined' && window.location && window.history) {
-          const url = new URL(window.location.href)
-          if (url.searchParams.has('role')) {
-            url.searchParams.delete('role')
-            window.history.replaceState({}, '', url.pathname + url.search)
-          }
-        }
         setProfile(p)
         return p
       } catch (err) {

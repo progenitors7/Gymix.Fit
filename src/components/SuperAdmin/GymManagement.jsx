@@ -166,20 +166,22 @@ export default function GymManagement() {
   async function handleActivateSubmit() {
     try {
       setUpdatingId(activationModal.gymId);
+      const planToUse = selectedPlan || (saasPlans[0]?.id || '770f855a-535c-44f1-9604-0ba7a74c6f59');
+
       if (useExactDate && exactEndDate) {
         await superAdminService.activateGymWithExactDates(
           activationModal.gymId,
-          selectedPlan,
+          planToUse,
           new Date().toISOString().split('T')[0],
           exactEndDate
         );
         showToast(`Gym account activated until ${exactEndDate}!`);
       } else {
         const days = parseInt(activationDays, 10) || 30;
-        await superAdminService.activateGym(activationModal.gymId, selectedPlan, days);
+        await superAdminService.activateGym(activationModal.gymId, planToUse, days);
         showToast(`Gym account activated for ${days} days!`);
       }
-      const selectedPlanData = saasPlans.find(p => p.id === selectedPlan);
+      const selectedPlanData = saasPlans.find(p => p.id === planToUse);
       
       setGyms(prev => prev.map(g => g.id === activationModal.gymId ? { 
         ...g, 
@@ -539,9 +541,12 @@ export default function GymManagement() {
 
                                   <button 
                                     onClick={() => {
+                                      localStorage.setItem('ghost_mode_gym_id', gym.id);
                                       localStorage.setItem('selected_gym_id', gym.id);
-                                      showToast(`Switching context to ${gym.gym_name}...`);
-                                      setTimeout(() => navigate('/dashboard'), 500);
+                                      showToast(`Ghost Mode: Inspecting ${gym.gym_name}...`);
+                                      setTimeout(() => {
+                                        window.location.href = '/dashboard';
+                                      }, 400);
                                       setOpenMenuId(null);
                                     }}
                                     className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-sky-400 hover:bg-sky-400/10 transition-all text-left border-t border-white/5"

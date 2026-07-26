@@ -370,6 +370,26 @@ export default function AppLayout({ children }) {
 
       {/* ── Main content ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+        {/* Ghost Mode Impersonation Banner */}
+        {(localStorage.getItem('ghost_mode_gym_id') || localStorage.getItem('selected_gym_id')) && (
+          <div className="bg-gradient-to-r from-purple-600 via-[#3390ec] to-blue-600 text-white px-4 py-2.5 text-xs font-extrabold flex items-center justify-between shadow-xl z-50 shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="text-base">👻</span>
+              <span>GHOST MODE ACTIVE: Inspecting Gym Dashboard (<strong>{gym?.gym_name || 'Selected Gym'}</strong>)</span>
+            </div>
+            <button
+              onClick={() => {
+                localStorage.removeItem('ghost_mode_gym_id');
+                localStorage.removeItem('selected_gym_id');
+                window.location.href = '/super-admin';
+              }}
+              className="bg-black/40 hover:bg-black/60 text-white px-3 py-1 rounded-lg border border-white/20 text-[10px] uppercase font-black cursor-pointer transition-all active:scale-95"
+            >
+              Exit Ghost Mode
+            </button>
+          </div>
+        )}
+
         {/* Mobile topbar */}
         <header 
           style={{ paddingTop: 'calc(12px + env(safe-area-inset-top))' }}
