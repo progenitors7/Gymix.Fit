@@ -286,6 +286,7 @@ export default function GymManagement() {
                     <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Gym & Owner Details</th>
                     <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Registry Date</th>
                     <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">SaaS Tier Plan</th>
+                    <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Plan Expiry & Time Left</th>
                     <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Gateway Code</th>
                     <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
                     <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
@@ -334,6 +335,36 @@ export default function GymManagement() {
                         <span className="bg-[#3390ec]/10 border border-[#3390ec]/20 text-[#3390ec] text-[10px] font-black px-2.5 py-1.5 rounded-xl uppercase tracking-wider">
                           {gym.saas_plans?.name || 'Starter Plan'}
                         </span>
+                      </td>
+                      <td className="px-7 py-5">
+                        {gym.expires_at ? (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
+                              <Calendar className="w-3.5 h-3.5 text-[#3390ec]" />
+                              <span>{new Date(gym.expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                            </div>
+                            <div>
+                              {gym.days_left > 0 ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                  <Clock className="w-3 h-3" />
+                                  {gym.days_left} {gym.days_left === 1 ? 'day' : 'days'} left
+                                </span>
+                              ) : gym.days_left === 0 ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-black px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                  <Clock className="w-3 h-3" />
+                                  Expires Today
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-black px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                                  <Clock className="w-3 h-3" />
+                                  Expired ({Math.abs(gym.days_left)} {Math.abs(gym.days_left) === 1 ? 'day' : 'days'} ago)
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-slate-600 text-xs font-bold">—</span>
+                        )}
                       </td>
                       <td className="px-7 py-5 font-mono text-emerald-400 text-xs font-black tracking-widest">
                         {gym.unique_code || '—'}

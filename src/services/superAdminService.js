@@ -79,28 +79,57 @@ export const superAdminService = {
   async getAllGyms() {
     const { data: gyms, error: gymsError } = await supabase
       .from('gyms')
-      .select('*, saas_plans(*)')
+      .select('*, saas_plans(*), saas_subscriptions(*)')
       .order('created_at', { ascending: false });
     
     if (gymsError) throw gymsError;
 
     try {
-      // NOTE (BUG #4): This query relies on Supabase RLS allowing super-admin role
-      // to read all profiles. Ensure your RLS policy is correctly restricted.
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name, email, avatar_url, role')
-        .limit(500); // Safety cap — prevents fetching unlimited rows
+        .limit(500);
       
       const profileMap = {};
       profiles?.forEach(p => {
         profileMap[p.id] = p;
       });
 
-      return (gyms || []).map(gym => ({
-        ...gym,
-        owner_profile: profileMap[gym.owner_user_id] || null
-      }));
+      const now = new Date();
+
+      return (gyms || []).map(gym => {
+        // Sort subscriptions descending by period end or creation date
+        const subs = gym.saas_subscriptions || [];
+        const sortedSubs = [...subs].sort((a, b) => new Date(b.current_period_end || b.created_at || 0) - new Date(a.current_period_end || a.created_at || 0));
+        const latestSub = sortedSubs[0];
+
+        let expiresAt = null;
+        if (latestSub?.current_period_end) {
+          expiresAt = new Date(latestSub.current_period_end);
+        } else if (gym.created_at) {
+          // If no explicit subscription record exists, calculate based on assigned plan tier
+          let months = 1;
+          const planName = (gym.saas_plans?.name || '').toLowerCase();
+          if (planName.includes('3 month')) months = 3;
+          else if (planName.includes('12 month')) months = 12;
+
+          const created = new Date(gym.created_at);
+          created.setMonth(created.getMonth() + months);
+          expiresAt = created;
+        }
+
+        let daysLeft = null;
+        if (expiresAt) {
+          daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        }
+
+        return {
+          ...gym,
+          owner_profile: profileMap[gym.owner_user_id] || null,
+          expires_at: expiresAt ? expiresAt.toISOString() : null,
+          days_left: daysLeft
+        };
+      });
     } catch (e) {
       console.error('[superAdminService] Error mapping owner profiles:', e);
       return gyms || [];
