@@ -133,6 +133,51 @@ export const superAdminService = {
   },
 
   /**
+   * Activate a gym account and insert an active SaaS subscription record for custom duration (days).
+   */
+  async activateGym(gymId, planId, durationDays = 30) {
+    // 1. Update Gym status and SaaS plan
+    const { data, error } = await supabase
+      .from('gyms')
+      .update({ 
+        status: 'active',
+        saas_plan_id: planId || null 
+      })
+      .eq('id', gymId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+
+    // 2. Calculate subscription period end date based on durationDays (e.g. 20 days)
+    const now = new Date();
+    const days = parseInt(durationDays, 10) || 30;
+    const periodEnd = new Date(now.getTime() + (days * 24 * 60 * 60 * 1000));
+
+    // 3. Insert an active saas_subscriptions record so getMyGym billing guard recognizes it
+    try {
+      const { error: subErr } = await supabase
+        .from('saas_subscriptions')
+        .insert([{
+          gym_id: gymId,
+          saas_plan_id: planId || null,
+          status: 'active',
+          amount: 0,
+          payment_status: 'completed',
+          current_period_end: periodEnd.toISOString(),
+          duration_months: Math.max(1, Math.ceil(days / 30))
+        }]);
+      if (subErr) {
+        console.warn('[superAdminService] saas_subscriptions insert warning:', subErr.message);
+      }
+    } catch (subErr) {
+      console.warn('[superAdminService] saas_subscriptions insert exception:', subErr);
+    }
+
+    return data;
+  },
+
+  /**
    * Create a new platform-wide broadcast announcement.
    */
   async createBroadcast(broadcast) {

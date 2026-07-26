@@ -48,6 +48,7 @@ export default function GymManagement() {
   const [saasPlans, setSaasPlans] = useState([]);
   const [activationModal, setActivationModal] = useState({ isOpen: false, gymId: null, gymName: '' });
   const [selectedPlan, setSelectedPlan] = useState('');
+  const [activationDays, setActivationDays] = useState(30);
   const [confirmState, setConfirmState] = useState({ isOpen: false, title: '', message: '', confirmLabel: '', onConfirm: () => {} });
 
   const triggerConfirm = (title, message, confirmLabel, onConfirm) => {
@@ -156,10 +157,8 @@ export default function GymManagement() {
   async function handleActivateSubmit() {
     try {
       setUpdatingId(activationModal.gymId);
-      if (selectedPlan) {
-        await superAdminService.updateGymSaaSPlan(activationModal.gymId, selectedPlan);
-      }
-      await superAdminService.updateGymStatus(activationModal.gymId, 'active');
+      const days = parseInt(activationDays, 10) || 30;
+      await superAdminService.activateGym(activationModal.gymId, selectedPlan, days);
       const selectedPlanData = saasPlans.find(p => p.id === selectedPlan);
       
       setGyms(prev => prev.map(g => g.id === activationModal.gymId ? { 
@@ -168,11 +167,12 @@ export default function GymManagement() {
         saas_plans: selectedPlanData || g.saas_plans
       } : g));
       
-      showToast('Gym account activated and plan assigned!');
+      showToast(`Gym account activated for ${days} days!`);
       setActivationModal({ isOpen: false, gymId: null, gymName: '' });
       fetchGyms();
     } catch (err) {
-      showToast('Failed to activate gym', 'error');
+      console.error('[GymManagement] Activation failed:', err);
+      showToast('Failed to activate gym: ' + (err.message || 'Unknown error'), 'error');
     } finally {
       setUpdatingId(null);
     }
@@ -615,12 +615,27 @@ export default function GymManagement() {
                   ))}
                 </select>
               </div>
+
+              <div>
+                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2.5">Activation Duration (Days)</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="3650"
+                  value={activationDays}
+                  onChange={(e) => setActivationDays(e.target.value)}
+                  placeholder="e.g. 20, 30, 90, 365"
+                  className="w-full bg-[#1c1d24] border border-white/5 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-[#3390ec]/60 transition-all font-bold text-white"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">Specify how many days the gym access remains active (e.g. enter 20 for 20 days).</p>
+              </div>
+
               <button 
                 onClick={handleActivateSubmit}
                 disabled={updatingId === activationModal.gymId}
-                className="w-full py-4.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black font-extrabold text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/15 active:scale-95 transition-all duration-300 disabled:opacity-50 cursor-pointer"
+                className="w-full py-4.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black font-extrabold text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/15 active:scale-95 transition-all duration-300 disabled:opacity-50 cursor-pointer mt-2"
               >
-                {updatingId === activationModal.gymId ? 'Activating...' : 'Confirm Activation'}
+                {updatingId === activationModal.gymId ? 'Activating...' : `Activate for ${activationDays || 30} Days`}
               </button>
             </div>
           </div>
