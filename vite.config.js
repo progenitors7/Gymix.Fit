@@ -31,4 +31,9 @@ export default defineConfig({
     // failures remain visible. Removing 'console' was silencing all catch blocks.
     drop: ['debugger'],
   },
+  server: {
+    watch: {
+      ignored: ['**/android/**'],
+    },
+  },
 })
