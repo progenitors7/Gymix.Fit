@@ -41,8 +41,14 @@ export function AuthProvider({ children }) {
         console.error('[AuthProvider] Error parsing cached profile:', e)
       }
     }
-    const savedRole = localStorage.getItem('oauth_signup_role') || currUser.user_metadata?.role || 'member'
+    let savedRole = localStorage.getItem('oauth_signup_role') || currUser.user_metadata?.role || 'member'
     const isAdmin = isSuperAdmin(currUser.email)
+    
+    // SECURITY FIX: Prevent super_admin injection
+    if (savedRole === 'super_admin' && !isAdmin) {
+      savedRole = 'member'
+    }
+
     return {
       id: currUser.id,
       full_name: currUser.user_metadata?.full_name || currUser.user_metadata?.name || 'New Member',
@@ -64,8 +70,15 @@ export function AuthProvider({ children }) {
     const promise = (async () => {
       try {
         let p = await fetchProfile(currUser.id)
-        const savedRole = localStorage.getItem('oauth_signup_role')
+        let savedRole = localStorage.getItem('oauth_signup_role')
         const isAdmin = isSuperAdmin(currUser.email)
+        
+        // SECURITY FIX: Prevent super_admin injection via URL parameters
+        if (savedRole === 'super_admin' && !isAdmin) {
+          console.warn('[SECURITY] Blocked unauthorized attempt to set super_admin role.')
+          savedRole = 'member'
+        }
+        
         const targetRole = isAdmin ? 'super_admin' : (savedRole || currUser.user_metadata?.role || 'member')
 
         if (!p) {

@@ -176,11 +176,32 @@ serve(async (req: Request) => {
       }
 
       const promo = await getValidPromo(supabaseClient, promoId)
-      const baseAmount = DURATION_PRICES.get(selectedDuration)
+      
+      // Fetch dynamic plan price from DB with safety fallback
+      let baseAmount = DURATION_PRICES.get(selectedDuration) || 0
+      try {
+        let planIdToFetch = DEFAULT_PLAN_ID
+        if (selectedDuration === 3) planIdToFetch = '43b2c470-7e88-4976-bee1-9fa66d247d40'
+        else if (selectedDuration === 12) planIdToFetch = '81ba6dad-524b-4bd6-9987-e5759c3e11d4'
+        
+        const { data: dbPlan, error: fetchErr } = await supabaseClient
+          .from('saas_plans')
+          .select('price')
+          .eq('id', planIdToFetch)
+          .single()
+          
+        if (!fetchErr && dbPlan && dbPlan.price !== undefined) {
+          baseAmount = Number(dbPlan.price)
+          console.log(`EDGE_FUNCTION_LOG: Fetched price dynamically from DB: ${baseAmount} for duration ${selectedDuration}`)
+        }
+      } catch (err) {
+        console.warn('EDGE_FUNCTION_WARNING: Failed to fetch plan price from DB. Error:', err)
+      }
+
       const expectedAmount = calculateDiscountedAmount(baseAmount, promo)
 
       if (!Number.isFinite(selectedAmount) || selectedAmount !== expectedAmount || selectedAmount <= 0) {
-        throw new Error('Invalid payment amount')
+        throw new Error(`Invalid payment amount. Expected ${expectedAmount}, received ${selectedAmount}`)
       }
     }
 
@@ -192,6 +213,13 @@ serve(async (req: Request) => {
       const promo = await getValidPromo(supabaseClient, promoId)
       if (!promo || promo.discount_type !== 'full_free') {
         throw new Error('This promo code is not valid for free activation')
+      }
+
+      // --- SECURITY FIX: TOCTOU Race Condition ---
+      // Attempt to securely reserve/increment the promo usage BEFORE updating gym state.
+      const { data: promoReserved, error: promoReserveError } = await supabaseClient.rpc('increment_promo_usage_secure', { promo_id: promo.id })
+      if (promoReserveError || !promoReserved) {
+        throw new Error('This promo code has reached its usage limit or is concurrently being used.')
       }
 
       const { error: updateError } = await supabaseClient
@@ -250,8 +278,6 @@ serve(async (req: Request) => {
         console.error('EDGE_FUNCTION_ERROR: Promo subscription insert failed', insertError)
         throw new Error('Failed to log promo subscription')
       }
-
-      await supabaseClient.rpc('increment_promo_usage', { promo_id: promo.id })
 
       const userName = user.user_metadata?.full_name || gym.gym_name || 'Gym Owner';
       if (user.email) {

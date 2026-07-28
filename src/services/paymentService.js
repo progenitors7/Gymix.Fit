@@ -2,10 +2,10 @@ import { supabase } from '../lib/supabaseClient';
 
 export const paymentService = {
   // Get all payments for a specific gym (protects against Super Admin leakage in dashboard)
-  async getAllPayments(gymId) {
+  async getAllPayments(gymId, page = null, pageSize = null) {
     if (!gymId) throw new Error('Gym ID is required to fetch payments');
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('payments')
       .select(`
         *,
@@ -19,8 +19,18 @@ export const paymentService = {
       `)
       .eq('gym_id', gymId)
       .order('payment_date', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(5000);
+      .order('created_at', { ascending: false });
+
+    if (page !== null && pageSize !== null) {
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      query = query.range(from, to);
+    } else {
+      // SECURITY/PERFORMANCE FIX: Hard limit to prevent browser OOM crashes
+      query = query.limit(2000);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     return data;

@@ -215,6 +215,13 @@ serve(async (req: Request) => {
         throw new Error('This promo code is not valid for free activation')
       }
 
+      // --- SECURITY FIX: TOCTOU Race Condition ---
+      // Attempt to securely reserve/increment the promo usage BEFORE updating gym state.
+      const { data: promoReserved, error: promoReserveError } = await supabaseClient.rpc('increment_promo_usage_secure', { promo_id: promo.id })
+      if (promoReserveError || !promoReserved) {
+        throw new Error('This promo code has reached its usage limit or is concurrently being used.')
+      }
+
       const { error: updateError } = await supabaseClient
         .from('gyms')
         .update({
@@ -271,8 +278,6 @@ serve(async (req: Request) => {
         console.error('EDGE_FUNCTION_ERROR: Promo subscription insert failed', insertError)
         throw new Error('Failed to log promo subscription')
       }
-
-      await supabaseClient.rpc('increment_promo_usage', { promo_id: promo.id })
 
       const userName = user.user_metadata?.full_name || gym.gym_name || 'Gym Owner';
       if (user.email) {

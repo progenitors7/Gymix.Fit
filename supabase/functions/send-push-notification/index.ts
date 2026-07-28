@@ -42,6 +42,51 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { userIds, title, message, body: notifBody, data = {}, gymId, type, relatedMemberId } = body;
 
+    // --- SECURITY FIX: Auth Validation ---
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing Authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const token = authHeader.replace('Bearer ', '');
+    const { data: authData, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !authData?.user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid token or unauthenticated user' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', authData.user.id).maybeSingle();
+    const isSuperAdmin = profile?.role === 'super_admin';
+
+    if (gymId) {
+      const { data: gymAuth } = await supabase
+        .from('gyms')
+        .select('id')
+        .eq('id', gymId)
+        .eq('owner_user_id', authData.user.id)
+        .maybeSingle();
+
+      if (!gymAuth && !isSuperAdmin) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized to act on behalf of this gym' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
+      if (!isSuperAdmin) {
+        return new Response(
+          JSON.stringify({ error: 'Only super admins can send global push notifications' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+    // --- END SECURITY FIX ---
+
     // Automate WhatsApp alerts if autopilot is enabled and it is a member notification
     if (gymId && relatedMemberId && type) {
       try {

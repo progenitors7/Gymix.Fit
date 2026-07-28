@@ -599,49 +599,12 @@ export const superAdminService = {
   async deleteMember(memberId) {
     if (!memberId) throw new Error('Member ID is required');
 
-    // 1. Fetch profile_id first to delete profile if it exists
-    const { data: member } = await supabase
-      .from('members')
-      .select('profile_id')
-      .eq('id', memberId)
-      .maybeSingle();
-
-    // 2. BUG #18 FIX: Check each delete result — prevents silent partial deletions
-    //    that leave orphaned rows in the database.
-    const cascadeDeletes = [
-      supabase.from('member_coins_transactions').delete().eq('member_id', memberId),
-      supabase.from('member_progress_logs').delete().eq('member_id', memberId),
-      supabase.from('member_xp_transactions').delete().eq('member_id', memberId),
-      supabase.from('leaderboard_season_history').delete().eq('member_id', memberId),
-      supabase.from('payments').delete().eq('member_id', memberId),
-      supabase.from('subscriptions').delete().eq('member_id', memberId),
-      supabase.from('attendance').delete().eq('member_id', memberId),
-    ];
-
-    const results = await Promise.all(cascadeDeletes);
-    const failedStep = results.find(r => r.error);
-    if (failedStep) {
-      throw new Error(`[superAdminService] Cascade delete failed: ${failedStep.error.message}`);
-    }
+    // BUG #18 FIX: Use secure atomic RPC instead of vulnerable frontend cascade deletes.
+    const { error } = await supabase.rpc('delete_member_by_admin', { target_member_id: memberId });
     
-    // 3. Delete member
-    const { error: memberError } = await supabase
-      .from('members')
-      .delete()
-      .eq('id', memberId);
-      
-    if (memberError) throw memberError;
-
-    // 4. Delete profile and auth.users entry completely (completely strips access)
-    if (member?.profile_id) {
-      const { error: rpcError } = await supabase.rpc('delete_user_by_admin', { target_user_id: member.profile_id });
-      if (rpcError) {
-        // Fallback to profile deletion if RPC has issues
-        await supabase
-          .from('profiles')
-          .delete()
-          .eq('id', member.profile_id);
-      }
+    if (error) {
+      console.error('[superAdminService] Error deleting member via RPC:', error);
+      throw error;
     }
     
     return true;

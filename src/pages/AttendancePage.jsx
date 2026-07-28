@@ -73,8 +73,8 @@ export default function AttendancePage() {
     const hasActive = memberTodayLogs.find(log => !log.check_out_time)
     const hasCompleted = memberTodayLogs.find(log => log.check_out_time)
 
-    if (hasCompleted) return 'completed'
     if (hasActive) return 'active'
+    if (hasCompleted) return 'completed'
     return 'none'
   }
 
@@ -616,9 +616,9 @@ export default function AttendancePage() {
 
                           <button
                             onClick={() => handleManualAttendance(member)}
-                            disabled={actionLoading !== null || isExpired || isCompleted}
+                            disabled={actionLoading !== null || isExpired}
                             className={`px-4 py-2.5 rounded-xl font-extrabold text-[10px] uppercase tracking-widest cursor-pointer transition-all duration-200 active:scale-95 flex items-center gap-1.5 shrink-0 ${
-                              isExpired || isCompleted
+                              isExpired
                                 ? 'bg-white/5 text-slate-500 border border-white/5 cursor-not-allowed'
                                 : isCheckedIn
                                 ? 'bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/10'
@@ -627,14 +627,14 @@ export default function AttendancePage() {
                           >
                             {actionLoading === member.id ? (
                               <div className={`w-3.5 h-3.5 border-2 ${isCheckedIn ? 'border-white/20 border-t-white' : 'border-black/20 border-t-black'} rounded-full animate-spin`} />
-                            ) : isCompleted ? (
-                              <CheckCircle className="w-3.5 h-3.5" />
                             ) : isCheckedIn ? (
                               <LogOut className="w-3.5 h-3.5" />
+                            ) : isCompleted ? (
+                              <LogIn className="w-3.5 h-3.5" />
                             ) : (
                               <LogIn className="w-3.5 h-3.5" />
                             )}
-                            {isCompleted ? 'Completed' : isCheckedIn ? 'Check Out' : 'Check In'}
+                            {isCheckedIn ? 'Check Out' : isCompleted ? 'Check In Again' : 'Check In'}
                           </button>
                         </div>
                       )

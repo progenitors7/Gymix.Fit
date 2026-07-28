@@ -23,7 +23,8 @@ import {
   Edit2,
   Sliders,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Download
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { superAdminService } from '../../services/superAdminService';
@@ -248,6 +249,55 @@ export default function GymManagement() {
     return matchesSearch && matchesStatus;
   });
 
+  const exportGymsToCSV = () => {
+    if (!filteredGyms.length) return showToast('No gyms to export', 'error');
+    
+    const headers = ['Gym ID', 'Gym Name', 'Owner Name', 'Owner Email', 'Status', 'Plan', 'Expires At', 'Unique Code', 'Created At'];
+    const rows = filteredGyms.map(g => [
+      g.id,
+      `"${(g.gym_name || '').replace(/"/g, '""')}"`,
+      `"${(g.owner_profile?.full_name || '').replace(/"/g, '""')}"`,
+      `"${(g.owner_profile?.email || '').replace(/"/g, '""')}"`,
+      g.status,
+      `"${(g.saas_plans?.name || 'Starter Plan').replace(/"/g, '""')}"`,
+      g.expires_at || 'None',
+      g.unique_code || '',
+      g.created_at
+    ]);
+    
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `gymix_gyms_export_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
+  const exportMembersToCSV = () => {
+    if (!filteredMembers.length) return showToast('No athletes to export', 'error');
+    
+    const headers = ['Athlete ID', 'Name', 'Phone', 'Email', 'Gym Name', 'Gym Code', 'Status', 'Join Date', 'Expiry Date', 'Check-ins'];
+    const rows = filteredMembers.map(m => [
+      m.id,
+      `"${(m.full_name || '').replace(/"/g, '""')}"`,
+      m.phone_number || '',
+      `"${(m.profiles?.email || '').replace(/"/g, '""')}"`,
+      `"${(m.gyms?.gym_name || '').replace(/"/g, '""')}"`,
+      m.gyms?.unique_code || '',
+      m.status,
+      m.join_date || '',
+      m.expiry_date || '',
+      m.check_in_count || 0
+    ]);
+    
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `gymix_athletes_export_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
   return (
     <div className="space-y-8">
       <Toast 
@@ -381,6 +431,14 @@ export default function GymManagement() {
               </select>
               <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
             </div>
+            
+            <button
+              onClick={exportGymsToCSV}
+              className="flex items-center gap-2 bg-[#3390ec]/10 hover:bg-[#3390ec]/20 text-[#3390ec] border border-[#3390ec]/20 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 whitespace-nowrap shadow-lg shadow-[#3390ec]/5"
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </button>
           </div>
 
           {/* Owners Table */}
@@ -619,6 +677,14 @@ export default function GymManagement() {
               </select>
               <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
             </div>
+
+            <button
+              onClick={exportMembersToCSV}
+              className="flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 whitespace-nowrap shadow-lg shadow-emerald-500/5"
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </button>
           </div>
 
           {/* Members Table */}

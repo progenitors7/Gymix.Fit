@@ -80,14 +80,26 @@ const syncMemberFromLatestSubscription = (member) => {
  * Fetch all members for the current user's gym.
  * @returns {Promise<Array>}
  */
-export async function getMembers(gymId) {
+export async function getMembers(gymId, page = null, pageSize = null) {
   if (!gymId) throw new Error('Gym ID is required to fetch members')
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('members')
     .select(MEMBER_WITH_SUBSCRIPTIONS)
     .eq('gym_id', gymId)
     .order('created_at', { ascending: false })
+
+  if (page !== null && pageSize !== null) {
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    query = query.range(from, to);
+  } else {
+    // SECURITY/PERFORMANCE FIX: Hard limit to prevent browser OOM crashes on massive gyms
+    // if client doesn't explicitly paginate.
+    query = query.limit(3000);
+  }
+
+  const { data, error } = await query
 
   if (error) throw error
 
