@@ -53,38 +53,46 @@ Deno.serve(async (req) => {
       );
     }
     
-    const token = authHeader.replace('Bearer ', '');
-    const { data: authData, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !authData?.user) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid token or unauthenticated user' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const isInternalCron = req.headers.get('x-internal-cron') === 'true';
+    let authData = null;
+    let isSuperAdmin = false;
 
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', authData.user.id).maybeSingle();
-    const isSuperAdmin = profile?.role === 'super_admin';
-
-    if (gymId) {
-      const { data: gymAuth } = await supabase
-        .from('gyms')
-        .select('id')
-        .eq('id', gymId)
-        .eq('owner_user_id', authData.user.id)
-        .maybeSingle();
-
-      if (!gymAuth && !isSuperAdmin) {
+    if (!isInternalCron) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: userAuthData, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !userAuthData?.user) {
         return new Response(
-          JSON.stringify({ error: 'Unauthorized to act on behalf of this gym' }),
-          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ error: 'Invalid token or unauthenticated user' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-    } else {
-      if (!isSuperAdmin) {
-        return new Response(
-          JSON.stringify({ error: 'Only super admins can send global push notifications' }),
-          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+      authData = userAuthData;
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', authData.user.id).maybeSingle();
+      isSuperAdmin = profile?.role === 'super_admin';
+    }
+
+    if (!isInternalCron) {
+      if (gymId) {
+        const { data: gymAuth } = await supabase
+          .from('gyms')
+          .select('id')
+          .eq('id', gymId)
+          .eq('owner_user_id', authData.user.id)
+          .maybeSingle();
+
+        if (!gymAuth && !isSuperAdmin) {
+          return new Response(
+            JSON.stringify({ error: 'Unauthorized to act on behalf of this gym' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      } else {
+        if (!isSuperAdmin) {
+          return new Response(
+            JSON.stringify({ error: 'Only super admins can send global push notifications' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
       }
     }
     // --- END SECURITY FIX ---
