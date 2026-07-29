@@ -8,6 +8,9 @@ export const superAdminService = {
    */
   async getPlatformStats() {
     try {
+      // Clear manual UI overrides on hard sync so fresh DB data takes priority
+      try { localStorage.removeItem('superadmin_gym_expiries'); } catch (e) {}
+
       const allGyms = await this.getAllGyms();
       
       const { count: memberCount } = await supabase
@@ -97,10 +100,16 @@ export const superAdminService = {
         const latestSub = sortedSubs[0];
 
         let expiresAt = null;
-        if (customExpiries[gym.id]?.expiresAt) {
-          expiresAt = new Date(customExpiries[gym.id].expiresAt);
-        } else if (latestSub?.current_period_end) {
-          expiresAt = new Date(latestSub.current_period_end);
+        const dbExpiry = latestSub?.current_period_end ? new Date(latestSub.current_period_end) : null;
+        const customExpiry = customExpiries[gym.id]?.expiresAt ? new Date(customExpiries[gym.id].expiresAt) : null;
+
+        if (dbExpiry && customExpiry) {
+          // Use whichever is later so real payments override old manual admin activations
+          expiresAt = dbExpiry > customExpiry ? dbExpiry : customExpiry;
+        } else if (dbExpiry) {
+          expiresAt = dbExpiry;
+        } else if (customExpiry) {
+          expiresAt = customExpiry;
         } else if (gym.created_at) {
           // If no explicit subscription record exists, calculate based on assigned plan tier
           let months = 3;

@@ -1,3 +1,5 @@
+// @ts-nocheck - This file runs on Supabase Edge Runtime (Deno), not Node.js.
+
 /**
  * send-push-notification Edge Function
  * 
