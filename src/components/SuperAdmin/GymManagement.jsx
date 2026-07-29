@@ -442,11 +442,10 @@ export default function GymManagement() {
           </div>
 
           {/* Owners Table */}
-          <div className="bg-[#14151b]/40 backdrop-blur-md border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl relative">
-            <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
+          <div className="bg-transparent sm:bg-[#161b22] border-none sm:border sm:border-white/10 rounded-none sm:rounded-2xl overflow-hidden relative">
+            <div className="overflow-x-hidden">
+              <table className="w-full text-left border-collapse block sm:table">
+                <thead className="hidden sm:table-header-group">
                   <tr className="bg-[#0b0c10]/80 border-b border-white/5">
                     <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Gym & Owner Details</th>
                     <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Registry Date</th>
@@ -457,10 +456,10 @@ export default function GymManagement() {
                     <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="block sm:table-row-group divide-y-0 sm:divide-y sm:divide-white/5">
                   {filteredGyms.map((gym) => (
-                    <tr key={gym.id} className="hover:bg-white/[0.01] transition-colors group">
-                      <td className="px-7 py-5">
+                    <tr key={gym.id} className="block sm:table-row bg-[#161b22] sm:bg-transparent rounded-2xl sm:rounded-none mb-4 sm:mb-0 border border-white/10 sm:border-none p-4 sm:p-0 hover:bg-white/[0.02] transition-colors group relative">
+                      <td className="block sm:table-cell px-2 py-3 sm:px-7 sm:py-5">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-slate-900 to-slate-800 flex items-center justify-center text-[#3390ec] font-black text-base border border-white/10 shadow-inner group-hover:scale-105 transition-transform duration-300 overflow-hidden">
                             {gym.owner_profile?.avatar_url ? (
@@ -493,15 +492,18 @@ export default function GymManagement() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-7 py-5 text-slate-400 text-xs font-bold font-mono">
+                      <td className="block sm:table-cell px-2 py-2 sm:px-7 sm:py-5 text-slate-400 text-xs font-medium">
+                        <span className="sm:hidden text-[10px] text-slate-500 uppercase font-bold mr-2">Registered:</span>
                         {new Date(gym.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </td>
-                      <td className="px-7 py-5">
-                        <span className="bg-[#3390ec]/10 border border-[#3390ec]/20 text-[#3390ec] text-[10px] font-black px-2.5 py-1.5 rounded-xl uppercase tracking-wider">
+                      <td className="block sm:table-cell px-2 py-2 sm:px-7 sm:py-5">
+                        <span className="sm:hidden text-[10px] text-slate-500 uppercase font-bold mr-2">Plan:</span>
+                        <span className="bg-slate-800 border border-slate-700 text-slate-300 text-[10px] font-semibold px-2 py-1 rounded-md uppercase tracking-wide">
                           {gym.saas_plans?.name || 'Starter Plan'}
                         </span>
                       </td>
-                      <td className="px-7 py-5">
+                      <td className="block sm:table-cell px-2 py-3 sm:px-7 sm:py-5">
+                        <span className="sm:hidden text-[10px] text-slate-500 uppercase font-bold block mb-1">Expiry Status:</span>
                         {gym.expires_at ? (
                           <div className="space-y-1">
                             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
@@ -531,15 +533,17 @@ export default function GymManagement() {
                           <span className="text-slate-600 text-xs font-bold">—</span>
                         )}
                       </td>
-                      <td className="px-7 py-5 font-mono text-emerald-400 text-xs font-black tracking-widest">
+                      <td className="block sm:table-cell px-2 py-2 sm:px-7 sm:py-5 font-mono text-emerald-400 text-xs font-medium tracking-wide">
+                        <span className="sm:hidden text-[10px] text-slate-500 uppercase font-bold mr-2">Code:</span>
                         {gym.unique_code || '—'}
                       </td>
-                      <td className="px-7 py-5">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                          gym.status === 'active' ? 'bg-emerald-400/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_rgba(52,211,153,0.05)]' : 
-                          gym.status === 'expired' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.05)]' : 
-                          gym.status === 'blocked' ? 'bg-red-400/10 text-red-400 border border-red-500/20 shadow-[0_0_15px_rgba(248,113,113,0.05)]' : 
-                          'bg-amber-400/10 text-amber-400 border border-amber-500/20 shadow-[0_0_15px_rgba(251,191,36,0.05)]'
+                      <td className="block sm:table-cell px-2 py-3 sm:px-7 sm:py-5">
+                        <span className="sm:hidden text-[10px] text-slate-500 uppercase font-bold mr-2">Status:</span>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wide ${
+                          gym.status === 'active' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 
+                          gym.status === 'expired' ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' : 
+                          gym.status === 'blocked' ? 'bg-slate-500/10 text-slate-400 border border-slate-500/20' : 
+                          'bg-amber-500/10 text-amber-500 border border-amber-500/20'
                         }`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${
                             gym.status === 'active' ? 'bg-emerald-400' : 
@@ -550,7 +554,7 @@ export default function GymManagement() {
                           {gym.status || 'pending'}
                         </span>
                       </td>
-                      <td className="px-7 py-5 text-right">
+                      <td className="absolute sm:relative top-2 sm:top-auto right-2 sm:right-auto block sm:table-cell px-2 py-2 sm:px-7 sm:py-5 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <div className="relative">
                             <button 

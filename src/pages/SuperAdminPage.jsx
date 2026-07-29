@@ -49,10 +49,10 @@ function StatCard({ title, value, icon, trend, subtext }) {
   return (
     <motion.div 
       variants={itemVariants}
-      className="glass-card bg-white/[0.02] border border-white/5 rounded-2xl p-6 transition-all hover:bg-white/[0.04] hover:border-white/10 group shadow-lg"
+      className="bg-[#161b22] border border-white/10 rounded-2xl p-6 transition-all hover:border-white/20 group"
     >
       <div className="flex items-center justify-between mb-4">
-        <div className="w-12 h-12 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-[#3390ec] group-hover:scale-110 group-hover:rotate-3 transition-all shadow-sm">
+        <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-center text-slate-300 transition-all">
           {icon}
         </div>
         {trend && (
@@ -122,29 +122,29 @@ export default function SuperAdminPage() {
         <div className="flex items-center gap-4 shrink-0">
           <button
             onClick={() => navigate('/dashboard')}
-            className="p-3 rounded-xl bg-white/[0.03] border border-white/5 text-slate-400 hover:text-white transition-all active:scale-95 glass-card shrink-0"
+            className="p-3 rounded-xl bg-[#161b22] border border-white/10 text-slate-400 hover:text-white transition-all active:scale-95 shrink-0"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <ShieldCheck className="w-6 h-6 text-[#3390ec] shrink-0" />
-              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight italic uppercase truncate">SUPER ADMIN OS</h1>
+              <ShieldCheck className="w-6 h-6 text-white shrink-0" />
+              <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight truncate">Super Admin</h1>
             </div>
             <p className="text-slate-500 text-[11px] font-bold uppercase tracking-wider">Enterprise Management Layer</p>
           </div>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex overflow-x-auto hide-scrollbar bg-white/[0.02] p-1.5 rounded-2xl border border-white/5 glass-card w-full xl:w-auto justify-start xl:justify-end gap-1.5 scroll-smooth">
+        <div className="flex overflow-x-auto hide-scrollbar bg-[#161b22] p-1.5 rounded-xl border border-white/10 w-full xl:w-auto justify-start xl:justify-end gap-1.5 scroll-smooth">
           {TABS.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all duration-300 whitespace-nowrap shrink-0 ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 whitespace-nowrap shrink-0 ${
                 activeTab === tab.id 
-                  ? 'bg-[#3390ec] text-white shadow-lg shadow-[#3390ec]/10' 
-                  : 'text-slate-500 hover:text-white hover:bg-white/5'
+                  ? 'bg-white/10 text-white' 
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
               {tab.icon}
@@ -220,15 +220,15 @@ export default function SuperAdminPage() {
               {/* Quick Actions */}
               <motion.div 
                 variants={itemVariants}
-                className="glass-card bg-gradient-to-br from-white/[0.03] to-transparent border border-white/5 rounded-3xl p-10 shadow-2xl relative overflow-hidden group"
+                className="bg-[#161b22] border border-white/10 rounded-2xl p-8 relative overflow-hidden"
               >
-                <div className="absolute top-0 right-0 p-8 text-white/[0.02] group-hover:text-[#3390ec]/5 transition-colors duration-500">
-                  <Zap className="w-64 h-64 -mr-16 -mt-16 transform rotate-12" />
+                <div className="absolute top-0 right-0 p-8 text-white/[0.02]">
+                  <Zap className="w-48 h-48 -mr-12 -mt-12 transform rotate-12" />
                 </div>
                 <div className="relative z-10">
                   <div className="flex items-center gap-3 mb-3">
-                    <ShieldCheck className="w-5 h-5 text-[#3390ec]" />
-                    <h2 className="text-xl font-black text-white tracking-tight uppercase">Platform Integrity</h2>
+                    <ShieldCheck className="w-5 h-5 text-white" />
+                    <h2 className="text-lg font-semibold text-white tracking-tight">Platform Controls</h2>
                   </div>
                   <p className="text-slate-500 text-sm max-w-lg mb-8 leading-relaxed font-medium">
                     You are currently in the Super Admin interface. All actions here affect the global SaaS state. Please handle moderation and broadcasts with care.
@@ -237,14 +237,14 @@ export default function SuperAdminPage() {
                     <button 
                       onClick={handleSync}
                       disabled={syncing}
-                      className="flex items-center gap-2 bg-[#3390ec] text-white px-6 py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider hover:bg-[#2b5278] transition-all active:scale-95 shadow-lg shadow-[#3390ec]/10 disabled:opacity-50"
+                      className="flex items-center gap-2 bg-white text-black px-6 py-2.5 rounded-lg font-semibold text-sm transition-all hover:bg-slate-200 active:scale-95 disabled:opacity-50"
                     >
                       <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                      {syncing ? 'Syncing...' : 'Force Sync Data'}
+                      {syncing ? 'Syncing...' : 'Sync Data'}
                     </button>
                     <button 
                       onClick={() => setActiveTab('settings')}
-                      className="flex items-center gap-2 bg-white/[0.03] text-slate-400 px-6 py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider hover:text-white hover:bg-white/[0.05] transition-all active:scale-95 border border-white/5"
+                      className="flex items-center gap-2 bg-transparent text-slate-300 px-6 py-2.5 rounded-lg font-semibold text-sm transition-all hover:text-white hover:bg-white/10 active:scale-95 border border-white/10"
                     >
                       <Settings2 className="w-4 h-4" />
                       Global Config
