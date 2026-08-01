@@ -259,7 +259,6 @@ export default function ScannerPage() {
     // Race-condition-safe duplicate check using ref (React state update is async and would be too slow)
     if (isProcessingRef.current) return
     isProcessingRef.current = true
-    setIsProcessing(true)
     
     // PAUSE the scanner — freezes video frame & stops decoding, but keeps camera hardware open.
     // This is the key fix: we never release the camera hardware between scans.
@@ -277,7 +276,6 @@ export default function ScannerPage() {
      */
     const scheduleResume = (delayMs) => {
       isProcessingRef.current = false
-      setIsProcessing(false)
       
       resumeTimerRef.current = setTimeout(() => {
         setScanResult(null)
