@@ -153,7 +153,7 @@ function SidebarContent({ onClose, isMobile }) {
     <div className="flex flex-col h-full bg-[#151922] border-r border-white/5 relative">
       {/* Logo Area */}
       <div 
-        style={{ paddingTop: 'calc(24px + env(safe-area-inset-top))' }}
+        style={{ paddingTop: 'calc(24px + env(safe-area-inset-top, 0px))' }}
         className="flex items-center gap-3 px-6 pb-6 border-b border-white/5"
       >
         <Logo className="w-8 h-8 flex-shrink-0 drop-shadow-[0_0_8px_rgba(134,59,255,0.2)]" />
@@ -271,8 +271,8 @@ function BottomNav() {
     <nav 
       className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#1A1F2B] border-t border-white/5 z-[100] shadow-lg"
       style={{
-        paddingBottom: 'env(safe-area-inset-bottom)',
-        height: 'calc(4rem + env(safe-area-inset-bottom))'
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        height: 'calc(4rem + env(safe-area-inset-bottom, 0px))'
       }}
     >
       <div className="flex items-center justify-around h-16 px-2">
@@ -341,7 +341,7 @@ export default function AppLayout({ children }) {
   }, [location.pathname])
 
   return (
-    <div className="flex h-screen bg-[#0F1117] overflow-hidden selection:bg-[#3B82F6]/30 selection:text-[#3B82F6]">
+    <div className="flex h-dvh bg-[#0F1117] overflow-hidden selection:bg-[#3B82F6]/30 selection:text-[#3B82F6]">
       {/* ── Desktop sidebar ── */}
       <aside className="hidden lg:flex lg:w-[280px] flex-col flex-shrink-0 z-50">
         <SidebarContent isMobile={false} />
@@ -392,7 +392,7 @@ export default function AppLayout({ children }) {
 
         {/* Mobile topbar */}
         <header 
-          style={{ paddingTop: 'calc(12px + env(safe-area-inset-top))' }}
+          style={{ paddingTop: 'calc(12px + env(safe-area-inset-top, 0px))' }}
           className="lg:hidden flex items-center justify-between px-4 pb-3 border-b border-white/5 bg-[#151922]/80 backdrop-blur-md flex-shrink-0 z-40 sticky top-0"
         >
           <div className="flex items-center gap-3">

@@ -25,13 +25,21 @@
 }
 
 /* ── Base ── */
-*, *::before, *::after { box-sizing: border-box; }
+*, *::before, *::after { 
+  box-sizing: border-box; 
+  -webkit-tap-highlight-color: transparent; /* Removes grey flash on iOS tap */
+}
 
 html, body {
   overflow-x: hidden;
   max-width: 100%;
   /* Disables double-tap to zoom globally */
   touch-action: manipulation;
+  overscroll-behavior-y: none; /* Prevents iOS rubber-banding pull-to-refresh effect */
+}
+
+a, button, img {
+  -webkit-touch-callout: none; /* Prevents long-press popups on iOS */
 }
 
 html, body, #root {
@@ -221,15 +229,15 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ── WebView Safe Area Utility Classes ── */
 .pb-safe {
-  padding-bottom: env(safe-area-inset-bottom) !important;
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
 }
 .pt-safe {
-  padding-top: env(safe-area-inset-top) !important;
+  padding-top: env(safe-area-inset-top, 0px) !important;
 }
 .mb-safe {
-  margin-bottom: env(safe-area-inset-bottom) !important;
+  margin-bottom: env(safe-area-inset-bottom, 0px) !important;
 }
 .mt-safe {
-  margin-top: env(safe-area-inset-top) !important;
+  margin-top: env(safe-area-inset-top, 0px) !important;
 }
 

@@ -12,7 +12,7 @@ export default function MemberMobileHeader({
 
   return (
     <header 
-      style={{ paddingTop: 'calc(16px + env(safe-area-inset-top))' }}
+      style={{ paddingTop: 'calc(16px + env(safe-area-inset-top, 0px))' }}
       className="sticky top-0 z-40 lg:hidden flex items-center justify-between px-6 pb-4 bg-[#151922]/80 backdrop-blur-md border-b border-white/5 shadow-lg shadow-black/20"
     >
       <div className="flex items-center gap-3">

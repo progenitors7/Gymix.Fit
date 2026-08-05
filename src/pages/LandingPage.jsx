@@ -304,8 +304,10 @@ export default function LandingPage() {
       {/* Futuristic subtle matrix/grid lines decoration */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.012)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.012)_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] pointer-events-none mask-image-[radial-gradient(ellipse_at_center,black,transparent_80%)]" />
 
-      {/* ── STICKY GLASSMORPHIC NAVBAR ── */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/5 bg-[#090C10]/75 transition-all duration-300">
+      <header 
+        style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+        className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/5 bg-[#090C10]/75 transition-all duration-300"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           
           {/* Logo Brand */}

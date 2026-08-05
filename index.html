@@ -11,6 +11,8 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- Content Security Policy to allow Vite HMR and 'eval' in Android WebView/Chrome Inspect -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' data: blob: 'unsafe-inline' 'unsafe-eval'; script-src * 'self' 'unsafe-inline' 'unsafe-eval'; connect-src * 'self' data: blob: ws: wss:;" />
     <meta name="description" content="Gymix.fit — The all-in-one revenue management platform for gym owners. Automate membership billing, UPI invoices, entry scanner gates, and WhatsApp messages." />
     <meta name="keywords" content="gym management software, fitness business software, gym billing software, gym attendance scanner, gymix, gymix.fit, gym software india, gym membership tracking, fitness center CRM, biometrics scanner gym" />
     

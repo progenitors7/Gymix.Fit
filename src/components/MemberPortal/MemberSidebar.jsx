@@ -35,7 +35,7 @@ export default function MemberSidebar({
       <div>
         {/* Logo Area */}
         <div 
-          style={{ paddingTop: 'calc(24px + env(safe-area-inset-top))' }}
+          style={{ paddingTop: 'calc(24px + env(safe-area-inset-top, 0px))' }}
           className="flex items-center gap-3 px-6 pb-6 border-b border-white/5"
         >
           <Logo className="w-8 h-8 flex-shrink-0 drop-shadow-[0_0_8px_rgba(134,59,255,0.2)]" />

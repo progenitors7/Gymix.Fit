@@ -136,8 +136,16 @@ export default function MemberDashboard() {
     return 'unknown'
   }
 
+  const isStandalone = () => {
+    return (
+      (window.navigator && window.navigator.standalone) ||
+      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+    )
+  }
+
   const renderPwaBanner = () => {
     if (!showPwaBanner) return null
+    if (isStandalone()) return null
     const os = getMobileOS()
 
     if (os === 'android') {
@@ -838,7 +846,7 @@ export default function MemberDashboard() {
   const activeRank = getAthleteRank(streakCount)
 
   return (
-    <div className="h-screen bg-[#0F1117] text-slate-100 font-sans flex flex-col lg:flex-row relative overflow-hidden">
+    <div className="h-dvh bg-[#0F1117] text-slate-100 font-sans flex flex-col lg:flex-row relative overflow-hidden">
       {/* Sidebar Navigation */}
       <aside className="hidden lg:block w-80 flex-shrink-0">
         <MemberSidebar
@@ -873,7 +881,7 @@ export default function MemberDashboard() {
               className="relative w-80 max-w-[85vw] h-full bg-[#151922] z-50 flex flex-col"
             >
               <div 
-                style={{ top: 'calc(16px + env(safe-area-inset-top))' }}
+                style={{ top: 'calc(16px + env(safe-area-inset-top, 0px))' }}
                 className="absolute right-4 z-50"
               >
                 <button
