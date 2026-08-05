@@ -269,11 +269,7 @@ function BottomNav() {
 
   return (
     <nav 
-      className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#1A1F2B] border-t border-white/5 z-[100] shadow-lg"
-      style={{
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        height: 'calc(4rem + env(safe-area-inset-bottom, 0px))'
-      }}
+      className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#1A1F2B] border-t border-white/5 z-[100] shadow-2xl pb-[env(safe-area-inset-bottom,0px)]"
     >
       <div className="flex items-center justify-around h-16 px-2">
         {visibleItems.map((item) => {
@@ -316,10 +312,8 @@ export default function AppLayout({ children }) {
   // B2B2C Member Shell: Bypass owner layout sidebars & headers entirely
   if (profile?.role === 'member') {
     return (
-      <div className="flex h-screen bg-[#0F1117] overflow-hidden">
-        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-          {children}
-        </div>
+      <div className="fixed inset-0 bg-[#0F1117] overflow-hidden">
+        {children}
       </div>
     )
   }

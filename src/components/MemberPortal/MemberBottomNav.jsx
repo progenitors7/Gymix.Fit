@@ -10,7 +10,7 @@ export default function MemberBottomNav({ activeTab, setActiveTab, streakCount }
   ]
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-[calc(4rem+env(safe-area-inset-bottom,0px))] bg-[#1A1F2B] border-t border-white/5 z-50 pb-[env(safe-area-inset-bottom,0px)] shadow-lg">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#1A1F2B] border-t border-white/5 pb-[env(safe-area-inset-bottom,0px)] shadow-2xl">
       <div className="flex items-center justify-around h-16 px-2">
         {visibleItems.map((item) => {
           const isActive = activeTab === item.id

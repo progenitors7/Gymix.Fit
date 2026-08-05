@@ -846,7 +846,7 @@ export default function MemberDashboard() {
   const activeRank = getAthleteRank(streakCount)
 
   return (
-    <div className="h-dvh bg-[#0F1117] text-slate-100 font-sans flex flex-col lg:flex-row relative overflow-hidden">
+    <div className="fixed inset-0 bg-[#0F1117] text-slate-100 font-sans flex flex-col lg:flex-row overflow-hidden">
       {/* Sidebar Navigation */}
       <aside className="hidden lg:block w-80 flex-shrink-0">
         <MemberSidebar
@@ -920,7 +920,7 @@ export default function MemberDashboard() {
           notifications={notifications}
         />
 
-        <main className="flex-1 p-6 lg:p-8 pb-28 lg:pb-8 max-w-6xl w-full mx-auto overflow-y-auto">
+        <main className="flex-1 p-6 lg:p-8 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:pb-8 max-w-6xl w-full mx-auto overflow-y-auto scroll-smooth">
           {renderPwaBanner()}
           {renderNotificationBanner()}
           {!membership ? (
