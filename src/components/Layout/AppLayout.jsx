@@ -269,7 +269,7 @@ function BottomNav() {
 
   return (
     <nav 
-      className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#1A1F2B] border-t border-white/5 z-[100] shadow-2xl pb-[env(safe-area-inset-bottom,0px)]"
+      className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#1A1F2B] border-t border-white/5 z-[100] shadow-2xl pb-safe"
     >
       <div className="flex items-center justify-around h-16 px-2">
         {visibleItems.map((item) => {
@@ -420,7 +420,7 @@ export default function AppLayout({ children }) {
         </header>
 
         {/* Page content with smooth route transition wrapper */}
-        <main className="flex-1 overflow-y-auto pb-28 lg:pb-0 scroll-smooth">
+        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0 scroll-smooth">
           <BroadcastBanner />
           {showBillingReminder && (
             <div className="mx-4 sm:mx-6 lg:mx-8 mt-4 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">

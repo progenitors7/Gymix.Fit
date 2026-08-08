@@ -920,7 +920,7 @@ export default function MemberDashboard() {
           notifications={notifications}
         />
 
-        <main className="flex-1 p-6 lg:p-8 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:pb-8 max-w-6xl w-full mx-auto overflow-y-auto scroll-smooth">
+        <main className="flex-1 p-6 lg:p-8 pb-20 lg:pb-8 max-w-6xl w-full mx-auto overflow-y-auto scroll-smooth">
           {renderPwaBanner()}
           {renderNotificationBanner()}
           {!membership ? (
