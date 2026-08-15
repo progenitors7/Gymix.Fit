@@ -123,7 +123,7 @@ function RootRoute() {
 
 function DeepLinkHandler() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const pushInitialized = useRef(false)
   // Store listener handles so we can properly remove them on cleanup
   const deepLinkHandleRef = useRef(null)
@@ -274,12 +274,14 @@ function DeepLinkHandler() {
 
     // Navigate when user taps a notification (app was in background/closed)
     const handleNotificationTap = (e) => {
-      const route = e.detail?.route || '/notifications'
+      const isMember = profile?.role === 'member'
+      const fallbackRoute = isMember ? '/dashboard?tab=notifications' : '/notifications'
+      const route = e.detail?.route || fallbackRoute
       navigate(route, { replace: true })
     }
     window.addEventListener('push-notification-tap', handleNotificationTap)
     return () => window.removeEventListener('push-notification-tap', handleNotificationTap)
-  }, [user, navigate])
+  }, [user, profile, navigate])
 
   // ── 5. Remove push token on logout ──
   useEffect(() => {

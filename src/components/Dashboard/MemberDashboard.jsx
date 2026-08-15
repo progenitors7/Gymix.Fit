@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, BellRing } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -25,9 +26,34 @@ import MemberStoreTab from '../MemberPortal/MemberStoreTab'
 
 export default function MemberDashboard() {
   const { profile, signOut, refreshProfile } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
   
-  // Navigation & View tab: 'pass' | 'notifications' | 'attendance' | 'streaks' | 'leaderboard' | 'progress' | 'profile'
-  const [activeTab, setActiveTab] = useState('pass')
+  // Navigation & View tab: 'pass' | 'notifications' | 'attendance' | 'streaks' | 'leaderboard' | 'progress' | 'store' | 'profile'
+  const validTabs = ['pass', 'notifications', 'attendance', 'streaks', 'leaderboard', 'progress', 'store', 'profile']
+  const tabParam = searchParams.get('tab')
+  const [activeTab, setActiveTabState] = useState(() => {
+    return (tabParam && validTabs.includes(tabParam)) ? tabParam : 'pass'
+  })
+
+  // Sync state with URL params
+  useEffect(() => {
+    if (tabParam && validTabs.includes(tabParam) && tabParam !== activeTab) {
+      setActiveTabState(tabParam)
+    }
+  }, [tabParam])
+
+  const setActiveTab = useCallback((tab) => {
+    setActiveTabState(tab)
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (tab === 'pass') {
+        next.delete('tab')
+      } else {
+        next.set('tab', tab)
+      }
+      return next
+    }, { replace: true })
+  }, [setSearchParams])
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showNotificationBanner, setShowNotificationBanner] = useState(false)
   const [showPwaBanner, setShowPwaBanner] = useState(false)
@@ -945,6 +971,7 @@ export default function MemberDashboard() {
                   streakCount={streakCount}
                   activeRank={activeRank}
                   loadMemberSystem={loadMemberSystem}
+                  setActiveTab={setActiveTab}
                 />
               )}
               {activeTab === 'notifications' && (

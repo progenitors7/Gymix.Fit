@@ -28,6 +28,7 @@ export function invalidateDashboardStatsCache(gymId) {
   if (!gymId) return;
   try {
     localStorage.removeItem(`gym_dashboard_stats_cache_${gymId}`);
+    localStorage.removeItem(`gym_members_cache_${gymId}`);
   } catch (e) {
     console.error('Error clearing stats cache:', e);
   }
@@ -556,11 +557,11 @@ export function useDashboardStats() {
     } finally {
       setLoading(false);
     }
-  }, [gym]);
+  }, [gym?.id]);
 
   useEffect(() => {
     let mounted = true;
-    if (gym) {
+    if (gym?.id) {
       const cacheKey = `gym_dashboard_stats_cache_${gym.id}`;
       const hasCache = !!localStorage.getItem(cacheKey);
       
@@ -571,7 +572,7 @@ export function useDashboardStats() {
     return () => {
       mounted = false;
     };
-  }, [fetchStats, gym]);
+  }, [fetchStats, gym?.id]);
 
   return {
     stats,

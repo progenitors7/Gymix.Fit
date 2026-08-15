@@ -86,8 +86,40 @@ export default function ProtectedRoute({ children }) {
     return <Navigate to="/dashboard" replace />
   }
 
-  // ── Step 4: Members skip ALL gym/billing checks ──
+  // ── Step 4: Member route mapping & access protection ──
   if (isMember) {
+    // Map standalone paths to corresponding member portal tabs
+    if (location.pathname === '/notifications') {
+      return <Navigate to="/dashboard?tab=notifications" replace />
+    }
+    if (location.pathname === '/attendance') {
+      return <Navigate to="/dashboard?tab=attendance" replace />
+    }
+    if (location.pathname === '/leaderboard') {
+      return <Navigate to="/dashboard?tab=leaderboard" replace />
+    }
+    if (location.pathname === '/profile') {
+      return <Navigate to="/dashboard?tab=profile" replace />
+    }
+    if (location.pathname === '/store' || location.pathname === '/store-manager') {
+      return <Navigate to="/dashboard?tab=store" replace />
+    }
+
+    // Block members from accessing gym owner management consoles
+    const ownerOnlyPaths = [
+      '/scanner', 
+      '/members', 
+      '/subscriptions', 
+      '/payments', 
+      '/settings', 
+      '/billing', 
+      '/subscription-status'
+    ]
+    const isOwnerRoute = ownerOnlyPaths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'))
+    if (isOwnerRoute) {
+      return <Navigate to="/dashboard" replace />
+    }
+
     return children
   }
 

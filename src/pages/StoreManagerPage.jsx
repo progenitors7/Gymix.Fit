@@ -57,7 +57,7 @@ export default function StoreManagerPage() {
     } finally {
       setProductsLoading(false)
     }
-  }, [gym])
+  }, [gym?.id])
 
   // Fetch orders log
   const fetchOrders = useCallback(async () => {
@@ -85,7 +85,7 @@ export default function StoreManagerPage() {
     } finally {
       setOrdersLoading(false)
     }
-  }, [gym])
+  }, [gym?.id])
 
   useEffect(() => {
     if (gym?.id) {

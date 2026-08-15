@@ -145,16 +145,31 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
             <X className="w-4 h-4" />
           </button>
 
-          {/* Header */}
-          <div className="space-y-1.5 pb-5 border-b border-white/5 flex items-center gap-4.5">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <UserCheck className="w-6 h-6" />
+          {/* Header with High-Res Athlete Identity */}
+          <div className="pb-5 border-b border-white/5 flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-slate-800 border-2 border-emerald-500/30 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-lg">
+              {request.profiles?.avatar_url ? (
+                <img
+                  src={request.profiles.avatar_url}
+                  alt={request.profiles?.full_name || 'Athlete'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-white text-lg font-black uppercase">
+                  {request.profiles?.full_name?.slice(0, 2) || 'M'}
+                </span>
+              )}
             </div>
-            <div>
-              <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em] leading-none">Smart Onboarding Approval</p>
-              <h3 className="text-xl font-black text-white uppercase italic tracking-tight pt-1 truncate max-w-[320px]">
-                {request.profiles?.full_name}
+            <div className="min-w-0 flex-1">
+              <span className="text-[9px] font-black text-emerald-400 uppercase tracking-[0.2em] leading-none">
+                Smart Onboarding Approval
+              </span>
+              <h3 className="text-lg sm:text-xl font-black text-white uppercase italic tracking-tight pt-0.5 break-words">
+                {request.profiles?.full_name || 'Athlete Profile'}
               </h3>
+              <p className="text-slate-400 text-xs truncate mt-0.5">
+                {request.profiles?.email}
+              </p>
             </div>
           </div>
 
@@ -166,12 +181,6 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
                 {error}
               </div>
             )}
-
-            {/* Profile email read-only info */}
-            <div className="p-4 rounded-xl bg-white/[0.01] border border-white/5 flex justify-between text-xs font-semibold text-slate-400">
-              <span>Google Account Email</span>
-              <span className="text-white truncate max-w-[240px]">{request.profiles?.email}</span>
-            </div>
 
             {loadingPlans ? (
               <div className="py-12 flex justify-center">

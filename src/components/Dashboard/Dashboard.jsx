@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import QRCode from 'qrcode';
 import { useCurrentGym } from '../../hooks/useCurrentGym';
 import { useDashboardStats } from '../../hooks/useDashboardStats';
 import DashboardSkeleton from './DashboardSkeleton';
@@ -255,6 +256,27 @@ export default function Dashboard() {
   }
 
   const [showPosterModal, setShowPosterModal] = useState(false)
+  const [posterQrUrl, setPosterQrUrl] = useState('')
+
+  useEffect(() => {
+    if (!gym?.unique_code) return
+    const originFallback = (window.location.origin && !window.location.origin.includes('localhost')) 
+      ? window.location.origin 
+      : 'https://gymix.fit'
+    const scanUrl = `${originFallback}/join/${gym.unique_code}`
+
+    QRCode.toDataURL(scanUrl, {
+      width: 400,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+      color: { dark: '#0F1117', light: '#FFFFFF' }
+    })
+      .then(setPosterQrUrl)
+      .catch((err) => {
+        console.error('[Dashboard] Error generating poster QR code:', err)
+        setPosterQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(scanUrl)}`)
+      })
+  }, [gym?.unique_code])
 
   useEffect(() => {
     const handleHardwareBack = (e) => {
@@ -279,7 +301,7 @@ export default function Dashboard() {
       ? window.location.origin 
       : 'https://gymix.fit'
     const scanUrl = `${originFallback}/join/${gym?.unique_code}`
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(scanUrl)}`
+    const qrUrl = posterQrUrl || `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(scanUrl)}`
     
     printWindow.document.write(`
       <html>
@@ -443,7 +465,11 @@ export default function Dashboard() {
 
           {/* QR Code Container */}
           <div className="relative w-44 h-44 sm:w-60 sm:h-60 mx-auto bg-white p-4 rounded-3xl border-4 border-slate-900 shadow-xl flex items-center justify-center relative z-10">
-            <img src={qrUrl} alt="Gym QR Code" className="w-full h-full object-contain" />
+            {posterQrUrl ? (
+              <img src={posterQrUrl} alt="Gym QR Code" className="w-full h-full object-contain select-none" />
+            ) : (
+              <div className="w-8 h-8 border-2 border-slate-300 border-t-[#3b82f6] rounded-full animate-spin" />
+            )}
           </div>
 
           <p className="text-slate-400 text-[10px] sm:text-xs font-semibold leading-relaxed max-w-xs mx-auto uppercase tracking-wide relative z-10">
@@ -709,6 +735,47 @@ export default function Dashboard() {
           </button>
         </div>
       </div>
+
+      {/* ── High-Visibility Pending Athlete Requests Alert Banner ── */}
+      {stats?.pendingRequestsCount > 0 && (
+        <div 
+          onClick={() => {
+            const el = document.getElementById('pending-requests-section');
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }}
+          className="group cursor-pointer rounded-2xl sm:rounded-3xl bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-emerald-500/10 border-2 border-emerald-500/40 p-4 sm:p-5 flex items-center justify-between gap-4 shadow-xl shadow-emerald-500/10 hover:border-emerald-400 transition-all active:scale-[0.99] animate-in fade-in slide-in-from-top-4 duration-300"
+        >
+          <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+            <div className="relative flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 shadow-inner">
+              <UserPlus className="h-6 w-6 animate-pulse" />
+              <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500"></span>
+              </span>
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-xs sm:text-sm font-black text-white uppercase tracking-wider truncate">
+                  {stats.pendingRequestsCount} Athlete Connection Request{stats.pendingRequestsCount > 1 ? 's' : ''} Awaiting Approval
+                </p>
+                <span className="px-2 py-0.5 rounded-md bg-emerald-500 text-black text-[9px] font-black uppercase tracking-wider flex-shrink-0 animate-pulse">
+                  Action Required
+                </span>
+              </div>
+              <p className="text-[11px] sm:text-xs text-slate-300 font-medium mt-0.5 truncate">
+                Tap here to inspect athlete identity, photos, and approve access plans
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-500 group-hover:bg-emerald-400 text-black font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-emerald-500/20 flex-shrink-0">
+            <span>Review</span>
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </div>
+        </div>
+      )}
 
       {/* Onboarding Checklist Widget */}
       {profile?.role === 'owner' && (
@@ -1000,7 +1067,7 @@ export default function Dashboard() {
           </div>
 
           {/* Pending requests approval box (Brought to top-priority area & highlighted!) */}
-          <div className="onboarding-requests-widget">
+          <div id="pending-requests-section" className="onboarding-requests-widget scroll-mt-24">
             <PendingRequestsWidget 
               gymId={gym?.id} 
               gymCode={gym?.unique_code} 

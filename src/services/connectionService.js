@@ -74,7 +74,7 @@ export const connectionService = {
     // 1. Resolve gym by unique code
     const { data: gym, error: gymError } = await supabase
       .from('gyms')
-      .select('id, gym_name')
+      .select('id, gym_name, owner_user_id')
       .eq('unique_code', gymCode.trim().toUpperCase())
       .maybeSingle()
 

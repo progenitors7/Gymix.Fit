@@ -63,6 +63,7 @@ export default function QuickRenewModal({ isOpen, onClose, member, onSuccess }) 
         }
       );
       
+      toast.success(`Membership for ${member.full_name} renewed successfully! 🎉`);
       onSuccess?.();
       onClose();
     } catch (error) {

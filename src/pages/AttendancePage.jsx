@@ -64,10 +64,15 @@ export default function AttendancePage() {
   }
 
   const getAttendanceStateForMember = (memberId) => {
-    const todayStr = new Date().toISOString().split('T')[0]
+    const today = new Date()
+    const todayYear = today.getFullYear()
+    const todayMonth = today.getMonth()
+    const todayDate = today.getDate()
+
     const memberTodayLogs = logs.filter(log => {
-      const logDateStr = new Date(log.check_in_time).toISOString().split('T')[0]
-      return log.members?.id === memberId && logDateStr === todayStr
+      if (log.members?.id !== memberId) return false
+      const logD = new Date(log.check_in_time)
+      return logD.getFullYear() === todayYear && logD.getMonth() === todayMonth && logD.getDate() === todayDate
     })
 
     const hasActive = memberTodayLogs.find(log => !log.check_out_time)
@@ -102,15 +107,13 @@ export default function AttendancePage() {
   const fetchTodayStats = useCallback(async () => {
     if (!gym?.id) return
     try {
-      // BUG #10 FIX: Use local timezone date (not UTC) so IST midnight is correct
-      const now = new Date()
-      const todayStr = [
-        now.getFullYear(),
-        String(now.getMonth() + 1).padStart(2, '0'),
-        String(now.getDate()).padStart(2, '0')
-      ].join('-')
-      const todayStartISO = `${todayStr}T00:00:00.000Z`
-      const todayEndISO   = `${todayStr}T23:59:59.999Z`
+      // Calculate start and end of current day in local timezone
+      const startOfToday = new Date()
+      startOfToday.setHours(0, 0, 0, 0)
+      const endOfToday = new Date()
+      endOfToday.setHours(23, 59, 59, 999)
+      const todayStartISO = startOfToday.toISOString()
+      const todayEndISO   = endOfToday.toISOString()
 
       const { data, error } = await supabase
         .from('attendance')
@@ -151,10 +154,13 @@ export default function AttendancePage() {
     setError(null)
     
     try {
-      // Filter by selectedDate directly on the database level
+      // Filter by selectedDate using exact local day start & end boundaries
       const targetDate = selectedDate || new Date().toISOString().split('T')[0]
-      const startISO = `${targetDate}T00:00:00.000Z`
-      const endISO = `${targetDate}T23:59:59.999Z`
+      const [year, month, day] = targetDate.split('-').map(Number)
+      const startDate = new Date(year, month - 1, day, 0, 0, 0, 0)
+      const endDate = new Date(year, month - 1, day, 23, 59, 59, 999)
+      const startISO = startDate.toISOString()
+      const endISO = endDate.toISOString()
 
       const { data, error: err } = await supabase
         .from('attendance')
