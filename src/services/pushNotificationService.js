@@ -196,4 +196,100 @@ export const pushNotificationService = {
       }, 3000);
     }
   },
+
+  /**
+   * Sends real-time push notification via Supabase Edge Function (non-blocking).
+   */
+  async sendPushNotification({ userIds, title, message, body, gymId, type, relatedMemberId, data = {} }) {
+    if (!userIds || !userIds.length) return;
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) return;
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const res = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userIds,
+          title: title || 'Gymix',
+          message: message || body || '',
+          body: body || message || '',
+          gymId,
+          type,
+          relatedMemberId,
+          data: { route: '/notifications', ...data }
+        })
+      });
+      return await res.json();
+    } catch (err) {
+      console.warn('[Push] Error sending real-time push notification:', err);
+    }
+  },
+
+  /**
+   * Instant Push: Check-In recorded for Athlete / Member
+   */
+  async notifyCheckIn(gymId, member) {
+    if (!member?.profile_id) return;
+    return this.sendPushNotification({
+      userIds: [member.profile_id],
+      title: 'Workout Started! 💪',
+      message: `Check-in recorded successfully. Have a powerful session!`,
+      gymId,
+      type: 'check_in',
+      relatedMemberId: member.id,
+      data: { route: '/dashboard', type: 'check_in' }
+    });
+  },
+
+  /**
+   * Instant Push: Payment received / recorded
+   */
+  async notifyPaymentReceived(gymId, member, amount) {
+    if (!member?.profile_id) return;
+    return this.sendPushNotification({
+      userIds: [member.profile_id],
+      title: 'Payment Received 💳',
+      message: `Payment of ₹${amount} recorded successfully. Thank you!`,
+      gymId,
+      type: 'payment_received',
+      relatedMemberId: member.id,
+      data: { route: '/dashboard', type: 'payment_received' }
+    });
+  },
+
+  /**
+   * Instant Push: New Connection Request for Gym Owner
+   */
+  async notifyNewConnectionRequest(gymId, ownerUserId, athleteName) {
+    if (!ownerUserId) return;
+    return this.sendPushNotification({
+      userIds: [ownerUserId],
+      title: 'New Athlete Request 🔔',
+      message: `${athleteName || 'An athlete'} requested to join your gym!`,
+      gymId,
+      type: 'new_connection_request',
+      data: { route: '/dashboard', type: 'connection_request' }
+    });
+  },
+
+  /**
+   * Instant Push: Connection Request Approved for Athlete
+   */
+  async notifyConnectionApproved(gymId, profileId, gymName) {
+    if (!profileId) return;
+    return this.sendPushNotification({
+      userIds: [profileId],
+      title: 'Welcome to the Gym! 🎉',
+      message: `Your membership at ${gymName || 'Gym'} has been activated!`,
+      gymId,
+      type: 'connection_approved',
+      data: { route: '/dashboard', type: 'connection_approved' }
+    });
+  }
 };

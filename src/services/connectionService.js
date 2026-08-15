@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabaseClient'
 import { createMember } from './memberService'
 import { unifiedService } from './unifiedService'
+import { pushNotificationService } from './pushNotificationService'
 
 export const connectionService = {
   /**
@@ -96,6 +97,11 @@ export const connectionService = {
         throw new Error('A connection request for this gym is already active or pending.')
       }
       throw error
+    }
+
+    // Trigger instant push notification to Gym Owner
+    if (gym?.owner_user_id) {
+      pushNotificationService.notifyNewConnectionRequest(gym.id, gym.owner_user_id, 'A new athlete').catch(() => {})
     }
 
     return { request: data, gym }
@@ -269,6 +275,11 @@ export const connectionService = {
       .eq('id', request.id)
 
     if (error) throw error
+
+    // Trigger instant push notification to Approved Member
+    if (profile_id) {
+      pushNotificationService.notifyConnectionApproved(gym_id, profile_id, '').catch(() => {})
+    }
 
     return newMember
   },
@@ -479,6 +490,11 @@ export const connectionService = {
         }
       } catch (coinErr) {
         console.error('[connectionService] Error awarding loyalty coins:', coinErr);
+      }
+
+      // Trigger instant push notification to Athlete
+      if (member?.profile_id) {
+        pushNotificationService.notifyCheckIn(gymId, member).catch(() => {})
       }
 
       return {

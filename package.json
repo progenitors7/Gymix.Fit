@@ -1,7 +1,7 @@
 {
   "name": "gym",
   "private": true,
-  "version": "2.15.6",
+  "version": "2.15.7",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -15,6 +15,7 @@
   "dependencies": {
     "@capacitor/android": "^8.3.4",
     "@capacitor/app": "^8.1.0",
+    "@capacitor/browser": "^8.0.4",
     "@capacitor/core": "^8.3.4",
     "@capacitor/push-notifications": "^8.1.1",
     "@hapi/boom": "^10.0.1",

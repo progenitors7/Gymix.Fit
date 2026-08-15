@@ -170,12 +170,25 @@ export function AuthProvider({ children }) {
         }
       }
 
-      // BUG #6 FIX: Capture ?role= from URL here (on mount only, not on every render)
+      // BUG #6 FIX: Capture ?role= and PKCE ?code= from URL here (on mount only, not on every render)
       if (typeof window !== 'undefined' && window.location.search) {
         const searchParams = new URLSearchParams(window.location.search)
         const urlRole = searchParams.get('role')
         if (urlRole) {
           localStorage.setItem('oauth_signup_role', urlRole)
+        }
+        const authCode = searchParams.get('code')
+        if (authCode && !isNativeCapacitorApp()) {
+          try {
+            const { data, error } = await supabase.auth.exchangeCodeForSession(authCode)
+            if (!error && data?.session?.user) {
+              setUser(data.session.user)
+              await syncProfile(data.session.user)
+              window.history.replaceState(null, '', window.location.pathname)
+            }
+          } catch (e) {
+            console.warn('[AuthProvider] Code exchange on web init:', e)
+          }
         }
       }
 
@@ -220,7 +233,7 @@ export function AuthProvider({ children }) {
             setLoading(false)
           }
         }
-      } catch (err) {
+      } catch {
         if (!settled) {
           settled = true
           clearTimeout(timer)
@@ -267,38 +280,97 @@ export function AuthProvider({ children }) {
         import('@capacitor/app').then(({ App }) => {
           App.addListener('appUrlOpen', async (event) => {
             console.log('[Capacitor Auth] App opened with URL:', event.url);
+            
+            // Close Chrome Custom Tab if open
             try {
-              const urlStr = event.url;
-              const hashIndex = urlStr.indexOf('#');
+              const { Browser } = await import('@capacitor/browser')
+              await Browser.close()
+            } catch {
+              // Non-fatal if browser was already closed or not opened
+            }
+
+            try {
+              const urlStr = event.url
+              if (!urlStr) return
+
+              // Parse and save role to localStorage for Capacitor deep links
+              const roleMatch = urlStr.match(/[?&]role=([^&#]+)/)
+              if (roleMatch && roleMatch[1]) {
+                localStorage.setItem('oauth_signup_role', decodeURIComponent(roleMatch[1]))
+              }
+
+              // 1. Check for PKCE Authorization Code (?code=... or &code=...)
+              const codeMatch = urlStr.match(/[?&]code=([^&#]+)/)
+              if (codeMatch && codeMatch[1]) {
+                const authCode = decodeURIComponent(codeMatch[1])
+                console.log('[Capacitor Auth] Exchanging PKCE auth code for session...')
+                setLoading(true)
+                const { data, error } = await supabase.auth.exchangeCodeForSession(authCode)
+                if (error) throw error
+                if (data?.session?.user) {
+                  setUser(data.session.user)
+                  await syncProfile(data.session.user)
+                }
+                console.log('[Capacitor Auth] PKCE session exchange successful!')
+                return
+              }
+
+              // 2. Check for Hash Fragment Tokens (#access_token=...&refresh_token=...)
+              const hashIndex = urlStr.indexOf('#')
               if (hashIndex !== -1) {
-                const hash = urlStr.substring(hashIndex + 1);
-                const params = new URLSearchParams(hash);
-                const accessToken = params.get('access_token');
-                const refreshToken = params.get('refresh_token');
+                const hash = urlStr.substring(hashIndex + 1)
+                const params = new URLSearchParams(hash)
+                const accessToken = params.get('access_token')
+                const refreshToken = params.get('refresh_token')
 
                 if (accessToken && refreshToken) {
-                  setLoading(true);
-                  // Parse and save role to localStorage for Capacitor deep links
-                  const match = urlStr.match(/[?&]role=([^&#]+)/)
-                  if (match) {
-                    localStorage.setItem('oauth_signup_role', match[1])
-                  }
-
+                  console.log('[Capacitor Auth] Found hash tokens. Setting session...')
+                  setLoading(true)
                   const { data, error } = await supabase.auth.setSession({
                     access_token: accessToken,
                     refresh_token: refreshToken
-                  });
-                  if (error) throw error;
-                  console.log('[Capacitor Auth] Session set successfully!', data);
+                  })
+                  if (error) throw error
+                  if (data?.session?.user) {
+                    setUser(data.session.user)
+                    await syncProfile(data.session.user)
+                  }
+                  console.log('[Capacitor Auth] Hash session set successfully!')
+                  return
+                }
+              }
+
+              // 3. Check for Query Param Tokens (?access_token=...&refresh_token=...)
+              const searchIndex = urlStr.indexOf('?')
+              if (searchIndex !== -1) {
+                const search = urlStr.substring(searchIndex + 1).split('#')[0]
+                const params = new URLSearchParams(search)
+                const accessToken = params.get('access_token')
+                const refreshToken = params.get('refresh_token')
+
+                if (accessToken && refreshToken) {
+                  console.log('[Capacitor Auth] Found query tokens. Setting session...')
+                  setLoading(true)
+                  const { data, error } = await supabase.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: refreshToken
+                  })
+                  if (error) throw error
+                  if (data?.session?.user) {
+                    setUser(data.session.user)
+                    await syncProfile(data.session.user)
+                  }
+                  console.log('[Capacitor Auth] Query session set successfully!')
+                  return
                 }
               }
             } catch (err) {
-              console.error('[Capacitor Auth] Failed to handle deep link login:', err.message || err);
+              console.error('[Capacitor Auth] Failed to handle deep link login:', err.message || err)
             } finally {
-              setLoading(false);
+              setLoading(false)
             }
-          });
-        });
+          })
+        })
       }
 
       return () => {
@@ -457,10 +529,11 @@ export function AuthProvider({ children }) {
       redirectUrl += `?role=${role}`;
     }
 
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: redirectUrl,
+        skipBrowserRedirect: isNative,
         queryParams: {
           prompt: 'select_account',
           access_type: 'offline',
@@ -468,6 +541,11 @@ export function AuthProvider({ children }) {
       },
     })
     if (error) throw error
+
+    if (isNative && data?.url) {
+      const { Browser } = await import('@capacitor/browser')
+      await Browser.open({ url: data.url, windowName: '_self' })
+    }
   }
 
   const refreshProfile = async () => {

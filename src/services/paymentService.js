@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
+import { pushNotificationService } from './pushNotificationService';
 
 export const paymentService = {
   // Get all payments for a specific gym (protects against Super Admin leakage in dashboard)
@@ -56,6 +57,22 @@ export const paymentService = {
       .single();
 
     if (error) throw error;
+
+    // Trigger instant push notification to Member if profile is linked
+    if (paymentData.member_id) {
+      supabase
+        .from('members')
+        .select('id, full_name, profile_id')
+        .eq('id', paymentData.member_id)
+        .maybeSingle()
+        .then(({ data: member }) => {
+          if (member?.profile_id) {
+            pushNotificationService.notifyPaymentReceived(gymId, member, paymentData.amount_paid).catch(() => {});
+          }
+        })
+        .catch(() => {});
+    }
+
     return data;
   },
 
