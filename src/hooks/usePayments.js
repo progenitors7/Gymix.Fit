@@ -1,8 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { paymentService } from '../services/paymentService';
 import { useCurrentGym } from './useCurrentGym';
 import { supabase } from '../lib/supabaseClient';
 import { invalidateDashboardStatsCache } from './useDashboardStats';
+import { useRealtimeSync } from './useRealtimeSync';
 
 export function usePayments() {
   const { gym, isReady } = useCurrentGym();
@@ -49,6 +50,21 @@ export function usePayments() {
       setLoading(false);
     }
   }, [isReady, gym?.id]);
+
+  useEffect(() => {
+    if (isReady && gym?.id) {
+      fetchPayments();
+    }
+  }, [isReady, gym?.id, fetchPayments]);
+
+  // Live Supabase Realtime Sync for payments and store orders
+  useRealtimeSync({
+    gymId: gym?.id,
+    tables: ['payments', 'store_orders'],
+    onUpdate: () => {
+      fetchPayments();
+    }
+  });
 
   const addPayment = async (paymentData) => {
     try {

@@ -1,13 +1,10 @@
-/**
- * useMembers.js
- * Hook that manages member list state — fetch, optimistic updates, search.
- */
 import { useState, useEffect, useCallback } from 'react'
 import { getMembers, createMember, updateMember, deleteMember, filterMembers } from '../services/memberService'
 import { useCurrentGym } from './useCurrentGym'
 import { unifiedService } from '../services/unifiedService'
 import { DEFAULT_WELCOME_TEMPLATE, DEFAULT_LEFT_TEMPLATE } from '../config/whatsappTemplates'
 import { waFetch } from '../lib/waFetch'
+import { useRealtimeSync } from './useRealtimeSync'
 
 export function useMembers() {
   const { gym, gymId, isReady } = useCurrentGym()
@@ -78,6 +75,15 @@ export function useMembers() {
       mounted = false;
     };
   }, [fetchMembers, isReady, hasFetched])
+
+  // Live Supabase Realtime Sync for members list
+  useRealtimeSync({
+    gymId,
+    tables: ['members'],
+    onUpdate: () => {
+      fetchMembers(true)
+    }
+  })
 
   const addMember = useCallback(async (formData) => {
     if (!gymId) throw new Error('Gym not loaded')

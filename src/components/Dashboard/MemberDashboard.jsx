@@ -9,6 +9,7 @@ import Logo from '../UI/Logo'
 import { toast } from 'react-hot-toast'
 import { pushNotificationService } from '../../services/pushNotificationService'
 import { isNativeCapacitorApp } from '../../utils/platform'
+import PullToRefresh from '../UI/PullToRefresh'
 
 // Modular Member Portal Subcomponents
 import MemberSidebar from '../MemberPortal/MemberSidebar'
@@ -801,6 +802,44 @@ export default function MemberDashboard() {
     loadMemberSystem()
   }, [loadMemberSystem])
 
+  // Realtime Live sync for athlete connection approvals and member profile updates
+  useEffect(() => {
+    if (!profile?.id) return
+
+    const channelName = `gymix-athlete-live-${profile.id}`
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'connection_requests',
+          filter: `profile_id=eq.${profile.id}`
+        },
+        () => {
+          loadMemberSystem()
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'members',
+          filter: `profile_id=eq.${profile.id}`
+        },
+        () => {
+          loadMemberSystem()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [profile?.id, loadMemberSystem])
+
   const handleClearScannedGym = () => {
     localStorage.removeItem('scanned_gym_code')
     setScannedGym(null)
@@ -947,8 +986,9 @@ export default function MemberDashboard() {
         />
 
         <main className="flex-1 p-6 lg:p-8 pb-20 lg:pb-8 max-w-6xl w-full mx-auto overflow-y-auto scroll-smooth">
-          {renderPwaBanner()}
-          {renderNotificationBanner()}
+          <PullToRefresh onRefresh={() => loadMemberSystem()}>
+            {renderPwaBanner()}
+            {renderNotificationBanner()}
           {!membership ? (
             <MemberConnectionPanel
               gymCode={gymCode}
@@ -1038,6 +1078,7 @@ export default function MemberDashboard() {
               )}
             </AnimatePresence>
           )}
+          </PullToRefresh>
         </main>
       </div>
 

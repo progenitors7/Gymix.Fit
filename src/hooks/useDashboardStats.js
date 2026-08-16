@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useGym } from './useGym';
+import { useRealtimeSync } from './useRealtimeSync';
 
 export const toLocalDateStr = (val) => {
   if (!val) return '';
@@ -573,6 +574,15 @@ export function useDashboardStats() {
       mounted = false;
     };
   }, [fetchStats, gym?.id]);
+
+  // Live Supabase Realtime Sync for dashboard stats
+  useRealtimeSync({
+    gymId: gym?.id,
+    tables: ['connection_requests', 'attendance', 'payments', 'members'],
+    onUpdate: () => {
+      fetchStats(true);
+    }
+  });
 
   return {
     stats,

@@ -8,6 +8,8 @@ import { useCurrentGym } from '../hooks/useCurrentGym'
 import { supabase } from '../lib/supabaseClient'
 import { connectionService } from '../services/connectionService'
 import toast from 'react-hot-toast'
+import PullToRefresh from '../components/UI/PullToRefresh'
+import { useRealtimeSync } from '../hooks/useRealtimeSync'
 
 export default function AttendancePage() {
   const { gym } = useCurrentGym()
@@ -216,6 +218,16 @@ export default function AttendancePage() {
     setRefreshing(false)
   }
 
+  // Live Supabase Realtime Sync for attendance records
+  useRealtimeSync({
+    gymId: gym?.id,
+    tables: ['attendance'],
+    onUpdate: () => {
+      fetchAttendanceLogs()
+      fetchTodayStats()
+    }
+  })
+
   // Filter logs dynamically by search query (date is handled by DB)
   useEffect(() => {
     if (!logs) return
@@ -255,7 +267,8 @@ export default function AttendancePage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-8 pb-28 lg:pb-10">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-8 pb-28 lg:pb-10">
       
       {/* HEADER SECTION */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
@@ -653,6 +666,7 @@ export default function AttendancePage() {
         )}
       </AnimatePresence>
 
-    </div>
+      </div>
+    </PullToRefresh>
   )
 }

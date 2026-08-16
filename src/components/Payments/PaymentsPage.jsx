@@ -23,6 +23,7 @@ import {
 import { usePayments } from '../../hooks/usePayments';
 import StatusBadge from '../UI/StatusBadge';
 import { isNativeCapacitorApp } from '../../utils/platform';
+import PullToRefresh from '../UI/PullToRefresh';
 
 const isNativeApp = isNativeCapacitorApp() || window.matchMedia('(display-mode: standalone)').matches;
 
@@ -151,12 +152,13 @@ export default function PaymentsPage() {
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      className="p-6 sm:p-8 max-w-7xl mx-auto space-y-10"
-    >
+    <PullToRefresh onRefresh={fetchPayments} className="min-h-screen">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="p-6 sm:p-8 max-w-7xl mx-auto space-y-10"
+      >
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-1">
@@ -617,7 +619,8 @@ export default function PaymentsPage() {
           )}
         </div>
       )}
-    </motion.div>
+      </motion.div>
+    </PullToRefresh>
   );
 }
 

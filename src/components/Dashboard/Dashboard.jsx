@@ -17,6 +17,7 @@ import OnboardingChecklist from './OnboardingChecklist';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../../lib/supabaseClient';
 import { pushNotificationService } from '../../services/pushNotificationService';
+import PullToRefresh from '../UI/PullToRefresh';
 
 import { 
   Users, 
@@ -605,33 +606,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      className="relative min-h-screen"
-    >
-      {/* Sliding Pull to Refresh Indicator */}
-      <div 
-        className="absolute left-0 right-0 z-50 flex items-center justify-center pointer-events-none transition-all duration-150"
-        style={{ 
-          top: `${pullDistance - 40}px`,
-          opacity: pullDistance > 10 ? 1 : 0
-        }}
-      >
-        <div className="w-10 h-10 rounded-full bg-[#1A1F2B] border border-white/10 flex items-center justify-center shadow-2xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-[#3B82F6]/5 pointer-events-none" />
-          <RefreshCw 
-            className={`w-4.5 h-4.5 text-[#3B82F6] ${
-              isRefreshing ? 'animate-spin' : ''
-            }`}
-            style={{ 
-              transform: isRefreshing ? undefined : `rotate(${pullDistance * 4}deg)`
-            }}
-          />
-        </div>
-      </div>
-
+    <PullToRefresh onRefresh={fetchStats} className="min-h-screen">
       <div className="p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-8">
       
       {/* Play Store Subscription Reminder Banner */}
@@ -1089,8 +1064,8 @@ export default function Dashboard() {
         </div>
 
       </div>
-      {renderPosterModal()}
       </div>
-    </div>
+      {renderPosterModal()}
+    </PullToRefresh>
   )
 }

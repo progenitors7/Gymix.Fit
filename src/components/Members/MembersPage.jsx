@@ -33,6 +33,7 @@ import StatusBadge from '../UI/StatusBadge';
 import ConfirmModal from '../UI/ConfirmModal';
 import { DEFAULT_EXPIRY_SOON_TEMPLATE, DEFAULT_EXPIRED_TEMPLATE } from '../../config/whatsappTemplates';
 import { isNativeCapacitorApp } from '../../utils/platform';
+import PullToRefresh from '../UI/PullToRefresh';
 
 const STATUS_TABS = [
   { key: 'all', label: 'All' },
@@ -91,6 +92,7 @@ export default function MembersPage() {
     searchQuery,
     setSearchQuery,
     removeMember,
+    fetchMembers,
   } = useMembers();
 
   const [localSearch, setLocalSearch] = useState(() => searchParams.get('search') || '');
@@ -314,7 +316,8 @@ export default function MembersPage() {
   };
 
   return (
-    <div className="p-6 sm:p-8 max-w-7xl mx-auto min-h-screen">
+    <PullToRefresh onRefresh={fetchMembers} className="min-h-screen">
+      <div className="p-6 sm:p-8 max-w-7xl mx-auto min-h-screen">
       {/* ── Page header ── */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
@@ -758,7 +761,8 @@ export default function MembersPage() {
       />
 
 
-    </div>
+      </div>
+    </PullToRefresh>
   );
 }
 
