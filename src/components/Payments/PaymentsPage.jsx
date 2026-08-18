@@ -85,8 +85,10 @@ export default function PaymentsPage() {
   };
 
   const filteredPayments = payments.filter(payment => {
-    const matchesSearch = payment.members?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          payment.subscriptions?.plan_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const q = searchTerm.toLowerCase();
+    const matchesSearch = (payment.members?.full_name && payment.members.full_name.toLowerCase().includes(q)) ||
+                          (payment.members?.phone_number && payment.members.phone_number.includes(searchTerm)) ||
+                          (payment.subscriptions?.plan_name && payment.subscriptions.plan_name.toLowerCase().includes(q));
     const matchesStatus = statusFilter === 'all' || payment.payment_status === statusFilter;
     return matchesSearch && matchesStatus;
   });

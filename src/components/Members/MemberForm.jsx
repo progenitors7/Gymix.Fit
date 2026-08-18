@@ -9,7 +9,7 @@
  */
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { User, Phone, Activity, Award, FileText, CreditCard, Sparkles } from 'lucide-react'
+import { User, Phone, Activity, Award, FileText, CreditCard, Sparkles, Calendar, Layers } from 'lucide-react'
 import DatePicker from '../UI/DatePicker'
 import { useCurrentGym } from '../../hooks/useCurrentGym'
 import { supabase } from '../../lib/supabaseClient'
@@ -225,10 +225,12 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
 
   const validate = () => {
     const errs = {}
-    if (!form.full_name.trim()) errs.full_name = 'Name is required'
-    if (!form.membership_plan) errs.membership_plan = 'Plan is required'
-    if (!form.expiry_date) errs.expiry_date = 'Expiry date is required'
-    if (!form.join_date) errs.join_date = 'Join date is required'
+    if (!form.full_name?.trim()) errs.full_name = 'Name is required'
+    if (mode === 'add') {
+      if (!form.membership_plan) errs.membership_plan = 'Plan is required'
+      if (!form.expiry_date) errs.expiry_date = 'Expiry date is required'
+      if (!form.join_date) errs.join_date = 'Join date is required'
+    }
     if (form.phone_number && !/^[0-9+\-\s()]{7,15}$/.test(form.phone_number)) {
       errs.phone_number = 'Enter a valid phone number'
     }
@@ -358,6 +360,43 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
         </div>
       </div>
 
+      {/* In Edit Mode: Show Read-Only Membership Information Card */}
+      {mode === 'edit' && (
+        <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Membership Overview</span>
+            <span className="text-[10px] font-bold text-slate-500">Managed via Subscriptions</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Layers className="w-3 h-3 text-slate-400" />
+                Current Plan
+              </p>
+              <p className="text-sm font-black text-white mt-1 truncate">{form.membership_plan || 'No Active Plan'}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Calendar className="w-3 h-3 text-slate-400" />
+                Joined On
+              </p>
+              <p className="text-sm font-black text-white mt-1">
+                {form.join_date ? new Date(form.join_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Calendar className="w-3 h-3 text-slate-400" />
+                Expires On
+              </p>
+              <p className="text-sm font-black text-emerald-400 mt-1">
+                {form.expiry_date ? new Date(form.expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Row 1: Name + Phone */}
       <div className="grid sm:grid-cols-2 gap-5">
         <Field label="Full Name" required error={errors.full_name}>
@@ -386,41 +425,69 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
         </Field>
       </div>
 
-      {/* Row 2: Gender + Plan */}
-      <div className="grid sm:grid-cols-2 gap-5">
-        <Field label="Gender">
-          <Activity className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
-          <select id="member-gender" value={form.gender} onChange={set('gender')} className={inputCls}>
-            <option value="">Select gender</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-        </Field>
-        <Field label="Membership Plan" required error={errors.membership_plan}>
-          <Award className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
-          <select id="member-plan" value={form.membership_plan} onChange={set('membership_plan')} className={inputCls}>
-            <option value="">Select plan</option>
-            {plans.map((p) => <option key={p.id} value={p.name}>{p.name} (₹{p.price})</option>)}
-          </select>
-        </Field>
-      </div>
+      {/* Mode === 'edit': Row 2 is Gender + Status */}
+      {mode === 'edit' ? (
+        <div className="grid sm:grid-cols-2 gap-5">
+          <Field label="Gender">
+            <Activity className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
+            <select id="member-gender" value={form.gender} onChange={set('gender')} className={inputCls}>
+              <option value="">Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </Field>
+          <Field label="Member Status">
+            <Activity className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
+            <select 
+              id="member-status" 
+              value={form.status || 'active'} 
+              onChange={set('status')} 
+              className={inputCls}
+            >
+              <option value="active">Active</option>
+              <option value="left">Left (Inactive)</option>
+            </select>
+          </Field>
+        </div>
+      ) : (
+        /* Mode === 'add': Row 2 & 3 are Gender + Plan & Join Date + Expiry Date */
+        <>
+          <div className="grid sm:grid-cols-2 gap-5">
+            <Field label="Gender">
+              <Activity className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
+              <select id="member-gender" value={form.gender} onChange={set('gender')} className={inputCls}>
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </Field>
+            <Field label="Membership Plan" required error={errors.membership_plan}>
+              <Award className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
+              <select id="member-plan" value={form.membership_plan} onChange={set('membership_plan')} className={inputCls}>
+                <option value="">Select plan</option>
+                {plans.map((p) => <option key={p.id} value={p.name}>{p.name} (₹{p.price})</option>)}
+              </select>
+            </Field>
+          </div>
 
-      {/* Row 3: Join date + Expiry date */}
-      <div className="grid sm:grid-cols-2 gap-5">
-        <Field label="Join Date" required error={errors.join_date}>
-          <DatePicker
-            value={form.join_date}
-            onChange={(val) => setForm(f => ({ ...f, join_date: val }))}
-          />
-        </Field>
-        <Field label="Expiry Date" required error={errors.expiry_date}>
-          <DatePicker
-            value={form.expiry_date}
-            onChange={(val) => setForm(f => ({ ...f, expiry_date: val }))}
-          />
-        </Field>
-      </div>
+          <div className="grid sm:grid-cols-2 gap-5">
+            <Field label="Join Date" required error={errors.join_date}>
+              <DatePicker
+                value={form.join_date}
+                onChange={(val) => setForm(f => ({ ...f, join_date: val }))}
+              />
+            </Field>
+            <Field label="Expiry Date" required error={errors.expiry_date}>
+              <DatePicker
+                value={form.expiry_date}
+                onChange={(val) => setForm(f => ({ ...f, expiry_date: val }))}
+              />
+            </Field>
+          </div>
+        </>
+      )}
 
       {/* Biometric ID (Only if enabled in gym settings) */}
       {gym?.biometric_enabled && (
@@ -440,29 +507,6 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
           <div className="flex items-center pb-1">
             <p className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest leading-tight">
               Enter the numeric User ID/Card ID of this member registered on the biometric fingerprint/face scanner.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Status (Only in Edit Mode) */}
-      {mode === 'edit' && (
-        <div className="grid sm:grid-cols-2 gap-5 animate-in fade-in duration-300">
-          <Field label="Member Status">
-            <Activity className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
-            <select 
-              id="member-status" 
-              value={form.status || 'active'} 
-              onChange={set('status')} 
-              className={inputCls}
-            >
-              <option value="active">Active (Auto-calculate)</option>
-              <option value="left">Left (Inactive)</option>
-            </select>
-          </Field>
-          <div className="flex items-center pb-1">
-            <p className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest leading-tight">
-              Marking status as "Left" will immediately restrict biometric scanner access and label them as inactive.
             </p>
           </div>
         </div>

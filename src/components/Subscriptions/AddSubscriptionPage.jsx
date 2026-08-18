@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Zap, Sparkles } from 'lucide-react';
 import SubscriptionForm from './SubscriptionForm';
 import { useSubscriptions } from '../../hooks/useSubscriptions';
@@ -8,6 +8,8 @@ import { useCurrentGym } from '../../hooks/useCurrentGym';
 
 export default function AddSubscriptionPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const preSelectedMemberId = searchParams.get('memberId') || searchParams.get('member');
   const { error } = useSubscriptions();
   const { gym } = useCurrentGym();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,7 +75,11 @@ export default function AddSubscriptionPage() {
             </div>
           )}
           
-          <SubscriptionForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
+          <SubscriptionForm 
+            onSubmit={handleSubmit} 
+            isSubmitting={isSubmitting} 
+            initialData={preSelectedMemberId ? { member_id: preSelectedMemberId } : null}
+          />
         </div>
       </div>
 
