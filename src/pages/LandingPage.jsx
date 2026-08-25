@@ -1425,6 +1425,40 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6.5 mt-12 max-w-5xl mx-auto">
             {[
               {
+                name: "AGARO AD1719 Electric Air Duster & Blower",
+                badge: "High-Power Equipment Care",
+                desc: "Heavy-duty 48,000 RPM electric blower for deep cleaning gym machines, treadmills, biometric scanners, and console electronics.",
+                specs: [
+                  "48,000 RPM Electric Motor",
+                  "Continuous Airflow Power",
+                  "Multi-Surface Nozzle Attachments",
+                  "Deep Cleaning for Gym Gear"
+                ],
+                link: "https://link.amazon/B0h3zDTU5",
+                color: "from-amber-500/20 to-transparent",
+                borderColor: "group-hover:border-amber-500/40",
+                badgeColor: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+                icon: Zap,
+                category: "Equipment Care"
+              },
+              {
+                name: "Portronics Tornado Pro Handheld Duster",
+                badge: "Cordless Turbo Care",
+                desc: "Ultra-fast rechargeable air duster & vacuum for quick touchups on gym machines, biometric scanners, and front desk hardware.",
+                specs: [
+                  "High-Speed Cordless Motor",
+                  "2-in-1 Blow & Vacuum Feature",
+                  "Type-C Quick Rechargeable Battery",
+                  "Interchangeable Precision Nozzles"
+                ],
+                link: "https://link.amazon/B04i3Snhd",
+                color: "from-cyan-500/20 to-transparent",
+                borderColor: "group-hover:border-cyan-500/40",
+                badgeColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20",
+                icon: ShoppingBag,
+                category: "Equipment Care"
+              },
+              {
                 name: "eSSL Identix K30 Pro",
                 badge: "Standard Fingerprint",
                 desc: "Extremely popular biometric machine featuring inbuilt battery backup, cloud push data technology, and access control support.",

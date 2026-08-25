@@ -3,11 +3,55 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Fingerprint, ShoppingBag, ExternalLink, Search, ArrowLeft, 
-  Cpu, ShieldCheck, Check, Info, X, Star, Calendar, Settings
+  Cpu, ShieldCheck, Check, Info, X, Star, Calendar, Settings, Zap
 } from 'lucide-react'
 import Logo from '../components/UI/Logo'
 
 const HARDWARE_PRODUCTS = [
+  {
+    id: "agaro-ad1719-duster",
+    name: "AGARO AD1719 Electric Air Duster & Blower",
+    brand: "AGARO",
+    category: "Maintenance & Tools",
+    badge: "High-Power Equipment Care",
+    desc: "Heavy-duty 48,000 RPM electric blower designed for deep cleaning gym machines, treadmills, biometric scanners, and console electronics.",
+    price: "₹1,999",
+    rating: 4.4,
+    specs: [
+      "48,000 RPM Electric High-Speed Motor",
+      "Continuous High-Pressure Airflow",
+      "Multi-Surface Precision Nozzle Attachments",
+      "Deep Cleaning for Gym Gear & Sensors",
+      "Compact & Ergonomic Heat-Resistant Body"
+    ],
+    link: "https://link.amazon/B0h3zDTU5",
+    color: "from-amber-500/15 to-transparent",
+    borderColor: "hover:border-amber-500/30",
+    badgeColor: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+    icon: Zap
+  },
+  {
+    id: "portronics-tornado-pro",
+    name: "Portronics Tornado Pro Handheld Air Duster & Vacuum",
+    brand: "Portronics",
+    category: "Maintenance & Tools",
+    badge: "Cordless Turbo Care",
+    desc: "Ultra-fast rechargeable air duster & vacuum for quick touchups on gym machines, turnstiles, biometric scanners, and front desk gear.",
+    price: "₹1,599",
+    rating: 4.3,
+    specs: [
+      "High-Speed Cordless Turbo Air Duster",
+      "2-in-1 Powerful Blow & Vacuum Function",
+      "Type-C Quick Rechargeable Battery",
+      "Interchangeable Precision Nozzles",
+      "Lightweight Portable Gym Maintenance Tool"
+    ],
+    link: "https://link.amazon/B04i3Snhd",
+    color: "from-cyan-500/15 to-transparent",
+    borderColor: "hover:border-cyan-500/30",
+    badgeColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20",
+    icon: ShoppingBag
+  },
   {
     id: "essl-k30-pro",
     name: "eSSL Identix K30 Pro",
@@ -79,8 +123,8 @@ export default function HardwareStorePage() {
   
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('All') // 'All' | 'Fingerprint' | 'Face Recognition'
-  const [selectedBrand, setSelectedBrand] = useState('All') // 'All' | 'eSSL' | 'BioMax' | 'Realtime' | 'ZKTeco'
+  const [selectedCategory, setSelectedCategory] = useState('All') // 'All' | 'Fingerprint' | 'Face Recognition' | 'Maintenance & Tools'
+  const [selectedBrand, setSelectedBrand] = useState('All') // 'All' | 'eSSL' | 'ZKTeco' | 'AGARO' | 'Portronics'
 
   // Scroll to top on load
   useEffect(() => {
@@ -175,7 +219,7 @@ export default function HardwareStorePage() {
 
             {/* Category Filter */}
             <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-              {['All', 'Fingerprint', 'Face Recognition'].map(cat => (
+              {['All', 'Fingerprint', 'Face Recognition', 'Maintenance & Tools'].map(cat => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
@@ -192,7 +236,7 @@ export default function HardwareStorePage() {
 
             {/* Brand Filter */}
             <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-              {['All', 'eSSL', 'ZKTeco'].map(brand => (
+              {['All', 'AGARO', 'Portronics', 'eSSL', 'ZKTeco'].map(brand => (
                 <button
                   key={brand}
                   onClick={() => setSelectedBrand(brand)}
