@@ -21,9 +21,39 @@ const BILLING_FUNCTION = 'razorpay-subscription-v2';
 const FREE_PROMO_DURATION_MONTHS = 1;
 
 const DURATIONS = [
-  { months: 1, label: '1 Month', price: 999, dailyText: 'Only ₹33/day', discount: 0 },
-  { months: 3, label: '3 Months', price: 2499, dailyText: 'Only ₹27/day', discount: 16, badge: 'MOST POPULAR', badgeColor: 'bg-amber-400 text-black' },
-  { months: 12, label: '12 Months + 1 Month Free', price: 9990, dailyText: 'Best value (13 months total)', discount: 23, badge: 'BEST VALUE', badgeColor: 'bg-[#3390ec] text-white' },
+  { 
+    months: 1, 
+    label: '1 Month', 
+    originalPrice: 999, 
+    price: 599, 
+    discountPercent: 40, 
+    savings: 400, 
+    dailyText: 'Only ₹20/day (~₹599/mo)',
+    badge: '40% OFF',
+    badgeColor: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+  },
+  { 
+    months: 3, 
+    label: '3 Months', 
+    originalPrice: 2499, 
+    price: 1499, 
+    discountPercent: 40, 
+    savings: 1000, 
+    dailyText: 'Only ₹16/day (~₹500/mo)', 
+    badge: 'MOST POPULAR (40% OFF)', 
+    badgeColor: 'bg-amber-400 text-black' 
+  },
+  { 
+    months: 12, 
+    label: '12 Months + 1 Month Free', 
+    originalPrice: 9990, 
+    price: 4999, 
+    discountPercent: 50, 
+    savings: 4991, 
+    dailyText: 'Best value (13 mos, ~₹416/mo)', 
+    badge: 'SAVE 50% (BEST VALUE)', 
+    badgeColor: 'bg-emerald-500 text-black' 
+  },
 ];
 
 export default function BillingPage() {
@@ -57,9 +87,11 @@ export default function BillingPage() {
               dbPlan = data.find(p => p.id === '81ba6dad-524b-4bd6-9987-e5759c3e11d4' || p.name.includes('12 Months'));
             }
             if (dbPlan) {
+              const currentPrice = Number(dbPlan.price);
               return {
                 ...dur,
-                price: Number(dbPlan.price)
+                price: currentPrice,
+                savings: (dur.originalPrice || currentPrice) - currentPrice
               };
             }
             return dur;
@@ -414,8 +446,8 @@ export default function BillingPage() {
               <Star className="w-5 h-5 fill-current" />
             </div>
             <div>
-              <h4 className="text-[#3390ec] font-black uppercase tracking-widest text-xs">Founding Gym Offer</h4>
-              <p className="text-gray-400 text-sm font-medium">Early access pricing for limited gyms</p>
+              <h4 className="text-[#3390ec] font-black uppercase tracking-widest text-xs">Founding Gym Launch Offer</h4>
+              <p className="text-gray-400 text-sm font-medium">Up to 50% introductory discount unlocked on all plans!</p>
             </div>
           </div>
 
@@ -452,8 +484,14 @@ export default function BillingPage() {
                     }`}>
                       {dur.label}
                     </span>
-                    <div className="flex items-baseline gap-1">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-sm font-bold text-gray-500 line-through">₹{dur.originalPrice}</span>
                       <span className="text-3xl font-black text-white transition-colors">₹{dur.price}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        SAVE {dur.discountPercent}% OFF
+                      </span>
                     </div>
                     <span className={`text-xs mt-2 font-medium ${
                       selectedDuration.months === dur.months ? 'text-[#3390ec]' : 'text-gray-500'
@@ -491,7 +529,15 @@ export default function BillingPage() {
             <div className="space-y-4 mb-8">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400 font-medium">Growth Plan ({selectedDuration.label})</span>
-                <span className="text-white font-bold">₹{selectedDuration.price}</span>
+                <div className="text-right">
+                  <span className="text-xs text-gray-500 line-through block">₹{selectedDuration.originalPrice}</span>
+                  <span className="text-white font-bold">₹{selectedDuration.price}</span>
+                </div>
+              </div>
+
+              <div className="flex justify-between text-xs py-1.5 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                <span className="text-emerald-400 font-bold">Launch Discount ({selectedDuration.discountPercent}% OFF)</span>
+                <span className="text-emerald-400 font-bold">-₹{selectedDuration.savings}</span>
               </div>
               
               {appliedPromo && (
@@ -511,8 +557,14 @@ export default function BillingPage() {
               <div className="h-px bg-white/5 my-4" />
               
               <div className="flex justify-between items-baseline">
-                <span className="text-white font-black uppercase italic text-lg">Total</span>
+                <div>
+                  <span className="text-white font-black uppercase italic text-lg block">Total</span>
+                  <span className="text-[10px] text-emerald-400 font-bold">
+                    You save ₹{(selectedDuration.savings || 0) + (selectedDuration.price - finalAmount)}
+                  </span>
+                </div>
                 <div className="text-right">
+                  <span className="text-xs text-gray-500 line-through font-bold pr-2">₹{selectedDuration.originalPrice}</span>
                   <span className="text-3xl font-black text-[#3390ec]">₹{finalAmount}</span>
                   <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-1">Inclusive of all taxes</p>
                 </div>

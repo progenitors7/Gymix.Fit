@@ -169,14 +169,42 @@ export default function LandingPage() {
 
   // Pricing calculations
   const planData = {
-    '1': { name: 'Growth Trial Plan', price: 999, desc: 'Ideal for small gyms starting out' },
-    '3': { name: 'Growth Elite Plan', price: 2499, desc: 'Best value for active gyms' },
-    '12': { name: 'Growth Premium Plan (12+1 Free)', price: 9990, desc: 'Unlimited scaling for empires' }
+    '1': { 
+      name: 'Growth Starter Plan', 
+      originalPrice: 999, 
+      price: 599, 
+      discountPercent: 40,
+      savings: 400,
+      dailyRate: '₹20/day',
+      effectiveRate: '₹599 / month',
+      desc: 'Ideal for small gyms starting out' 
+    },
+    '3': { 
+      name: 'Growth Elite Plan', 
+      originalPrice: 2499, 
+      price: 1499, 
+      discountPercent: 40,
+      savings: 1000,
+      dailyRate: '₹16/day',
+      effectiveRate: '₹500 / month',
+      desc: 'Best value for active gyms' 
+    },
+    '12': { 
+      name: 'Growth Premium Plan (12+1 Free)', 
+      originalPrice: 9990, 
+      price: 4999, 
+      discountPercent: 50,
+      savings: 4991,
+      dailyRate: '₹13/day',
+      effectiveRate: '₹416 / month',
+      desc: 'Unlimited scaling for empires (13 Months Access)' 
+    }
   };
   const activePlan = planData[selectedDuration];
-  const originalPrice = activePlan.price;
-  const computedDiscount = promoApplied ? originalPrice : 0;
-  const netTotal = originalPrice - computedDiscount;
+  const originalPrice = activePlan.originalPrice;
+  const offerPrice = activePlan.price;
+  const computedDiscount = promoApplied ? offerPrice : 0;
+  const netTotal = offerPrice - computedDiscount;
 
   const handleApplyPromo = (e) => {
     e.preventDefault();
@@ -1667,12 +1695,19 @@ export default function LandingPage() {
                   }`}
                 >
                   <div className="space-y-1">
-                    <span className="text-[8px] font-black uppercase text-slate-500 tracking-widest">Growth Starter</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[8px] font-black uppercase text-slate-500 tracking-widest">Growth Starter</span>
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[8px] font-black tracking-wider uppercase">
+                        SAVE 40% OFF
+                      </span>
+                    </div>
                     <h4 className="text-lg sm:text-xl font-black text-white italic uppercase">1 Month Access</h4>
+                    <p className="text-[10px] text-slate-400 font-semibold tracking-wide">₹599 / month • Only ₹20/day</p>
                     <p className="text-[10px] text-[#10B981] font-bold uppercase tracking-wider">Eligible for voucher GYMIX1FREE</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-2xl sm:text-3xl font-black text-white">₹999</p>
+                    <span className="text-xs sm:text-sm font-bold text-slate-500 line-through block">₹999</span>
+                    <p className="text-2xl sm:text-3xl font-black text-white">₹599</p>
                     <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none pt-1">Charged Monthly</p>
                   </div>
                 </div>
@@ -1692,17 +1727,24 @@ export default function LandingPage() {
                 >
                   {/* Neon ribbon */}
                   <div className="absolute top-0 right-6 px-3 py-1 bg-[#863BFF] text-white text-[7px] font-black uppercase tracking-widest rounded-b-md">
-                    Recommended
+                    Recommended • 40% OFF
                   </div>
 
                   <div className="space-y-1">
-                    <span className="text-[8px] font-black uppercase text-[#863BFF] tracking-widest">Growth Elite</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[8px] font-black uppercase text-[#863BFF] tracking-widest">Growth Elite</span>
+                      <span className="px-2 py-0.5 rounded-md bg-[#863BFF]/15 border border-[#863BFF]/30 text-[#a87ffb] text-[8px] font-black tracking-wider uppercase">
+                        SAVE ₹1,000
+                      </span>
+                    </div>
                     <h4 className="text-lg sm:text-xl font-black text-white italic uppercase">3 Months Access</h4>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Frictionless operational value</p>
+                    <p className="text-[10px] text-slate-400 font-semibold tracking-wide">₹500 / month • Only ₹16/day</p>
+                    <p className="text-[10px] text-[#863BFF] font-bold uppercase tracking-wider">Most popular for growing gyms</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-2xl sm:text-3xl font-black text-white">₹2499</p>
-                    <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none pt-1">Frictionless Value</p>
+                    <span className="text-xs sm:text-sm font-bold text-slate-500 line-through block">₹2,499</span>
+                    <p className="text-2xl sm:text-3xl font-black text-white">₹1,499</p>
+                    <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none pt-1">Charged Quarterly (~₹500/mo)</p>
                   </div>
                 </div>
 
@@ -1720,16 +1762,23 @@ export default function LandingPage() {
                   }`}
                 >
                   <div className="absolute top-0 right-6 px-3 py-1 bg-[#10B981] text-black text-[7px] font-black uppercase tracking-widest rounded-b-md">
-                    Best Savings
+                    🔥 Best Value • Save 50%
                   </div>
 
                   <div className="space-y-1">
-                    <span className="text-[8px] font-black uppercase text-slate-500 tracking-widest">Gym Empire Pack</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[8px] font-black uppercase text-[#10B981] tracking-widest">Gym Empire Pack</span>
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[8px] font-black tracking-wider uppercase">
+                        SAVE 50% (₹4,991 OFF)
+                      </span>
+                    </div>
                     <h4 className="text-lg sm:text-xl font-black text-white italic uppercase">12 Months + 1 Month Free</h4>
-                    <p className="text-[10px] text-[#10B981] font-bold uppercase tracking-wider">Best value (13 months total)</p>
+                    <p className="text-[10px] text-emerald-400 font-semibold tracking-wide">Only ₹416 / month • ₹13/day (13 Months Total)</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Save ₹4,991 instantly</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-2xl sm:text-3xl font-black text-white">₹9,990</p>
+                    <span className="text-xs sm:text-sm font-bold text-slate-500 line-through block">₹9,990</span>
+                    <p className="text-2xl sm:text-3xl font-black text-[#10B981]">₹4,999</p>
                     <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none pt-1">Charged Annually (13 Months)</p>
                   </div>
                 </div>
@@ -1743,7 +1792,7 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <h4 className="text-xs font-black uppercase tracking-wide text-white">Founding Gym Partner Scheme</h4>
-                  <p className="text-slate-400 text-xs font-semibold leading-normal pt-1">Early adopter license rates lock for life. Get 1 Month 100% Free inside the checkout calculator by entering voucher <strong className="text-emerald-400">GYMIX1FREE</strong> below.</p>
+                  <p className="text-slate-400 text-xs font-semibold leading-normal pt-1">Special introductory discount: 1 Month for <strong className="text-white">₹599</strong>, 3 Months for <strong className="text-white">₹1,499</strong>, or 1 Year for just <strong className="text-emerald-400">₹4,999 (~₹416/mo)</strong>. Plus claim 1 Month 100% Free inside the checkout calculator by entering voucher <strong className="text-emerald-400">GYMIX1FREE</strong> below.</p>
                 </div>
               </div>
             </div>
@@ -1764,7 +1813,18 @@ export default function LandingPage() {
                       <p className="text-white font-black">{activePlan.name}</p>
                       <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{selectedDuration} Months access cycle</p>
                     </div>
-                    <span className="text-white font-black">₹{originalPrice}</span>
+                    <div className="text-right">
+                      <span className="text-xs text-slate-500 line-through block">₹{originalPrice}</span>
+                      <span className="text-white font-black">₹{offerPrice}</span>
+                    </div>
+                  </div>
+
+                  {/* Instant Launch Discount Line */}
+                  <div className="flex justify-between items-center text-xs font-semibold py-2 px-3 rounded-xl bg-emerald-500/5 border border-emerald-500/15">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-emerald-400 font-bold">Launch Discount ({activePlan.discountPercent}% OFF)</span>
+                    </div>
+                    <span className="text-emerald-400 font-bold">-₹{activePlan.savings}</span>
                   </div>
 
                   {/* Promo Input / Applied Box code */}
@@ -1785,8 +1845,8 @@ export default function LandingPage() {
                         </div>
                         
                         <div className="flex justify-between items-center text-xs font-black text-[#10B981] pt-1">
-                          <span>3 Months Promo Discount</span>
-                          <span>-₹{originalPrice}</span>
+                          <span>Voucher Discount (100% OFF)</span>
+                          <span>-₹{offerPrice}</span>
                         </div>
                         
                         <p className="text-[9px] text-[#10B981] font-semibold leading-normal pt-1">
@@ -1827,12 +1887,15 @@ export default function LandingPage() {
                   {/* Calculations Line and net Payable */}
                   <div className="pt-4.5 border-t border-white/5 space-y-2.5">
                     <div className="flex justify-between items-baseline">
-                      <span className="text-xs font-black uppercase tracking-widest text-slate-500">Net Payable</span>
+                      <div>
+                        <span className="text-xs font-black uppercase tracking-widest text-slate-500 block">Net Payable</span>
+                        <span className="text-[10px] text-emerald-400 font-bold">
+                          Total savings: ₹{activePlan.savings + computedDiscount}
+                        </span>
+                      </div>
                       
                       <div className="text-right">
-                        {promoApplied && (
-                          <span className="text-xs text-slate-600 line-through font-bold pr-2.5">₹{originalPrice}</span>
-                        )}
+                        <span className="text-xs text-slate-500 line-through font-bold pr-2.5">₹{originalPrice}</span>
                         <span className="text-2.5xl sm:text-3xl font-black text-white">
                           ₹{netTotal}
                         </span>

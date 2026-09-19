@@ -12,10 +12,10 @@ const corsHeaders = {
 const ALLOWED_DURATIONS = new Set([1, 3, 6, 12])
 const DEFAULT_PLAN_ID = '770f855a-535c-44f1-9604-0ba7a74c6f59'
 const DURATION_PRICES = new Map([
-  [1, 999],
-  [3, 2499],
-  [6, 5499],
-  [12, 9990],
+  [1, 599],
+  [3, 1499],
+  [6, 2999],
+  [12, 4999],
 ])
 
 function calculateDiscountedAmount(baseAmount: number, promo: Record<string, unknown> | null) {
