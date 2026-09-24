@@ -162,22 +162,16 @@ export default function PaymentsPage() {
         className="p-6 sm:p-8 max-w-7xl mx-auto space-y-10"
       >
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-7 h-7 rounded-lg bg-[#3390ec]/10 flex items-center justify-center border border-[#3390ec]/10">
-              <TrendingUp className="w-3.5 h-3.5 text-[#3390ec]" />
-            </div>
-            <p className="text-[#3390ec] font-bold text-[10px] uppercase tracking-wider">Finance</p>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Revenue History</h1>
-          <p className="text-slate-500 text-[11px] font-bold uppercase tracking-wider">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Revenue History</h1>
+          <p className="text-slate-500 dark:text-zinc-400 text-xs mt-1 font-medium">
             {loading ? 'Updating transactions…' : `${payments.length} Transactions Logged`}
           </p>
         </div>
         <button
           onClick={() => navigate('/payments/new')}
-          className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#3390ec] hover:bg-[#2b5278] text-white font-bold text-sm transition-all shadow-lg shadow-[#3390ec]/10 active:scale-95 w-full md:w-auto"
+          className="group flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 active:scale-95 text-white font-semibold text-xs transition-all w-full sm:w-auto cursor-pointer"
         >
           <DollarSign className="w-4 h-4" />
           <span>Manual Entry</span>
@@ -227,32 +221,26 @@ export default function PaymentsPage() {
 
             return (
               <>
-                <div className="glass-card border border-white/5 rounded-2xl p-5 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                    <DollarSign className="w-6 h-6 text-emerald-400" />
+                <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-slate-500 dark:text-zinc-400 text-xs font-medium">Today's Revenue</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">₹{todayRevenue.toLocaleString()}</p>
                   </div>
-                  <div>
-                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Today's Revenue</p>
-                    <p className="text-2xl font-black text-white">₹{todayRevenue.toLocaleString()}</p>
-                  </div>
+                  <DollarSign className="w-5 h-5 text-slate-400 dark:text-zinc-500 stroke-[1.5]" />
                 </div>
-                <div className="glass-card border border-white/5 rounded-2xl p-5 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#3390ec]/10 flex items-center justify-center border border-[#3390ec]/20">
-                    <TrendingUp className="w-6 h-6 text-[#3390ec]" />
+                <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-slate-500 dark:text-zinc-400 text-xs font-medium">This Month</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">₹{monthRevenue.toLocaleString()}</p>
                   </div>
-                  <div>
-                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">This Month</p>
-                    <p className="text-2xl font-black text-white">₹{monthRevenue.toLocaleString()}</p>
-                  </div>
+                  <TrendingUp className="w-5 h-5 text-slate-400 dark:text-zinc-500 stroke-[1.5]" />
                 </div>
-                <div className="glass-card border border-white/5 rounded-2xl p-5 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
-                    <Clock className="w-6 h-6 text-amber-400" />
+                <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-slate-500 dark:text-zinc-400 text-xs font-medium">Pending Dues</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">₹{pendingRevenue.toLocaleString()}</p>
                   </div>
-                  <div>
-                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Pending Dues</p>
-                    <p className="text-2xl font-black text-white">₹{pendingRevenue.toLocaleString()}</p>
-                  </div>
+                  <Clock className="w-5 h-5 text-slate-400 dark:text-zinc-500 stroke-[1.5]" />
                 </div>
               </>
             );
@@ -261,63 +249,63 @@ export default function PaymentsPage() {
       )}
 
       {/* Tabs and Filters Panel */}
-      <div className="space-y-6">
-        {/* Tab Switcher */}
-        <div className="flex bg-white/[0.02] p-1 rounded-xl border border-white/5 self-start overflow-x-auto max-w-full hide-scrollbar">
+      <div className="space-y-4">
+        {/* Tab Switcher - Clean Floating Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
           <button
             onClick={() => { setActiveTab('subscriptions'); setStatusFilter('all'); }}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer ${
               activeTab === 'subscriptions'
-                ? 'bg-[#3390ec] text-white shadow-lg shadow-[#3390ec]/10'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-violet-600 text-white'
+                : 'bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            <Receipt className="w-4 h-4" />
+            <Receipt className="w-3.5 h-3.5" />
             <span>Subscription Collections</span>
           </button>
           <button
             onClick={() => { setActiveTab('store'); setStatusFilter('all'); }}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer ${
               activeTab === 'store'
-                ? 'bg-[#3390ec] text-white shadow-lg shadow-[#3390ec]/10'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-violet-600 text-white'
+                : 'bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            <Store className="w-4 h-4" />
+            <Store className="w-3.5 h-3.5" />
             <span>Store Sales</span>
           </button>
         </div>
 
         {/* Search */}
         <div className="relative group max-w-2xl">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-[#3390ec] transition-colors" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
           <input
             type="text"
             placeholder={activeTab === 'subscriptions' ? "Search by athlete name or plan…" : "Search by buyer name or product…"}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.03] border border-white/5 text-white placeholder-slate-500 text-sm font-medium focus:outline-none focus:border-[#3390ec]/50 focus:bg-[#3390ec]/[0.02] transition-all"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-violet-500 transition-all"
           />
         </div>
 
-        {/* Status Filters (Only for subscriptions since store sales are completed/paid) */}
+        {/* Status Filters - Clean Floating Pills */}
         {activeTab === 'subscriptions' && (
-          <div className="flex gap-1.5 overflow-x-auto pb-1 hide-scrollbar">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
             {['all', 'paid', 'pending', 'overdue'].map((status) => {
-              const isActive = statusFilter === status
+              const isActive = statusFilter === status;
               return (
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
-                  className={`flex items-center gap-2.5 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all duration-200 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize whitespace-nowrap transition-colors duration-150 cursor-pointer ${
                     isActive
-                      ? 'bg-[#3390ec] text-white shadow-lg shadow-[#3390ec]/10'
-                      : 'bg-white/[0.02] border border-white/5 text-slate-500 hover:text-slate-200 hover:bg-white/5'
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   {status === 'all' ? 'All Payments' : status}
                 </button>
-              )
+              );
             })}
           </div>
         )}
@@ -331,43 +319,36 @@ export default function PaymentsPage() {
           ))}
         </div>
       ) : error ? (
-        <div className="glass-card border border-rose-500/10 rounded-xl p-10 text-center relative overflow-hidden">
+        <div className="rounded-2xl border border-rose-500/20 bg-rose-50/50 dark:bg-rose-500/5 p-10 text-center relative overflow-hidden">
           <div className="relative w-12 h-12 bg-rose-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-6 h-6 text-rose-400" />
+            <AlertCircle className="w-6 h-6 text-rose-500" />
           </div>
-          <p className="text-rose-400 text-sm font-bold mb-4">{error}</p>
+          <p className="text-rose-600 dark:text-rose-400 text-sm font-bold mb-4">{error}</p>
           <button 
             onClick={fetchPayments}
-            className="px-6 py-2.5 bg-white/[0.05] hover:bg-white/[0.1] text-white rounded-xl text-xs font-bold transition-all border border-white/5"
+            className="px-6 py-2.5 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-zinc-700 cursor-pointer"
           >
             Try Again
           </button>
         </div>
       ) : (activeTab === 'subscriptions' ? filteredPayments.length : filteredStoreOrders.length) === 0 ? (
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="glass-card border border-white/5 rounded-xl p-20 text-center relative overflow-hidden"
-        >
-          <div className="relative w-16 h-16 bg-white/[0.03] border border-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Receipt className="w-8 h-8 text-slate-600" />
-          </div>
-          <h3 className="text-xl font-bold text-white mb-1 tracking-tight">No match found</h3>
-          <p className="text-slate-500 text-xs max-w-sm mx-auto mb-6 font-medium leading-relaxed">
+        <div className="py-24 text-center space-y-3">
+          <Receipt className="w-8 h-8 text-slate-300 dark:text-zinc-600 mx-auto stroke-1" />
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">No transactions found</h3>
+          <p className="text-xs text-slate-500 dark:text-zinc-500 max-w-sm mx-auto">
             {searchTerm || statusFilter !== 'all' 
-              ? "We couldn't find any transactions matching your filters."
-              : "No transaction history found."}
+              ? "Try tweaking your filters or search query to find transactions."
+              : "No transaction history recorded yet."}
           </p>
           {(searchTerm || statusFilter !== 'all') && (
             <button
               onClick={() => { setSearchTerm(''); setStatusFilter('all'); }}
-              className="text-[#3390ec] hover:text-[#2b5278] font-bold text-[10px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2 mx-auto"
+              className="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline cursor-pointer"
             >
               Reset Filters
-              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           )}
-        </motion.div>
+        </div>
       ) : (
         <div className="space-y-6">
           {/* Subscription Payments List */}
@@ -375,55 +356,55 @@ export default function PaymentsPage() {
             <>
               {/* Desktop Table */}
               {!isMobile && (
-                <div className="hidden lg:block overflow-hidden rounded-xl border border-white/5 glass-card">
+                <div className="hidden lg:block overflow-hidden rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-white/5 bg-white/[0.02]">
-                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Athlete</th>
-                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Subscription</th>
-                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Amount</th>
-                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Date</th>
-                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Method</th>
-                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Status</th>
+                      <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950/60">
+                        <th className="px-6 py-3.5 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Athlete</th>
+                        <th className="px-6 py-3.5 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Subscription</th>
+                        <th className="px-6 py-3.5 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Amount</th>
+                        <th className="px-6 py-3.5 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Date</th>
+                        <th className="px-6 py-3.5 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Method</th>
+                        <th className="px-6 py-3.5 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Status</th>
                       </tr>
                     </thead>
                     <motion.tbody 
                       variants={containerVariants}
                       initial="hidden"
                       animate="show"
-                      className="divide-y divide-white/[0.02]"
+                      className="divide-y divide-slate-100 dark:divide-zinc-800"
                     >
                       {visiblePayments.map((payment) => (
                         <motion.tr 
                           variants={itemVariants}
                           key={payment.id} 
-                          className="group hover:bg-white/[0.03] transition-colors duration-200"
+                          className="group hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors duration-150"
                         >
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-white text-[13px] font-bold uppercase shadow-sm">
+                              <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-slate-700 dark:text-zinc-200 text-xs font-bold uppercase">
                                 {payment.members?.full_name?.slice(0, 1) || '?'}
                               </div>
                               <div>
-                                <p className="text-white font-bold text-[14px] group-hover:text-[#3390ec] transition-colors">{payment.members?.full_name || 'Unknown Member'}</p>
-                                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">{payment.members?.phone_number || 'No Phone'}</p>
+                                <p className="text-slate-900 dark:text-white font-semibold text-xs group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{payment.members?.full_name || 'Unknown Member'}</p>
+                                <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium tracking-wider mt-0.5">{payment.members?.phone_number || 'No Phone'}</p>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <p className="text-slate-300 font-bold text-[12px]">{payment.subscriptions?.plan_name || 'One-time Entry'}</p>
+                            <p className="text-slate-700 dark:text-zinc-300 font-semibold text-xs">{payment.subscriptions?.plan_name || 'One-time Entry'}</p>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="text-emerald-400 font-bold text-[13px]">₹{payment.amount_paid}</span>
+                            <span className="text-emerald-600 dark:text-emerald-400 font-bold text-xs">₹{payment.amount_paid}</span>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="flex items-center gap-2 text-slate-400 text-[12px] font-bold">
-                              <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                            <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-xs font-medium">
+                              <Calendar className="w-3.5 h-3.5 text-slate-400" />
                               {new Date(payment.payment_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.03] border border-white/5 text-slate-400 text-[10px] font-bold uppercase tracking-wider shadow-sm">
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 text-[10px] font-semibold uppercase tracking-wider">
                               {getMethodIcon(payment.payment_method)}
                               {getMethodText(payment.payment_method)}
                             </div>
@@ -450,16 +431,16 @@ export default function PaymentsPage() {
                     <motion.div 
                       variants={itemVariants}
                       key={payment.id} 
-                      className="bg-white/[0.03] border border-white/5 rounded-xl p-5 active:scale-[0.98] transition-all relative overflow-hidden glass-card"
+                      className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 active:scale-[0.98] transition-all"
                     >
-                      <div className="flex items-start justify-between gap-4 mb-4 relative z-10">
+                      <div className="flex items-start justify-between gap-4 mb-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-white text-[14px] font-bold shadow-sm">
+                          <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-slate-700 dark:text-zinc-200 text-sm font-bold">
                             {payment.members?.full_name?.slice(0, 1) || '?'}
                           </div>
                           <div>
-                            <p className="text-white font-bold text-sm tracking-tight">{payment.members?.full_name || 'Unknown'}</p>
-                            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">
+                            <p className="text-slate-900 dark:text-white font-bold text-sm tracking-tight">{payment.members?.full_name || 'Unknown'}</p>
+                            <p className="text-slate-500 dark:text-zinc-400 text-xs mt-0.5">
                               {payment.subscriptions?.plan_name || 'One-time'}
                             </p>
                           </div>
@@ -467,25 +448,16 @@ export default function PaymentsPage() {
                         <StatusBadge status={payment.payment_status} />
                       </div>
 
-                      <div className="flex items-center justify-between pt-4 border-t border-white/5 relative z-10">
-                        <div className="space-y-1.5">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                            <p className="text-slate-400 text-[11px] font-bold">
-                              {new Date(payment.payment_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-slate-500">{getMethodIcon(payment.payment_method)}</span>
-                            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">
-                              {getMethodText(payment.payment_method)}
-                            </p>
-                          </div>
+                      <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-zinc-800">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                          <p className="text-slate-500 dark:text-zinc-400 text-xs">
+                            {new Date(payment.payment_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                          </p>
                         </div>
                         
                         <div className="text-right">
-                          <p className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-0.5">Paid</p>
-                          <p className="text-lg font-bold text-emerald-400 tracking-tight">₹{payment.amount_paid}</p>
+                          <p className="text-emerald-600 dark:text-emerald-400 font-bold text-base">₹{payment.amount_paid}</p>
                         </div>
                       </div>
                     </motion.div>
@@ -500,55 +472,55 @@ export default function PaymentsPage() {
             <>
               {/* Desktop Table */}
               {!isMobile && (
-                <div className="hidden lg:block overflow-hidden rounded-xl border border-white/5 glass-card">
+                <div className="hidden lg:block overflow-hidden rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-white/5 bg-white/[0.02]">
-                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Buyer / Athlete</th>
-                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Purchased Items</th>
-                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Amount</th>
-                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Date</th>
-                        <th className="px-6 py-4 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Status</th>
+                      <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950/60">
+                        <th className="px-6 py-3.5 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Customer</th>
+                        <th className="px-6 py-3.5 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Items</th>
+                        <th className="px-6 py-3.5 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Total Amount</th>
+                        <th className="px-6 py-3.5 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Date</th>
+                        <th className="px-6 py-3.5 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Status</th>
                       </tr>
                     </thead>
                     <motion.tbody 
                       variants={containerVariants}
                       initial="hidden"
                       animate="show"
-                      className="divide-y divide-white/[0.02]"
+                      className="divide-y divide-slate-100 dark:divide-zinc-800"
                     >
                       {visibleStoreOrders.map((order) => (
                         <motion.tr 
                           variants={itemVariants}
                           key={order.id} 
-                          className="group hover:bg-white/[0.03] transition-colors duration-200"
+                          className="group hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors duration-150"
                         >
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-white text-[13px] font-bold uppercase shadow-sm">
+                              <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-slate-700 dark:text-zinc-200 text-xs font-bold uppercase">
                                 {(order.members?.full_name || 'Guest').slice(0, 1)}
                               </div>
                               <div>
-                                <p className="text-white font-bold text-[14px] group-hover:text-[#3390ec] transition-colors">
+                                <p className="text-slate-900 dark:text-white font-semibold text-xs group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                                   {order.members?.full_name || 'Guest / Walk-in'}
                                 </p>
-                                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">
+                                <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium tracking-wider mt-0.5">
                                   {order.members?.phone_number || 'Cash Order'}
                                 </p>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 max-w-xs">
-                            <p className="text-slate-300 font-medium text-[12px] truncate" title={order.items?.map(i => `${i.name} (x${i.quantity})`).join(', ')}>
+                            <p className="text-slate-600 dark:text-zinc-300 font-medium text-xs truncate" title={order.items?.map(i => `${i.name} (x${i.quantity})`).join(', ')}>
                               {order.items?.map(i => `${i.name} (x${i.quantity})`).join(', ') || 'No Items'}
                             </p>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="text-emerald-400 font-bold text-[13px]">₹{order.total_amount}</span>
+                            <span className="text-emerald-600 dark:text-emerald-400 font-bold text-xs">₹{order.total_amount}</span>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="flex items-center gap-2 text-slate-400 text-[12px] font-bold">
-                              <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                            <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-xs font-medium">
+                              <Calendar className="w-3.5 h-3.5 text-slate-400" />
                               {new Date(order.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                             </div>
                           </td>
@@ -574,16 +546,16 @@ export default function PaymentsPage() {
                     <motion.div 
                       variants={itemVariants}
                       key={order.id} 
-                      className="bg-white/[0.03] border border-white/5 rounded-xl p-5 active:scale-[0.98] transition-all relative overflow-hidden glass-card"
+                      className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 active:scale-[0.98] transition-all"
                     >
-                      <div className="flex items-start justify-between gap-4 mb-4 relative z-10">
+                      <div className="flex items-start justify-between gap-4 mb-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-white text-[14px] font-bold shadow-sm">
+                          <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-slate-700 dark:text-zinc-200 text-sm font-bold">
                             {(order.members?.full_name || 'Guest').slice(0, 1)}
                           </div>
                           <div>
-                            <p className="text-white font-bold text-sm tracking-tight">{order.members?.full_name || 'Guest / Walk-in'}</p>
-                            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5 truncate max-w-[180px]">
+                            <p className="text-slate-900 dark:text-white font-bold text-sm tracking-tight">{order.members?.full_name || 'Guest / Walk-in'}</p>
+                            <p className="text-slate-500 dark:text-zinc-400 text-xs mt-0.5 truncate max-w-[180px]">
                               {order.items?.map(i => `${i.name} (x${i.quantity})`).join(', ') || 'Store Order'}
                             </p>
                           </div>
@@ -591,19 +563,16 @@ export default function PaymentsPage() {
                         <StatusBadge status="paid" />
                       </div>
 
-                      <div className="flex items-center justify-between pt-4 border-t border-white/5 relative z-10">
-                        <div className="space-y-1.5">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-3 h-3 text-slate-500" />
-                            <p className="text-slate-400 text-[11px] font-bold">
-                              {new Date(order.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                            </p>
-                          </div>
+                      <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-zinc-800">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                          <p className="text-slate-500 dark:text-zinc-400 text-xs">
+                            {new Date(order.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                          </p>
                         </div>
                         
                         <div className="text-right">
-                          <p className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-0.5">Total</p>
-                          <p className="text-lg font-bold text-emerald-400 tracking-tight">₹{order.total_amount}</p>
+                          <p className="text-emerald-600 dark:text-emerald-400 font-bold text-base">₹{order.total_amount}</p>
                         </div>
                       </div>
                     </motion.div>
@@ -616,7 +585,7 @@ export default function PaymentsPage() {
           {/* Sentinel observer target for infinite scroll */}
           {visibleCount < (activeTab === 'subscriptions' ? filteredPayments.length : filteredStoreOrders.length) && (
             <div ref={observerRef} className="h-16 flex items-center justify-center mt-4">
-              <div className="w-6 h-6 border-2 border-[#3390ec]/20 border-t-[#3390ec] rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-emerald-500/20 border-t-emerald-600 rounded-full animate-spin" />
             </div>
           )}
         </div>
@@ -625,4 +594,3 @@ export default function PaymentsPage() {
     </PullToRefresh>
   );
 }
-

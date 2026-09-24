@@ -177,44 +177,44 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
   };
 
   return (
-    <div className="space-y-10">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* Modern Searchable Athlete Selector */}
-        <div className="space-y-3 md:col-span-2" ref={searchContainerRef}>
-          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">
-            Select Athlete <span className="text-rose-500">*</span>
+        <div className="space-y-2 md:col-span-2" ref={searchContainerRef}>
+          <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 ml-1">
+            Select Athlete <span className="text-red-500">*</span>
           </label>
 
           {selectedMember ? (
             /* Selected Athlete Card */
-            <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-emerald-500/30 flex items-center justify-between gap-4 animate-in fade-in duration-200">
+            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-emerald-500/30 flex items-center justify-between gap-4 animate-in fade-in duration-200 shadow-xs">
               <div className="flex items-center gap-3.5 min-w-0">
                 {selectedMember.avatar_url ? (
                   <img
                     src={selectedMember.avatar_url}
                     alt={selectedMember.full_name}
-                    className="w-12 h-12 rounded-xl object-cover border border-white/10 flex-shrink-0"
+                    className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-zinc-800 flex-shrink-0"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#3390ec]/20 to-[#3390ec]/10 border border-[#3390ec]/30 flex items-center justify-center text-white text-base font-bold flex-shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-base font-bold flex-shrink-0">
                     {selectedMember.full_name?.slice(0, 1) || '?'}
                   </div>
                 )}
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-white font-black text-sm tracking-tight truncate">{selectedMember.full_name}</p>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase tracking-wider">
+                    <p className="text-slate-900 dark:text-white font-bold text-sm tracking-tight truncate">{selectedMember.full_name}</p>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold">
                       Selected
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 text-slate-500 text-xs mt-0.5">
+                  <div className="flex items-center gap-3 text-slate-500 dark:text-zinc-400 text-xs mt-0.5">
                     <span className="flex items-center gap-1">
-                      <Phone className="w-3 h-3 text-slate-500" />
+                      <Phone className="w-3 h-3 text-slate-400" />
                       {selectedMember.phone_number || 'No Phone'}
                     </span>
                     {selectedMember.expiry_date && (
-                      <span className="text-[10px] font-bold text-slate-400">
+                      <span className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">
                         • Current Exp: {formatDate(selectedMember.expiry_date)}
                       </span>
                     )}
@@ -229,9 +229,10 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
                     setFormData(prev => ({ ...prev, member_id: '' }));
                     setIsSearchOpen(true);
                   }}
-                  className="px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white text-[11px] font-black uppercase tracking-wider transition-all border border-white/5 flex-shrink-0"
+                  className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+                  title="Change Member"
                 >
-                  Change
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -239,7 +240,7 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
             /* Search Input & Interactive Dropdown */
             <div className="relative">
               <div className="relative group">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-[#3390ec] transition-colors" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
                 <input
                   type="text"
                   value={memberSearch}
@@ -249,13 +250,13 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
                     setIsSearchOpen(true);
                   }}
                   placeholder="Search athlete by name or phone number..."
-                  className="w-full bg-white/[0.03] border border-white/5 rounded-2xl pl-12 pr-10 py-4 text-white placeholder-slate-500 text-sm font-medium focus:outline-none focus:bg-white/[0.05] focus:border-[#3390ec]/50 transition-all shadow-inner"
+                  className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl pl-11 pr-10 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all shadow-xs"
                 />
                 {memberSearch && (
                   <button
                     type="button"
                     onClick={() => setMemberSearch('')}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -264,9 +265,9 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
 
               {/* Suggestions Dropdown */}
               {isSearchOpen && (
-                <div className="absolute z-50 left-0 right-0 mt-2 max-h-60 overflow-y-auto rounded-2xl bg-[#0f1117] border border-white/10 divide-y divide-white/5 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute z-50 left-0 right-0 mt-2 max-h-60 overflow-y-auto rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 divide-y divide-slate-100 dark:divide-zinc-800 shadow-xl animate-in fade-in zoom-in-95 duration-150 custom-scrollbar">
                   {filteredMembers.length === 0 ? (
-                    <div className="p-4 text-center text-slate-500 text-xs">
+                    <div className="p-4 text-center text-slate-500 dark:text-zinc-400 text-xs">
                       No matching athletes found.
                     </div>
                   ) : (
@@ -275,23 +276,23 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
                         key={member.id}
                         type="button"
                         onClick={() => handleSelectMember(member)}
-                        className="w-full p-3.5 text-left hover:bg-white/[0.05] flex items-center justify-between transition-colors group"
+                        className="w-full p-3.5 text-left hover:bg-slate-50 dark:hover:bg-zinc-800/60 flex items-center justify-between transition-colors group cursor-pointer"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-white text-xs font-bold group-hover:border-[#3390ec]/30">
+                          <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-slate-700 dark:text-zinc-200 text-xs font-bold group-hover:border-emerald-500">
                             {member.full_name?.slice(0, 1) || '?'}
                           </div>
                           <div>
-                            <p className="text-white text-xs font-bold group-hover:text-[#3390ec] transition-colors">{member.full_name}</p>
-                            <p className="text-slate-500 text-[11px] font-medium">{member.phone_number || 'No Phone'}</p>
+                            <p className="text-slate-900 dark:text-white text-xs font-bold group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{member.full_name}</p>
+                            <p className="text-slate-500 dark:text-zinc-400 text-[11px] font-medium">{member.phone_number || 'No Phone'}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <span className="text-[10px] px-2 py-0.5 rounded-lg bg-white/[0.03] border border-white/5 text-slate-400 font-bold uppercase tracking-wider">
+                          <span className="text-[10px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 font-semibold uppercase tracking-wider">
                             {member.membership_plan || 'No Plan'}
                           </span>
                           {member.expiry_date && (
-                            <p className="text-[9px] text-slate-500 mt-0.5">Exp: {formatDate(member.expiry_date)}</p>
+                            <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">Exp: {formatDate(member.expiry_date)}</p>
                           )}
                         </div>
                       </button>
@@ -304,8 +305,8 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
         </div>
 
         {/* Plan Selection (Dynamic Grid) */}
-        <div className="space-y-3 md:col-span-2">
-          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Gym Plans</label>
+        <div className="space-y-2 md:col-span-2">
+          <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 ml-1">Gym Plans</label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {plans.map(plan => (
               <button
@@ -324,28 +325,28 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
                     };
                   });
                 }}
-                className={`p-3.5 rounded-2xl border text-left transition-all ${
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer shadow-xs ${
                   formData.plan_name === plan.name 
-                    ? 'bg-emerald-500/10 border-emerald-500/50 shadow-lg shadow-emerald-500/10' 
-                    : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.05]'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500' 
+                    : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{plan.name}</p>
-                  {formData.plan_name === plan.name && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400">{plan.name}</p>
+                  {formData.plan_name === plan.name && <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
                 </div>
-                <p className="text-sm font-black text-white mt-1">₹{plan.price}</p>
-                <p className="text-[10px] text-slate-500 font-medium mt-0.5">{plan.duration_days} Days</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white mt-1">₹{plan.price}</p>
+                <p className="text-[11px] text-slate-500 dark:text-zinc-400 font-medium mt-0.5">{plan.duration_days} Days</p>
               </button>
             ))}
           </div>
         </div>
 
         {/* Plan Name */}
-        <div className="space-y-3">
-          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Plan Display Name</label>
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 ml-1">Plan Display Name</label>
           <div className="relative group">
-            <Tag className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
+            <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
             <input
               type="text"
               name="plan_name"
@@ -353,16 +354,16 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
               value={formData.plan_name}
               onChange={handleChange}
               placeholder="e.g. Monthly Standard"
-              className="w-full bg-white/[0.03] border border-white/5 rounded-2xl pl-12 pr-4 py-4 text-white placeholder-slate-600 text-sm font-medium focus:outline-none focus:bg-white/[0.05] focus:border-emerald-500/50 transition-all"
+              className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all shadow-xs"
             />
           </div>
         </div>
 
         {/* Amount */}
-        <div className="space-y-3">
-          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Amount Paid (₹)</label>
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 ml-1">Amount Paid (₹)</label>
           <div className="relative group">
-            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 font-black text-xs group-focus-within:text-emerald-400 transition-colors">₹</div>
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm group-focus-within:text-emerald-500 transition-colors">₹</div>
             <input
               type="number"
               name="amount"
@@ -372,22 +373,22 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
               value={formData.amount}
               onChange={handleChange}
               placeholder="0"
-              className="w-full bg-white/[0.03] border border-white/5 rounded-2xl pl-12 pr-4 py-4 text-white placeholder-slate-600 text-sm font-medium focus:outline-none focus:bg-white/[0.05] focus:border-emerald-500/50 transition-all"
+              className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all shadow-xs"
             />
           </div>
         </div>
 
         {/* Duration Type */}
-        <div className="space-y-3">
-          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Lifecycle Duration</label>
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 ml-1">Lifecycle Duration</label>
           <div className="relative group">
-            <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
+            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
             <select
               name="duration_type"
               value={formData.duration_type}
               onChange={handleChange}
               required
-              className="w-full bg-white/[0.03] border border-white/5 rounded-2xl pl-12 pr-4 py-4 text-white text-sm font-medium appearance-none focus:outline-none focus:bg-white/[0.05] focus:border-emerald-500/50 transition-all"
+              className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white text-sm font-medium appearance-none focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all shadow-xs"
             >
               <option value="monthly">Monthly Cycle (+1 Month)</option>
               <option value="quarterly">Quarterly Cycle (+3 Months)</option>
@@ -398,8 +399,8 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
         </div>
 
         {/* Start Date */}
-        <div className="space-y-3">
-          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Activation Date</label>
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 ml-1">Activation Date</label>
           <DatePicker
             value={formData.start_date}
             onChange={(val) => {
@@ -422,8 +423,8 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
         </div>
 
         {/* Expiry Date Display/Input */}
-        <div className="space-y-3 md:col-span-2">
-          <label className={`block text-[10px] font-black uppercase tracking-[0.2em] ml-1 ${formData.duration_type === 'custom' ? 'text-rose-500' : 'text-slate-500'}`}>
+        <div className="space-y-1.5 md:col-span-2">
+          <label className={`block text-xs font-semibold ml-1 ${formData.duration_type === 'custom' ? 'text-red-500' : 'text-slate-700 dark:text-zinc-300'}`}>
             {formData.duration_type === 'custom' ? 'Custom Expiry Date' : 'Estimated Expiry Date'}
           </label>
           {formData.duration_type === 'custom' ? (
@@ -432,8 +433,8 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
               onChange={(val) => setFormData(prev => ({ ...prev, expiry_date: val }))}
             />
           ) : (
-            <div className="w-full pl-12 pr-5 py-4 rounded-2xl bg-white/[0.01] border border-white/5 text-slate-400 text-sm font-medium flex items-center relative">
-              <Calendar className="absolute left-5 w-4 h-4 text-slate-600" />
+            <div className="w-full pl-11 pr-5 py-3 rounded-xl bg-slate-100 dark:bg-zinc-950/40 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 text-sm font-medium flex items-center relative shadow-xs">
+              <Calendar className="absolute left-4 w-4 h-4 text-slate-400" />
               {formData.expiry_date ? new Date(formData.expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : 'Select duration first'}
             </div>
           )}
@@ -441,9 +442,9 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
 
         {/* Overlap Warning Info Tip */}
         {hasOverlap && (
-          <div className="md:col-span-2 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 text-amber-400 text-xs font-semibold space-y-2">
+          <div className="md:col-span-2 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-amber-700 dark:text-amber-400 text-xs font-medium space-y-2">
             <p className="flex items-center gap-2">
-              <AlertTriangle className="w-4.5 h-4.5 text-amber-400 flex-shrink-0 animate-pulse" />
+              <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 animate-pulse" />
               <span>
                 Athlete has an active plan until <strong>{formatDate(selectedMember.expiry_date)}</strong>. 
                 Activating the new plan on <strong>{formatDate(formData.start_date)}</strong> will overlap with their current active plan.
@@ -452,7 +453,7 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
             <button
               type="button"
               onClick={handleAutoSchedule}
-              className="text-emerald-400 hover:text-emerald-300 font-bold underline transition-colors cursor-pointer text-left block"
+              className="text-emerald-600 dark:text-emerald-400 font-semibold underline transition-colors cursor-pointer text-left block"
             >
               Click here to auto-schedule starting the day after (starts {formatDate(getNextDayDateString(selectedMember.expiry_date))}).
             </button>
@@ -460,11 +461,11 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t border-white/5">
+      <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-slate-200 dark:border-zinc-800">
         <button
           type="button"
           onClick={() => navigate('/subscriptions')}
-          className="order-2 sm:order-1 flex-1 py-4 px-6 bg-white/[0.03] hover:bg-white/[0.08] text-slate-400 hover:text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all border border-white/5"
+          className="order-2 sm:order-1 flex-1 py-3 px-5 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-xl text-xs font-semibold transition-all border border-slate-200 dark:border-zinc-700 cursor-pointer"
         >
           Cancel
         </button>
@@ -472,10 +473,10 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
           type="button"
           onClick={handleSubmit}
           disabled={isSubmitting || !formData.member_id}
-          className="order-1 sm:order-2 flex-1 py-4 px-6 bg-emerald-500 hover:bg-emerald-400 text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50 hover:scale-[1.02] active:scale-95"
+          className="order-1 sm:order-2 flex-1 py-3 px-5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white rounded-xl text-xs font-semibold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
         >
           {isSubmitting ? (
-            <span className="flex items-center justify-center gap-3">
+            <span className="flex items-center justify-center gap-2">
               <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               Processing…
             </span>

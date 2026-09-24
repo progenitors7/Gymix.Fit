@@ -75,9 +75,9 @@ export default function BroadcastBanner() {
         };
       default:
         return {
-          bg: 'bg-[#3390ec]/10',
-          border: 'border-[#3390ec]/20',
-          text: 'text-[#3390ec]',
+          bg: 'bg-emerald-500/10',
+          border: 'border-emerald-500/20',
+          text: 'text-emerald-600 dark:text-emerald-400',
           icon: <Info className="w-4 h-4" />
         };
     }
@@ -89,14 +89,14 @@ export default function BroadcastBanner() {
     <div className={`relative z-40 px-4 py-3 border-b ${styles.bg} ${styles.border} backdrop-blur-md animate-in fade-in slide-in-from-top duration-500`}>
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={`p-2 rounded-lg bg-white/5 ${styles.text}`}>
+          <div className={`p-2 rounded-lg bg-black/5 dark:bg-white/5 ${styles.text}`}>
             <Megaphone className="w-4 h-4" />
           </div>
           <div className="min-w-0">
             <p className={`text-xs font-bold uppercase tracking-widest mb-0.5 ${styles.text}`}>
               System Announcement
             </p>
-            <p className="text-sm text-white/90 font-medium leading-relaxed">
+            <p className="text-sm text-slate-800 dark:text-white/90 font-medium leading-relaxed">
               <span className="font-bold">{current.title}:</span> {current.message}
             </p>
           </div>
@@ -108,7 +108,7 @@ export default function BroadcastBanner() {
               {broadcasts.map((_, idx) => (
                 <div 
                   key={idx}
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentIndex ? 'bg-white w-3' : 'bg-white/20'}`}
+                  className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentIndex ? 'bg-slate-900 dark:bg-white w-3' : 'bg-slate-300 dark:bg-white/20'}`}
                 />
               ))}
             </div>
@@ -116,7 +116,7 @@ export default function BroadcastBanner() {
           
           <button 
             onClick={() => dismissBroadcast(current.id)}
-            className="p-1.5 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-all active:scale-95"
+            className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-all active:scale-95"
             title="Dismiss"
           >
             <X className="w-4 h-4" />

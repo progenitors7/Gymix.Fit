@@ -259,7 +259,7 @@ export default function BillingPage() {
           email: ownerEmail || '',
         },
         theme: {
-          color: '#3390ec', // Premium Brand Accent Color
+          color: '#059669', // Brand Accent Color
         },
         modal: {
           confirm_close: true, // Prevents users from accidentally closing the payment popup
@@ -305,13 +305,12 @@ export default function BillingPage() {
   if (isPlaystoreApp) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-6 text-center">
-        <div className="max-w-md w-full bg-[#1c1c1c] border border-white/5 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden animate-in fade-in duration-500">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#3390ec]/5 blur-[50px] rounded-full pointer-events-none" />
-          <div className="w-16 h-16 bg-[#3390ec]/10 rounded-2xl flex items-center justify-center text-[#3390ec] text-3xl mx-auto mb-6 border border-white/5">
+        <div className="max-w-md w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-8 shadow-xs relative overflow-hidden animate-in fade-in duration-500">
+          <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-2xl mx-auto mb-4 border border-emerald-500/20">
             🔒
           </div>
-          <h2 className="text-2xl font-black text-white uppercase italic tracking-tight mb-2">In-App Purchases Disabled</h2>
-          <p className="text-slate-400 text-sm mb-6 leading-relaxed font-semibold">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">In-App Purchases Disabled</h2>
+          <p className="text-slate-500 dark:text-zinc-400 text-xs mb-6 leading-relaxed font-medium">
             To comply with app store guidelines, subscription upgrades and renewals are not supported inside this application. 
             <br/><br/>
             Please manage your account online to proceed.
@@ -324,9 +323,9 @@ export default function BillingPage() {
   if (!isReady) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <RefreshCw className="w-8 h-8 text-[#3390ec] animate-spin" />
-          <p className="text-gray-500 font-medium">Loading subscription details...</p>
+        <div className="flex flex-col items-center gap-3">
+          <RefreshCw className="w-6 h-6 text-emerald-600 dark:text-emerald-400 animate-spin" />
+          <p className="text-slate-500 dark:text-zinc-400 text-xs font-semibold">Loading subscription details...</p>
         </div>
       </div>
     );
@@ -346,23 +345,21 @@ export default function BillingPage() {
   if (showReturnToApp) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-4">
-        <div className="bg-[#1c1c1c] border border-emerald-500/20 rounded-[2.5rem] p-8 sm:p-12 text-center space-y-6 max-w-md w-full shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-[50px] rounded-full pointer-events-none" />
-          
-          <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20 text-emerald-400 text-3xl mx-auto mb-2">
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-8 sm:p-12 text-center space-y-5 max-w-md w-full shadow-xs relative overflow-hidden">
+          <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-2xl mx-auto mb-2">
             🎉
           </div>
           
-          <div className="space-y-2">
-            <h2 className="text-2xl font-black text-white uppercase italic tracking-tight">Payment Successful!</h2>
-            <p className="text-slate-400 text-sm font-semibold leading-relaxed">
-              Your Gymix subscription for <strong className="text-white">"{gymName}"</strong> is now active. You can close this window and return to the app.
+          <div className="space-y-1.5">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Payment Successful!</h2>
+            <p className="text-slate-500 dark:text-zinc-400 text-xs font-medium leading-relaxed">
+              Your Gymix subscription for <strong className="text-slate-900 dark:text-white">"{gymName}"</strong> is now active. You can close this window and return to the app.
             </p>
           </div>
           
           <a
             href="com.gymix.fit://dashboard"
-            className="block w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-2xl transition-all uppercase text-xs tracking-widest shadow-lg shadow-emerald-500/20 text-center flex items-center justify-center gap-2"
+            className="block w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-all text-xs shadow-xs text-center flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>Return to Mobile App</span>
             <ArrowRight className="w-4 h-4" />
@@ -373,46 +370,44 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-10 animate-in fade-in duration-700">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="text-center space-y-4">
+      <div className="text-center space-y-3">
         {isPending ? (
           <>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-400/10 text-amber-400 rounded-full text-[10px] font-black uppercase tracking-widest">
-              <Zap className="w-3 h-3" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full text-xs font-semibold">
+              <Zap className="w-3.5 h-3.5" />
               Activate Your Account
             </div>
-            <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tighter uppercase italic">
-              Welcome to <span className="text-[#3390ec]">Gymix</span>
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
+              Welcome to <span className="text-emerald-600 dark:text-emerald-400">Gymix</span>
             </h1>
-            <p className="text-gray-400 max-w-xl mx-auto text-sm font-medium leading-relaxed">
-              You're one step away from managing your gym like a pro.
-              Choose a plan below to unlock all features and start growing your fitness empire.
+            <p className="text-slate-500 dark:text-zinc-400 max-w-xl mx-auto text-sm leading-relaxed">
+              You're one step away from managing your gym like a pro. Choose a plan below to unlock all features.
             </p>
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/20 text-[11px] font-black uppercase tracking-widest">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 text-xs font-semibold">
               <CreditCard className="w-3.5 h-3.5" />
               Subscription required to access the platform
             </div>
           </>
         ) : (
           <>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#3390ec]/10 text-[#3390ec] rounded-full text-[10px] font-black uppercase tracking-widest">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-semibold">
               Used by growing gyms across India
             </div>
-            <h1 className="text-5xl font-black text-white tracking-tighter uppercase italic">
-              Gymix <span className="text-[#3390ec]">Growth Plan</span>
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
+              Gymix <span className="text-emerald-600 dark:text-emerald-400">Growth Plan</span>
             </h1>
-            <p className="text-gray-500 max-w-xl mx-auto text-sm font-medium leading-relaxed">
-              Unlock unlimited potential. One plan, everything included. 
-              Choose a duration and start growing your fitness empire.
+            <p className="text-slate-500 dark:text-zinc-400 max-w-xl mx-auto text-sm leading-relaxed">
+              Unlock unlimited potential. One plan, everything included. Choose a duration to begin.
             </p>
             {(expiryDate || isExpired) && (
-              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-[11px] font-black uppercase tracking-widest ${
+              <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-semibold ${
                 isExpired
-                  ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                  ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
                   : isExpiringSoon
-                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                    ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                    : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
               }`}>
                 <Clock className="w-3.5 h-3.5" />
                 {isExpired
@@ -425,39 +420,35 @@ export default function BillingPage() {
       </div>
 
       {isPlaystoreApp && (
-        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-3xl p-6 text-xs font-semibold leading-relaxed space-y-2 max-w-5xl mx-auto shadow-lg shadow-amber-500/5 animate-in slide-in-from-top duration-500">
-          <p className="uppercase tracking-widest text-[10px] font-black text-amber-500 flex items-center gap-1.5">
+        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 rounded-2xl p-4 sm:p-5 text-xs font-medium leading-relaxed space-y-1.5 max-w-5xl mx-auto">
+          <p className="text-xs font-bold flex items-center gap-1.5">
             <CreditCard className="w-3.5 h-3.5" />
             Google Play Policy Notice
           </p>
           <p>
             To comply with Google Play Developer Guidelines, subscription billing updates cannot be completed directly inside the app. 
-            Please click the button below to securely open **gymix.fit** on your phone's browser, complete the subscription payment, and return to find your mobile dashboard instantly active!
+            Please open **gymix.fit** on your browser to complete your renewal.
           </p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Duration Selection & Pricing */}
         <div className="lg:col-span-2 space-y-6">
           {/* Founding Gym Offer Banner */}
-          <div className="bg-gradient-to-r from-[#3390ec]/10 to-transparent border border-[#3390ec]/20 rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-left duration-700">
-            <div className="w-10 h-10 rounded-xl bg-[#3390ec]/20 flex items-center justify-center text-[#3390ec] flex-shrink-0 shadow-lg shadow-[#3390ec]/20">
-              <Star className="w-5 h-5 fill-current" />
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-3.5">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+              <Star className="w-4 h-4 fill-current" />
             </div>
             <div>
-              <h4 className="text-[#3390ec] font-black uppercase tracking-widest text-xs">Founding Gym Launch Offer</h4>
-              <p className="text-gray-400 text-sm font-medium">Up to 50% introductory discount unlocked on all plans!</p>
+              <h4 className="text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-wider text-xs">Founding Gym Launch Offer</h4>
+              <p className="text-slate-600 dark:text-zinc-400 text-xs font-medium">Up to 50% introductory discount unlocked on all plans!</p>
             </div>
           </div>
 
-          <div className="bg-[#212121] border border-white/5 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-5">
-              <Zap className="w-32 h-32 text-[#3390ec]" />
-            </div>
-
-            <h3 className="text-white font-black uppercase italic tracking-tight mb-8 flex items-center gap-2 text-xl">
-              <Clock className="w-5 h-5 text-[#3390ec]" />
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
+            <h3 className="text-slate-900 dark:text-white font-bold tracking-tight mb-6 flex items-center gap-2 text-lg">
+              <Clock className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               Select Duration
             </h3>
 
@@ -467,35 +458,33 @@ export default function BillingPage() {
                   key={dur.months}
                   onClick={() => !isDurationDisabled && setSelectedDuration(dur)}
                   disabled={isDurationDisabled}
-                  className={`relative p-6 rounded-3xl border-2 transition-all duration-300 text-left group active:scale-[0.98] ${
+                  className={`relative p-5 rounded-2xl border-2 transition-all duration-200 text-left group active:scale-[0.98] cursor-pointer ${
                     selectedDuration.months === dur.months
-                      ? 'bg-[#3390ec]/5 border-[#3390ec] shadow-xl shadow-[#3390ec]/20'
-                      : 'bg-[#1c1c1c] border-white/5 hover:border-white/10 hover:bg-white/[0.02]'
+                      ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-600 dark:border-emerald-500 shadow-xs'
+                      : 'bg-slate-50/60 dark:bg-zinc-950/60 border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700'
                   } ${isDurationDisabled && selectedDuration.months !== dur.months ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {dur.badge && (
-                    <div className={`absolute -top-3 right-4 px-3 py-1 text-[8px] font-black uppercase tracking-widest rounded-full shadow-lg ${dur.badgeColor}`}>
+                    <div className={`absolute -top-2.5 right-3 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full shadow-xs ${dur.badgeColor}`}>
                       {dur.badge}
                     </div>
                   )}
-                  <div className="flex flex-col mb-4">
-                    <span className={`text-sm font-black uppercase tracking-widest mb-1 ${
-                      selectedDuration.months === dur.months ? 'text-[#3390ec]' : 'text-gray-500 group-hover:text-gray-400'
+                  <div className="flex flex-col mb-3">
+                    <span className={`text-xs font-bold uppercase tracking-wider mb-1 ${
+                      selectedDuration.months === dur.months ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-zinc-400 group-hover:text-slate-900 dark:group-hover:text-white'
                     }`}>
                       {dur.label}
                     </span>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-sm font-bold text-gray-500 line-through">₹{dur.originalPrice}</span>
-                      <span className="text-3xl font-black text-white transition-colors">₹{dur.price}</span>
+                      <span className="text-xs font-semibold text-slate-400 line-through">₹{dur.originalPrice}</span>
+                      <span className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white transition-colors">₹{dur.price}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                         SAVE {dur.discountPercent}% OFF
                       </span>
                     </div>
-                    <span className={`text-xs mt-2 font-medium ${
-                      selectedDuration.months === dur.months ? 'text-[#3390ec]' : 'text-gray-500'
-                    }`}>
+                    <span className="text-xs mt-2 text-slate-500 dark:text-zinc-400 font-medium">
                       {dur.dailyText}
                     </span>
                   </div>
@@ -507,15 +496,15 @@ export default function BillingPage() {
           {/* Trust Building Features */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
              {[
-               { icon: Star, text: "Made for Indian Gym Owners", color: "text-amber-400", bg: "bg-amber-400/10" },
-               { icon: Zap, text: "Simple. Fast. Reliable.", color: "text-[#3390ec]", bg: "bg-[#3390ec]/10" },
-               { icon: CheckCircle2, text: "Manage members, fees and attendance easily.", color: "text-emerald-400", bg: "bg-emerald-400/10" }
+               { icon: Star, text: "Made for Indian Gym Owners", color: "text-amber-500", bg: "bg-amber-500/10" },
+               { icon: Zap, text: "Simple. Fast. Reliable.", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" },
+               { icon: CheckCircle2, text: "Manage members, fees and attendance easily.", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" }
              ].map((item, i) => (
-               <div key={i} className="flex flex-col items-start gap-3 p-5 bg-[#212121] backdrop-blur-md rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
-                 <div className={`w-8 h-8 rounded-xl ${item.bg} flex items-center justify-center ${item.color} flex-shrink-0`}>
+               <div key={i} className="flex flex-col items-start gap-2.5 p-4 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-xs">
+                 <div className={`w-8 h-8 rounded-lg ${item.bg} flex items-center justify-center ${item.color} shrink-0`}>
                    <item.icon className="w-4 h-4" />
                  </div>
-                 <span className="text-gray-300 text-sm font-medium leading-relaxed">{item.text}</span>
+                 <span className="text-slate-600 dark:text-zinc-300 text-xs font-medium leading-relaxed">{item.text}</span>
                </div>
              ))}
           </div>
@@ -523,30 +512,30 @@ export default function BillingPage() {
 
         {/* Right: Summary & Checkout */}
         <div className="space-y-6">
-          <div className="bg-[#212121]/80 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl sticky top-8">
-            <h3 className="text-white font-black uppercase italic tracking-tight mb-8 text-xl">Order Summary</h3>
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-xs sticky top-8">
+            <h3 className="text-slate-900 dark:text-white font-bold tracking-tight mb-6 text-lg">Order Summary</h3>
             
-            <div className="space-y-4 mb-8">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400 font-medium">Growth Plan ({selectedDuration.label})</span>
+            <div className="space-y-3 mb-6">
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-500 dark:text-zinc-400 font-medium">Growth Plan ({selectedDuration.label})</span>
                 <div className="text-right">
-                  <span className="text-xs text-gray-500 line-through block">₹{selectedDuration.originalPrice}</span>
-                  <span className="text-white font-bold">₹{selectedDuration.price}</span>
+                  <span className="text-[10px] text-slate-400 line-through block">₹{selectedDuration.originalPrice}</span>
+                  <span className="text-slate-900 dark:text-white font-bold">₹{selectedDuration.price}</span>
                 </div>
               </div>
 
-              <div className="flex justify-between text-xs py-1.5 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                <span className="text-emerald-400 font-bold">Launch Discount ({selectedDuration.discountPercent}% OFF)</span>
-                <span className="text-emerald-400 font-bold">-₹{selectedDuration.savings}</span>
+              <div className="flex justify-between text-xs py-1.5 px-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Launch Discount ({selectedDuration.discountPercent}% OFF)</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">-₹{selectedDuration.savings}</span>
               </div>
               
               {appliedPromo && (
-                <div className="flex justify-between text-sm animate-in slide-in-from-top-2">
-                  <span className="text-emerald-400 font-bold flex items-center gap-1">
-                    <Ticket className="w-3 h-3" />
+                <div className="flex justify-between text-xs animate-in slide-in-from-top-2">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                    <Ticket className="w-3.5 h-3.5" />
                     Promo: {appliedPromo.code}
                   </span>
-                  <span className="text-emerald-400 font-bold">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
                     -{appliedPromo.discount_type === 'full_free' ? '₹' + selectedDuration.price : 
                       appliedPromo.discount_type === 'percentage' ? appliedPromo.discount_value + '%' : 
                       '₹' + appliedPromo.discount_value}
@@ -554,39 +543,39 @@ export default function BillingPage() {
                 </div>
               )}
               
-              <div className="h-px bg-white/5 my-4" />
+              <div className="h-px bg-slate-100 dark:bg-zinc-800 my-3" />
               
               <div className="flex justify-between items-baseline">
                 <div>
-                  <span className="text-white font-black uppercase italic text-lg block">Total</span>
-                  <span className="text-[10px] text-emerald-400 font-bold">
+                  <span className="text-slate-900 dark:text-white font-bold text-base block">Total</span>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
                     You save ₹{(selectedDuration.savings || 0) + (selectedDuration.price - finalAmount)}
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs text-gray-500 line-through font-bold pr-2">₹{selectedDuration.originalPrice}</span>
-                  <span className="text-3xl font-black text-[#3390ec]">₹{finalAmount}</span>
-                  <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-1">Inclusive of all taxes</p>
+                  <span className="text-xs text-slate-400 line-through font-medium pr-1.5">₹{selectedDuration.originalPrice}</span>
+                  <span className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">₹{finalAmount}</span>
+                  <p className="text-slate-400 text-[10px] font-medium mt-0.5">Inclusive of all taxes</p>
                 </div>
               </div>
             </div>
 
             {/* Promo Code Input */}
-            <div className="space-y-3 mb-8">
+            <div className="space-y-2 mb-6">
               <div className="relative">
-                <Ticket className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Ticket className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
                   type="text"
                   placeholder="HAVE A PROMO CODE?"
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
                   disabled={appliedPromo || verifyingPromo}
-                  className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl pl-11 pr-4 py-4 text-xs font-black tracking-widest text-white focus:outline-none focus:border-[#3390ec]/50 transition-all uppercase disabled:opacity-50"
+                  className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl pl-10 pr-16 py-2.5 text-xs font-bold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all uppercase disabled:opacity-50 shadow-xs"
                 />
                 {appliedPromo ? (
                   <button 
                     onClick={() => { setAppliedPromo(null); setPromoCode(''); }}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-rose-500 text-[10px] font-black uppercase hover:underline"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-rose-500 text-xs font-bold uppercase hover:underline cursor-pointer"
                   >
                     Remove
                   </button>
@@ -594,35 +583,35 @@ export default function BillingPage() {
                   <button 
                     onClick={handleVerifyPromo}
                     disabled={!promoCode || verifyingPromo}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#3390ec] text-[10px] font-black uppercase hover:underline disabled:opacity-50"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase hover:underline disabled:opacity-50 cursor-pointer"
                   >
                     {verifyingPromo ? '...' : 'Apply'}
                   </button>
                 )}
               </div>
-              {promoError && <p className="text-rose-500 text-[10px] font-bold ml-2">{promoError}</p>}
+              {promoError && <p className="text-rose-500 text-xs font-medium ml-1">{promoError}</p>}
             </div>
 
             <button
               disabled={processing}
               onClick={handleSubscribe}
-              className="w-full py-5 bg-gradient-to-r from-[#3390ec] to-[#2b83d6] hover:from-[#4aa1fa] hover:to-[#3390ec] text-white rounded-2xl text-sm font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-3 shadow-xl shadow-[#3390ec]/30 hover:shadow-[#3390ec]/50 active:scale-[0.98] disabled:opacity-50 group"
+              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 group"
             >
               {processing ? (
-                <RefreshCw className="w-5 h-5 animate-spin" />
+                <RefreshCw className="w-4 h-4 animate-spin" />
               ) : finalAmount === 0 ? (
                 <>
-                  <Gift className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  <Gift className="w-4 h-4 group-hover:scale-105 transition-transform" />
                   Redeem on Web
                 </>
               ) : isPlaystoreApp ? (
                 <>
-                  <CreditCard className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  <CreditCard className="w-4 h-4 group-hover:scale-105 transition-transform" />
                   Open Payment on Web
                 </>
               ) : (
                 <>
-                  <Zap className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  <Zap className="w-4 h-4 group-hover:scale-105 transition-transform" />
                   Start Growing
                 </>
               )}
@@ -632,17 +621,17 @@ export default function BillingPage() {
       </div>
 
       {/* Support Info */}
-      <div className="flex flex-col md:flex-row gap-8 items-center justify-between p-8 bg-white/5 border border-white/5 rounded-[2.5rem]">
-        <div className="flex items-center gap-6">
-          <div className="w-16 h-16 rounded-2xl bg-amber-400/10 flex items-center justify-center text-amber-400">
-            <Star className="w-8 h-8" />
+      <div className="flex flex-col md:flex-row gap-6 items-center justify-between p-6 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xs">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
+            <Star className="w-6 h-6" />
           </div>
           <div>
-            <h4 className="text-white font-black uppercase italic text-lg tracking-tight">Need help choosing?</h4>
-            <p className="text-gray-500 text-sm font-medium">Contact our support team for any billing related queries.</p>
+            <h4 className="text-slate-900 dark:text-white font-bold text-base tracking-tight">Need help choosing?</h4>
+            <p className="text-slate-500 dark:text-zinc-400 text-xs font-medium">Contact our support team for any billing related queries.</p>
           </div>
         </div>
-        <button className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest border border-white/5 transition-all">
+        <button className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer">
           Contact Support
         </button>
       </div>

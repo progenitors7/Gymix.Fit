@@ -1,33 +1,132 @@
 @import "tailwindcss";
 
-:root {
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+@custom-variant dark (&:where(.dark, .dark *));
 
-  /* Premium SaaS Color Palette */
-  --color-bg-base: #0F1117;
-  --color-bg-surface: #1A1F2B;
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Tier-1 Tech Color Palette - Light Mode (Meta / Stripe / Instagram standard) */
+  --color-bg-base: #F8FAFC;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-surface-elevated: #F1F5F9;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #64748B;
+  --color-text-muted: #94A3B8;
+  --border-subtle: #E2E8F0;
+  --border-highlight: #CBD5E1;
+  --divider: #E2E8F0;
+
+  --color-brand-primary: #7C3AED;
+  --color-brand-secondary: #6D28D9;
   
-  --color-brand-primary: #3B82F6;
-  --color-brand-secondary: #2563EB;
+  --color-success: #16A34A;
+  --color-warning: #D97706;
+  --color-danger: #DC2626;
+  --color-info: #0284C7;
+  
+  --radius-card: 1rem;
+  --radius-button: 0.75rem;
+
+  color-scheme: light;
+}
+
+.dark {
+  /* Tier-1 Tech Color Palette - OLED Dark Mode (Zinc-950 / Meta Dark standard) */
+  --color-bg-base: #09090B;
+  --color-bg-surface: #121215;
+  --color-bg-surface-elevated: #18181B;
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #A1A1AA;
+  --color-text-muted: #71717A;
+  --border-subtle: #27272A;
+  --border-highlight: #3F3F46;
+  --divider: #27272A;
+
+  --color-brand-primary: #8B5CF6;
+  --color-brand-secondary: #7C3AED;
   
   --color-success: #22C55E;
   --color-warning: #F59E0B;
   --color-danger: #EF4444;
-  --color-info: #0EA5E9;
-  
-  --radius-card: 1rem;
-  --radius-button: 0.75rem;
-  
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-highlight: rgba(255, 255, 255, 0.12);
-  --divider: rgba(255, 255, 255, 0.06);
+  --color-info: #38BDF8;
+
   color-scheme: dark;
+}
+
+.dark.theme-abyss, [data-theme="abyss"] {
+  /* Tier-1 Tech Color Palette - Midnight Abyss (Deep Navy Blue / VS Code Abyss standard) */
+  --color-bg-base: #080C16;
+  --color-bg-surface: #0F172A;
+  --color-bg-surface-elevated: #1E293B;
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
+  --border-subtle: #1E293B;
+  --border-highlight: #334155;
+  --divider: #1E293B;
+
+  --color-brand-primary: #818CF8;
+  --color-brand-secondary: #6366F1;
+
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #38BDF8;
+
+  color-scheme: dark;
+}
+
+/* ── Midnight Abyss Theme Utility Mappings ── */
+.theme-abyss .bg-zinc-950,
+[data-theme="abyss"] .bg-zinc-950 {
+  background-color: #080C16 !important;
+}
+
+.theme-abyss .bg-zinc-900,
+[data-theme="abyss"] .bg-zinc-900 {
+  background-color: #0F172A !important;
+}
+
+.theme-abyss .bg-zinc-800,
+[data-theme="abyss"] .bg-zinc-800 {
+  background-color: #1E293B !important;
+}
+
+.theme-abyss .border-zinc-800,
+[data-theme="abyss"] .border-zinc-800 {
+  border-color: #1E293B !important;
+}
+
+.theme-abyss .border-zinc-700,
+[data-theme="abyss"] .border-zinc-700 {
+  border-color: #334155 !important;
 }
 
 /* ── Base ── */
 *, *::before, *::after { 
   box-sizing: border-box; 
-  -webkit-tap-highlight-color: transparent; /* Removes grey flash on iOS tap */
+  -webkit-tap-highlight-color: transparent !important; /* Removes grey/white flash on tap */
+}
+
+/* Eliminate browser default white outline/focus ring flash on clicks across all interactive elements */
+button, a, input, select, textarea, [role="button"], [role="tab"], [tabindex] {
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+button:focus,
+button:focus-visible,
+button:active,
+a:focus,
+a:focus-visible,
+a:active,
+[role="button"]:focus,
+[role="button"]:focus-visible,
+[role="button"]:active,
+[role="tab"]:focus,
+[role="tab"]:focus-visible,
+[role="tab"]:active {
+  outline: none !important;
+  box-shadow: none;
 }
 
 html, body {
@@ -48,10 +147,11 @@ html, body, #root {
   padding: 0;
   font-family: var(--font-sans);
   background: var(--color-bg-base);
-  color: #F8FAFC;
+  color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 /* mobile and tablet screen optimization */
@@ -86,17 +186,18 @@ select {
 }
 
 select option {
-  background-color: #1A1F2B;
-  color: #F8FAFC;
+  background-color: var(--color-bg-surface);
+  color: var(--color-text-primary);
   padding: 12px;
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: pointer;
 }
-
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
 
 /* ── UI Panels (Premium SaaS Style) ── */
 .glass-panel {
@@ -118,22 +219,22 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* ── Custom Utilities ── */
 .text-gradient {
-  background: linear-gradient(to right, #F8FAFC, #94A3B8);
+  background: linear-gradient(to right, var(--color-text-primary), var(--color-text-secondary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .text-gradient-primary {
-  background: linear-gradient(to right, #60A5FA, #3B82F6);
+  background: linear-gradient(to right, #A78BFA, #7C3AED);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Subtle glowing accents */
-.glow-primary {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+/* Subtle clean card shadow */
+.card-elevation {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
 }
 
 /* Hide scrollbar */

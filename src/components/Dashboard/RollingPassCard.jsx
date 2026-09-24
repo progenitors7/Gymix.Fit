@@ -76,20 +76,20 @@ export default function RollingPassCard({ membership }) {
 
   return (
     <>
-      <div className="bg-[#1A1F2B] border border-white/5 rounded-3xl p-6 sm:p-8 text-center relative overflow-hidden shadow-xl flex-1 flex flex-col justify-center items-center min-h-[360px]">
+      <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 text-center relative overflow-hidden flex-1 flex flex-col justify-center items-center min-h-[360px]">
         
         {/* Status badges header */}
         <div className="absolute top-5 inset-x-5 flex items-center justify-between pointer-events-none">
           {!isOnline ? (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[8px] font-black uppercase tracking-widest text-amber-400">
-              <WifiOff className="w-2.5 h-2.5" />
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-semibold tracking-wider text-amber-600 dark:text-amber-400">
+              <WifiOff className="w-3 h-3" />
               OFFLINE PASS READY
             </div>
           ) : <div />}
 
           {/* Rotating countdown indicator */}
-          {(!membership.gyms?.biometric_enabled || passMode === 'qr') && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-black uppercase tracking-widest text-emerald-400">
+          {(!membership?.gyms?.biometric_enabled || passMode === 'qr') && (
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-semibold tracking-wider text-emerald-600 dark:text-emerald-400">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500 animate-ping"></span>
               </span>
@@ -99,33 +99,41 @@ export default function RollingPassCard({ membership }) {
         </div>
 
         {/* Dual Mode Switcher Selector (Only if biometric is enabled) */}
-        {membership.gyms?.biometric_enabled && (
-          <div className="flex bg-black/40 border border-white/5 rounded-xl p-1 mb-6 mt-4 relative z-10 w-full max-w-[280px]">
+        {membership?.gyms?.biometric_enabled && (
+          <div className="flex items-center gap-1.5 mb-6 mt-4 relative z-10 w-full max-w-[280px]">
             <button 
               onClick={() => setPassMode('qr')}
-              className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${passMode === 'qr' ? 'bg-[#3B82F6]/10 border border-[#3B82F6]/20 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                passMode === 'qr' 
+                  ? 'bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white border border-slate-200 dark:border-zinc-700' 
+                  : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
             >
-              <QrCode className="w-3.5 h-3.5" />
-              QR Code Pass
+              <QrCode className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
+              QR Pass
             </button>
             <button 
               onClick={() => setPassMode('biometric')}
-              className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${passMode === 'biometric' ? 'bg-[#10B981]/10 border border-[#10B981]/20 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                passMode === 'biometric' 
+                  ? 'bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white border border-slate-200 dark:border-zinc-700' 
+                  : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
             >
-              <Fingerprint className="w-3.5 h-3.5" />
+              <Fingerprint className="w-3.5 h-3.5 text-emerald-500" />
               Biometric Sync
             </button>
           </div>
         )}
 
         <div className="space-y-6 pt-6 w-full flex-1 flex flex-col justify-center items-center">
-          {(!membership.gyms?.biometric_enabled || passMode === 'qr') ? (
+          {(!membership?.gyms?.biometric_enabled || passMode === 'qr') ? (
             <div className="space-y-4 w-full flex flex-col items-center">
               
               {/* Clickable QR Frame */}
               <div 
                 onClick={() => setIsZoomed(true)}
-                className="group relative w-48 h-48 sm:w-52 sm:h-52 mx-auto border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center bg-white shadow-lg cursor-pointer transition-transform duration-200 active:scale-95 hover:shadow-emerald-500/10"
+                className="group relative w-48 h-48 sm:w-52 sm:h-52 mx-auto border border-slate-200 dark:border-zinc-700 rounded-2xl p-4 flex flex-col items-center justify-center bg-white cursor-pointer transition-transform duration-200 active:scale-95 hover:border-violet-500/50"
                 title="Tap to enlarge QR Pass"
               >
                 {qrDataUrl ? (
@@ -135,26 +143,26 @@ export default function RollingPassCard({ membership }) {
                     className="w-full h-full object-contain rounded-lg select-none"
                   />
                 ) : (
-                  <div className="w-8 h-8 border-2 border-slate-300 border-t-emerald-500 rounded-full animate-spin" />
+                  <div className="w-8 h-8 border-2 border-slate-300 border-t-violet-600 rounded-full animate-spin" />
                 )}
 
-                <div className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-slate-900/80 text-white opacity-0 group-hover:opacity-100 transition-opacity">
                   <Maximize2 className="w-3.5 h-3.5" />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center justify-center gap-1.5">
-                  <Shield className="w-3.5 h-3.5 text-emerald-400" />
+                <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center justify-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 text-emerald-500" />
                   ACTIVE PASS KEY
                 </h3>
-                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider flex items-center justify-center gap-1.5">
+                <p className="text-[11px] text-slate-500 dark:text-zinc-400 font-medium flex items-center justify-center gap-1.5">
                   <span>SCAN PASS AT FRONT DESK</span>
-                  <span className="text-slate-600">•</span>
+                  <span className="text-slate-300 dark:text-zinc-700">•</span>
                   <button 
                     type="button" 
                     onClick={() => setIsZoomed(true)}
-                    className="text-[#3B82F6] hover:underline cursor-pointer"
+                    className="text-violet-600 dark:text-violet-400 font-semibold hover:underline cursor-pointer"
                   >
                     Tap to Enlarge
                   </button>
@@ -163,32 +171,36 @@ export default function RollingPassCard({ membership }) {
             </div>
           ) : (
             <div className="space-y-6 w-full flex flex-col items-center py-4">
-              {/* Biometric linked display with dynamic colors */}
+              {/* Biometric linked display */}
               <div className="relative w-40 h-40 sm:w-44 sm:h-44 mx-auto flex items-center justify-center">
-                <div className={`relative w-full h-full rounded-full flex flex-col items-center justify-center border ${membership.biometric_user_id ? 'bg-emerald-500/10 border-emerald-500/20 text-[#10B981]' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'} shadow-lg`}>
+                <div className={`relative w-full h-full rounded-full flex flex-col items-center justify-center border ${
+                  membership?.biometric_user_id 
+                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' 
+                    : 'bg-rose-500/10 border-rose-500/20 text-rose-500'
+                }`}>
                   <Fingerprint className="w-16 h-16" />
                 </div>
               </div>
 
               <div className="space-y-2 max-w-sm">
                 <div className="flex justify-center">
-                  {membership.biometric_user_id ? (
-                    <span className="px-3.5 py-1 rounded-full bg-[#10B981]/15 border border-[#10B981]/30 text-[9px] font-black uppercase tracking-widest text-[#10B981] shadow-sm">
+                  {membership?.biometric_user_id ? (
+                    <span className="px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-semibold tracking-wider text-emerald-600 dark:text-emerald-400">
                       Device Linked 🟢
                     </span>
                   ) : (
-                    <span className="px-3.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-[9px] font-black uppercase tracking-widest text-rose-400 shadow-sm">
+                    <span className="px-3.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-[10px] font-semibold tracking-wider text-rose-600 dark:text-rose-400">
                       Link Missing 🔴
                     </span>
                   )}
                 </div>
-                <h3 className="text-xs font-black text-white uppercase tracking-wider">
-                  {membership.biometric_user_id ? `Active Bio User ID: #${membership.biometric_user_id}` : 'Biometric Link Inactive'}
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  {membership?.biometric_user_id ? `Active Bio User ID: #${membership.biometric_user_id}` : 'Biometric Link Inactive'}
                 </h3>
-                <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
-                  {membership.biometric_user_id 
-                    ? "Your account is securely synced with the gym's biometric face/fingerprint terminals. Simply walk to the reception scanner to log entry!" 
-                    : "Your biometric ID is not linked to your account yet. Please visit the reception desk to scan your finger/face and complete linking."}
+                <p className="text-xs text-slate-500 dark:text-zinc-400 font-normal leading-relaxed">
+                  {membership?.biometric_user_id 
+                    ? "Your account is securely synced with the gym's biometric terminals. Walk to the reception scanner to log entry!" 
+                    : "Your biometric ID is not linked to your account yet. Please visit the reception desk to scan and complete linking."}
                 </p>
               </div>
             </div>
@@ -196,7 +208,7 @@ export default function RollingPassCard({ membership }) {
         </div>
       </div>
 
-      {/* Fullscreen High Contrast QR Modal Overlay */}
+      {/* Fullscreen QR Modal */}
       <AnimatePresence>
         {isZoomed && (
           <motion.div
@@ -204,32 +216,32 @@ export default function RollingPassCard({ membership }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsZoomed(false)}
-            className="fixed inset-0 z-[120] bg-black/90 backdrop-blur-md flex items-center justify-center p-6"
+            className="fixed inset-0 z-[120] bg-slate-900/40 dark:bg-black/60 backdrop-blur-xs flex items-center justify-center p-6"
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+              exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#151922] border border-white/10 rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center space-y-6 shadow-2xl relative"
+              className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 max-w-sm w-full text-center space-y-6 relative"
             >
               <button
                 onClick={() => setIsZoomed(false)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
 
               <div className="space-y-1 text-left">
-                <span className="text-[9px] font-black uppercase tracking-widest text-[#3B82F6]">
-                  {membership.gyms?.gym_name || 'Gymix Access Pass'}
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400">
+                  {membership?.gyms?.gym_name || 'Gymix Access Pass'}
                 </span>
-                <h4 className="text-base font-black text-white uppercase italic tracking-tight">
+                <h4 className="text-base font-bold text-slate-900 dark:text-white">
                   Gate Scanner Key
                 </h4>
               </div>
 
-              <div className="w-64 h-64 mx-auto bg-white rounded-2xl p-4 flex items-center justify-center shadow-2xl">
+              <div className="w-64 h-64 mx-auto bg-white border border-slate-200 rounded-2xl p-4 flex items-center justify-center">
                 {qrDataUrl && (
                   <img
                     src={qrDataUrl}
@@ -239,14 +251,14 @@ export default function RollingPassCard({ membership }) {
                 )}
               </div>
 
-              <div className="flex items-center justify-between px-2 pt-2 border-t border-white/5 text-[10px] font-bold text-slate-400">
-                <span className="flex items-center gap-1.5 text-emerald-400">
+              <div className="flex items-center justify-between px-2 pt-2 border-t border-slate-200 dark:border-zinc-800 text-xs font-medium text-slate-500 dark:text-zinc-400">
+                <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   Auto-rotating in {timeLeft}s
                 </span>
                 <button
                   onClick={() => setIsZoomed(false)}
-                  className="text-white hover:text-slate-300 font-semibold uppercase tracking-wider text-[9px]"
+                  className="text-slate-900 dark:text-white hover:underline font-semibold cursor-pointer"
                 >
                   Close
                 </button>

@@ -12,7 +12,7 @@ import {
   Users, 
   Building2, 
   Calendar, 
-  Sparkles, 
+  Tag, 
   Phone, 
   Trash2, 
   Clock,
@@ -31,21 +31,123 @@ import { superAdminService } from '../../services/superAdminService';
 import Toast from '../UI/Toast';
 import ConfirmModal from '../UI/ConfirmModal';
 
-export default function GymManagement() {
-  // Navigation: 'owners' | 'members'
-  const [activeSubTab, setActiveSubTab] = useState('owners');
+function PaginationControls({
+  currentPage,
+  totalPages,
+  totalItems,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  itemName = 'records'
+}) {
+  if (totalItems === 0) return null;
 
-  // Owners State
+  const startItem = (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push('...');
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push('...');
+      pages.push(totalPages);
+    }
+    return pages;
+  };
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-slate-50/80 dark:bg-zinc-950/60 border-t border-slate-200 dark:border-zinc-800 text-xs text-slate-500 dark:text-zinc-400">
+      <div className="flex items-center gap-3">
+        <span>
+          Showing <strong className="text-slate-900 dark:text-white font-bold">{startItem}</strong> to <strong className="text-slate-900 dark:text-white font-bold">{endItem}</strong> of <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{totalItems}</strong> {itemName}
+        </span>
+        <div className="flex items-center gap-1.5 ml-2 border-l border-slate-200 dark:border-zinc-800 pl-3">
+          <span>Rows:</span>
+          <select
+            value={pageSize}
+            onChange={(e) => onPageSizeChange(Number(e.target.value))}
+            className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-emerald-500 cursor-pointer"
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage <= 1}
+          className="px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all font-bold"
+        >
+          Previous
+        </button>
+
+        <div className="flex items-center gap-1 mx-1">
+          {getPageNumbers().map((p, idx) => (
+            p === '...' ? (
+              <span key={`ellipsis-${idx}`} className="px-2 text-slate-400 dark:text-zinc-600 font-black">…</span>
+            ) : (
+              <button
+                key={p}
+                onClick={() => onPageChange(p)}
+                className={`min-w-[32px] h-8 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                  currentPage === p
+                    ? 'bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-black'
+                    : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700'
+                }`}
+              >
+                {p}
+              </button>
+            )
+          ))}
+        </div>
+
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+          className="px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all font-bold"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function GymManagement({ initialSubTab = 'owners', mode = null }) {
+  // Navigation: 'owners' | 'members'
+  const [activeSubTab, setActiveSubTab] = useState(mode || initialSubTab);
+
+  useEffect(() => {
+    if (mode) setActiveSubTab(mode);
+    else if (initialSubTab) setActiveSubTab(initialSubTab);
+  }, [mode, initialSubTab]);
+
+  // Owners State & Pagination
   const [gyms, setGyms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [gymsPage, setGymsPage] = useState(1);
+  const [gymsPerPage, setGymsPerPage] = useState(10);
   
-  // Members State
+  // Members State & Pagination
   const [members, setMembers] = useState([]);
   const [membersLoading, setMembersLoading] = useState(false);
   const [membersSearch, setMembersSearch] = useState('');
   const [membersStatusFilter, setMembersStatusFilter] = useState('all');
+  const [membersPage, setMembersPage] = useState(1);
+  const [membersPerPage, setMembersPerPage] = useState(15);
 
   // Shared Action States
   const navigate = useNavigate();
@@ -69,11 +171,24 @@ export default function GymManagement() {
     setToast({ message, type });
   };
 
+  // Reset pagination on search or filter change
   useEffect(() => {
-    fetchGyms();
-    fetchPlans();
-    fetchMembers();
-  }, []);
+    setGymsPage(1);
+  }, [search, statusFilter, gymsPerPage]);
+
+  useEffect(() => {
+    setMembersPage(1);
+  }, [membersSearch, membersStatusFilter, membersPerPage]);
+
+  // Optimized fetch: Only fetch data for active tab to eliminate server overhead
+  useEffect(() => {
+    if (activeSubTab === 'owners') {
+      fetchGyms();
+      fetchPlans();
+    } else {
+      fetchMembers();
+    }
+  }, [activeSubTab]);
 
   async function fetchPlans() {
     try {
@@ -102,7 +217,8 @@ export default function GymManagement() {
     try {
       setMembersLoading(true);
       const data = await superAdminService.getAllMembers();
-      setMembers(data || []);
+      const memberList = Array.isArray(data) ? data : (data?.members || []);
+      setMembers(memberList);
     } catch (err) {
       console.error('[GymManagement] Error fetching members:', err);
       showToast('Failed to load member directory', 'error');
@@ -249,6 +365,13 @@ export default function GymManagement() {
     return matchesSearch && matchesStatus;
   });
 
+  // Calculate paginated slices
+  const totalGymPages = Math.max(1, Math.ceil(filteredGyms.length / gymsPerPage));
+  const paginatedGyms = filteredGyms.slice((gymsPage - 1) * gymsPerPage, gymsPage * gymsPerPage);
+
+  const totalMemberPages = Math.max(1, Math.ceil(filteredMembers.length / membersPerPage));
+  const paginatedMembers = filteredMembers.slice((membersPage - 1) * membersPerPage, membersPage * membersPerPage);
+
   const exportGymsToCSV = () => {
     if (!filteredGyms.length) return showToast('No gyms to export', 'error');
     
@@ -276,7 +399,7 @@ export default function GymManagement() {
   const exportMembersToCSV = () => {
     if (!filteredMembers.length) return showToast('No athletes to export', 'error');
     
-    const headers = ['Athlete ID', 'Name', 'Phone', 'Email', 'Gym Name', 'Gym Code', 'Status', 'Join Date', 'Expiry Date', 'Check-ins'];
+    const headers = ['Athlete ID', 'Name', 'Phone', 'Email', 'Gym Name', 'Gym Code', 'Status', 'Join Date', 'Expiry Date'];
     const rows = filteredMembers.map(m => [
       m.id,
       `"${(m.full_name || '').replace(/"/g, '""')}"`,
@@ -286,8 +409,7 @@ export default function GymManagement() {
       m.gyms?.unique_code || '',
       m.status,
       m.join_date || '',
-      m.expiry_date || '',
-      m.check_in_count || 0
+      m.expiry_date || ''
     ]);
     
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -306,122 +428,60 @@ export default function GymManagement() {
         onClose={() => setToast({ message: '', type: 'success' })} 
       />
 
-      {/* Directory Selector Toggle */}
-      <div className="flex rounded-3xl bg-slate-950/40 backdrop-blur-md border border-white/5 p-1.5 max-w-lg shadow-2xl relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#3390ec]/5 to-transparent pointer-events-none opacity-40" />
-        <button
-          onClick={() => setActiveSubTab('owners')}
-          className={`flex-1 flex items-center justify-center gap-2.5 py-4.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-300 cursor-pointer ${
-            activeSubTab === 'owners'
-              ? 'bg-gradient-to-r from-[#3390ec] to-[#2563eb] text-white shadow-xl shadow-[#3390ec]/20 hover:brightness-110 active:scale-95'
-              : 'text-slate-500 hover:text-slate-200 hover:bg-white/[0.02]'
-          }`}
-        >
-          <Building2 className="w-4 h-4" />
-          Gym Owners
-          <span className="text-[10px] bg-black/40 text-white/90 font-black px-2.5 py-0.5 rounded-full border border-white/5 ml-1">
-            {gyms.length}
-          </span>
-        </button>
-        <button
-          onClick={() => setActiveSubTab('members')}
-          className={`flex-1 flex items-center justify-center gap-2.5 py-4.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-300 cursor-pointer ${
-            activeSubTab === 'members'
-              ? 'bg-gradient-to-r from-[#3390ec] to-[#2563eb] text-white shadow-xl shadow-[#3390ec]/20 hover:brightness-110 active:scale-95'
-              : 'text-slate-500 hover:text-slate-200 hover:bg-white/[0.02]'
-          }`}
-        >
-          <Users className="w-4 h-4" />
-          Athletes / Members
-          <span className="text-[10px] bg-black/40 text-white/90 font-black px-2.5 py-0.5 rounded-full border border-white/5 ml-1">
-            {members.length}
-          </span>
-        </button>
-      </div>
-
       {/* OWNERS TAB VIEW */}
       {activeSubTab === 'owners' && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
           {/* Quick Status Filter Summary Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-                statusFilter === 'all'
-                  ? 'bg-[#3390ec]/15 border-[#3390ec]/50 text-white shadow-lg shadow-[#3390ec]/10'
-                  : 'bg-[#14151b]/40 border-white/5 text-slate-400 hover:bg-white/[0.03] hover:text-white'
-              }`}
-            >
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">All Gyms</p>
-              <p className="text-xl font-black text-white mt-1">{gyms.length}</p>
-            </button>
-            
-            <button
-              onClick={() => setStatusFilter('active')}
-              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-                statusFilter === 'active'
-                  ? 'bg-emerald-500/15 border-emerald-500/50 text-white shadow-lg shadow-emerald-500/10'
-                  : 'bg-[#14151b]/40 border-white/5 text-slate-400 hover:bg-white/[0.03] hover:text-white'
-              }`}
-            >
-              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Active Plans</p>
-              <p className="text-xl font-black text-emerald-400 mt-1">{gyms.filter(g => g.status === 'active').length}</p>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('expired')}
-              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-                statusFilter === 'expired'
-                  ? 'bg-rose-500/15 border-rose-500/50 text-white shadow-lg shadow-rose-500/10'
-                  : 'bg-[#14151b]/40 border-white/5 text-slate-400 hover:bg-white/[0.03] hover:text-white'
-              }`}
-            >
-              <p className="text-[10px] font-black uppercase tracking-widest text-rose-400">Expired Plans</p>
-              <p className="text-xl font-black text-rose-400 mt-1">{gyms.filter(g => g.status === 'expired').length}</p>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('pending')}
-              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-                statusFilter === 'pending'
-                  ? 'bg-amber-500/15 border-amber-500/50 text-white shadow-lg shadow-amber-500/10'
-                  : 'bg-[#14151b]/40 border-white/5 text-slate-400 hover:bg-white/[0.03] hover:text-white'
-              }`}
-            >
-              <p className="text-[10px] font-black uppercase tracking-widest text-amber-400">Pending</p>
-              <p className="text-xl font-black text-amber-400 mt-1">{gyms.filter(g => g.status === 'pending').length}</p>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('blocked')}
-              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-                statusFilter === 'blocked'
-                  ? 'bg-red-500/15 border-red-500/50 text-white shadow-lg shadow-red-500/10'
-                  : 'bg-[#14151b]/40 border-white/5 text-slate-400 hover:bg-white/[0.03] hover:text-white'
-              }`}
-            >
-              <p className="text-[10px] font-black uppercase tracking-widest text-red-400">Blocked</p>
-              <p className="text-xl font-black text-red-400 mt-1">{gyms.filter(g => g.status === 'blocked').length}</p>
-            </button>
+          {/* Quick Status Filter Floating Pills - Matching Subscriptions */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {[
+              { key: 'all', label: 'All Gyms', count: gyms.length },
+              { key: 'active', label: 'Active Plans', count: gyms.filter(g => g.status === 'active').length },
+              { key: 'expired', label: 'Expired', count: gyms.filter(g => g.status === 'expired').length },
+              { key: 'pending', label: 'Pending', count: gyms.filter(g => g.status === 'pending').length },
+              { key: 'blocked', label: 'Blocked', count: gyms.filter(g => g.status === 'blocked').length },
+            ].map((tab) => {
+              const isActive = statusFilter === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setStatusFilter(tab.key)}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer ${
+                    isActive
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
+                    isActive
+                      ? 'bg-violet-700/80 text-white'
+                      : 'bg-slate-200/70 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400'
+                  }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Filters & Search */}
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+          {/* Filters & Search - Floating on Canvas */}
+          <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
             <div className="relative w-full sm:w-[28rem] group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-[#3390ec] transition-colors" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-zinc-500 group-focus-within:text-violet-500 transition-colors" />
               <input
                 type="text"
-                placeholder="Search by Gym Name, ID, Owner Name or Email..."
+                placeholder="Search by gym name, ID, owner name or email..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-11 pr-4 py-4 bg-[#14151b] border border-white/5 rounded-2xl text-xs font-bold text-white placeholder-slate-600 focus:outline-none focus:border-[#3390ec]/60 focus:ring-1 focus:ring-[#3390ec]/30 shadow-inner transition-all duration-300"
+                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto relative">
               <select 
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full sm:w-auto appearance-none bg-[#14151b] border border-white/5 rounded-2xl pl-5 pr-10 py-4 text-xs font-black uppercase tracking-wider text-slate-400 hover:text-white transition-all focus:outline-none focus:border-[#3390ec]/60 cursor-pointer"
+                className="w-full sm:w-auto appearance-none bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl pl-4 pr-10 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-200 transition-colors focus:outline-none focus:border-violet-500 cursor-pointer"
               >
                 <option value="all">All SaaS Status</option>
                 <option value="active">Active Plan</option>
@@ -429,140 +489,139 @@ export default function GymManagement() {
                 <option value="pending">Pending</option>
                 <option value="blocked">Blocked</option>
               </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-zinc-500 pointer-events-none" />
             </div>
             
             <button
               onClick={exportGymsToCSV}
-              className="flex items-center gap-2 bg-[#3390ec]/10 hover:bg-[#3390ec]/20 text-[#3390ec] border border-[#3390ec]/20 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 whitespace-nowrap shadow-lg shadow-[#3390ec]/5"
+              className="flex items-center gap-2 bg-slate-100 dark:bg-zinc-900 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap cursor-pointer"
             >
-              <Download className="w-4 h-4" />
-              Export CSV
+              <Download className="w-3.5 h-3.5" />
+              <span>Export CSV</span>
             </button>
           </div>
 
           {/* Owners Table */}
-          <div className="bg-transparent sm:bg-[#161b22] border-none sm:border sm:border-white/10 rounded-none sm:rounded-2xl overflow-hidden relative">
-            <div className="overflow-x-hidden">
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl overflow-hidden relative">
+            <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse block sm:table">
                 <thead className="hidden sm:table-header-group">
-                  <tr className="bg-[#0b0c10]/80 border-b border-white/5">
-                    <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Gym & Owner Details</th>
-                    <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Registry Date</th>
-                    <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">SaaS Tier Plan</th>
-                    <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Plan Expiry & Time Left</th>
-                    <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Gateway Code</th>
-                    <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                    <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                  <tr className="bg-slate-50/80 dark:bg-zinc-950/60 border-b border-slate-200 dark:border-zinc-800">
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Gym & Owner Details</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Registry Date</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">SaaS Tier Plan</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Plan Expiry & Time Left</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Gateway Code</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Status</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="block sm:table-row-group divide-y-0 sm:divide-y sm:divide-white/5">
-                  {filteredGyms.map((gym) => (
-                    <tr key={gym.id} className="block sm:table-row bg-[#161b22] sm:bg-transparent rounded-2xl sm:rounded-none mb-4 sm:mb-0 border border-white/10 sm:border-none p-4 sm:p-0 hover:bg-white/[0.02] transition-colors group relative">
-                      <td className="block sm:table-cell px-2 py-3 sm:px-7 sm:py-5">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-slate-900 to-slate-800 flex items-center justify-center text-[#3390ec] font-black text-base border border-white/10 shadow-inner group-hover:scale-105 transition-transform duration-300 overflow-hidden">
+                <tbody className="block sm:table-row-group divide-y-0 sm:divide-y sm:divide-slate-100 dark:sm:divide-zinc-800/80">
+                  {paginatedGyms.map((gym) => (
+                    <tr key={gym.id} className="block sm:table-row bg-white dark:bg-zinc-900 sm:bg-transparent rounded-2xl sm:rounded-none mb-4 sm:mb-0 border border-slate-200 dark:border-zinc-800 sm:border-none p-4 sm:p-0 hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors group relative">
+                      <td className="block sm:table-cell px-2 py-3 sm:px-6 sm:py-4">
+                        <div className="flex items-center gap-3.5">
+                          <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-black text-base border border-slate-200 dark:border-zinc-700 overflow-hidden shrink-0">
                             {gym.owner_profile?.avatar_url ? (
                               <img src={gym.owner_profile.avatar_url} alt="Owner" className="w-full h-full object-cover" />
                             ) : (
                               gym.gym_name ? gym.gym_name.charAt(0).toUpperCase() : 'G'
                             )}
                           </div>
-                          <div className="space-y-1">
-                            <p className="text-white font-extrabold text-sm tracking-tight">{gym.gym_name || 'No Name Gym'}</p>
+                          <div className="space-y-0.5 min-w-0">
+                            <p className="text-slate-900 dark:text-white font-bold text-sm tracking-tight truncate">{gym.gym_name || 'No Name Gym'}</p>
                             
-                            {/* Gym Owner details displaying dynamically */}
                             {gym.owner_profile ? (
-                              <div className="flex flex-col gap-0.5">
-                                <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold">
-                                  <User className="w-3 h-3 text-[#3390ec]" />
-                                  <span>{gym.owner_profile.full_name || 'Anonymous Owner'}</span>
+                              <div className="flex flex-col">
+                                <div className="flex items-center gap-1 text-slate-600 dark:text-zinc-400 text-[11px] font-semibold truncate">
+                                  <User className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                  <span className="truncate">{gym.owner_profile.full_name || 'Anonymous Owner'}</span>
                                 </div>
-                                <div className="flex items-center gap-1.5 text-slate-500 text-[9px] font-mono">
-                                  <Mail className="w-2.5 h-2.5 text-slate-600" />
-                                  <span>{gym.owner_profile.email}</span>
+                                <div className="flex items-center gap-1 text-slate-400 dark:text-zinc-500 text-[10px] font-mono truncate">
+                                  <Mail className="w-2.5 h-2.5 shrink-0" />
+                                  <span className="truncate">{gym.owner_profile.email}</span>
                                 </div>
                               </div>
                             ) : (
-                              <div className="flex items-center gap-1 text-rose-500/60 text-[10px] font-bold">
-                                <ShieldAlert className="w-3 h-3" />
-                                <span>No Linked Owner Account</span>
+                              <div className="flex items-center gap-1 text-rose-500 text-[10px] font-bold">
+                                <ShieldAlert className="w-3 h-3 shrink-0" />
+                                <span>No Linked Owner</span>
                               </div>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="block sm:table-cell px-2 py-2 sm:px-7 sm:py-5 text-slate-400 text-xs font-medium">
-                        <span className="sm:hidden text-[10px] text-slate-500 uppercase font-bold mr-2">Registered:</span>
+                      <td className="block sm:table-cell px-2 py-2 sm:px-6 sm:py-4 text-slate-500 dark:text-zinc-400 text-xs font-medium">
+                        <span className="sm:hidden text-[10px] text-slate-400 uppercase font-bold mr-2">Registered:</span>
                         {new Date(gym.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </td>
-                      <td className="block sm:table-cell px-2 py-2 sm:px-7 sm:py-5">
-                        <span className="sm:hidden text-[10px] text-slate-500 uppercase font-bold mr-2">Plan:</span>
-                        <span className="bg-slate-800 border border-slate-700 text-slate-300 text-[10px] font-semibold px-2 py-1 rounded-md uppercase tracking-wide">
+                      <td className="block sm:table-cell px-2 py-2 sm:px-6 sm:py-4">
+                        <span className="sm:hidden text-[10px] text-slate-400 uppercase font-bold mr-2">Plan:</span>
+                        <span className="bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wide">
                           {gym.saas_plans?.name || 'Starter Plan'}
                         </span>
                       </td>
-                      <td className="block sm:table-cell px-2 py-3 sm:px-7 sm:py-5">
-                        <span className="sm:hidden text-[10px] text-slate-500 uppercase font-bold block mb-1">Expiry Status:</span>
+                      <td className="block sm:table-cell px-2 py-3 sm:px-6 sm:py-4">
+                        <span className="sm:hidden text-[10px] text-slate-400 uppercase font-bold block mb-1">Expiry Status:</span>
                         {gym.expires_at ? (
                           <div className="space-y-1">
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
-                              <Calendar className="w-3.5 h-3.5 text-[#3390ec]" />
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-zinc-300">
+                              <Calendar className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                               <span>{new Date(gym.expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                             </div>
                             <div>
                               {gym.days_left > 0 ? (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
                                   <Clock className="w-3 h-3" />
                                   {gym.days_left} {gym.days_left === 1 ? 'day' : 'days'} left
                                 </span>
                               ) : gym.days_left === 0 ? (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-black px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
                                   <Clock className="w-3 h-3" />
                                   Expires Today
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-black px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
                                   <Clock className="w-3 h-3" />
-                                  Expired ({Math.abs(gym.days_left)} {Math.abs(gym.days_left) === 1 ? 'day' : 'days'} ago)
+                                  Expired ({Math.abs(gym.days_left)}d ago)
                                 </span>
                               )}
                             </div>
                           </div>
                         ) : (
-                          <span className="text-slate-600 text-xs font-bold">—</span>
+                          <span className="text-slate-400 dark:text-zinc-600 text-xs font-bold">—</span>
                         )}
                       </td>
-                      <td className="block sm:table-cell px-2 py-2 sm:px-7 sm:py-5 font-mono text-emerald-400 text-xs font-medium tracking-wide">
-                        <span className="sm:hidden text-[10px] text-slate-500 uppercase font-bold mr-2">Code:</span>
+                      <td className="block sm:table-cell px-2 py-2 sm:px-6 sm:py-4 font-mono text-emerald-600 dark:text-emerald-400 text-xs font-bold tracking-wide">
+                        <span className="sm:hidden text-[10px] text-slate-400 uppercase font-bold mr-2">Code:</span>
                         {gym.unique_code || '—'}
                       </td>
-                      <td className="block sm:table-cell px-2 py-3 sm:px-7 sm:py-5">
-                        <span className="sm:hidden text-[10px] text-slate-500 uppercase font-bold mr-2">Status:</span>
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wide ${
-                          gym.status === 'active' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 
-                          gym.status === 'expired' ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' : 
-                          gym.status === 'blocked' ? 'bg-slate-500/10 text-slate-400 border border-slate-500/20' : 
-                          'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                      <td className="block sm:table-cell px-2 py-3 sm:px-6 sm:py-4">
+                        <span className="sm:hidden text-[10px] text-slate-400 uppercase font-bold mr-2">Status:</span>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                          gym.status === 'active' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20' : 
+                          gym.status === 'expired' ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20' : 
+                          gym.status === 'blocked' ? 'bg-slate-500/10 text-slate-700 dark:text-slate-400 border border-slate-500/20' : 
+                          'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20'
                         }`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${
-                            gym.status === 'active' ? 'bg-emerald-400' : 
-                            gym.status === 'expired' ? 'bg-rose-400' : 
-                            gym.status === 'blocked' ? 'bg-red-400' : 
-                            'bg-amber-400'
+                            gym.status === 'active' ? 'bg-emerald-500' : 
+                            gym.status === 'expired' ? 'bg-rose-500' : 
+                            gym.status === 'blocked' ? 'bg-red-500' : 
+                            'bg-amber-500'
                           }`} />
                           {gym.status || 'pending'}
                         </span>
                       </td>
-                      <td className="absolute sm:relative top-2 sm:top-auto right-2 sm:right-auto block sm:table-cell px-2 py-2 sm:px-7 sm:py-5 text-right">
+                      <td className="absolute sm:relative top-2 sm:top-auto right-2 sm:right-auto block sm:table-cell px-2 py-2 sm:px-6 sm:py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <div className="relative">
                             <button 
                               onClick={() => setOpenMenuId(openMenuId === gym.id ? null : gym.id)}
-                              className={`p-2.5 rounded-xl transition-all cursor-pointer border ${
+                              className={`p-2 rounded-xl transition-all cursor-pointer border ${
                                 openMenuId === gym.id 
-                                  ? 'bg-[#3390ec] text-white border-[#3390ec]' 
-                                  : 'bg-white/5 border-white/5 text-slate-400 hover:text-white hover:bg-white/[0.08]'
+                                  ? 'bg-emerald-600 text-white border-emerald-600' 
+                                  : 'bg-slate-100 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-zinc-700'
                               }`}
                             >
                               <MoreVertical className="w-4 h-4" />
@@ -571,16 +630,16 @@ export default function GymManagement() {
                             {openMenuId === gym.id && (
                               <>
                                 <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
-                                <div className="absolute right-0 mt-2.5 w-52 bg-[#0e0f14] border border-white/10 rounded-2xl shadow-2xl z-20 py-2.5 animate-in zoom-in-95 duration-200">
+                                <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl z-20 py-2 animate-in zoom-in-95 duration-200">
                                   {gym.status !== 'active' ? (
                                     <button 
                                       onClick={() => {
                                         setActivationModal({ isOpen: true, gymId: gym.id, gymName: gym.gym_name });
                                         setOpenMenuId(null);
                                       }}
-                                      className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-emerald-400 hover:bg-emerald-400/10 transition-all text-left"
+                                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-all text-left cursor-pointer"
                                     >
-                                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                                      <ShieldCheck className="w-4 h-4" />
                                       {gym.status === 'expired' ? 'Renew / Extend Plan' : 'Activate Account'}
                                     </button>
                                   ) : (
@@ -594,9 +653,9 @@ export default function GymManagement() {
                                         );
                                         setOpenMenuId(null);
                                       }}
-                                      className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-amber-400 hover:bg-amber-400/10 transition-all text-left"
+                                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-all text-left cursor-pointer"
                                     >
-                                      <Ban className="w-4 h-4 text-amber-400" />
+                                      <Ban className="w-4 h-4" />
                                       Block & Delete Auth
                                     </button>
                                   )}
@@ -611,9 +670,9 @@ export default function GymManagement() {
                                       }, 400);
                                       setOpenMenuId(null);
                                     }}
-                                    className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-sky-400 hover:bg-sky-400/10 transition-all text-left border-t border-white/5"
+                                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-sky-600 dark:text-sky-400 hover:bg-sky-500/10 transition-all text-left border-t border-slate-100 dark:border-zinc-800 cursor-pointer"
                                   >
-                                    <ExternalLink className="w-4 h-4 text-sky-400" />
+                                    <ExternalLink className="w-4 h-4" />
                                     Ghost Mode (Inspect Dashboard)
                                   </button>
 
@@ -627,9 +686,9 @@ export default function GymManagement() {
                                       );
                                       setOpenMenuId(null);
                                     }}
-                                    className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 transition-all text-left border-t border-white/5"
+                                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-all text-left border-t border-slate-100 dark:border-zinc-800 cursor-pointer"
                                   >
-                                    <Trash2 className="w-4 h-4 text-red-500" />
+                                    <Trash2 className="w-4 h-4" />
                                     Delete Account
                                   </button>
                                 </div>
@@ -642,10 +701,19 @@ export default function GymManagement() {
                   ))}
                 </tbody>
               </table>
+              <PaginationControls
+                currentPage={gymsPage}
+                totalPages={totalGymPages}
+                totalItems={filteredGyms.length}
+                pageSize={gymsPerPage}
+                onPageChange={setGymsPage}
+                onPageSizeChange={setGymsPerPage}
+                itemName="gyms"
+              />
               {filteredGyms.length === 0 && (
                 <div className="py-20 text-center">
-                  <AlertCircle className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-                  <p className="text-slate-500 font-medium">No gyms found matching your query.</p>
+                  <AlertCircle className="w-10 h-10 text-slate-400 dark:text-zinc-600 mx-auto mb-3" />
+                  <p className="text-slate-600 dark:text-zinc-400 font-bold text-xs">No gyms found matching your query.</p>
                 </div>
               )}
             </div>
@@ -656,163 +724,205 @@ export default function GymManagement() {
       {/* MEMBERS/ATHLETES TAB VIEW */}
       {activeSubTab === 'members' && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          {/* Filters & Search */}
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+          {/* Quick Status Filter Floating Pills - Matching Subscriptions & Owners */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {[
+              { key: 'all', label: 'All Athletes', count: members.length },
+              { key: 'active', label: 'Active Pass', count: members.filter(m => m.status === 'active').length },
+              { key: 'expired', label: 'Expired', count: members.filter(m => m.status === 'expired').length },
+              { key: 'expiring_soon', label: 'Expiring Soon', count: members.filter(m => m.status === 'expiring_soon').length },
+            ].map((tab) => {
+              const isActive = membersStatusFilter === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setMembersStatusFilter(tab.key)}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer ${
+                    isActive
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
+                    isActive
+                      ? 'bg-violet-700/80 text-white'
+                      : 'bg-slate-200/70 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400'
+                  }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Filters & Search - Floating on Canvas */}
+          <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
             <div className="relative w-full sm:w-[28rem] group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-[#3390ec] transition-colors" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-zinc-500 group-focus-within:text-violet-500 transition-colors" />
               <input
                 type="text"
-                placeholder="Search Athlete by Name, Phone, Email, Gym..."
+                placeholder="Search athlete by name, phone, email, gym..."
                 value={membersSearch}
                 onChange={(e) => setMembersSearch(e.target.value)}
-                className="w-full pl-11 pr-4 py-4 bg-[#14151b] border border-white/5 rounded-2xl text-xs font-bold text-white placeholder-slate-600 focus:outline-none focus:border-[#3390ec]/60 focus:ring-1 focus:ring-[#3390ec]/30 shadow-inner transition-all duration-300"
+                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto relative">
               <select 
                 value={membersStatusFilter}
                 onChange={(e) => setMembersStatusFilter(e.target.value)}
-                className="w-full sm:w-auto appearance-none bg-[#14151b] border border-white/5 rounded-2xl pl-5 pr-10 py-4 text-xs font-black uppercase tracking-wider text-slate-400 hover:text-white transition-all focus:outline-none focus:border-[#3390ec]/60 cursor-pointer"
+                className="w-full sm:w-auto appearance-none bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl pl-4 pr-10 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-200 transition-colors focus:outline-none focus:border-violet-500 cursor-pointer"
               >
                 <option value="all">All Pass Status</option>
                 <option value="active">Active Pass</option>
                 <option value="expired">Expired Pass</option>
                 <option value="expiring_soon">Expiring Soon</option>
               </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-zinc-500 pointer-events-none" />
             </div>
 
             <button
               onClick={exportMembersToCSV}
-              className="flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 whitespace-nowrap shadow-lg shadow-emerald-500/5"
+              className="flex items-center gap-2 bg-slate-100 dark:bg-zinc-900 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap cursor-pointer"
             >
-              <Download className="w-4 h-4" />
-              Export CSV
+              <Download className="w-3.5 h-3.5" />
+              <span>Export CSV</span>
             </button>
           </div>
 
           {/* Members Table */}
-          <div className="bg-[#14151b]/40 backdrop-blur-md border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl relative">
-            <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl overflow-hidden relative">
             <div className="overflow-x-auto">
               {membersLoading && members.length === 0 ? (
-                <div className="py-20 text-center text-slate-500 font-medium">Loading Athlete Directory...</div>
+                <div className="py-20 text-center text-slate-500 dark:text-zinc-400 font-medium text-xs">Loading athlete directory...</div>
               ) : (
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-[#0b0c10]/80 border-b border-white/5">
-                      <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Athlete Details</th>
-                      <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Connected Gym</th>
-                      <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Join & Expiry</th>
-                      <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Workouts</th>
-                      <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                      <th className="px-7 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {filteredMembers.map((member) => (
-                      <tr key={member.id} className="hover:bg-white/[0.01] transition-colors group">
-                        <td className="px-7 py-5">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#3390ec]/5 to-[#3390ec]/20 flex items-center justify-center text-[#3390ec] font-black text-base border border-[#3390ec]/20 shadow-inner group-hover:scale-105 transition-transform duration-300 overflow-hidden">
-                              {(member.avatar_url || member.profiles?.avatar_url) ? (
-                                <img src={member.avatar_url || member.profiles.avatar_url} alt="Athlete" className="w-full h-full object-cover" />
-                              ) : (
-                                member.full_name ? member.full_name.charAt(0).toUpperCase() : 'M'
-                              )}
-                            </div>
-                            <div className="space-y-1">
-                              <p className="text-white font-extrabold text-sm tracking-tight">{member.full_name || 'No Name Athlete'}</p>
-                              <div className="flex flex-col gap-0.5">
-                                <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold">
-                                  <Phone className="w-3 h-3 text-[#3390ec]" />
-                                  <span>{member.phone_number || 'No Phone Registered'}</span>
-                                </div>
-                                {member.profiles?.email && (
-                                  <div className="flex items-center gap-1.5 text-slate-500 text-[9px] font-mono">
-                                    <Mail className="w-2.5 h-2.5 text-slate-600" />
-                                    <span>{member.profiles.email}</span>
-                                  </div>
+                <>
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50/80 dark:bg-zinc-950/60 border-b border-slate-200 dark:border-zinc-800">
+                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Athlete Details</th>
+                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Connected Gym</th>
+                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Join & Expiry</th>
+                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Plan / Package</th>
+                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Status</th>
+                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/80">
+                      {paginatedMembers.map((member) => (
+                        <tr key={member.id} className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors group">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3.5">
+                              <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-violet-600 dark:text-violet-400 font-black text-base border border-slate-200 dark:border-zinc-700 overflow-hidden shrink-0">
+                                {(member.avatar_url || member.profiles?.avatar_url) ? (
+                                  <img src={member.avatar_url || member.profiles.avatar_url} alt="Athlete" className="w-full h-full object-cover" />
+                                ) : (
+                                  member.full_name ? member.full_name.charAt(0).toUpperCase() : 'M'
                                 )}
                               </div>
+                              <div className="space-y-0.5 min-w-0">
+                                <p className="text-slate-900 dark:text-white font-bold text-sm tracking-tight truncate">{member.full_name || 'No Name Athlete'}</p>
+                                <div className="flex flex-col">
+                                  <div className="flex items-center gap-1 text-slate-600 dark:text-zinc-400 text-[11px] font-semibold truncate">
+                                    <Phone className="w-3 h-3 text-slate-400 dark:text-zinc-500 shrink-0" />
+                                    <span>{member.phone_number || 'No Phone'}</span>
+                                  </div>
+                                  {member.profiles?.email && (
+                                    <div className="flex items-center gap-1 text-slate-400 dark:text-zinc-500 text-[10px] font-mono truncate">
+                                      <Mail className="w-2.5 h-2.5 shrink-0" />
+                                      <span className="truncate">{member.profiles.email}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-7 py-5">
-                          {member.gyms ? (
-                            <div className="space-y-1">
-                              <p className="text-white font-bold text-xs flex items-center gap-1.5">
-                                <Building2 className="w-3.5 h-3.5 text-[#3390ec]" />
-                                {member.gyms.gym_name}
+                          </td>
+                          <td className="px-6 py-4">
+                            {member.gyms ? (
+                              <div className="space-y-1">
+                                <p className="text-slate-900 dark:text-white font-bold text-xs flex items-center gap-1.5">
+                                  <Building2 className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500" />
+                                  {member.gyms.gym_name}
+                                </p>
+                                <span className="text-violet-600 dark:text-violet-400 font-mono text-[9px] font-black tracking-widest uppercase bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-md inline-block">
+                                  Code: {member.gyms.unique_code}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 dark:text-zinc-600 text-xs font-bold">Unlinked</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="space-y-1 text-[11px] font-medium">
+                              <p className="text-slate-600 dark:text-zinc-400 flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                <span>Join: {member.join_date ? new Date(member.join_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'}</span>
                               </p>
-                              <span className="text-emerald-400 font-mono text-[9px] font-black tracking-widest uppercase bg-emerald-500/5 border border-emerald-500/10 px-2 py-0.5 rounded-lg inline-block">
-                                Code: {member.gyms.unique_code}
-                              </span>
+                              <p className="text-rose-600 dark:text-rose-400 flex items-center gap-1 font-semibold">
+                                <Calendar className="w-3.5 h-3.5 text-rose-500/60" />
+                                <span>Expr: {member.expiry_date ? new Date(member.expiry_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
+                              </p>
                             </div>
-                          ) : (
-                            <span className="text-slate-600 text-xs font-black uppercase tracking-wider">Not connected</span>
-                          )}
-                        </td>
-                        <td className="px-7 py-5">
-                          <div className="space-y-1 text-[11px] font-bold">
-                            <p className="text-slate-400 flex items-center gap-1">
-                              <Clock className="w-3.5 h-3.5 text-slate-600" />
-                              <span>Join: {member.join_date ? new Date(member.join_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'}</span>
-                            </p>
-                            <p className="text-rose-400/80 flex items-center gap-1">
-                              <Calendar className="w-3.5 h-3.5 text-rose-500/40" />
-                              <span>Expr: {member.expiry_date ? new Date(member.expiry_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
-                            </p>
-                          </div>
-                        </td>
-                        <td className="px-7 py-5">
-                          <span className="inline-flex items-center gap-1 bg-white/5 text-white text-[11px] font-black px-3 py-1.5 rounded-xl border border-white/5">
-                            <Sparkles className="w-3.5 h-3.5 text-amber-400 fill-amber-400/20" />
-                            {member.check_in_count || 0} Check-ins
-                          </span>
-                        </td>
-                        <td className="px-7 py-5">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                            member.status === 'active' ? 'bg-emerald-400/10 text-emerald-400 border border-emerald-500/20' : 
-                            member.status === 'expired' ? 'bg-red-400/10 text-red-400 border border-red-500/20' : 
-                            'bg-amber-400/10 text-amber-400 border border-amber-500/20'
-                          }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${
-                              member.status === 'active' ? 'bg-emerald-400' : 
-                              member.status === 'expired' ? 'bg-red-400' : 
-                              'bg-amber-400'
-                            }`} />
-                            {member.status || 'active'}
-                          </span>
-                        </td>
-                        <td className="px-7 py-5 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => setEditMemberModal({ isOpen: true, member: { ...member } })}
-                              className="p-3 bg-sky-500/5 hover:bg-sky-500/15 border border-sky-500/10 hover:border-sky-500/30 text-sky-400 hover:text-sky-500 rounded-xl transition-all cursor-pointer inline-flex shadow-lg shadow-sky-500/5 active:scale-95"
-                              title="Edit Athlete Details & Expiry Date"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteMember(member.id)}
-                              disabled={updatingId === member.id}
-                              className="p-3 bg-rose-500/5 hover:bg-rose-500/15 border border-rose-500/10 hover:border-rose-500/30 text-rose-400 hover:text-rose-500 rounded-xl transition-all cursor-pointer inline-flex shadow-lg shadow-rose-500/5 active:scale-95 disabled:opacity-50"
-                              title="Delete Athlete Record & Auth Profile"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-[11px] font-bold px-2.5 py-1 rounded-xl border border-slate-200 dark:border-zinc-700">
+                              <Tag className="w-3.5 h-3.5 text-violet-500 shrink-0" />
+                              {member.membership_plan || 'General Plan'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                              member.status === 'active' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20' : 
+                              member.status === 'expired' ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20' : 
+                              'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20'
+                            }`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${
+                                member.status === 'active' ? 'bg-emerald-500' : 
+                                member.status === 'expired' ? 'bg-rose-500' : 
+                                'bg-amber-500'
+                              }`} />
+                              {member.status || 'active'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => setEditMemberModal({ isOpen: true, member: { ...member } })}
+                                className="p-2 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 rounded-xl transition-all cursor-pointer"
+                                title="Edit Athlete Details & Expiry Date"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteMember(member.id)}
+                                disabled={updatingId === member.id}
+                                className="p-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-700 dark:text-rose-400 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                                title="Delete Athlete Record & Auth Profile"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <PaginationControls
+                    currentPage={membersPage}
+                    totalPages={totalMemberPages}
+                    totalItems={filteredMembers.length}
+                    pageSize={membersPerPage}
+                    onPageChange={setMembersPage}
+                    onPageSizeChange={setMembersPerPage}
+                    itemName="athletes"
+                  />
+                </>
               )}
               {filteredMembers.length === 0 && !membersLoading && (
                 <div className="py-20 text-center">
-                  <AlertCircle className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-                  <p className="text-slate-500 font-medium">No athletes found matching your query.</p>
+                  <AlertCircle className="w-10 h-10 text-slate-400 dark:text-zinc-600 mx-auto mb-3" />
+                  <p className="text-slate-600 dark:text-zinc-400 font-bold text-xs">No athletes found matching your query.</p>
                 </div>
               )}
             </div>
@@ -822,27 +932,29 @@ export default function GymManagement() {
 
       {/* Activation Modal */}
       {activationModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#121319] border border-white/10 rounded-[2rem] p-8 w-full max-w-md shadow-2xl relative zoom-in-95 animate-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-7 w-full max-w-md relative zoom-in-95 animate-in duration-150">
             <button 
               onClick={() => setActivationModal({ isOpen: false, gymId: null, gymName: '' })}
-              className="absolute top-5 right-5 p-2 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="absolute top-5 right-5 p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
-            <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 rounded-2xl mb-6 shadow-inner">
-              <ShieldCheck className="w-7 h-7" />
+            <div className="flex items-center gap-3 mb-4">
+              <ShieldCheck className="w-6 h-6 text-violet-600 dark:text-violet-400 shrink-0" />
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Activate Gym Account</h3>
+                <p className="text-slate-500 dark:text-zinc-400 text-xs">Assign SaaS tier to <strong className="text-slate-900 dark:text-white">"{activationModal.gymName}"</strong></p>
+              </div>
             </div>
-            <h3 className="text-xl font-black text-white uppercase italic tracking-tight mb-2">Activate Gym Account</h3>
-            <p className="text-slate-400 text-sm mb-6">Select a SaaS subscription tier to assign to <strong className="text-white">"{activationModal.gymName}"</strong>.</p>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2.5">SaaS Plan Tier</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">SaaS Plan Tier</label>
                 <select
                   value={selectedPlan}
                   onChange={(e) => setSelectedPlan(e.target.value)}
-                  className="w-full bg-[#1c1d24] border border-white/5 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-[#3390ec]/60 transition-all font-bold cursor-pointer"
+                  className="w-full bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-colors font-medium cursor-pointer"
                 >
                   <option value="">No Plan / Starter</option>
                   {saasPlans.map(plan => (
@@ -852,58 +964,58 @@ export default function GymManagement() {
               </div>
 
               {/* Toggle exact date vs quick duration */}
-              <div className="flex bg-white/5 rounded-xl p-1 gap-1 border border-white/5">
+              <div className="flex bg-slate-100 dark:bg-zinc-800 rounded-xl p-1 gap-1 border border-slate-200 dark:border-zinc-700">
                 <button
                   type="button"
                   onClick={() => setUseExactDate(false)}
-                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                    !useExactDate ? 'bg-[#3390ec] text-white shadow' : 'text-slate-400 hover:text-white'
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+                    !useExactDate ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  Quick Duration (Days)
+                  Quick Duration
                 </button>
                 <button
                   type="button"
                   onClick={() => setUseExactDate(true)}
-                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                    useExactDate ? 'bg-[#3390ec] text-white shadow' : 'text-slate-400 hover:text-white'
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+                    useExactDate ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  Calendar Date Picker
+                  Calendar Date
                 </button>
               </div>
 
               {!useExactDate ? (
                 <div>
-                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2.5">Activation Duration (Days)</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">Activation Duration (Days)</label>
                   <input
                     type="number"
                     min="1"
                     max="3650"
                     value={activationDays}
                     onChange={(e) => setActivationDays(e.target.value)}
-                    placeholder="e.g. 20, 30, 90, 365"
-                    className="w-full bg-[#1c1d24] border border-white/5 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-[#3390ec]/60 transition-all font-bold text-white"
+                    placeholder="e.g. 30, 90, 365"
+                    className="w-full bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-colors font-medium"
                   />
-                  <p className="text-[10px] text-slate-400 mt-1">Specify how many days the gym access remains active (e.g. enter 20 for 20 days).</p>
+                  <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1">Specify how many days the gym access remains active.</p>
                 </div>
               ) : (
                 <div>
-                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2.5">Exact Expiry Date</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">Exact Expiry Date</label>
                   <input
                     type="date"
                     value={exactEndDate}
                     onChange={(e) => setExactEndDate(e.target.value)}
-                    className="w-full bg-[#1c1d24] border border-white/5 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-[#3390ec]/60 transition-all font-bold text-white"
+                    className="w-full bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-colors font-medium"
                   />
-                  <p className="text-[10px] text-slate-400 mt-1">Select the exact calendar date when this gym's SaaS plan will expire.</p>
+                  <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1">Select the exact calendar date when this gym's SaaS plan will expire.</p>
                 </div>
               )}
 
               <button 
                 onClick={handleActivateSubmit}
                 disabled={updatingId === activationModal.gymId}
-                className="w-full py-4.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black font-extrabold text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/15 active:scale-95 transition-all duration-300 disabled:opacity-50 cursor-pointer mt-2"
+                className="w-full py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs rounded-xl transition-all disabled:opacity-50 cursor-pointer mt-2 active:scale-95"
               >
                 {updatingId === activationModal.gymId ? 'Activating...' : (useExactDate && exactEndDate ? `Activate Until ${exactEndDate}` : `Activate for ${activationDays || 30} Days`)}
               </button>
@@ -914,23 +1026,25 @@ export default function GymManagement() {
 
       {/* Edit Athlete / Member Modal */}
       {editMemberModal.isOpen && editMemberModal.member && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#121319] border border-white/10 rounded-[2rem] p-8 w-full max-w-md shadow-2xl relative zoom-in-95 animate-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-7 w-full max-w-md relative zoom-in-95 animate-in duration-150">
             <button 
               onClick={() => setEditMemberModal({ isOpen: false, member: null })}
-              className="absolute top-5 right-5 p-2 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="absolute top-5 right-5 p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
-            <div className="w-14 h-14 bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 rounded-2xl mb-6 shadow-inner">
-              <Edit2 className="w-7 h-7" />
+            <div className="flex items-center gap-3 mb-4">
+              <Edit2 className="w-6 h-6 text-violet-600 dark:text-violet-400 shrink-0" />
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Edit Athlete Details</h3>
+                <p className="text-slate-500 dark:text-zinc-400 text-xs">Modify athlete record across the platform.</p>
+              </div>
             </div>
-            <h3 className="text-xl font-black text-white uppercase italic tracking-tight mb-2">Edit Athlete Details</h3>
-            <p className="text-slate-400 text-sm mb-6">Modify member record and plan expiry date across the platform.</p>
             
             <form onSubmit={handleMemberEditSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Full Name</label>
+                <label className="block text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">Full Name</label>
                 <input
                   type="text"
                   value={editMemberModal.member.full_name || ''}
@@ -938,13 +1052,13 @@ export default function GymManagement() {
                     ...editMemberModal,
                     member: { ...editMemberModal.member, full_name: e.target.value }
                   })}
-                  className="w-full bg-[#1c1d24] border border-white/5 rounded-2xl px-5 py-3.5 text-sm text-white font-bold"
+                  className="w-full bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-medium focus:outline-none focus:border-violet-500 transition-colors"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Phone Number</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">Phone Number</label>
                 <input
                   type="text"
                   value={editMemberModal.member.phone_number || ''}
@@ -952,12 +1066,12 @@ export default function GymManagement() {
                     ...editMemberModal,
                     member: { ...editMemberModal.member, phone_number: e.target.value }
                   })}
-                  className="w-full bg-[#1c1d24] border border-white/5 rounded-2xl px-5 py-3.5 text-sm text-white font-bold"
+                  className="w-full bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-medium focus:outline-none focus:border-violet-500 transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Membership Plan Name</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">Membership Plan Name</label>
                 <input
                   type="text"
                   value={editMemberModal.member.membership_plan || ''}
@@ -965,12 +1079,12 @@ export default function GymManagement() {
                     ...editMemberModal,
                     member: { ...editMemberModal.member, membership_plan: e.target.value }
                   })}
-                  className="w-full bg-[#1c1d24] border border-white/5 rounded-2xl px-5 py-3.5 text-sm text-white font-bold"
+                  className="w-full bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-medium focus:outline-none focus:border-violet-500 transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Plan Expiry Date</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">Plan Expiry Date</label>
                 <input
                   type="date"
                   value={editMemberModal.member.expiry_date ? new Date(editMemberModal.member.expiry_date).toISOString().split('T')[0] : ''}
@@ -978,19 +1092,19 @@ export default function GymManagement() {
                     ...editMemberModal,
                     member: { ...editMemberModal.member, expiry_date: e.target.value }
                   })}
-                  className="w-full bg-[#1c1d24] border border-white/5 rounded-2xl px-5 py-3.5 text-sm text-white font-bold"
+                  className="w-full bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-medium focus:outline-none focus:border-violet-500 transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Member Status</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">Member Status</label>
                 <select
                   value={editMemberModal.member.status || 'active'}
                   onChange={(e) => setEditMemberModal({
                     ...editMemberModal,
                     member: { ...editMemberModal.member, status: e.target.value }
                   })}
-                  className="w-full bg-[#1c1d24] border border-white/5 rounded-2xl px-5 py-3.5 text-sm text-white font-bold cursor-pointer"
+                  className="w-full bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-medium cursor-pointer focus:outline-none focus:border-violet-500 transition-colors"
                 >
                   <option value="active">Active Pass</option>
                   <option value="expired">Expired Pass</option>
@@ -1001,7 +1115,7 @@ export default function GymManagement() {
               <button 
                 type="submit"
                 disabled={updatingId === editMemberModal.member.id}
-                className="w-full py-4 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-extrabold text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-sky-500/15 active:scale-95 transition-all duration-300 disabled:opacity-50 cursor-pointer mt-4"
+                className="w-full py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs rounded-xl transition-all disabled:opacity-50 cursor-pointer mt-2 active:scale-95"
               >
                 {updatingId === editMemberModal.member.id ? 'Saving Changes...' : 'Save Athlete Changes'}
               </button>

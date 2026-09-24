@@ -404,28 +404,28 @@ export function MemberProfileTab({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         
         {/* Profile editing card */}
-        <div className="bg-[#1A1F2B] border border-white/5 rounded-2xl p-6 space-y-6">
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-6">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#3B82F6]/10 flex items-center justify-center border border-[#3B82F6]/20 text-[#3B82F6]">
-              <User className="w-4.5 h-4.5" />
+            <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center border border-violet-500/20 text-violet-600 dark:text-violet-400">
+              <User className="w-5 h-5" />
             </div>
             <div className="text-left">
-              <h4 className="text-xs font-black text-white uppercase tracking-wider">Personal Settings</h4>
-              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Configure your athlete identity</p>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white">Personal Settings</h4>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">Configure your athlete identity</p>
             </div>
           </div>
 
           <form onSubmit={handleUpdateProfile} className="space-y-4">
             {/* Photo Selection Widget */}
-            <div className="flex flex-col items-center gap-4 p-5 rounded-xl bg-white/[0.02] border border-white/5">
+            <div className="flex flex-col items-center gap-4 p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-800">
               
               {/* Flat Avatar Frame */}
-              <div className="relative group w-24 h-24 rounded-full p-[2px] bg-white/10 hover:border-white/20 transition-all duration-200">
-                <div className="relative w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-slate-900">
+              <div className="relative group w-24 h-24 rounded-full p-[2px] bg-slate-200 dark:bg-zinc-700 hover:border-violet-500 transition-all duration-200">
+                <div className="relative w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-slate-100 dark:bg-zinc-800">
                   {profileAvatar ? (
                     <img src={profileAvatar} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
-                    <User className="w-8 h-8 text-slate-500" />
+                    <User className="w-8 h-8 text-slate-400 dark:text-zinc-500" />
                   )}
                   <button
                     type="button"
@@ -439,7 +439,7 @@ export function MemberProfileTab({
               </div>
 
               <div className="text-center space-y-1">
-                <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block">Profile Photo</span>
+                <span className="text-xs font-semibold text-slate-600 dark:text-zinc-400 block">Profile Photo</span>
               </div>
 
               {/* Action buttons */}
@@ -454,7 +454,7 @@ export function MemberProfileTab({
                 />
                 <label
                   htmlFor="dashboard-avatar-upload"
-                  className={`p-2.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white rounded-xl text-xs transition-all flex items-center justify-center cursor-pointer shadow-sm active:scale-95 ${avatarCooldownTimeLeft > 0 ? 'opacity-50 pointer-events-none' : ''}`}
+                  className={`p-2.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white rounded-xl text-xs transition-all flex items-center justify-center cursor-pointer active:scale-95 ${avatarCooldownTimeLeft > 0 ? 'opacity-50 pointer-events-none' : ''}`}
                   title="Upload Photo"
                 >
                   <Upload className="w-4 h-4 text-[#3B82F6]" />
@@ -464,7 +464,7 @@ export function MemberProfileTab({
                   type="button"
                   onClick={startCamera}
                   disabled={avatarCooldownTimeLeft > 0 || savingProfile}
-                  className="p-2.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white rounded-xl text-xs transition-all flex items-center justify-center cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
+                  className="p-2.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white rounded-xl text-xs transition-all flex items-center justify-center cursor-pointer active:scale-95 disabled:opacity-50"
                   title="Take Photo"
                 >
                   <Camera className="w-4 h-4 text-emerald-400" />
@@ -474,7 +474,7 @@ export function MemberProfileTab({
                   type="button"
                   onClick={fetchGoogleAvatar}
                   disabled={avatarCooldownTimeLeft > 0 || savingProfile}
-                  className="p-2.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white rounded-xl text-xs transition-all flex items-center justify-center cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
+                  className="p-2.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white rounded-xl text-xs transition-all flex items-center justify-center cursor-pointer active:scale-95 disabled:opacity-50"
                   title="Sync Google Photo"
                 >
                   <Sparkles className="w-4 h-4 text-amber-400" />
@@ -488,7 +488,7 @@ export function MemberProfileTab({
                       setAvatarSize(null);
                     }}
                     disabled={avatarCooldownTimeLeft > 0 || savingProfile}
-                    className="p-2.5 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 hover:border-rose-500/35 text-rose-400 rounded-xl text-xs transition-all flex items-center justify-center cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
+                    className="p-2.5 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 hover:border-rose-500/35 text-rose-400 rounded-xl text-xs transition-all flex items-center justify-center cursor-pointer active:scale-95 disabled:opacity-50"
                     title="Clear Photo"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -524,7 +524,7 @@ export function MemberProfileTab({
                   onChange={(e) => setProfileName(e.target.value)}
                   required
                   disabled={cooldownTimeLeft > 0 || savingProfile}
-                  className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-slate-950/40 border border-white/5 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:border-[#3B82F6]/50 focus:ring-1 focus:ring-[#3B82F6]/20 transition-all disabled:opacity-40"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 text-xs font-medium focus:outline-none focus:border-violet-500 transition-all disabled:opacity-40"
                   placeholder="Display name"
                 />
               </div>
@@ -532,15 +532,15 @@ export function MemberProfileTab({
 
             {/* Phone input */}
             <div className="space-y-1.5 text-left">
-              <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Mobile Number</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300 ml-1">Mobile Number</label>
               <div className="relative">
-                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
                   type="text" 
                   value={profilePhone}
                   onChange={(e) => setProfilePhone(e.target.value)}
                   disabled={cooldownTimeLeft > 0 || savingProfile}
-                  className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-slate-950/40 border border-white/5 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:border-[#3B82F6]/50 focus:ring-1 focus:ring-[#3B82F6]/20 transition-all disabled:opacity-40"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 text-xs font-medium focus:outline-none focus:border-violet-500 transition-all disabled:opacity-40"
                   placeholder="Add phone number"
                 />
               </div>
@@ -548,7 +548,7 @@ export function MemberProfileTab({
 
             {/* Gender buttons */}
             <div className="space-y-1.5 text-left">
-              <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Gender Preference</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300 ml-1">Gender Preference</label>
               <div className="grid grid-cols-3 gap-2">
                 {['male', 'female', 'other'].map((gender) => (
                   <button
@@ -556,10 +556,10 @@ export function MemberProfileTab({
                     type="button"
                     onClick={() => setProfileGender(gender)}
                     disabled={savingProfile}
-                    className={`py-3 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95 duration-150 ${
+                    className={`py-2.5 rounded-xl border text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95 duration-150 ${
                       profileGender === gender
-                      ? 'bg-[#3B82F6]/10 border-[#3B82F6] text-white'
-                      : 'bg-slate-950/30 border-white/5 text-slate-500 hover:border-white/10 hover:text-slate-400'
+                      ? 'bg-violet-500/10 border-violet-500 text-violet-600 dark:text-violet-400 font-bold'
+                      : 'bg-slate-50 dark:bg-zinc-800/60 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:border-slate-300 dark:hover:border-zinc-600'
                     }`}
                   >
                     <span>
@@ -576,7 +576,7 @@ export function MemberProfileTab({
             <button
               type="submit"
               disabled={cooldownTimeLeft > 0 || savingProfile}
-              className="w-full py-3.5 bg-gradient-to-r from-[#3B82F6] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1D4ED8] text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {savingProfile ? (
                 <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -592,7 +592,7 @@ export function MemberProfileTab({
                 </>
               )}
             </button>
-            <p className="text-[9px] text-slate-500 font-semibold text-center italic mt-2.5">
+            <p className="text-[10px] text-slate-500 dark:text-zinc-400 text-center italic mt-2.5">
               * Profile updates (display name, phone number, and photo) are limited to 3 edits per 3 months to prevent duplicate account manipulation.
             </p>
           </form>
@@ -600,27 +600,27 @@ export function MemberProfileTab({
 
         {/* Connected Gym & Active membership metadata card */}
         {membership && (
-          <div className="bg-[#1A1F2B] border border-white/5 rounded-2xl p-6 space-y-6 flex flex-col justify-between">
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-6 flex flex-col justify-between">
             <div className="space-y-6">
               
-              {/* VIP Membership Header Card */}
-              <div className="relative p-5 rounded-xl bg-slate-950/40 border border-emerald-500/10 overflow-hidden text-left">
+              {/* Connected Gym Header Card */}
+              <div className="relative p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-800 overflow-hidden text-left">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                      <Building className="w-3.5 h-3.5 text-emerald-400" />
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                      <Building className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     </div>
-                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest leading-none">CONNECTED GYM HUB</span>
+                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider leading-none">CONNECTED GYM HUB</span>
                   </div>
                   
                   <div className="space-y-2">
-                    <h3 className="text-lg font-black text-white uppercase italic tracking-tight leading-tight">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">
                       {membership.gyms?.gym_name || 'My Gym'}
                     </h3>
                     
                     {/* Code copy block */}
                     <div className="flex items-center gap-2 pt-0.5">
-                      <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider">Access Code:</span>
+                      <span className="text-[10px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Access Code:</span>
                       <button 
                         type="button"
                         onClick={() => {
@@ -628,14 +628,14 @@ export function MemberProfileTab({
                           setCopiedGymCode(true)
                           setTimeout(() => setCopiedGymCode(false), 2000)
                         }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-900 border border-white/5 hover:border-emerald-500/30 text-emerald-400 hover:text-emerald-300 font-mono text-[10px] font-bold tracking-widest cursor-pointer hover:bg-slate-950 transition-all active:scale-95"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:border-violet-500 text-violet-600 dark:text-violet-400 font-mono text-xs font-semibold cursor-pointer transition-all active:scale-95"
                         title="Copy gym access code"
                       >
                         <span>{membership.gyms?.unique_code}</span>
                         {copiedGymCode ? (
-                          <Check className="w-3 h-3 text-emerald-400" />
+                          <Check className="w-3.5 h-3.5 text-emerald-500" />
                         ) : (
-                          <Copy className="w-3 h-3 text-slate-500" />
+                          <Copy className="w-3.5 h-3.5 text-slate-400" />
                         )}
                       </button>
                     </div>
@@ -645,14 +645,14 @@ export function MemberProfileTab({
 
               {/* Athlete Info Stack */}
               <div className="space-y-3">
-                <h4 className="text-[9px] font-black uppercase tracking-widest text-slate-500 text-left ml-1">Athlete Pass Info</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 text-left ml-1">Athlete Pass Info</h4>
                 
                 <div className="space-y-2 text-xs">
                   {/* Athlete ID */}
-                  <div className="flex justify-between items-center py-2.5 px-4 rounded-xl bg-slate-950/30 border border-white/5 hover:border-white/10 transition-colors">
-                    <span className="text-slate-400 font-medium text-left">Athlete ID</span>
+                  <div className="flex justify-between items-center py-2.5 px-4 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-800">
+                    <span className="text-slate-500 dark:text-zinc-400 font-medium text-left">Athlete ID</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-white font-mono font-bold select-all text-[10px] max-w-[120px] truncate">{membership.id}</span>
+                      <span className="text-slate-900 dark:text-white font-mono font-semibold select-all text-xs max-w-[120px] truncate">{membership.id}</span>
                       <button 
                         type="button"
                         onClick={() => {
@@ -660,11 +660,11 @@ export function MemberProfileTab({
                           setCopiedAthleteId(true)
                           setTimeout(() => setCopiedAthleteId(false), 2000)
                         }}
-                        className="text-slate-500 hover:text-white p-1 transition-all cursor-pointer active:scale-90"
+                        className="text-slate-400 hover:text-slate-900 dark:hover:text-white p-1 transition-all cursor-pointer active:scale-90"
                         title="Copy Athlete ID"
                       >
                         {copiedAthleteId ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <Check className="w-3.5 h-3.5 text-emerald-500" />
                         ) : (
                           <Copy className="w-3.5 h-3.5" />
                         )}
@@ -673,29 +673,29 @@ export function MemberProfileTab({
                   </div>
 
                   {/* Email Address */}
-                  <div className="flex justify-between items-center py-2.5 px-4 rounded-xl bg-slate-950/30 border border-white/5">
-                    <span className="text-slate-400 font-medium text-left">Email Address</span>
-                    <span className="text-white font-semibold text-right">{profile?.email}</span>
+                  <div className="flex justify-between items-center py-2.5 px-4 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-800">
+                    <span className="text-slate-500 dark:text-zinc-400 font-medium text-left">Email Address</span>
+                    <span className="text-slate-900 dark:text-white font-semibold text-right">{profile?.email}</span>
                   </div>
 
                   {/* Active Pass Plan */}
-                  <div className="flex justify-between items-center py-2.5 px-4 rounded-xl bg-slate-950/30 border border-white/5">
-                    <span className="text-slate-400 font-medium text-left">Active Pass Plan</span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 font-bold uppercase tracking-wider text-[9px]">
+                  <div className="flex justify-between items-center py-2.5 px-4 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-800">
+                    <span className="text-slate-500 dark:text-zinc-400 font-medium text-left">Active Pass Plan</span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/25 text-violet-600 dark:text-violet-400 font-bold uppercase tracking-wider text-[10px]">
                       {membership.membership_plan}
                     </span>
                   </div>
 
                   {/* Member Since */}
-                  <div className="flex justify-between items-center py-2.5 px-4 rounded-xl bg-slate-950/30 border border-white/5">
-                    <span className="text-slate-400 font-medium text-left">Member Since</span>
-                    <span className="text-white font-semibold text-right">{membership.join_date}</span>
+                  <div className="flex justify-between items-center py-2.5 px-4 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-800">
+                    <span className="text-slate-500 dark:text-zinc-400 font-medium text-left">Member Since</span>
+                    <span className="text-slate-900 dark:text-white font-semibold text-right">{membership.join_date}</span>
                   </div>
 
                   {/* Pass Expiry */}
-                  <div className="flex justify-between items-center py-2.5 px-4 rounded-xl bg-slate-950/30 border border-white/5">
-                    <span className="text-slate-400 font-medium text-left">Pass Expiry</span>
-                    <span className="text-rose-400 font-bold uppercase tracking-wider text-[10px] text-right">{membership.expiry_date || '—'}</span>
+                  <div className="flex justify-between items-center py-2.5 px-4 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-800">
+                    <span className="text-slate-500 dark:text-zinc-400 font-medium text-left">Pass Expiry</span>
+                    <span className="text-rose-600 dark:text-rose-400 font-bold uppercase tracking-wider text-[11px] text-right">{membership.expiry_date || '—'}</span>
                   </div>
                 </div>
               </div>
@@ -706,7 +706,7 @@ export function MemberProfileTab({
               type="button"
               onClick={handleLeaveGym}
               disabled={savingProfile}
-              className="w-full py-3.5 rounded-xl bg-rose-950/10 hover:bg-rose-500/10 border border-rose-500/10 hover:border-rose-500/20 text-rose-400 hover:text-rose-300 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer mt-6 active:scale-[0.97] disabled:opacity-50"
+              className="w-full py-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold tracking-wide transition-all cursor-pointer mt-6 active:scale-[0.98] disabled:opacity-50"
             >
               Disconnect from Gym Hub
             </button>
@@ -735,30 +735,30 @@ export function MemberProfileTab({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/60 backdrop-blur-xs"
           >
             <motion.div 
               initial={{ scale: 0.95 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.95 }}
-              className="w-full max-w-md bg-[#0F111A] border border-white/10 rounded-2xl p-6 relative shadow-2xl flex flex-col items-center gap-6"
+              className="w-full max-w-md bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 relative flex flex-col items-center gap-6"
             >
               <div className="w-full flex justify-between items-start">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                     <Camera className="w-5 h-5" />
                   </div>
                   <div className="text-left">
-                    <h3 className="text-sm font-black text-white uppercase tracking-wider">Webcam Capture</h3>
-                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Snap a display picture</p>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Webcam Capture</h3>
+                    <p className="text-xs text-slate-500 dark:text-zinc-400">Snap a display picture</p>
                   </div>
                 </div>
                 <button 
                   type="button"
                   onClick={stopCamera}
-                  className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer"
+                  className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all active:scale-95 cursor-pointer"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
@@ -779,14 +779,14 @@ export function MemberProfileTab({
                 <button
                   type="button"
                   onClick={stopCamera}
-                  className="flex-1 py-3 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-slate-300 text-xs font-black uppercase tracking-wider rounded-xl transition-all active:scale-95 cursor-pointer"
+                  className="flex-1 py-2.5 bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 text-xs font-semibold uppercase tracking-wider rounded-xl transition-all active:scale-95 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={captureSnapshot}
-                  className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-black text-xs font-black uppercase tracking-wider rounded-xl transition-all active:scale-95 cursor-pointer"
+                  className="flex-1 py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition-all active:scale-95 cursor-pointer"
                 >
                   Snap Photo
                 </button>
@@ -874,32 +874,32 @@ export function MemberOnboarding({
   }
 
   return (
-    <div className="min-h-screen bg-[#0f111a] text-slate-100 font-sans flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 font-sans flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-[#1A1F2B] border border-white/5 rounded-2xl p-8 text-center space-y-6 max-w-md w-full relative overflow-hidden"
+        className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-8 text-center space-y-6 max-w-md w-full relative overflow-hidden"
       >
         <div className="space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center mx-auto mb-4">
-            <User className="w-8 h-8 text-[#3B82F6]" />
+          <div className="w-14 h-14 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mx-auto mb-4 text-violet-600 dark:text-violet-400">
+            <User className="w-7 h-7" />
           </div>
           
           <div className="space-y-2">
-            <span className="px-3.5 py-1 rounded-full bg-[#3B82F6]/10 border border-[#3B82F6]/20 text-[9px] font-black uppercase tracking-widest text-[#3B82F6]">
+            <span className="px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400">
               Setup Your Athlete Profile
             </span>
-            <h3 className="text-xl font-black text-white uppercase italic tracking-tight pt-1">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white pt-1">
               Welcome to Gymix!
             </h3>
-            <p className="text-slate-400 text-xs leading-relaxed max-w-xs mx-auto font-semibold">
+            <p className="text-slate-500 dark:text-zinc-400 text-xs leading-relaxed max-w-xs mx-auto">
               Please complete your display profile to get connected to your Gym Hub.
             </p>
           </div>
 
           {onboardError && (
-            <div className="px-4.5 py-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-black uppercase tracking-wider text-left flex items-start gap-2">
-              <ShieldAlert className="w-4 h-4 text-rose-400 flex-shrink-0" />
+            <div className="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold text-left flex items-start gap-2">
+              <ShieldAlert className="w-4 h-4 flex-shrink-0" />
               <span>{onboardError}</span>
             </div>
           )}
@@ -907,9 +907,9 @@ export function MemberOnboarding({
           <form onSubmit={handleOnboardSubmit} className="space-y-4 text-left">
             {/* Full Name */}
             <div className="space-y-1.5">
-              <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Full Display Name</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Full Display Name</label>
               <div className="relative group">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-[#3B82F6] transition-colors" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
                 <input
                   type="text"
                   placeholder="E.g. Shubh Sharma"
@@ -917,16 +917,16 @@ export function MemberOnboarding({
                   onChange={(e) => setOnboardName(e.target.value)}
                   required
                   disabled={onboardSaving}
-                  className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/[0.02] border border-white/10 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:border-[#3B82F6]/50 focus:ring-1 focus:ring-[#3B82F6]/20 transition-all"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 text-xs font-medium focus:outline-none focus:border-violet-500 transition-all"
                 />
               </div>
             </div>
 
             {/* Phone Number */}
             <div className="space-y-1.5">
-              <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Mobile Number</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Mobile Number</label>
               <div className="relative group">
-                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-[#3B82F6] transition-colors" />
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
                 <input
                   type="tel"
                   placeholder="E.g. +91 9999999999"
@@ -934,14 +934,14 @@ export function MemberOnboarding({
                   onChange={(e) => setOnboardPhone(e.target.value)}
                   required
                   disabled={onboardSaving}
-                  className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/[0.02] border border-white/10 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:border-[#3B82F6]/50 focus:ring-1 focus:ring-[#3B82F6]/20 transition-all"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 text-xs font-medium focus:outline-none focus:border-violet-500 transition-all"
                 />
               </div>
             </div>
 
             {/* Gender Preference */}
             <div className="space-y-1.5">
-              <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Gender Preference</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Gender Preference</label>
               <div className="grid grid-cols-3 gap-2">
                 {['male', 'female', 'other'].map((gender) => (
                   <button
@@ -949,10 +949,10 @@ export function MemberOnboarding({
                     type="button"
                     disabled={onboardSaving}
                     onClick={() => setOnboardGender(gender)}
-                    className={`py-3 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center cursor-pointer hover:border-white/20 ${
+                    className={`py-2.5 rounded-xl border text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center cursor-pointer ${
                       onboardGender === gender
-                      ? 'bg-[#3B82F6]/10 border-[#3B82F6] text-white'
-                      : 'bg-white/[0.02] border-white/5 text-slate-500'
+                      ? 'bg-violet-500/10 border-violet-500 text-violet-600 dark:text-violet-400 font-bold'
+                      : 'bg-slate-50 dark:bg-zinc-800/60 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:border-slate-300 dark:hover:border-zinc-600'
                     }`}
                   >
                     {gender}
@@ -965,7 +965,7 @@ export function MemberOnboarding({
             <button
               type="submit"
               disabled={onboardSaving}
-              className="w-full py-4 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-black uppercase tracking-widest rounded-xl active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
+              className="w-full py-3 bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold uppercase tracking-wider rounded-xl active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
             >
               {onboardSaving ? (
                 <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -979,11 +979,11 @@ export function MemberOnboarding({
           </form>
 
           {/* Logout Action */}
-          <div className="pt-4 border-t border-white/5">
+          <div className="pt-4 border-t border-slate-100 dark:border-zinc-800">
             <button
               onClick={signOut}
               type="button"
-              className="text-[10px] font-black text-rose-400 hover:text-rose-300 uppercase tracking-widest transition-colors cursor-pointer"
+              className="text-xs font-semibold text-rose-500 hover:text-rose-600 dark:text-rose-400 uppercase tracking-wider transition-colors cursor-pointer"
             >
               Sign Out
             </button>

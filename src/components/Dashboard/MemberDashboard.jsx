@@ -122,14 +122,14 @@ export default function MemberDashboard() {
   const renderNotificationBanner = () => {
     if (!showNotificationBanner) return null
     return (
-      <div className="mb-6 rounded-[2rem] border border-[#3390ec]/20 bg-[#3390ec]/10 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+      <div className="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 dark:bg-emerald-950/20 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#3390ec]/10 border border-[#3390ec]/20 flex items-center justify-center text-[#3390ec]">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
             <BellRing className="w-5 h-5 animate-pulse" />
           </div>
           <div className="text-left">
-            <p className="text-blue-200 text-xs font-bold">Stay Updated with Real-Time Alerts</p>
-            <p className="text-slate-400 text-[11px] font-medium mt-0.5">
+            <p className="text-slate-900 dark:text-white text-xs font-bold">Stay Updated with Real-Time Alerts</p>
+            <p className="text-slate-500 dark:text-zinc-400 text-xs font-normal mt-0.5">
               Enable notifications to get plan expiry reminders and fitness rewards instantly.
             </p>
           </div>
@@ -137,13 +137,13 @@ export default function MemberDashboard() {
         <div className="flex items-center gap-2.5">
           <button
             onClick={handleEnableNotifications}
-            className="px-4 py-2.5 rounded-xl bg-[#3390ec] hover:bg-[#3390ec]/90 text-white text-[10px] font-black uppercase tracking-widest text-center shadow-lg shadow-[#3390ec]/10 transition-all active:scale-95 whitespace-nowrap cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold text-center transition-all active:scale-95 whitespace-nowrap cursor-pointer"
           >
             Enable Alerts
           </button>
           <button
             onClick={handleDismissNotificationBanner}
-            className="px-3 py-2.5 rounded-xl border border-white/10 hover:bg-white/[0.05] text-[#94A3B8] hover:text-white text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer"
+            className="px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white text-xs font-medium transition-all cursor-pointer"
           >
             Later
           </button>
@@ -192,7 +192,7 @@ export default function MemberDashboard() {
               href="https://play.google.com/store/apps/details?id=com.gymix.fit"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 sm:flex-none text-center px-5 py-3 bg-[#3B82F6] hover:bg-[#287cd0] text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-[#3B82F6]/10"
+              className="flex-1 sm:flex-none text-center px-5 py-3 bg-violet-600 hover:bg-violet-500 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all"
             >
               Download App
             </a>
@@ -228,7 +228,7 @@ export default function MemberDashboard() {
                 localStorage.setItem('gymix_pwa_banner_dismissed', 'true')
                 setShowPwaBanner(false)
               }}
-              className="flex-1 sm:flex-none text-center px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-purple-500/10 cursor-pointer"
+              className="flex-1 sm:flex-none text-center px-6 py-3 bg-violet-600 hover:bg-violet-500 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer"
             >
               Okay, Got It
             </button>
@@ -889,7 +889,7 @@ export default function MemberDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F1117] flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex items-center justify-center">
         <Logo className="w-12 h-12 animate-pulse" />
       </div>
     )
@@ -911,7 +911,7 @@ export default function MemberDashboard() {
   const activeRank = getAthleteRank(streakCount)
 
   return (
-    <div className="fixed inset-0 bg-[#0F1117] text-slate-100 font-sans flex flex-col lg:flex-row overflow-hidden">
+    <div className="fixed inset-0 bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 font-sans flex flex-col lg:flex-row overflow-hidden">
       {/* Sidebar Navigation */}
       <aside className="hidden lg:block w-80 flex-shrink-0">
         <MemberSidebar
@@ -932,10 +932,10 @@ export default function MemberDashboard() {
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileMenuOpen(false)}
-              className="fixed inset-0 bg-black"
+              className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-xs"
             />
             {/* Menu container */}
             <motion.div
@@ -943,7 +943,7 @@ export default function MemberDashboard() {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'tween', duration: 0.2 }}
-              className="relative w-80 max-w-[85vw] h-full bg-[#151922] z-50 flex flex-col"
+              className="relative w-80 max-w-[85vw] h-full bg-white dark:bg-zinc-950 border-r border-slate-200 dark:border-zinc-800 z-50 flex flex-col"
             >
               <div 
                 style={{ top: 'calc(16px + env(safe-area-inset-top, 0px))' }}
@@ -951,7 +951,7 @@ export default function MemberDashboard() {
               >
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white"
+                  className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -985,7 +985,7 @@ export default function MemberDashboard() {
           notifications={notifications}
         />
 
-        <main className="flex-1 p-6 lg:p-8 pb-20 lg:pb-8 max-w-6xl w-full mx-auto overflow-y-auto scroll-smooth">
+        <main className="flex-1 p-6 sm:p-8 pb-24 lg:pb-8 max-w-7xl w-full mx-auto overflow-y-auto scroll-smooth">
           <PullToRefresh onRefresh={() => loadMemberSystem()}>
             {renderPwaBanner()}
             {renderNotificationBanner()}

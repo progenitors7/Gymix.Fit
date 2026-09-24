@@ -384,35 +384,35 @@ export default function ScannerPage() {
     <div className="p-6 sm:p-10 lg:p-12 max-w-2xl mx-auto space-y-8 pb-28 sm:pb-10">
       
       {/* HEADER */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-4">
         <button
           onClick={() => navigate('/dashboard')}
-          className="group w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/[0.08] transition-all duration-300"
+          className="group w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-zinc-800 transition-all shadow-xs"
         >
-          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
         </button>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 mb-1">
-            <Camera className="w-4 h-4 text-emerald-400" />
-            <p className="text-emerald-400 font-black text-[10px] uppercase tracking-[0.2em]">Gate Entry</p>
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <Camera className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <p className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider">Gate Entry</p>
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tighter uppercase italic">Attendance Scanner</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Attendance Scanner</h1>
         </div>
       </div>
 
-      {/* Main glass frame card */}
-      <div className="glass-card border border-white/5 rounded-[2.5rem] p-8 sm:p-12 relative overflow-hidden text-center min-h-[450px] flex flex-col justify-between">
+      {/* Main frame card */}
+      <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-10 bg-white dark:bg-zinc-900 shadow-xs relative overflow-hidden text-center min-h-[450px] flex flex-col justify-between">
         
         <div className="relative z-10 flex-1 flex flex-col justify-center items-center space-y-6">
           {scannerError && (
             <div className="w-full flex flex-col items-center gap-4">
-              <div className="w-full px-4.5 py-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-bold uppercase tracking-wider animate-shake">
-                <ShieldAlert className="w-5 h-5 inline mr-2 text-rose-400" />
+              <div className="w-full px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-bold uppercase tracking-wider animate-shake">
+                <ShieldAlert className="w-4 h-4 inline mr-2 text-rose-500" />
                 {scannerError}
               </div>
               <button
                 onClick={requestCameraAccess}
-                className="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-emerald-500/10 border border-emerald-500/15 text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer"
+                className="px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer"
               >
                 Retry Camera Access
               </button>
@@ -425,7 +425,7 @@ export default function ScannerPage() {
             {/* Cameras Dropdown selection — hidden during result overlay */}
             {cameras.length > 1 && !scanResult && (
               <div className="w-full max-w-xs flex flex-col gap-2 text-left">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Select Camera Lens</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Select Camera Lens</label>
                 <select
                   value={selectedCameraId}
                   onChange={(e) => {
@@ -433,7 +433,7 @@ export default function ScannerPage() {
                     setSelectedCameraId(newId)
                     startScanner(newId)
                   }}
-                  className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-3.5 text-white text-xs font-medium focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-emerald-500 shadow-xs"
                 >
                   {cameras.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -445,11 +445,11 @@ export default function ScannerPage() {
             )}
 
             {/* Secure Scan window wrapper — ALWAYS in DOM so camera hardware is never released */}
-            <div className="relative w-64 h-64 mx-auto rounded-[2rem] overflow-hidden border border-white/5 bg-slate-950/80 p-1">
+            <div className="relative w-64 h-64 mx-auto rounded-2xl overflow-hidden border border-slate-200 dark:border-zinc-800 bg-slate-950 p-1 shadow-md">
               {/* Neon flashing camera alignment lines — only visible during active scanning */}
               {scanning && !scanResult && (
-                <div className="absolute inset-0 z-10 pointer-events-none border-2 border-emerald-500/20 rounded-[2rem] overflow-hidden">
-                  {/* Highly performant CSS-only Laser scanner effect line */}
+                <div className="absolute inset-0 z-10 pointer-events-none border-2 border-emerald-500/30 rounded-2xl overflow-hidden">
+                  {/* CSS-only Laser scanner effect line */}
                   <>
                     <style>{`
                       @keyframes scanLaser {
@@ -469,7 +469,7 @@ export default function ScannerPage() {
               {/* HTML5 QR Container — PERMANENTLY in DOM. Never unmounted. */}
               <div 
                 id={scannerId} 
-                className="w-full h-full rounded-[2rem] overflow-hidden [&>video]:object-cover [&>video]:w-full [&>video]:h-full"
+                className="w-full h-full rounded-2xl overflow-hidden [&>video]:object-cover [&>video]:w-full [&>video]:h-full"
               />
             </div>
 
@@ -477,7 +477,7 @@ export default function ScannerPage() {
             {!scanResult && (
               <>
                 <div className="space-y-1">
-                  <h3 className="text-sm font-black text-white uppercase tracking-wider">ALIGN MEMBER QR CODE</h3>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">ALIGN MEMBER QR CODE</h3>
                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">System matches rolling sessions dynamically</p>
                 </div>
 
@@ -487,10 +487,10 @@ export default function ScannerPage() {
                       if (scanning) stopScanner()
                       else startScanner(selectedCameraId)
                     }}
-                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                    className={`px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
                       scanning 
-                        ? 'bg-rose-500/10 border border-rose-500/15 text-rose-400 hover:bg-rose-500/20' 
-                        : 'bg-emerald-500/10 border border-emerald-500/15 text-emerald-400 hover:bg-emerald-500/20'
+                        ? 'bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20' 
+                        : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
                     }`}
                   >
                     {scanning ? 'Stop Camera' : 'Start Camera'}
@@ -501,7 +501,7 @@ export default function ScannerPage() {
           </div>
         </div>
 
-        {/* ─── RESULT OVERLAY — Absolute positioned over the glass card ─── */}
+        {/* ─── RESULT OVERLAY — Absolute positioned over the card ─── */}
         {/* This covers the frozen camera view without unmounting it */}
         <AnimatePresence>
           {scanResult && (
@@ -511,87 +511,87 @@ export default function ScannerPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="absolute inset-0 z-30 flex items-center justify-center p-6 sm:p-8 bg-[#12141C]/98 rounded-[2.5rem]"
+              className="absolute inset-0 z-30 flex items-center justify-center p-6 sm:p-8 bg-white/95 dark:bg-zinc-900/95 rounded-2xl backdrop-blur-sm"
             >
-              <div className={`w-full max-w-sm p-8 rounded-[2rem] border relative overflow-hidden flex flex-col items-center justify-center space-y-6 ${
+              <div className={`w-full max-w-sm p-6 sm:p-8 rounded-2xl border relative overflow-hidden flex flex-col items-center justify-center space-y-5 ${
                 scanResult.success 
                   ? scanResult.action === 'checkout'
-                    ? 'bg-sky-500/5 border-sky-500/20 text-sky-400'
-                    : 'bg-emerald-500/5 border-emerald-500/20 text-emerald-400' 
-                  : 'bg-rose-500/5 border-rose-500/20 text-rose-400'
+                    ? 'bg-sky-50 dark:bg-sky-500/5 border-sky-500/20 text-sky-600 dark:text-sky-400'
+                    : 'bg-emerald-50 dark:bg-emerald-500/5 border-emerald-500/20 text-emerald-600 dark:text-emerald-400' 
+                  : 'bg-rose-50 dark:bg-rose-500/5 border-rose-500/20 text-rose-600 dark:text-rose-400'
               }`}>
 
-                <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-inner ${
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-xs ${
                   scanResult.success 
                     ? scanResult.action === 'checkout'
-                      ? 'bg-sky-500/10 border border-sky-500/20'
-                      : 'bg-emerald-500/10 border border-emerald-500/20' 
-                    : 'bg-rose-500/10 border border-rose-500/20'
+                      ? 'bg-sky-500/15 border border-sky-500/25'
+                      : 'bg-emerald-500/15 border border-emerald-500/25' 
+                    : 'bg-rose-500/15 border border-rose-500/25'
                 }`}>
                   {scanResult.success ? (
                     scanResult.action === 'checkout' ? (
-                      <LogOut className="w-8 h-8 text-sky-400" />
+                      <LogOut className="w-7 h-7 text-sky-600 dark:text-sky-400" />
                     ) : (
-                      <LogIn className="w-8 h-8 text-emerald-400" />
+                      <LogIn className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
                     )
                   ) : (
-                    <ShieldAlert className="w-8 h-8 text-rose-400" />
+                    <ShieldAlert className="w-7 h-7 text-rose-600 dark:text-rose-400" />
                   )}
                 </div>
 
-                <div className="space-y-2 relative z-10">
-                  <h4 className="text-xl font-black uppercase italic tracking-tight">
+                <div className="space-y-1 relative z-10 text-center">
+                  <h4 className="text-lg font-bold uppercase tracking-tight">
                     {scanResult.success 
                       ? scanResult.action === 'checkout'
                         ? 'Access Granted - Check-Out'
                         : 'Access Granted - Check-In' 
                       : 'Access Denied'}
                   </h4>
-                  <p className="text-xs font-bold leading-relaxed max-w-xs mx-auto text-slate-400 uppercase tracking-wide">
+                  <p className="text-xs font-medium leading-relaxed max-w-xs mx-auto text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
                     {scanResult.message}
                   </p>
                 </div>
 
                 {scanResult.success && scanResult.member && (
-                  <div className="w-full max-w-sm p-4.5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3.5 pt-4 text-left relative z-10">
-                    <div className="flex justify-between items-baseline text-xs font-semibold text-slate-500">
+                  <div className="w-full max-w-sm p-4 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 space-y-3 text-left relative z-10 shadow-xs">
+                    <div className="flex justify-between items-baseline text-xs font-medium text-slate-500 dark:text-zinc-400">
                       <span>ATHLETE</span>
-                      <strong className="text-white text-sm font-black uppercase italic">{scanResult.member.full_name}</strong>
+                      <strong className="text-slate-900 dark:text-white text-sm font-bold uppercase">{scanResult.member.full_name}</strong>
                     </div>
-                    <div className="flex justify-between items-center text-xs font-semibold text-slate-500">
+                    <div className="flex justify-between items-center text-xs font-medium text-slate-500 dark:text-zinc-400">
                       <span>ACTIVE PLAN</span>
                       <span className={`font-bold uppercase tracking-wider ${
-                        scanResult.action === 'checkout' ? 'text-sky-400' : 'text-emerald-400'
+                        scanResult.action === 'checkout' ? 'text-sky-600 dark:text-sky-400' : 'text-emerald-600 dark:text-emerald-400'
                       }`}>{scanResult.member.membership_plan}</span>
                     </div>
 
                     {scanResult.action === 'checkout' ? (
                       <>
-                        <div className="flex justify-between items-center text-xs font-semibold text-slate-500">
+                        <div className="flex justify-between items-center text-xs font-medium text-slate-500 dark:text-zinc-400">
                           <span>CHECK-IN TIME</span>
-                          <span className="text-white font-semibold">{scanResult.checkInTimeStr || '—'}</span>
+                          <span className="text-slate-900 dark:text-white font-semibold">{scanResult.checkInTimeStr || '—'}</span>
                         </div>
-                        <div className="flex justify-between items-center text-xs font-semibold text-slate-500">
+                        <div className="flex justify-between items-center text-xs font-medium text-slate-500 dark:text-zinc-400">
                           <span>CHECK-OUT TIME</span>
-                          <span className="text-sky-400 font-bold">{scanResult.checkOutTimeStr || scanResult.time}</span>
+                          <span className="text-sky-600 dark:text-sky-400 font-bold">{scanResult.checkOutTimeStr || scanResult.time}</span>
                         </div>
                         {scanResult.durationStr && (
-                          <div className="flex justify-between items-center text-xs font-semibold text-slate-500 pt-2 border-t border-white/5">
+                          <div className="flex justify-between items-center text-xs font-medium text-slate-500 dark:text-zinc-400 pt-2 border-t border-slate-200 dark:border-zinc-700">
                             <span>SESSION DURATION</span>
-                            <span className="text-white font-black uppercase tracking-wider bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">{scanResult.durationStr}</span>
+                            <span className="text-slate-900 dark:text-white font-bold uppercase tracking-wider bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">{scanResult.durationStr}</span>
                           </div>
                         )}
                       </>
                     ) : (
-                      <div className="flex justify-between items-center text-xs font-semibold text-slate-500">
+                      <div className="flex justify-between items-center text-xs font-medium text-slate-500 dark:text-zinc-400">
                         <span>CHECK-IN TIME</span>
-                        <span className="text-emerald-400 font-bold">{scanResult.time}</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">{scanResult.time}</span>
                       </div>
                     )}
                   </div>
                 )}
                 
-                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest pt-2 animate-pulse">
+                <p className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest pt-1 animate-pulse text-center">
                   System returning to live scanner feed shortly...
                 </p>
               </div>

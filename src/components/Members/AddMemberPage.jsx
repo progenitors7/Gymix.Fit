@@ -15,26 +15,25 @@ export default function AddMemberPage() {
   return (
     <div className="p-6 sm:p-10 lg:p-12 max-w-3xl mx-auto space-y-10 pb-28 sm:pb-10">
       {/* Header */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-4">
         <button
           onClick={() => navigate('/members')}
-          className="group w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/[0.08] transition-all duration-300"
+          className="group w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-zinc-800 transition-all shadow-xs"
           aria-label="Back to members"
         >
-          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
         </button>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 mb-1">
-            <UserPlus className="w-4 h-4 text-emerald-400" />
-            <p className="text-emerald-400 font-black text-[10px] uppercase tracking-[0.2em]">Registration</p>
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <UserPlus className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <p className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider">Registration</p>
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tighter">New Athlete</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">New Athlete</h1>
         </div>
       </div>
 
       {/* Form card */}
-      <div className="glass-card border border-white/5 rounded-[2.5rem] p-8 sm:p-12 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+      <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-10 bg-white dark:bg-zinc-900 shadow-xs relative overflow-hidden">
         <div className="relative z-10">
           <MemberForm
             mode="add"

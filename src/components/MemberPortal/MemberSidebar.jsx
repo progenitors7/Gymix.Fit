@@ -1,4 +1,4 @@
-import { QrCode, Bell, Calendar, Flame, Trophy, Sparkles, User, LogOut, ShoppingBag } from 'lucide-react'
+import { QrCode, Bell, Calendar, Flame, Trophy, TrendingUp, User, LogOut, ShoppingBag } from 'lucide-react'
 import Logo from '../UI/Logo'
 
 export default function MemberSidebar({ 
@@ -24,29 +24,29 @@ export default function MemberSidebar({
     { id: 'streaks', label: 'Workout Streaks', icon: Flame, badge: streakCount > 0 ? `${streakCount} Days` : null },
     { id: 'leaderboard', label: 'Gym Leaderboard', icon: Trophy },
     { id: 'store', label: 'Gym Store', icon: ShoppingBag },
-    { id: 'progress', label: 'PR & Progress', icon: Sparkles },
+    { id: 'progress', label: 'PR & Progress', icon: TrendingUp },
     { id: 'profile', label: 'Profile Settings', icon: User }
   ]
 
   const initials = profile?.full_name?.slice(0, 2).toUpperCase() || 'M'
 
   return (
-    <div className="flex flex-col h-full bg-[#151922] border-r border-white/5 justify-between">
+    <div className="flex flex-col h-full bg-white dark:bg-zinc-950 border-r border-slate-200 dark:border-zinc-800 justify-between">
       <div>
         {/* Logo Area */}
         <div 
           style={{ paddingTop: 'calc(24px + env(safe-area-inset-top, 0px))' }}
-          className="flex items-center gap-3 px-6 pb-6 border-b border-white/5"
+          className="flex items-center gap-3 px-6 pb-6 border-b border-slate-200 dark:border-zinc-800/80"
         >
-          <Logo className="w-8 h-8 flex-shrink-0 drop-shadow-[0_0_8px_rgba(134,59,255,0.2)]" />
+          <Logo className="w-8 h-8 flex-shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="font-bold text-white text-lg tracking-tight leading-none">Gymix</p>
-            <p className="text-[#94A3B8] text-[10px] mt-1 truncate uppercase tracking-widest font-semibold">Member Terminal</p>
+            <p className="font-bold text-slate-900 dark:text-white text-lg tracking-tight leading-none">Gymix</p>
+            <p className="text-slate-500 dark:text-zinc-400 text-[10px] mt-1 truncate uppercase tracking-widest font-semibold">Member Terminal</p>
           </div>
         </div>
 
-        {/* Navigation items matching the Owner UI style */}
-        <nav className="px-4 py-6 space-y-1.5 overflow-y-auto hide-scrollbar">
+        {/* Navigation items matching the Owner AppLayout style */}
+        <nav className="px-4 py-6 space-y-1 overflow-y-auto hide-scrollbar">
           {NAV_ITEMS.map((item) => {
             const isActive = activeTab === item.id
             const Icon = item.icon
@@ -54,19 +54,19 @@ export default function MemberSidebar({
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`relative flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
+                className={`relative flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-colors duration-150 cursor-pointer ${
                   isActive 
-                    ? "text-[#3B82F6] bg-[#3B82F6]/10 border border-[#3B82F6]/20 font-semibold" 
-                    : "text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-white/5 border border-transparent"
+                    ? "bg-slate-100 dark:bg-zinc-900 text-slate-900 dark:text-white font-semibold" 
+                    : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-zinc-900/60"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={`w-5 h-5 transition-colors ${isActive ? "text-[#3B82F6]" : "text-[#94A3B8]"}`} />
-                  <span>{item.label}</span>
+                  <Icon className={`w-4.5 h-4.5 transition-colors ${isActive ? "text-violet-600 dark:text-violet-400" : "text-slate-400 dark:text-zinc-500"}`} />
+                  <span className="truncate">{item.label}</span>
                 </div>
                 {item.badge && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                    isActive ? 'bg-[#3B82F6] text-white' : 'bg-white/5 text-[#94A3B8]'
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    isActive ? 'bg-violet-600 text-white' : 'bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400'
                   }`}>
                     {item.badge}
                   </span>
@@ -78,9 +78,9 @@ export default function MemberSidebar({
       </div>
 
       {/* User Footer Profile matching AppLayout.jsx */}
-      <div className="p-4 border-t border-white/5 bg-[#151922]">
-        <div className="flex items-center gap-3 px-3 py-3 rounded-2xl bg-[#1A1F2B] border border-white/5">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#1A1F2B] to-[#2D3748] border border-white/10 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-inner overflow-hidden">
+      <div className="p-4 border-t border-slate-200 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-950">
+        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800">
+          <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-slate-800 dark:text-zinc-200 text-xs font-bold flex-shrink-0 overflow-hidden">
             {membership?.avatar_url || profile?.avatar_url ? (
               <img src={membership?.avatar_url || profile?.avatar_url} alt="Profile" className="w-full h-full object-cover" />
             ) : (
@@ -88,17 +88,17 @@ export default function MemberSidebar({
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[#F8FAFC] text-[13px] font-semibold truncate leading-tight">
+            <p className="text-slate-900 dark:text-zinc-100 text-xs font-semibold truncate leading-tight">
               {profile?.full_name || 'Athlete'}
             </p>
-            <p className="text-[#94A3B8] text-[11px] truncate mt-0.5">
+            <p className="text-slate-500 dark:text-zinc-400 text-[11px] truncate mt-0.5 font-medium">
               {membership ? membership.gyms?.gym_name : 'No Active Gym'}
             </p>
           </div>
           <button
             onClick={onSignOut}
             title="Sign out"
-            className="w-8 h-8 flex items-center justify-center text-[#94A3B8] hover:text-[#EF4444] hover:bg-[#EF4444]/10 rounded-lg transition-all flex-shrink-0 cursor-pointer"
+            className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
           </button>

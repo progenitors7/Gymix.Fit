@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../hooks/useAuth'
+import { isSuperAdmin } from '../config/admins'
 import { GymContext } from './GymContext'
 import { getMyGym, createMyGym, updateGymName as updateGymNameService } from '../services/gymService'
 
@@ -19,6 +20,14 @@ export function GymProvider({ children }) {
 
     // Check if Ghost Mode (SuperAdmin Impersonation) is active
     const ghostGymId = localStorage.getItem('ghost_mode_gym_id') || localStorage.getItem('selected_gym_id');
+
+    // Super Admin is exempt from personal gym requirement unless viewing via Ghost Mode
+    if (isSuperAdmin(targetUser.email) && !ghostGymId) {
+      setGym(null)
+      setGymLoading(false)
+      setGymError(null)
+      return
+    }
     if (ghostGymId) {
       try {
         const { data: ghostGym } = await supabase

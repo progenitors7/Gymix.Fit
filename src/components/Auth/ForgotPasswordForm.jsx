@@ -31,22 +31,22 @@ export default function ForgotPasswordForm({ onSwitch }) {
         <motion.div 
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="w-20 h-20 rounded-[2.5rem] bg-emerald-500/10 flex items-center justify-center mx-auto shadow-2xl shadow-emerald-500/5 border border-emerald-500/20"
+          className="w-20 h-20 rounded-[2.5rem] bg-violet-500/10 flex items-center justify-center mx-auto shadow-2xl shadow-violet-500/5 border border-violet-500/20"
         >
-          <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+          <CheckCircle2 className="w-10 h-10 text-violet-400" />
         </motion.div>
         <div className="space-y-3">
           <h2 className="text-2xl font-black text-white tracking-tight uppercase italic">Link Dispatched</h2>
-          <p className="text-slate-400 text-sm leading-relaxed font-medium">
+          <p className="text-zinc-400 text-sm leading-relaxed font-medium">
             Recovery instructions sent to <br />
-            <span className="text-emerald-500 font-bold">{email}</span>
+            <span className="text-violet-400 font-bold">{email}</span>
           </p>
         </div>
         <button
           onClick={() => onSwitch('login')}
-          className="text-[10px] font-black text-emerald-500 hover:text-emerald-400 uppercase tracking-[0.2em] transition-all border-b border-emerald-500/20 pb-1"
+          className="text-xs font-bold text-violet-400 hover:text-violet-300 uppercase tracking-wider transition-all border-b border-violet-500/20 pb-1 cursor-pointer"
         >
-          Return to Command Center
+          Return to Login
         </button>
       </div>
     )
@@ -57,18 +57,18 @@ export default function ForgotPasswordForm({ onSwitch }) {
       <div className="flex items-center gap-4">
         <button 
           onClick={() => onSwitch('login')}
-          className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-slate-500 hover:text-white transition-colors"
+          className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Reset Entry Protocol</p>
+        <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Reset Password</p>
       </div>
 
       {error && (
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="px-4 py-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest text-center"
+          className="p-4 rounded-xl bg-red-950/40 border border-red-900/50 text-red-400 text-xs font-medium text-center"
         >
           {error}
         </motion.div>
@@ -76,11 +76,11 @@ export default function ForgotPasswordForm({ onSwitch }) {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-2">
-          <label htmlFor="reset-email" className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">
+          <label htmlFor="reset-email" className="block text-xs font-semibold text-zinc-300 ml-1">
             Registered Email
           </label>
           <div className="relative group">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-emerald-500 transition-colors" />
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-violet-400 transition-colors" />
             <input
               id="reset-email"
               type="email"
@@ -88,8 +88,8 @@ export default function ForgotPasswordForm({ onSwitch }) {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="operator@gymrevenue.os"
-              className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-black/40 border border-white/5 text-white placeholder-slate-700 text-sm focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium"
+              placeholder="operator@yourgym.com"
+              className="w-full pl-11 pr-4 py-3 rounded-xl bg-zinc-950/70 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all font-medium shadow-xs"
             />
           </div>
         </div>
@@ -98,7 +98,7 @@ export default function ForgotPasswordForm({ onSwitch }) {
           id="reset-submit-btn"
           type="submit"
           disabled={loading}
-          className="w-full py-4 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-black text-[10px] uppercase tracking-[0.3em] transition-all shadow-xl shadow-emerald-500/20 active:scale-[0.98] flex items-center justify-center gap-3 mt-4"
+          className="w-full py-3.5 px-6 rounded-xl bg-violet-600 hover:bg-violet-500 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm transition-all shadow-lg shadow-violet-600/25 flex items-center justify-center gap-3 mt-4 cursor-pointer"
         >
           {loading ? (
             <>

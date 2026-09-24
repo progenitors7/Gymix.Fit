@@ -116,6 +116,10 @@ export function AuthProvider({ children }) {
             }
           }
         }
+
+        if (isAdmin && p) {
+          p.role = 'super_admin';
+        }
         
         localStorage.setItem(`profile_cache_${currUser.id}`, JSON.stringify(p))
         localStorage.removeItem('oauth_signup_role')

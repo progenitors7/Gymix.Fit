@@ -1,29 +1,32 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, Circle, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Circle, ArrowRight, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { planService } from '../../services/planService';
-import { toast } from 'react-hot-toast';
+
+const DISMISS_KEY = 'gymix_onboarding_dismissed';
 
 export default function OnboardingChecklist({ profile, gym, stats }) {
   const navigate = useNavigate();
   const [plansCount, setPlansCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(DISMISS_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     if (gym?.id) {
       planService.getPlans(gym.id)
         .then(plans => {
-          // Exclude default system trial plan from owner-configured plans count if needed
           const customPlans = plans.filter(p => p.id !== 'trial_default');
           setPlansCount(customPlans.length);
-          setLoading(false);
         })
         .catch(err => {
           console.error('[OnboardingChecklist] Failed to load plans:', err);
-          setLoading(false);
         });
-    } else {
-      setLoading(false);
     }
   }, [gym?.id, stats]);
 
@@ -37,7 +40,7 @@ export default function OnboardingChecklist({ profile, gym, stats }) {
     {
       id: 'profile',
       title: 'Complete Profile Details',
-      description: 'Fill in your name and contact phone number.',
+      description: 'Add your phone number and contact details.',
       completed: isProfileComplete,
       actionLabel: 'Edit Profile',
       path: '/profile'
@@ -45,15 +48,15 @@ export default function OnboardingChecklist({ profile, gym, stats }) {
     {
       id: 'plans',
       title: 'Create Membership Plans',
-      description: 'Configure your subscription tiers (e.g. Monthly, Yearly) in settings.',
+      description: 'Configure subscription tiers (e.g. Monthly, Quarterly, Yearly).',
       completed: isPlansConfigured,
-      actionLabel: 'Configure Plans',
+      actionLabel: 'Setup Plans',
       path: '/settings'
     },
     {
       id: 'members',
       title: 'Onboard Your First Member',
-      description: 'Add a member manually or let them scan your QR Connection Poster.',
+      description: 'Add a member manually or let them scan your QR code.',
       completed: isMembersOnboarded,
       actionLabel: 'Add Member',
       path: '/members/new'
@@ -61,9 +64,9 @@ export default function OnboardingChecklist({ profile, gym, stats }) {
     {
       id: 'store',
       title: 'Explore Gym Store',
-      description: 'Set up supplements, drinks, or gym gear catalog for sales.',
+      description: 'Set up supplements, drinks, or gym merchandise for sale.',
       completed: isStoreVisited,
-      actionLabel: 'Open Store Manager',
+      actionLabel: 'Open Store',
       path: '/store-manager'
     }
   ];
@@ -71,102 +74,116 @@ export default function OnboardingChecklist({ profile, gym, stats }) {
   const completedCount = steps.filter(s => s.completed).length;
   const progressPercent = Math.round((completedCount / steps.length) * 100);
 
-  // Hide the checklist if all tasks are complete
-  if (completedCount === steps.length) {
+  // If dismissed or all tasks are complete, do not render
+  if (isDismissed || completedCount === steps.length) {
     return null;
   }
 
+  const handleDismiss = () => {
+    setIsDismissed(true);
+    try {
+      localStorage.setItem(DISMISS_KEY, 'true');
+    } catch {}
+  };
+
+  const nextPendingStep = steps.find(s => !s.completed);
+
   return (
-    <div className="onboarding-checklist-card relative overflow-hidden bg-gradient-to-r from-blue-950/20 to-indigo-950/20 border border-blue-500/15 rounded-3xl p-6 sm:p-8 text-left space-y-6 animate-in fade-in duration-300">
-      {/* Glow Effects */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-[50px] rounded-full pointer-events-none" />
-      
-      {/* Header and Progress */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4 relative z-10">
-        <div className="space-y-1">
-          <h2 className="text-white font-extrabold text-lg sm:text-xl uppercase tracking-tight flex items-center gap-2">
-            🚀 Complete Your Gym Setup
-          </h2>
-          <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
-            Follow these easy steps to get your gym up and running
-          </p>
-        </div>
-        
-        {/* Progress Circle & Text */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="text-right">
-            <span className="text-white font-black text-sm">{progressPercent}%</span>
-            <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest leading-none mt-0.5">Progress</p>
-          </div>
-          <div className="w-12 h-12 rounded-full border-2 border-white/10 flex items-center justify-center relative">
-            <svg className="w-10 h-10 transform -rotate-90">
-              <circle
-                cx="20"
-                cy="20"
-                r="16"
-                className="text-white/5"
-                strokeWidth="3"
-                stroke="currentColor"
-                fill="transparent"
-              />
-              <circle
-                cx="20"
-                cy="20"
-                r="16"
-                className="text-blue-500 transition-all duration-500"
-                strokeWidth="3"
-                strokeDasharray={100}
-                strokeDashoffset={100 - progressPercent}
-                strokeLinecap="round"
-                stroke="currentColor"
-                fill="transparent"
-              />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {/* Checklist List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
-        {steps.map((step, idx) => (
-          <div 
-            key={step.id}
-            className={`p-4 rounded-2xl border transition-all duration-300 flex flex-col justify-between gap-3 ${
-              step.completed 
-                ? 'bg-emerald-500/5 border-emerald-500/10' 
-                : 'bg-white/[0.01] border-white/5 hover:border-white/10'
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <span className="shrink-0 mt-0.5">
-                {step.completed ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                ) : (
-                  <Circle className="w-4 h-4 text-slate-600" />
-                )}
+    <div className="rounded-xl border border-slate-200/80 dark:border-white/[0.06] bg-slate-50/40 dark:bg-zinc-950/30 p-3 text-left shadow-xs transition-all">
+      {/* Compact Banner Row */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse shrink-0" />
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                Gym Setup ({completedCount}/{steps.length} completed)
+              </p>
+              <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400 font-mono">
+                {progressPercent}%
               </span>
-              <div className="space-y-1">
-                <p className={`text-xs font-bold ${step.completed ? 'text-emerald-400 line-through' : 'text-white'}`}>
-                  {idx + 1}. {step.title}
-                </p>
-                <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
-                  {step.description}
-                </p>
-              </div>
             </div>
-
-            {!step.completed && (
-              <button
-                onClick={() => navigate(step.path)}
-                className="self-end px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-[#60A5FA] hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all cursor-pointer"
-              >
-                <span>{step.actionLabel}</span>
-                <ArrowRight className="w-3 h-3" />
-              </button>
+            {nextPendingStep && !isExpanded && (
+              <p className="text-[11px] text-slate-500 dark:text-zinc-400 truncate mt-0.5">
+                Next: <span className="text-slate-700 dark:text-zinc-300 font-medium">{nextPendingStep.title}</span>
+              </p>
             )}
           </div>
-        ))}
+        </div>
+
+        {/* Action Controls */}
+        <div className="flex items-center gap-2 shrink-0">
+          {nextPendingStep && !isExpanded && (
+            <button
+              onClick={() => navigate(nextPendingStep.path)}
+              className="px-3 py-1.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer active:scale-95 shadow-xs"
+            >
+              <span>{nextPendingStep.actionLabel}</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          )}
+
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            title={isExpanded ? "Collapse setup" : "Expand setup steps"}
+          >
+            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+
+          <button
+            onClick={handleDismiss}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+            title="Dismiss setup banner"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
+
+      {/* Expanded Step Details */}
+      {isExpanded && (
+        <div className="mt-4 pt-3.5 border-t border-slate-200/60 dark:border-zinc-800/80 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 animate-in fade-in duration-200">
+          {steps.map((step, idx) => (
+            <div
+              key={step.id}
+              className={`p-3 rounded-xl border transition-all flex flex-col justify-between gap-2 ${
+                step.completed
+                  ? 'bg-emerald-50/50 dark:bg-emerald-500/5 border-emerald-500/20'
+                  : 'bg-white/60 dark:bg-zinc-900/60 border-slate-200/80 dark:border-zinc-800 hover:border-violet-500/30'
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <span className="shrink-0 mt-0.5">
+                  {step.completed ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  ) : (
+                    <Circle className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
+                  )}
+                </span>
+                <div className="min-w-0 space-y-0.5">
+                  <p className={`text-xs font-bold truncate ${step.completed ? 'text-emerald-700 dark:text-emerald-400 line-through' : 'text-slate-900 dark:text-white'}`}>
+                    {idx + 1}. {step.title}
+                  </p>
+                  <p className="text-[10px] text-slate-500 dark:text-zinc-400 line-clamp-2 leading-tight">
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+
+              {!step.completed && (
+                <button
+                  onClick={() => navigate(step.path)}
+                  className="self-end px-2.5 py-1 bg-violet-600/10 hover:bg-violet-600 text-violet-600 hover:text-white dark:text-violet-400 dark:hover:text-white rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <span>{step.actionLabel}</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

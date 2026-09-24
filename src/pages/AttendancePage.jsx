@@ -271,191 +271,175 @@ export default function AttendancePage() {
       <div className="p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-8 pb-28 lg:pb-10">
       
       {/* HEADER SECTION */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-widest">
-            <Clock className="w-4 h-4" />
-            Live Access Log
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
             Attendance Logs
           </h1>
-          <p className="text-[#94A3B8] text-xs font-semibold uppercase tracking-wider">
-            Manage and track checked-in members and training session durations
+          <p className="text-slate-500 dark:text-zinc-400 text-xs mt-1 font-medium">
+            Manage and track checked-in members and live training session durations
           </p>
         </div>
 
         {/* Actions Container */}
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-2.5 w-full sm:w-auto">
           <button
             onClick={() => setIsKioskOpen(true)}
-            className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#863BFF] to-[#6A1BFF] hover:from-[#762BEF] hover:to-[#5B0CEF] text-white rounded-2xl font-bold text-xs shadow-lg shadow-[#863BFF]/10 active:scale-95 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-semibold text-xs transition-colors active:scale-95 cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5" />
-            Manual Check-In
+            <Plus className="w-4 h-4" />
+            <span>Manual Check-In</span>
           </button>
           
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-2 px-5 py-3 bg-[#1A1F2B] border border-white/5 hover:border-white/10 text-white rounded-2xl font-bold text-xs shadow-lg active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 border border-slate-200/80 dark:border-zinc-700 rounded-xl font-semibold text-xs transition-colors active:scale-95 cursor-pointer disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh Logs
+            <span>Refresh</span>
           </button>
         </div>
       </div>
 
       {error && (
-        <div className="px-6 py-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-bold uppercase tracking-wider animate-shake">
+        <div className="px-4 py-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400 text-xs font-medium">
           Error syncing logs: {error}
         </div>
       )}
 
       {/* KPI STATS ROW */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Active inside gym */}
-        <div className="bg-[#12141c]/60 border border-emerald-500/20 p-6 rounded-3xl relative overflow-hidden group">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
-              <Flame className="w-5 h-5 animate-pulse" />
-            </div>
-            <div>
-              <p className="text-2xl font-black text-white">{stats.activeInside}</p>
-              <p className="text-[9px] font-black uppercase text-slate-500 tracking-widest mt-0.5">Currently Inside Gym ⚡</p>
-            </div>
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-slate-500 dark:text-zinc-400 text-xs font-medium">Currently Inside Gym</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.activeInside}</p>
           </div>
+          <Flame className="w-5 h-5 text-slate-400 dark:text-zinc-500 stroke-[1.5]" />
         </div>
 
         {/* Total arrivals today */}
-        <div className="bg-[#12141c]/60 border border-white/5 p-6 rounded-3xl relative overflow-hidden group">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-[#863BFF]/10 flex items-center justify-center border border-[#863BFF]/20 text-[#b370ff]">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-black text-white">{stats.todayArrivals}</p>
-              <p className="text-[9px] font-black uppercase text-slate-500 tracking-widest mt-0.5">Total Check-Ins Today</p>
-            </div>
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-slate-500 dark:text-zinc-400 text-xs font-medium">Total Check-Ins Today</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.todayArrivals}</p>
           </div>
+          <Users className="w-5 h-5 text-slate-400 dark:text-zinc-500 stroke-[1.5]" />
         </div>
 
         {/* Checked outs today */}
-        <div className="bg-[#12141c]/60 border border-white/5 p-6 rounded-3xl relative overflow-hidden group">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-sky-500/10 flex items-center justify-center border border-sky-500/20 text-sky-400">
-              <CheckCircle className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-black text-white">{stats.checkOuts}</p>
-              <p className="text-[9px] font-black uppercase text-slate-500 tracking-widest mt-0.5">Completed Workouts Today</p>
-            </div>
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-slate-500 dark:text-zinc-400 text-xs font-medium">Completed Workouts Today</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.checkOuts}</p>
           </div>
+          <CheckCircle className="w-5 h-5 text-slate-400 dark:text-zinc-500 stroke-[1.5]" />
         </div>
       </div>
 
       {/* FILTER SEARCH PANEL */}
-      <div className="flex flex-col sm:flex-row items-stretch gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch gap-3">
         {/* Search bar */}
         <div className="relative group flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94A3B8] group-focus-within:text-[#3B82F6] transition-colors" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-zinc-500 group-focus-within:text-violet-500 transition-colors" />
           <input 
             type="text" 
             placeholder="Search checked-in members by name or phone..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#1A1F2B] border border-white/5 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#3B82F6]/50 focus:ring-1 focus:ring-[#3B82F6]/50 transition-all shadow-inner"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-violet-500 transition-all"
           />
         </div>
 
         {/* Date Filter */}
-        <div className="flex items-center gap-2 bg-[#1A1F2B] border border-white/5 rounded-2xl px-4 py-2 w-full sm:w-auto">
-          <Calendar className="w-4 h-4 text-slate-500" />
+        <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 py-2 w-full sm:w-auto">
+          <Calendar className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
           <input 
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="bg-transparent border-none text-white text-xs font-semibold focus:outline-none w-full sm:w-auto cursor-pointer"
+            className="bg-transparent border-none text-slate-900 dark:text-white text-xs font-semibold focus:outline-none w-full sm:w-auto cursor-pointer"
           />
         </div>
       </div>
 
       {/* LEDGER TIMELINE CONTAINER */}
-      <div className="backdrop-blur-md bg-[#12141c]/60 border border-white/10 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-        <div className="flex items-center justify-between pb-6 border-b border-white/5">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Live check-in stream</p>
-          <span className="text-[9px] font-black uppercase bg-white/5 px-2.5 py-0.5 rounded text-slate-400">
+      <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/60 dark:bg-zinc-900/60">
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Live check-in stream</p>
+          <span className="text-[11px] font-semibold bg-slate-100 dark:bg-zinc-800 px-2.5 py-1 rounded-lg text-slate-600 dark:text-zinc-400 border border-slate-200/60 dark:border-zinc-700">
             {filteredLogs.length} Records Listed
           </span>
         </div>
 
         {filteredLogs.length === 0 ? (
-          <div className="text-center py-20 text-slate-500 font-semibold space-y-3">
-            <Sparkles className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-            <p className="text-xs uppercase tracking-widest">No matching logs found for this date.</p>
+          <div className="text-center py-16 text-slate-400 dark:text-zinc-500 space-y-2">
+            <Sparkles className="w-8 h-8 text-slate-300 dark:text-zinc-600 mx-auto mb-1" />
+            <p className="text-xs font-medium">No check-in logs found for this date.</p>
           </div>
         ) : (
-          <div className="divide-y divide-white/5 overflow-x-auto min-w-full">
-            <table className="w-full text-left border-collapse min-w-[600px] table-auto">
+          <div className="overflow-x-auto min-w-full">
+            <table className="w-full text-left border-collapse min-w-[600px]">
               <thead>
-                <tr className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
-                  <th className="py-4.5 px-4">Member</th>
-                  <th className="py-4.5 px-4">Plan Name</th>
-                  <th className="py-4.5 px-4">Check-In Time</th>
-                  <th className="py-4.5 px-4">Check-Out Time</th>
-                  <th className="py-4.5 px-4">Session Duration</th>
+                <tr className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider border-b border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-900/40">
+                  <th className="py-3 px-6">Member</th>
+                  <th className="py-3 px-6">Plan Name</th>
+                  <th className="py-3 px-6">Check-In Time</th>
+                  <th className="py-3 px-6">Check-Out Time</th>
+                  <th className="py-3 px-6">Session Duration</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/70">
                 {filteredLogs.map((log) => {
                   const checkIn = new Date(log.check_in_time)
                   const checkOut = log.check_out_time ? new Date(log.check_out_time) : null
                   const isToday = new Date().toISOString().split('T')[0] === checkIn.toISOString().split('T')[0]
 
                   return (
-                    <tr key={log.id} className="text-xs font-semibold text-slate-300 hover:bg-white/[0.01] transition-all group">
+                    <tr key={log.id} className="text-xs font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition-colors group">
                       {/* Name / Phone */}
-                      <td className="py-4 px-4">
+                      <td className="py-3.5 px-6">
                         <div className="flex items-center gap-3">
                           {log.members?.avatar_url ? (
                             <img 
                               src={log.members.avatar_url} 
                               alt={log.members.full_name} 
-                              className="w-8 h-8 rounded-full object-cover border border-white/10 group-hover:border-emerald-400/40 transition-colors"
+                              className="w-8 h-8 rounded-xl object-cover border border-slate-200 dark:border-zinc-700"
                             />
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-[#1E293B] border border-white/10 flex items-center justify-center text-[#F8FAFC] text-[10px] font-extrabold uppercase group-hover:border-emerald-400/40 transition-colors">
+                            <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-slate-700 dark:text-zinc-300 text-xs font-bold uppercase">
                               {log.members?.full_name?.slice(0, 1) || 'M'}
                             </div>
                           )}
-                          <div className="space-y-0.5">
-                            <span className="text-white font-black uppercase italic group-hover:text-emerald-400 transition-colors block">
+                          <div>
+                            <span className="text-slate-900 dark:text-white font-semibold group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors block">
                               {log.members?.full_name || 'Member'}
                             </span>
                             {log.members?.phone_number && (
-                              <p className="text-[10px] text-slate-500 font-medium leading-none">{log.members.phone_number}</p>
+                              <p className="text-[11px] text-slate-400 dark:text-zinc-500 font-medium">{log.members.phone_number}</p>
                             )}
                           </div>
                         </div>
                       </td>
 
                       {/* Plan */}
-                      <td className="py-4 px-4">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-white/5 px-2 py-0.5 rounded">
+                      <td className="py-3.5 px-6">
+                        <span className="text-[11px] font-medium text-slate-600 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 px-2 py-0.5 rounded-lg">
                           {log.members?.membership_plan || 'Custom Plan'}
                         </span>
                       </td>
 
                       {/* Check-In */}
-                      <td className="py-4 px-4">
+                      <td className="py-3.5 px-6">
                         <div className="flex items-center gap-2">
-                          <LogIn className="w-3.5 h-3.5 text-emerald-400" />
+                          <LogIn className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                           <div>
-                            <span className="text-white font-bold">
+                            <span className="text-slate-900 dark:text-white font-semibold">
                               {checkIn.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                             {!isToday && (
-                              <p className="text-[9px] text-slate-500 mt-0.5 font-bold">
+                              <p className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium">
                                 {checkIn.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                               </p>
                             )}
@@ -464,37 +448,37 @@ export default function AttendancePage() {
                       </td>
 
                       {/* Check-Out */}
-                      <td className="py-4 px-4">
+                      <td className="py-3.5 px-6">
                         {checkOut ? (
                           <div className="flex items-center gap-2">
-                            <LogOut className="w-3.5 h-3.5 text-sky-400" />
+                            <LogOut className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
                             <div>
-                              <span className="text-white font-bold">
+                              <span className="text-slate-900 dark:text-white font-semibold">
                                 {checkOut.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                               </span>
                               {!isToday && (
-                                <p className="text-[9px] text-slate-500 mt-0.5 font-bold">
+                                <p className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium">
                                   {checkOut.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                                 </p>
                               )}
                             </div>
                           </div>
                         ) : (
-                          <span className="text-[9px] font-black uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
-                            In Gym ⚡
+                          <span className="text-[10px] font-bold uppercase text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+                            Inside Gym
                           </span>
                         )}
                       </td>
 
                       {/* Session duration */}
-                      <td className="py-4 px-4">
+                      <td className="py-3.5 px-6">
                         {checkOut ? (
-                          <span className="text-[10px] font-black uppercase tracking-wider bg-sky-500/10 border border-sky-500/20 text-sky-400 px-2.5 py-0.5 rounded shadow-sm">
+                          <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300">
                             {getSessionDuration(log.check_in_time, log.check_out_time)}
                           </span>
                         ) : (
-                          <span className="text-[10px] font-black uppercase tracking-wider text-slate-600 bg-white/[0.01] border border-white/5 px-2.5 py-0.5 rounded">
-                            Ongoing
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                            Active
                           </span>
                         )}
                       </td>
@@ -510,25 +494,22 @@ export default function AttendancePage() {
       {/* MANUAL CHECK-IN MODAL */}
       <AnimatePresence>
         {isKioskOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/60 backdrop-blur-xs">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-[#12141C] border border-white/10 rounded-[2.5rem] w-full max-w-xl p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh]"
+              exit={{ opacity: 0, scale: 0.96, y: 8 }}
+              className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl w-full max-w-xl p-6 relative overflow-hidden flex flex-col max-h-[85vh]"
             >
-              {/* Top glowing strip */}
-              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-violet-500/0 via-violet-500 to-violet-500/0" />
-
               {/* Modal Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-white/5 mb-6">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-zinc-800 mb-5">
                 <div>
-                  <h3 className="text-xl font-extrabold text-white tracking-tight flex items-center gap-2">
-                    <Users className="w-5 h-5 text-violet-400" />
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                    <Users className="w-5 h-5 text-violet-600 dark:text-violet-400" />
                     Manual Check-In Console
                   </h3>
-                  <p className="text-[#94A3B8] text-[10px] font-bold uppercase tracking-widest mt-0.5">
-                    Search & log attendance for offline members
+                  <p className="text-slate-500 dark:text-zinc-400 text-xs mt-0.5">
+                    Search and log member attendance directly from front desk
                   </p>
                 </div>
                 <button
@@ -536,30 +517,30 @@ export default function AttendancePage() {
                     setIsKioskOpen(false)
                     setKioskSearch('')
                   }}
-                  className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer"
+                  className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center transition-all cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {/* Search Input */}
-              <div className="relative group mb-6">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94A3B8] group-focus-within:text-[#863BFF] transition-colors" />
+              <div className="relative group mb-5">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-zinc-500 group-focus-within:text-violet-500 transition-colors" />
                 <input
                   type="text"
                   placeholder="Search member by name or phone..."
                   value={kioskSearch}
                   onChange={(e) => setKioskSearch(e.target.value)}
-                  className="w-full bg-[#1A1F2B] border border-white/5 rounded-2xl pl-11 pr-4 py-3 text-sm text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#863BFF]/50 focus:ring-1 focus:ring-[#863BFF]/50 transition-all shadow-inner"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-violet-500 transition-all"
                 />
               </div>
 
               {/* Members List */}
-              <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar min-h-[200px]">
+              <div className="flex-1 overflow-y-auto pr-1 space-y-2.5 custom-scrollbar min-h-[200px]">
                 {loadingMembers ? (
-                  <div className="flex flex-col items-center justify-center py-10 gap-2 text-slate-500">
-                    <div className="w-8 h-8 border-2 border-violet-500/20 border-t-violet-500 rounded-full animate-spin" />
-                    <p className="text-[10px] font-bold uppercase tracking-widest">Fetching members list...</p>
+                  <div className="flex flex-col items-center justify-center py-10 gap-2 text-slate-400">
+                    <div className="w-6 h-6 border-2 border-violet-500/20 border-t-violet-500 rounded-full animate-spin" />
+                    <p className="text-xs font-medium">Loading roster...</p>
                   </div>
                 ) : (
                   (() => {
@@ -571,62 +552,62 @@ export default function AttendancePage() {
 
                     if (filtered.length === 0) {
                       return (
-                        <div className="text-center py-12 text-slate-500 font-semibold space-y-2">
-                          <AlertCircle className="w-6 h-6 text-slate-600 mx-auto" />
-                          <p className="text-xs uppercase tracking-widest">No matching members found</p>
+                        <div className="text-center py-10 text-slate-400 dark:text-zinc-500 space-y-1">
+                          <AlertCircle className="w-6 h-6 mx-auto text-slate-300 dark:text-zinc-600 mb-1" />
+                          <p className="text-xs font-medium">No matching members found</p>
                         </div>
                       )
                     }
 
                     return filtered.map(member => {
-                      const attState = getAttendanceStateForMember(member.id) // 'completed' | 'active' | 'none'
+                      const attState = getAttendanceStateForMember(member.id)
                       const isCheckedIn = attState === 'active'
                       const isCompleted = attState === 'completed'
                       const todayStr = new Date().toISOString().split('T')[0]
                       const isExpired = member.status === 'expired' || (member.expiry_date && member.expiry_date < todayStr)
                       const isLeft = member.status === 'left'
 
-                      if (isLeft) return null // Hide members who have left
+                      if (isLeft) return null
 
                       return (
                         <div
                           key={member.id}
-                          className="p-4 bg-white/[0.02] hover:bg-white/[0.04] rounded-2xl border border-white/5 flex items-center justify-between gap-4 transition-colors"
+                          className="p-3.5 bg-slate-50/60 dark:bg-zinc-800/50 hover:bg-slate-100/80 dark:hover:bg-zinc-800 rounded-xl border border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-between gap-3 transition-colors"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             {member.avatar_url ? (
                               <img
                                 src={member.avatar_url}
                                 alt={member.full_name}
-                                className="w-10 h-10 rounded-xl object-cover border border-white/10"
+                                className="w-9 h-9 rounded-xl object-cover border border-slate-200 dark:border-zinc-700"
                               />
                             ) : (
-                              <div className="w-10 h-10 rounded-xl bg-[#1E293B] border border-white/10 flex items-center justify-center text-[#F8FAFC] text-xs font-black uppercase">
+                              <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-zinc-700 border border-slate-300 dark:border-zinc-600 flex items-center justify-center text-slate-700 dark:text-zinc-200 text-xs font-bold uppercase">
                                 {member.full_name?.slice(0, 1)}
                               </div>
                             )}
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-white font-extrabold text-sm truncate uppercase italic">
+                                <span className="text-slate-900 dark:text-white font-semibold text-sm truncate">
                                   {member.full_name}
                                 </span>
                                 {isExpired && (
-                                  <span className="px-1.5 py-0.5 rounded bg-rose-500/15 border border-rose-500/20 text-rose-400 text-[8px] font-black uppercase tracking-wider">
-                                    Expired ⚠️
+                                  <span className="px-1.5 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-[9px] font-bold">
+                                    Expired
                                   </span>
                                 )}
                                 {isCheckedIn && (
-                                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 text-[8px] font-black uppercase tracking-wider">
-                                    In Gym ⚡
+                                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[9px] font-bold">
+                                    Inside
                                   </span>
                                 )}
                                 {isCompleted && (
-                                  <span className="px-1.5 py-0.5 rounded bg-sky-500/15 border border-sky-500/20 text-sky-400 text-[8px] font-black uppercase tracking-wider">
-                                    Done ✓
+                                  <span className="px-1.5 py-0.5 rounded bg-sky-500/10 border border-sky-500/20 text-sky-600 dark:text-sky-400 text-[9px] font-bold">
+                                    Done
                                   </span>
                                 )}
                               </div>
-                              <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">
+                              <p className="text-slate-400 dark:text-zinc-500 text-[11px] font-medium mt-0.5">
                                 {member.membership_plan || 'No Active Plan'}
                                 {member.expiry_date && ` • Exp: ${new Date(member.expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`}
                               </p>
@@ -636,20 +617,18 @@ export default function AttendancePage() {
                           <button
                             onClick={() => handleManualAttendance(member)}
                             disabled={actionLoading !== null || isExpired}
-                            className={`px-4 py-2.5 rounded-xl font-extrabold text-[10px] uppercase tracking-widest cursor-pointer transition-all duration-200 active:scale-95 flex items-center gap-1.5 shrink-0 ${
+                            className={`px-3.5 py-1.5 rounded-lg font-semibold text-xs cursor-pointer transition-all active:scale-95 flex items-center gap-1.5 shrink-0 ${
                               isExpired
-                                ? 'bg-white/5 text-slate-500 border border-white/5 cursor-not-allowed'
+                                ? 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 border border-slate-200 dark:border-zinc-700 cursor-not-allowed'
                                 : isCheckedIn
-                                ? 'bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/10'
-                                : 'bg-emerald-500 hover:bg-emerald-600 text-black shadow-lg shadow-emerald-500/10'
+                                ? 'bg-sky-600 hover:bg-sky-500 text-white'
+                                : 'bg-emerald-600 hover:bg-emerald-500 text-white'
                             }`}
                           >
                             {actionLoading === member.id ? (
-                              <div className={`w-3.5 h-3.5 border-2 ${isCheckedIn ? 'border-white/20 border-t-white' : 'border-black/20 border-t-black'} rounded-full animate-spin`} />
+                              <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                             ) : isCheckedIn ? (
                               <LogOut className="w-3.5 h-3.5" />
-                            ) : isCompleted ? (
-                              <LogIn className="w-3.5 h-3.5" />
                             ) : (
                               <LogIn className="w-3.5 h-3.5" />
                             )}

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Sparkles, Send, Copy, X, Check, Trash2, Camera, Upload, Building, Clock, Activity, ArrowRight } from 'lucide-react'
+import { TrendingUp, Send, Copy, X, Check, Trash2, Camera, Upload, Building, Clock, Activity, ArrowRight } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
 import Logo from '../UI/Logo'
 import { toast } from 'react-hot-toast'
@@ -100,7 +100,6 @@ export default function MemberProgressTab({
           glow1: 'bg-rose-500/5',
           glow2: 'bg-orange-500/5',
           border: 'border-rose-500/30',
-          shadow: 'shadow-lg',
           titleColor: 'text-rose-400',
           statColor: 'text-rose-300',
           gymColor: 'text-orange-400'
@@ -111,7 +110,6 @@ export default function MemberProgressTab({
           glow1: 'bg-emerald-500/5',
           glow2: 'bg-yellow-500/5',
           border: 'border-emerald-500/30',
-          shadow: 'shadow-lg',
           titleColor: 'text-emerald-400',
           statColor: 'text-emerald-300',
           gymColor: 'text-emerald-400'
@@ -123,7 +121,6 @@ export default function MemberProgressTab({
           glow1: 'bg-blue-500/5',
           glow2: 'bg-[#3B82F6]/5',
           border: 'border-[#3B82F6]/30',
-          shadow: 'shadow-lg',
           titleColor: 'text-[#3B82F6]',
           statColor: 'text-[#3B82F6]',
           gymColor: 'text-[#3B82F6]'
@@ -465,45 +462,43 @@ export default function MemberProgressTab({
       {/* PR Lift Cards Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Bench Press Card */}
-        <div className="bg-[#1A1F2B] border border-white/5 p-5 rounded-[2rem] text-center space-y-2 relative group overflow-hidden shadow-xl">
-          <p className="text-[8px] font-black uppercase text-amber-500 tracking-widest">Bench Press Max</p>
-          <p className="text-2xl font-black text-white">{prValues['Bench Press'] || '—'} <span className="text-xs text-slate-500 font-bold">kg</span></p>
-          <span className="text-[8px] text-slate-500 font-bold uppercase">PR Lift 🔥</span>
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5 rounded-2xl text-center space-y-1.5 relative group overflow-hidden">
+          <p className="text-[11px] font-semibold uppercase text-amber-600 dark:text-amber-400 tracking-wider">Bench Press Max</p>
+          <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{prValues['Bench Press'] || '—'} <span className="text-xs text-slate-500 dark:text-zinc-400 font-normal">kg</span></p>
+          <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium uppercase">PR Lift 🔥</span>
         </div>
 
         {/* Squat Card */}
-        <div className="bg-[#1A1F2B] border border-white/5 p-5 rounded-[2rem] text-center space-y-2 relative group overflow-hidden shadow-xl">
-          <p className="text-[8px] font-black uppercase text-amber-500 tracking-widest">Squat Max</p>
-          <p className="text-2xl font-black text-white">{prValues['Squat'] || '—'} <span className="text-xs text-slate-500 font-bold">kg</span></p>
-          <span className="text-[8px] text-slate-500 font-bold uppercase">PR Lift 🔥</span>
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5 rounded-2xl text-center space-y-1.5 relative group overflow-hidden">
+          <p className="text-[11px] font-semibold uppercase text-amber-600 dark:text-amber-400 tracking-wider">Squat Max</p>
+          <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{prValues['Squat'] || '—'} <span className="text-xs text-slate-500 dark:text-zinc-400 font-normal">kg</span></p>
+          <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium uppercase">PR Lift 🔥</span>
         </div>
 
         {/* Deadlift Card */}
-        <div className="bg-[#1A1F2B] border border-white/5 p-5 rounded-[2rem] text-center space-y-2 relative group overflow-hidden shadow-xl">
-          <p className="text-[8px] font-black uppercase text-amber-500 tracking-widest">Deadlift Max</p>
-          <p className="text-2xl font-black text-white">{prValues['Deadlift'] || '—'} <span className="text-xs text-slate-500 font-bold">kg</span></p>
-          <span className="text-[8px] text-slate-500 font-bold uppercase">PR Lift 🔥</span>
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5 rounded-2xl text-center space-y-1.5 relative group overflow-hidden">
+          <p className="text-[11px] font-semibold uppercase text-amber-600 dark:text-amber-400 tracking-wider">Deadlift Max</p>
+          <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{prValues['Deadlift'] || '—'} <span className="text-xs text-slate-500 dark:text-zinc-400 font-normal">kg</span></p>
+          <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium uppercase">PR Lift 🔥</span>
         </div>
 
         {/* Body Weight Card */}
-        <div className="bg-[#1A1F2B] border border-white/5 p-5 rounded-[2rem] text-center space-y-2 relative group overflow-hidden shadow-xl">
-          <p className="text-[8px] font-black uppercase text-emerald-400 tracking-widest">Body Weight</p>
-          <p className="text-2xl font-black text-white">{prValues['Body Weight'] || '—'} <span className="text-xs text-slate-500 font-bold">kg</span></p>
-          <span className="text-[8px] text-slate-500 font-bold uppercase">Latest Log ⚖️</span>
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5 rounded-2xl text-center space-y-1.5 relative group overflow-hidden">
+          <p className="text-[11px] font-semibold uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">Body Weight</p>
+          <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{prValues['Body Weight'] || '—'} <span className="text-xs text-slate-500 dark:text-zinc-400 font-normal">kg</span></p>
+          <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium uppercase">Latest Log ⚖️</span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
         
         {/* LOG PROGRESS FORM */}
-        <div className="bg-[#1A1F2B] border border-white/5 rounded-[2.5rem] p-6 space-y-5 shadow-2xl">
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-400">
-              <Sparkles className="w-4.5 h-4.5" />
-            </div>
+            <TrendingUp className="w-6 h-6 text-violet-600 dark:text-violet-400 shrink-0" />
             <div>
-              <h4 className="text-xs font-black text-white uppercase tracking-wider">Log Workout Progress</h4>
-              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5 font-medium">Record PRs or Body Weight updates</p>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white">Log Workout Progress</h4>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">Record PRs or Body Weight updates</p>
             </div>
           </div>
 
@@ -516,10 +511,10 @@ export default function MemberProgressTab({
                   setNewLogType('PR')
                   setNewExerciseName('Bench Press')
                 }}
-                className={`py-3 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center cursor-pointer ${
+                className={`py-2.5 px-3 rounded-xl border text-xs font-semibold uppercase tracking-wide transition-all flex items-center justify-center cursor-pointer ${
                   newLogType === 'PR'
-                  ? 'bg-amber-500/20 border-amber-500 text-white shadow-md'
-                  : 'bg-white/[0.02] border-white/5 text-slate-500'
+                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400 font-bold'
+                  : 'bg-slate-50 dark:bg-zinc-800/60 border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-400'
                 }`}
               >
                 Max Lift PR 🔥
@@ -530,10 +525,10 @@ export default function MemberProgressTab({
                   setNewLogType('BODYWEIGHT')
                   setNewExerciseName('Body Weight')
                 }}
-                className={`py-3 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center cursor-pointer ${
+                className={`py-2.5 px-3 rounded-xl border text-xs font-semibold uppercase tracking-wide transition-all flex items-center justify-center cursor-pointer ${
                   newLogType === 'BODYWEIGHT'
-                  ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-md'
-                  : 'bg-white/[0.02] border-white/5 text-slate-500'
+                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-bold'
+                  : 'bg-slate-50 dark:bg-zinc-800/60 border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-400'
                 }`}
               >
                 Body Weight ⚖️
@@ -543,14 +538,14 @@ export default function MemberProgressTab({
             {/* Exercise Selection */}
             {newLogType === 'PR' && (
               <div className="space-y-1.5 animate-in fade-in duration-200">
-                <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Select Exercise</label>
+                <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Select Exercise</label>
                 <select 
                   value={newExerciseName}
                   onChange={(e) => setNewExerciseName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-amber-500/50 transition-all select-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-violet-500 transition-all select-none"
                 >
                   {['Bench Press', 'Squat', 'Deadlift', 'Shoulder Press', 'Barbell Row', 'Incline Bench Press', 'Bicep Curl'].map((name) => (
-                    <option key={name} value={name} className="bg-[#12141c] text-white py-2">{name}</option>
+                    <option key={name} value={name} className="bg-white dark:bg-zinc-900 text-slate-900 dark:text-white py-2">{name}</option>
                   ))}
                 </select>
               </div>
@@ -558,7 +553,7 @@ export default function MemberProgressTab({
 
             {/* Value Input */}
             <div className="space-y-1.5">
-              <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">
                 {newLogType === 'PR' ? 'Lift Weight (kg)' : 'Body Weight (kg)'}
               </label>
               <input 
@@ -568,32 +563,32 @@ export default function MemberProgressTab({
                 onChange={(e) => setNewValue(e.target.value)}
                 required
                 placeholder="e.g. 85.5"
-                className="w-full px-4 py-3 rounded-xl bg-white/[0.02] border border-white/10 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-amber-500/50 transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 text-xs font-medium focus:outline-none focus:border-violet-500 transition-all"
               />
             </div>
 
             {/* Notes Input */}
             <div className="space-y-1.5">
-              <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Notes / Logs</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Notes / Logs</label>
               <input 
                 type="text" 
                 value={newNotes}
                 onChange={(e) => setNewNotes(e.target.value)}
                 placeholder="e.g. Felt light, clean reps! (Optional)"
-                className="w-full px-4 py-3 rounded-xl bg-white/[0.02] border border-white/10 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:bg-white/[0.04] focus:border-amber-500/50 transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 text-xs font-medium focus:outline-none focus:border-violet-500 transition-all"
               />
             </div>
 
             <button
               type="submit"
               disabled={loggingProgress}
-              className="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-black text-[10px] font-black uppercase tracking-widest rounded-xl active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="w-full py-3 bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold rounded-xl active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {loggingProgress ? (
-                <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <TrendingUp className="w-4 h-4" />
                   Log Entry
                 </>
               )}
@@ -602,16 +597,16 @@ export default function MemberProgressTab({
         </div>
 
         {/* PROGRESS LOG TIMELINE */}
-        <div className="bg-[#1A1F2B] border border-white/5 rounded-[2.5rem] p-6 space-y-4 shadow-2xl">
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4">
           <div>
-            <h4 className="text-xs font-black text-white uppercase tracking-wider">Progress Timeline</h4>
-            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5 font-medium">History of your workout gains</p>
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white">Progress Timeline</h4>
+            <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">History of your workout gains</p>
           </div>
 
           {progressLoading ? (
-            <div className="text-center py-10 text-slate-500 text-[10px] uppercase font-bold tracking-widest animate-pulse">Retrieving PR logs...</div>
+            <div className="text-center py-10 text-slate-500 dark:text-zinc-400 text-xs font-medium animate-pulse">Retrieving PR logs...</div>
           ) : progressLogs.length === 0 ? (
-            <div className="text-center py-12 text-slate-500 text-xs font-semibold">
+            <div className="text-center py-12 text-slate-500 dark:text-zinc-400 text-xs font-medium">
               No progress entries logged yet. Record your lifts above to start tracking!
             </div>
           ) : (
@@ -620,33 +615,33 @@ export default function MemberProgressTab({
                 const date = new Date(log.recorded_at)
                 const isPR = log.log_type === 'PR'
                 return (
-                  <div key={log.id} className="p-3.5 rounded-2xl bg-white/[0.01] border border-white/5 flex items-center justify-between relative group">
+                  <div key={log.id} className="p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 transition-all flex items-center justify-between relative group">
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center border text-xs font-black ${
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center border text-xs font-bold ${
                         isPR 
-                        ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' 
-                        : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                        ? 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400' 
+                        : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
                       }`}>
                         {isPR ? 'PR' : 'BW'}
                       </div>
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-black text-white uppercase tracking-wide">
+                          <span className="text-xs font-bold text-slate-900 dark:text-white">
                             {log.exercise_name}
                           </span>
-                          <span className="text-[9px] text-slate-500 font-bold">
+                          <span className="text-[10px] text-slate-500 dark:text-zinc-400">
                             {date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                           </span>
                         </div>
                         {log.notes && (
-                          <p className="text-[10px] text-slate-400 font-medium italic">
+                           <p className="text-[11px] text-slate-500 dark:text-zinc-400 italic">
                             “{log.notes}”
                           </p>
                         )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`text-sm font-black ${isPR ? 'text-amber-400' : 'text-emerald-400'}`}>
+                      <span className={`text-sm font-bold ${isPR ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                         {log.value} kg
                       </span>
                       <button
@@ -654,7 +649,7 @@ export default function MemberProgressTab({
                           setActiveShareLog(log)
                           setShareModalOpen(true)
                         }}
-                        className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow active:scale-95"
+                        className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 flex items-center justify-center transition-all cursor-pointer active:scale-95"
                         title="Share PR"
                       >
                         <Send className="w-3.5 h-3.5" />
@@ -671,13 +666,13 @@ export default function MemberProgressTab({
 
       {/* INSTAGRAM SHARE MODAL (Flat styling, optimized for budget phones) */}
       {shareModalOpen && activeShareLog && (
-        <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className="max-w-md w-full flex flex-col items-center space-y-5 py-4">
             
             {/* THE SHARABLE CARD */}
             <div 
               id="share-pr-card"
-              className={`w-full max-w-[310px] sm:max-w-[330px] aspect-[9/16] rounded-[2.2rem] bg-gradient-to-br ${getThemeStyles(shareTheme).bg} border-2 ${getThemeStyles(shareTheme).border} p-5.5 flex flex-col justify-between relative overflow-hidden shadow-2xl select-none`}
+              className={`w-full max-w-[310px] sm:max-w-[330px] aspect-[9/16] rounded-[2.2rem] bg-gradient-to-br ${getThemeStyles(shareTheme).bg} border-2 ${getThemeStyles(shareTheme).border} p-5.5 flex flex-col justify-between relative overflow-hidden select-none`}
             >
               {/* CARD HEADER */}
               <div className="flex justify-between items-center relative z-10">
@@ -770,7 +765,7 @@ export default function MemberProgressTab({
               <div className="flex flex-wrap gap-2.5 justify-center">
                 <button 
                   onClick={handleNativeShare}
-                  className="px-4 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-md"
+                  className="px-4 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 active:scale-95"
                 >
                   <Send className="w-4 h-4" />
                   Share Story
@@ -778,9 +773,9 @@ export default function MemberProgressTab({
 
                 <button 
                   onClick={handleDownloadImage}
-                  className="px-4 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-black text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-md"
+                  className="px-4 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-black text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 active:scale-95"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Camera className="w-4 h-4" />
                   Download PNG
                 </button>
                 

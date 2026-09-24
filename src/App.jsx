@@ -1,5 +1,6 @@
 import React, { Suspense, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthProvider'
 import { GymProvider } from './context/GymProvider'
 import { NotificationProvider } from './context/NotificationProvider'
@@ -8,12 +9,12 @@ import AppLayout from './components/Layout/AppLayout'
 import ErrorBoundary from './components/Common/ErrorBoundary'
 import SuperAdminRoute from './components/Layout/SuperAdminRoute'
 import Logo from './components/UI/Logo'
-import { motion } from 'framer-motion'
 import { useAuth } from './hooks/useAuth'
 import { Toaster, toast } from 'react-hot-toast'
 import { pushNotificationService } from './services/pushNotificationService'
 import AppUpdateChecker from './components/Common/AppUpdateChecker'
 import { isNativeCapacitorApp } from './utils/platform'
+import { isSuperAdmin } from './config/admins'
 
 
 const LandingPage = React.lazy(() => import('./pages/LandingPage'))
@@ -43,27 +44,16 @@ const JoinGymPage = React.lazy(() => import('./pages/JoinGymPage'))
 
 function LoadingScreen() {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center h-full min-h-[50vh] gap-4">
-      <motion.div
-        animate={{ 
-          scale: [1, 1.1, 1],
-          opacity: [0.5, 1, 0.5] 
-        }}
-        transition={{ 
-          duration: 2, 
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      >
-        <Logo className="w-12 h-12 drop-shadow-[0_0_15px_rgba(134,59,255,0.3)]" />
-      </motion.div>
-      <div className="w-8 h-1 border-2 border-white/5 bg-white/5 rounded-full overflow-hidden">
-        <motion.div 
-          className="h-full bg-[#863BFF]"
-          initial={{ width: "0%" }}
-          animate={{ width: "100%" }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-        />
+    <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh] p-6 gap-4 bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 transition-colors">
+      <div className="relative flex items-center justify-center">
+        <div className="absolute w-16 h-16 rounded-full bg-violet-500/10 dark:bg-violet-500/15 blur-md animate-pulse" />
+        <Logo className="w-12 h-12 relative z-10" />
+      </div>
+      <div className="flex flex-col items-center gap-2">
+        <div className="w-6 h-6 border-2 border-violet-500/20 border-t-violet-600 dark:border-t-violet-400 rounded-full animate-spin" />
+        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
+          Loading Gymix...
+        </p>
       </div>
     </div>
   )
@@ -97,7 +87,7 @@ function RootRoute() {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-[#0F1117]">
+      <div className="h-screen w-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 transition-colors">
         <LoadingScreen />
       </div>
     )
@@ -107,15 +97,18 @@ function RootRoute() {
     return <LandingPage />
   }
 
+  const isAdmin = user ? isSuperAdmin(user.email) : false;
+  const destination = isAdmin ? '/super-admin' : '/dashboard';
+
   // Only force direct login/dashboard navigation for native apps or Play Store wrappers.
   // Standard web browser users (including desktop/mobile PWA) should see the Landing Page if logged out.
   if (isNativeApp || isPlaystoreApp) {
-    return user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+    return user ? <Navigate to={destination} replace /> : <Navigate to="/login" replace />
   }
 
-  // If user is already logged in, automatically redirect browser users to dashboard too
+  // If user is already logged in, automatically redirect browser users too
   if (user) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to={destination} replace />
   }
 
   return <LandingPage />
@@ -262,11 +255,15 @@ function DeepLinkHandler() {
         toast(body ? `${title}: ${body}` : title, {
           icon: '🔔',
           duration: 5000,
+          className: 'gymix-toast',
           style: {
-            background: '#1A1F2B',
-            color: '#fff',
-            border: '1px solid rgba(134,59,255,0.3)',
-            borderRadius: '16px',
+            background: '#18181b',
+            color: '#fafafa',
+            border: '1px solid #27272a',
+            borderRadius: '14px',
+            fontSize: '13px',
+            fontWeight: '500',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
           },
         })
       }
@@ -315,81 +312,79 @@ export default function App() {
   // after user auth state is confirmed (to associate the FCM token with the user).
 
   return (
-    <BrowserRouter>
-      <Toaster 
-        position="top-right"
-        toastOptions={{
-          style: {
-            background: '#1A1F2B',
-            color: '#fff',
-            border: '1px solid rgba(255,255,255,0.05)',
-            borderRadius: '16px',
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '13px',
-          },
-          success: {
-            iconTheme: {
-              primary: '#10B981',
-              secondary: '#fff',
+    <ThemeProvider>
+      <BrowserRouter>
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            className: '!bg-white dark:!bg-zinc-900 !text-slate-900 dark:!text-zinc-100 !border !border-slate-200 dark:!border-zinc-800 !rounded-2xl !shadow-xl !text-xs !font-medium',
+            success: {
+              iconTheme: {
+                primary: '#10B981',
+                secondary: '#fff',
+              },
             },
-          },
-          error: {
-            iconTheme: {
-              primary: '#EF4444',
-              secondary: '#fff',
+            error: {
+              iconTheme: {
+                primary: '#EF4444',
+                secondary: '#fff',
+              },
             },
-          },
-        }}
-      />
-      <AuthProvider>
-        <GymProvider>
-          <DeepLinkHandler />
-          <AppUpdateChecker />
-          <Suspense fallback={<div className="h-screen flex items-center justify-center bg-[#1c1c1c]"><LoadingScreen /></div>}>
-            <Routes>
-              {/* ── Public ── */}
-              <Route path="/" element={<RootRoute />} />
-              <Route path="/home" element={<LandingPage />} />
-              <Route path="/landing" element={<LandingPage />} />
-              <Route path="/login" element={<AuthPage />} />
-              <Route path="/signup" element={<AuthPage />} />
-              <Route path="/owner-signup" element={<AuthPage />} />
-              <Route path="/forgot-password" element={<AuthPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/hardware" element={<HardwareStorePage />} />
-              <Route path="/privacy" element={<PrivacyPolicyPage />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-              <Route path="/join/:gymCode" element={<JoinGymPage />} />
+          }}
+        />
+        <AuthProvider>
+          <GymProvider>
+            <DeepLinkHandler />
+            <AppUpdateChecker />
+            <Suspense fallback={<div className="h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-[#09090b]"><LoadingScreen /></div>}>
+              <Routes>
+                {/* ── Public ── */}
+                <Route path="/" element={<RootRoute />} />
+                <Route path="/home" element={<LandingPage />} />
+                <Route path="/landing" element={<LandingPage />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/login" element={<AuthPage />} />
+                <Route path="/signup" element={<AuthPage />} />
+                <Route path="/owner-signup" element={<AuthPage />} />
+                <Route path="/forgot-password" element={<AuthPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                <Route path="/hardware" element={<Protected><HardwareStorePage /></Protected>} />
+                <Route path="/join" element={<JoinGymPage />} />
+                <Route path="/join/:gymCode" element={<JoinGymPage />} />
+                
+                {/* ── Protected: Gym Owner & Athletes ── */}
+                <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
+                <Route path="/scanner" element={<Protected><ScannerPage /></Protected>} />
+                <Route path="/leaderboard" element={<Protected><LeaderboardPage /></Protected>} />
+                <Route path="/store" element={<Protected><HardwareStorePage /></Protected>} />
+                <Route path="/members" element={<Protected><MembersPage /></Protected>} />
+                <Route path="/members/new" element={<Protected><AddMemberPage /></Protected>} />
+                <Route path="/members/:id/edit" element={<Protected><EditMemberPage /></Protected>} />
+                
+                <Route path="/subscriptions" element={<Protected><SubscriptionsPage /></Protected>} />
+                <Route path="/subscriptions/new" element={<Protected><AddSubscriptionPage /></Protected>} />
+                
+                <Route path="/payments" element={<Protected><PaymentsPage /></Protected>} />
+                <Route path="/payments/new" element={<Protected><AddPaymentPage /></Protected>} />
 
-            {/* ── Protected ── */}
-            <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
-            <Route path="/leaderboard"      element={<Protected><LeaderboardPage /></Protected>} />
-            <Route path="/members"          element={<Protected><MembersPage /></Protected>} />
-            <Route path="/members/new"      element={<Protected><AddMemberPage /></Protected>} />
-            <Route path="/members/:id/edit" element={<Protected><EditMemberPage /></Protected>} />
-            <Route path="/scanner"          element={<Protected><ScannerPage /></Protected>} />
-            
-            <Route path="/subscriptions"     element={<Protected><SubscriptionsPage /></Protected>} />
-            <Route path="/subscriptions/new" element={<Protected><AddSubscriptionPage /></Protected>} />
-            
-            <Route path="/payments"          element={<Protected><PaymentsPage /></Protected>} />
-            <Route path="/payments/new"      element={<Protected><AddPaymentPage /></Protected>} />
+                <Route path="/notifications" element={<Protected><NotificationsPage /></Protected>} />
+                <Route path="/store-manager" element={<Protected><StoreManagerPage /></Protected>} />
+                <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
+                <Route path="/profile" element={<Protected><ProfilePage /></Protected>} />
+                <Route path="/billing" element={<Protected><BillingPage /></Protected>} />
+                <Route path="/subscription-status" element={<Protected><SubscriptionStatusPage /></Protected>} />
+                <Route path="/attendance" element={<Protected><AttendancePage /></Protected>} />
+                <Route path="/super-admin" element={<Protected><SuperAdminRoute><SuperAdminPage /></SuperAdminRoute></Protected>} />
 
-            <Route path="/notifications"     element={<Protected><NotificationsPage /></Protected>} />
-            <Route path="/store-manager"     element={<Protected><StoreManagerPage /></Protected>} />
-            <Route path="/settings"          element={<Protected><SettingsPage /></Protected>} />
-            <Route path="/profile"           element={<Protected><ProfilePage /></Protected>} />
-            <Route path="/billing"           element={<Protected><BillingPage /></Protected>} />
-            <Route path="/subscription-status" element={<Protected><SubscriptionStatusPage /></Protected>} />
-            <Route path="/attendance"        element={<Protected><AttendancePage /></Protected>} />
-            <Route path="/super-admin"      element={<Protected><SuperAdminRoute><SuperAdminPage /></SuperAdminRoute></Protected>} />
-
-            {/* ── Catch-all ── */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-          </Suspense>
-        </GymProvider>
-      </AuthProvider>
-    </BrowserRouter>
+                {/* ── Catch-all ── */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+          </GymProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }

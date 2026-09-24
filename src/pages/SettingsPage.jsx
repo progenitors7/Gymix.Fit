@@ -54,14 +54,14 @@ const WA_PRESETS = [
 /* ── Section wrapper ── */
 function Section({ icon, title, description, children, id }) {
   return (
-    <div id={id} className="bg-[#212121] border border-white/5 rounded-xl p-6 transition-all duration-500">
+    <div id={id} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 shadow-xs transition-all duration-300">
       <div className="flex items-center gap-3 mb-6">
-        <div className="text-[#3390ec]">
+        <div className="text-emerald-600 dark:text-emerald-400">
           {icon}
         </div>
         <div>
-          <h3 className="text-white font-bold text-lg">{title}</h3>
-          {description && <p className="text-gray-500 text-xs mt-0.5">{description}</p>}
+          <h3 className="text-slate-900 dark:text-white font-bold text-lg">{title}</h3>
+          {description && <p className="text-slate-500 dark:text-zinc-400 text-xs mt-0.5">{description}</p>}
         </div>
       </div>
       <div className="space-y-4">{children}</div>
@@ -73,10 +73,10 @@ function Section({ icon, title, description, children, id }) {
 function Field({ label, id, ...props }) {
   return (
     <div className="space-y-1.5">
-      <label htmlFor={id} className="text-xs font-medium text-gray-400 px-1">{label}</label>
+      <label htmlFor={id} className="text-xs font-semibold text-slate-700 dark:text-zinc-300 px-1">{label}</label>
       <input
         id={id}
-        className="w-full bg-[#1c1c1c] border border-white/5 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#3390ec]/50 transition-all"
+        className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all shadow-xs"
         {...props}
       />
     </div>
@@ -88,14 +88,14 @@ function Toast({ message, type, onClose }) {
   if (!message) return null;
   return (
     <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[100] min-w-[300px] animate-in slide-in-from-top-4">
-      <div className={`flex items-center justify-between gap-4 px-4 py-3 rounded-lg shadow-xl border border-white/5 ${
-        type === 'success' ? 'bg-[#212121] text-emerald-400' : 'bg-[#212121] text-red-400'
+      <div className={`flex items-center justify-between gap-4 px-4 py-3 rounded-xl shadow-lg border ${
+        type === 'success' ? 'bg-white dark:bg-zinc-900 border-emerald-500/30 text-emerald-600 dark:text-emerald-400' : 'bg-white dark:bg-zinc-900 border-rose-500/30 text-rose-600 dark:text-rose-400'
       }`}>
         <div className="flex items-center gap-3">
           {type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
-          <span className="text-sm font-medium">{message}</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-white">{message}</span>
         </div>
-        <button onClick={onClose} className="p-1 hover:bg-white/5 rounded transition-colors">
+        <button onClick={onClose} className="p-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 transition-colors cursor-pointer">
           <Trash2 className="w-4 h-4 opacity-50" />
         </button>
       </div>
@@ -105,7 +105,7 @@ function Toast({ message, type, onClose }) {
 
 export default function SettingsPage() {
   const { user, signIn, signOut, updatePassword, resetPasswordForEmail } = useAuth();
-  const { gym, gymName, gymLoading, gymError, updateGymName, ownerEmail } = useCurrentGym();
+  const { gym, gymName, gymLoading, gymError, updateGymName, ownerEmail, refreshGym } = useCurrentGym();
   const navigate = useNavigate();
   const gymId = gym?.id ?? null;
 
@@ -661,9 +661,9 @@ export default function SettingsPage() {
         if (el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'start' });
           // Highlight with a pulse ring
-          el.classList.add('border-[#3390ec]/80', 'ring-2', 'ring-[#3390ec]/20');
+          el.classList.add('border-emerald-500/80', 'ring-2', 'ring-emerald-500/20');
           setTimeout(() => {
-            el.classList.remove('border-[#3390ec]/80', 'ring-2', 'ring-[#3390ec]/20');
+            el.classList.remove('border-emerald-500/80', 'ring-2', 'ring-emerald-500/20');
           }, 3000);
         }
       }, 500);
@@ -933,7 +933,7 @@ export default function SettingsPage() {
     <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6 pb-28 sm:pb-8">
       {gymLoading && (
         <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 border-2 border-white/10 border-t-[#3390ec] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-slate-200 dark:border-zinc-800 border-t-emerald-600 rounded-full animate-spin" />
         </div>
       )}
       {!gymLoading && (
@@ -941,7 +941,7 @@ export default function SettingsPage() {
       <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: 'success' })} />
 
       {gymError && (
-        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-4 rounded-xl flex items-center gap-3">
+        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 p-4 rounded-xl flex items-center gap-3">
           <AlertTriangle className="w-5 h-5 shrink-0" />
           <div className="text-sm font-medium">
             <strong>Warning:</strong> {gymError}
@@ -950,16 +950,16 @@ export default function SettingsPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex items-center gap-4 mb-6">
         <button
           onClick={() => navigate('/dashboard')}
-          className="p-2 rounded-lg bg-[#212121] border border-white/5 text-gray-400 hover:text-white transition-colors"
+          className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors shadow-xs cursor-pointer"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-white">Settings</h1>
-          <p className="text-gray-500 text-sm">Manage your gym account and preferences</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Settings</h1>
+          <p className="text-slate-500 dark:text-zinc-400 text-xs">Manage your gym account and preferences</p>
         </div>
       </div>
 
@@ -977,13 +977,13 @@ export default function SettingsPage() {
               {plans.map(plan => {
                 const isTrial = plan.id === 'trial_default';
                 return (
-                  <div key={plan.id} className="p-5 rounded-2xl bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 hover:border-[#3390ec]/30 flex flex-col justify-between group transition-all duration-300 min-h-[110px] relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-[#3390ec] opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                  <div key={plan.id} className="p-5 rounded-2xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 hover:border-emerald-500/40 flex flex-col justify-between group transition-all duration-300 min-h-[110px] relative overflow-hidden shadow-xs">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 opacity-0 group-hover:opacity-100 transition-all duration-300" />
                     
                     <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-1 min-w-0">
-                        <p className="text-sm font-bold text-white tracking-wide truncate group-hover:text-[#3390ec] transition-colors">{plan.name}</p>
-                        <p className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Plan Tier</p>
+                      <div className="space-y-0.5 min-w-0">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white tracking-wide truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{plan.name}</p>
+                        <p className="text-[9px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider">Plan Tier</p>
                       </div>
                       
                       <div className="flex items-center gap-1.5 shrink-0">
@@ -992,31 +992,31 @@ export default function SettingsPage() {
                             <button 
                               onClick={() => openEditPlanModal(plan)}
                               title="Edit Plan"
-                              className="p-2 rounded-xl bg-white/5 hover:bg-[#3390ec]/20 text-gray-400 hover:text-white transition-all transform active:scale-95"
+                              className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 transition-all active:scale-95 cursor-pointer"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button 
                               onClick={() => handleDeletePlanClick(plan.id)}
                               title="Delete Plan"
-                              className="p-2 rounded-xl bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-all transform active:scale-95"
+                              className="p-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 transition-all active:scale-95 cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </>
                         ) : (
-                          <span className="text-[8px] font-black uppercase tracking-widest text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-lg">
+                          <span className="text-[8px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-lg">
                             System
                           </span>
                         )}
                       </div>
                     </div>
                     
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/[0.03]">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 bg-white/5 px-2.5 py-0.5 rounded">
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-200/60 dark:border-zinc-800/60">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-2.5 py-0.5 rounded-lg">
                         {plan.duration_days} Days
                       </span>
-                      <span className="text-sm font-black text-[#3390ec]">
+                      <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
                         ₹{plan.price.toLocaleString()}
                       </span>
                     </div>
@@ -1026,10 +1026,10 @@ export default function SettingsPage() {
               
               <button 
                 onClick={openAddPlanModal}
-                className="onboarding-add-plan-btn p-5 rounded-2xl border-2 border-dashed border-white/5 hover:border-[#3390ec]/30 hover:bg-[#3390ec]/5 text-gray-500 hover:text-[#3390ec] transition-all duration-300 flex flex-col items-center justify-center gap-2 min-h-[110px] w-full"
+                className="onboarding-add-plan-btn p-5 rounded-2xl border-2 border-dashed border-slate-200 dark:border-zinc-800 hover:border-emerald-500/50 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20 text-slate-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-300 flex flex-col items-center justify-center gap-1.5 min-h-[110px] w-full cursor-pointer"
               >
-                <Plus className="w-5 h-5 mb-1 text-gray-600 group-hover:text-[#3390ec] transition-colors" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Add New Plan</span>
+                <Plus className="w-5 h-5 mb-1 text-slate-400 dark:text-zinc-500 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" />
+                <span className="text-xs font-semibold uppercase tracking-wider">Add New Plan</span>
               </button>
             </div>
           </div>
@@ -1042,17 +1042,17 @@ export default function SettingsPage() {
           description="Reward members with loyalty coins for check-ins, active streaks, and dedication"
         >
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4.5 rounded-2xl bg-white/[0.01] border border-white/5">
+            <div className="flex items-center justify-between p-4.5 rounded-2xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800">
               <div>
-                <p className="text-sm font-bold text-white">Enable Gym Loyalty Coins</p>
-                <p className="text-[10px] text-gray-500 font-medium">Turn rewards on/off. Great for small gyms to control balances.</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">Enable Gym Loyalty Coins</p>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Turn rewards on/off. Great for small gyms to control balances.</p>
               </div>
               <button
                 type="button"
                 onClick={() => setEnableGymCoins(!enableGymCoins)}
-                className={`w-12 h-7 rounded-full p-1 transition-all cursor-pointer relative flex items-center ${enableGymCoins ? 'bg-emerald-500' : 'bg-white/10'}`}
+                className={`w-12 h-7 rounded-full p-1 transition-all cursor-pointer relative flex items-center ${enableGymCoins ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-zinc-800'}`}
               >
-                <span className={`w-5 h-5 bg-white rounded-full shadow-md transition-all absolute ${enableGymCoins ? 'right-1' : 'left-1'}`} />
+                <span className={`w-5 h-5 bg-white rounded-full shadow-xs transition-all absolute ${enableGymCoins ? 'right-1' : 'left-1'}`} />
               </button>
             </div>
 
@@ -1081,7 +1081,7 @@ export default function SettingsPage() {
               <button 
                 onClick={handleSaveCoinsSettings} 
                 disabled={savingCoinsSettings} 
-                className="px-6 py-2.5 bg-[#3390ec] hover:bg-[#2b7ad2] disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-all"
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-50 text-white font-semibold rounded-xl text-xs transition-all shadow-xs cursor-pointer"
               >
                 {savingCoinsSettings ? 'Saving...' : 'Save Loyalty Settings'}
               </button>
@@ -1091,22 +1091,22 @@ export default function SettingsPage() {
 
         {/* Universal Biometric Integration */}
         <Section 
-          icon={<Fingerprint className="w-5.5 h-5.5 text-[#10B981] fill-[#10B981]/10" />}
+          icon={<Fingerprint className="w-5.5 h-5.5 text-emerald-600 dark:text-emerald-400 fill-emerald-500/10" />}
           title="Universal Biometric Integration" 
           description="Direct Cloud Plug-and-Play sync for ZKTeco, eSSL, BioMax, Realtime & Hikvision terminals"
         >
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4.5 rounded-2xl bg-white/[0.01] border border-white/5">
+            <div className="flex items-center justify-between p-4.5 rounded-2xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800">
               <div>
-                <p className="text-sm font-bold text-white">Enable Biometric Attendance System</p>
-                <p className="text-[10px] text-gray-500 font-medium">Link face/fingerprint terminals with cloud webhook auto check-ins. QR stays standard.</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">Enable Biometric Attendance System</p>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Link face/fingerprint terminals with cloud webhook auto check-ins. QR stays standard.</p>
               </div>
               <button
                 type="button"
                 onClick={() => setBiometricEnabled(!biometricEnabled)}
-                className={`w-12 h-7 rounded-full p-1 transition-all cursor-pointer relative flex items-center ${biometricEnabled ? 'bg-emerald-500' : 'bg-white/10'}`}
+                className={`w-12 h-7 rounded-full p-1 transition-all cursor-pointer relative flex items-center ${biometricEnabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-zinc-800'}`}
               >
-                <span className={`w-5 h-5 bg-white rounded-full shadow-md transition-all absolute ${biometricEnabled ? 'right-1' : 'left-1'}`} />
+                <span className={`w-5 h-5 bg-white rounded-full shadow-xs transition-all absolute ${biometricEnabled ? 'right-1' : 'left-1'}`} />
               </button>
             </div>
 
@@ -1123,13 +1123,13 @@ export default function SettingsPage() {
                   />
                   
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-400 px-1">Cloud API Webhook Address (Device Target)</label>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300 px-1">Cloud API Webhook Address (Device Target)</label>
                     <div className="relative">
                       <input 
                         type="text" 
                         readOnly 
                         value="https://api.gymix.fit/v1/biometric-push"
-                        className="w-full bg-[#161616] border border-white/5 rounded-lg pl-4 pr-12 py-2.5 text-xs text-gray-400 focus:outline-none transition-all select-all font-mono"
+                        className="w-full bg-slate-100 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl pl-4 pr-12 py-2.5 text-xs text-slate-700 dark:text-zinc-300 focus:outline-none transition-all select-all font-mono"
                       />
                       <button 
                         type="button"
@@ -1137,7 +1137,7 @@ export default function SettingsPage() {
                           navigator.clipboard.writeText("https://api.gymix.fit/v1/biometric-push");
                           showToast('Server URL copied to clipboard!');
                         }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-white/5 rounded text-gray-400 hover:text-white transition-colors cursor-pointer"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 transition-colors cursor-pointer"
                         title="Copy URL"
                       >
                         <Copy className="w-3.5 h-3.5" />
@@ -1148,13 +1148,13 @@ export default function SettingsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-400 px-1">Device Key / Secret Key</label>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300 px-1">Device Key / Secret Key</label>
                     <div className="relative">
                       <input 
                         type="text" 
                         readOnly 
                         value={biometricApiKey || 'Not generated'}
-                        className="w-full bg-[#161616] border border-white/5 rounded-lg pl-4 pr-12 py-2.5 text-xs text-gray-400 focus:outline-none transition-all select-all font-mono"
+                        className="w-full bg-slate-100 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl pl-4 pr-12 py-2.5 text-xs text-slate-700 dark:text-zinc-300 focus:outline-none transition-all select-all font-mono"
                       />
                       {biometricApiKey && (
                         <button 
@@ -1163,7 +1163,7 @@ export default function SettingsPage() {
                             navigator.clipboard.writeText(biometricApiKey);
                             showToast('Device Key copied to clipboard!');
                           }}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-white/5 rounded text-gray-400 hover:text-white transition-colors cursor-pointer"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 transition-colors cursor-pointer"
                           title="Copy Key"
                         >
                           <Copy className="w-3.5 h-3.5" />
@@ -1172,66 +1172,66 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   
-                  <div className="p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/10 text-[10px] text-amber-500/70 leading-normal flex items-start gap-2.5 font-medium">
-                    <AlertTriangle className="w-4.5 h-4.5 flex-shrink-0 text-amber-500" />
+                  <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-400 leading-normal flex items-start gap-2.5 font-medium">
+                    <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
                     <div>
-                      <span className="font-bold text-amber-400">Important:</span> Copy this Device Key and Server Webhook URL into your biometric machine communication setup. Gymix will reject logs from unknown machines.
+                      <span className="font-bold">Important:</span> Copy this Device Key and Server Webhook URL into your biometric machine communication setup. Gymix will reject logs from unknown machines.
                     </div>
                   </div>
                 </div>
 
                 {/* Platform Manual Guide Panel inside Settings */}
-                <div className="p-5 rounded-2xl bg-black/30 border border-white/5 space-y-4">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Biometric Device Integration Guides:</p>
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 space-y-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Biometric Device Integration Guides:</p>
                   <div className="flex gap-2">
                     <button 
                       type="button"
                       onClick={() => setPwaGuideTab('zkteco')}
-                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all border cursor-pointer ${pwaGuideTab === 'zkteco' ? 'bg-white/5 border-white/10 text-[#10B981]' : 'bg-transparent border-transparent text-slate-400'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wider transition-all border cursor-pointer ${pwaGuideTab === 'zkteco' ? 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'bg-transparent border-transparent text-slate-500 dark:text-zinc-400'}`}
                     >
                       eSSL / ZKTeco / BioMax / Realtime Setup
                     </button>
                     <button 
                       type="button"
                       onClick={() => setPwaGuideTab('hikvision')}
-                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all border cursor-pointer ${pwaGuideTab === 'hikvision' ? 'bg-white/5 border-white/10 text-[#863BFF]' : 'bg-transparent border-transparent text-slate-400'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wider transition-all border cursor-pointer ${pwaGuideTab === 'hikvision' ? 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'bg-transparent border-transparent text-slate-500 dark:text-zinc-400'}`}
                     >
                       Hikvision Setup
                     </button>
                   </div>
                   
                   {pwaGuideTab === 'zkteco' ? (
-                    <div className="text-[10px] text-slate-400 space-y-1.5 leading-normal">
-                      <p className="font-bold text-slate-200">1. Open the Machine Menu (press and hold M/OK).</p>
-                      <p>2. Go to <span className="text-white font-bold">Comm. (Communication) Settings</span> -&gt; <span className="text-white font-bold">ADMS / Cloud Server</span>.</p>
-                      <p>3. Enable <span className="text-[#10B981] font-bold">Cloud Server / Server Settings</span> and select <span className="text-white font-bold">Domain Name</span>.</p>
-                      <p>4. Set Server Address to <span className="text-white font-mono font-bold select-all">api.gymix.fit</span> and Port to <span className="text-white font-bold">80</span>.</p>
+                    <div className="text-xs text-slate-600 dark:text-zinc-400 space-y-1.5 leading-relaxed">
+                      <p className="font-bold text-slate-900 dark:text-white">1. Open the Machine Menu (press and hold M/OK).</p>
+                      <p>2. Go to <span className="text-slate-900 dark:text-white font-bold">Comm. (Communication) Settings</span> -&gt; <span className="text-slate-900 dark:text-white font-bold">ADMS / Cloud Server</span>.</p>
+                      <p>3. Enable <span className="text-emerald-600 dark:text-emerald-400 font-bold">Cloud Server / Server Settings</span> and select <span className="text-slate-900 dark:text-white font-bold">Domain Name</span>.</p>
+                      <p>4. Set Server Address to <span className="text-slate-900 dark:text-white font-mono font-bold select-all">api.gymix.fit</span> and Port to <span className="text-slate-900 dark:text-white font-bold">80</span>.</p>
                       <p>5. Save changes and restart the machine; it will automatically connect ONLINE! 🟢 (Note: eSSL, ZKTeco, BioMax, Realtime and other ADMS push terminals use this exact same setup).</p>
                     </div>
                   ) : (
-                    <div className="text-[10px] text-slate-400 space-y-1.5 leading-normal">
-                      <p className="font-bold text-slate-200">1. Log into the Hikvision IVMS portal or machine interface.</p>
-                      <p>2. Go to <span className="text-white font-bold">Network Configuration</span> -&gt; <span className="text-white font-bold">Advanced Settings</span> -&gt; <span className="text-white font-bold">ISUP/EHome</span>.</p>
-                      <p>3. Enable ISUP and select Protocol Version <span className="text-white font-bold">ISUP5.0</span>.</p>
-                      <p>4. Set Server Address to <span className="text-[#863BFF] font-mono font-bold select-all">api.gymix.fit</span> and configure the target port.</p>
+                    <div className="text-xs text-slate-600 dark:text-zinc-400 space-y-1.5 leading-relaxed">
+                      <p className="font-bold text-slate-900 dark:text-white">1. Log into the Hikvision IVMS portal or machine interface.</p>
+                      <p>2. Go to <span className="text-slate-900 dark:text-white font-bold">Network Configuration</span> -&gt; <span className="text-slate-900 dark:text-white font-bold">Advanced Settings</span> -&gt; <span className="text-slate-900 dark:text-white font-bold">ISUP/EHome</span>.</p>
+                      <p>3. Enable ISUP and select Protocol Version <span className="text-slate-900 dark:text-white font-bold">ISUP5.0</span>.</p>
+                      <p>4. Set Server Address to <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold select-all">api.gymix.fit</span> and configure the target port.</p>
                       <p>5. Copy your machine's actual Serial Number and update it in the **Device Serial Number** field above.</p>
                     </div>
                   )}
                 </div>
 
-                {/* Amazon Affiliate Buy Card */}
-                <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 to-amber-500/5 border border-amber-500/20 space-y-3.5">
+                {/* Hardware Recommendation Card */}
+                <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-3">
                   <div className="flex items-center gap-2">
-                    <ShoppingBag className="w-5 h-5 text-amber-400" />
-                    <p className="text-xs font-black uppercase tracking-wider text-amber-400">Need a Premium Biometric Machine?</p>
+                    <ShoppingBag className="w-4 h-4 text-amber-500" />
+                    <p className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Need a Premium Biometric Machine?</p>
                   </div>
                   
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="space-y-1">
-                      <p className="text-[11px] text-slate-300 font-bold leading-normal">
-                        Get the recommended <span className="text-white font-black">ZKTeco Touchless Face & Fingerprint</span> biometric scanner. Contactless face verification prevents scanner issues for members with sweaty/dry hands.
+                      <p className="text-xs text-slate-700 dark:text-zinc-300 font-medium leading-relaxed">
+                        Get the recommended <span className="text-slate-900 dark:text-white font-bold">ZKTeco Touchless Face & Fingerprint</span> biometric scanner. Contactless face verification prevents scanner issues for members with sweaty/dry hands.
                       </p>
-                      <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">
+                      <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-semibold uppercase tracking-wider">
                         Recommended • Face + Fingerprint + Card + Password • Inbuilt Battery Backup • 100% Gymix Cloud Compatible
                       </p>
                     </div>
@@ -1240,7 +1240,7 @@ export default function SettingsPage() {
                       href="https://amzn.to/4e7Cqxu"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-black text-[9px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/15 whitespace-nowrap self-stretch sm:self-auto text-center"
+                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-semibold uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap self-stretch sm:self-auto text-center"
                     >
                       Buy on Amazon 🛒
                     </a>
@@ -1249,12 +1249,12 @@ export default function SettingsPage() {
 
                 {/* Real-time Hardware Device Simulator Card */}
                 {gym?.biometric_device_serial && gym?.biometric_api_key && (
-                  <div className="p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 space-y-4">
+                  <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-3">
                     <div className="flex items-center gap-2">
-                      <Zap className="w-4.5 h-4.5 text-emerald-400 animate-pulse" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[#10B981]">Biometric Connectivity Simulator</p>
+                      <Zap className="w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-pulse" />
+                      <p className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Biometric Connectivity Simulator</p>
                     </div>
-                    <p className="text-[10px] text-slate-400 leading-normal font-semibold">
+                    <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed font-medium">
                       Test instant punch signals by entering a custom Biometric User ID below without installing any physical hardware!
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3">
@@ -1264,17 +1264,17 @@ export default function SettingsPage() {
                           placeholder="e.g. 105" 
                           value={testBioId}
                           onChange={e => setTestBioId(e.target.value)}
-                          className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all font-mono"
+                          className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition-all font-mono shadow-xs"
                         />
                       </div>
                       <button
                         type="button"
                         onClick={handleSimulateBiometric}
                         disabled={simulatingBio || !testBioId.trim()}
-                        className="px-5 py-2.5 bg-[#10B981] hover:bg-[#1bc58c] disabled:opacity-40 text-black text-[9px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                       >
                         {simulatingBio ? (
-                          <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                          <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         ) : (
                           <>
                             <Zap className="w-3.5 h-3.5" />
@@ -1292,7 +1292,7 @@ export default function SettingsPage() {
               <button 
                 onClick={handleSaveBiometricSettings} 
                 disabled={savingBiometricSettings} 
-                className="px-6 py-2.5 bg-[#3390ec] hover:bg-[#2b7ad2] disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-all"
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-50 text-white font-semibold rounded-xl text-xs transition-all shadow-xs cursor-pointer"
               >
                 {savingBiometricSettings ? 'Saving...' : 'Save Biometric Settings'}
               </button>
@@ -1364,18 +1364,18 @@ export default function SettingsPage() {
                     </div>
                     
                     {/* Method Selector Tabs */}
-                    <div className="flex items-center bg-[#1A1F2B] p-1.5 rounded-xl border border-white/5 w-full max-w-xs mx-auto">
+                    <div className="flex items-center bg-slate-100 dark:bg-zinc-900 p-1 rounded-xl border border-slate-200 dark:border-zinc-800 w-full max-w-xs mx-auto">
                       <button
                         type="button"
                         onClick={() => setWaPairingMethod('code')}
-                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${waPairingMethod === 'code' ? 'bg-[#3390ec] text-white' : 'text-gray-400 hover:text-white'}`}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-semibold tracking-wider transition-all cursor-pointer ${waPairingMethod === 'code' ? 'bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
                       >
                         Pairing Code
                       </button>
                       <button
                         type="button"
                         onClick={() => setWaPairingMethod('qr')}
-                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${waPairingMethod === 'qr' ? 'bg-[#3390ec] text-white' : 'text-gray-400 hover:text-white'}`}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-semibold tracking-wider transition-all cursor-pointer ${waPairingMethod === 'qr' ? 'bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
                       >
                         QR Code
                       </button>
@@ -1384,8 +1384,8 @@ export default function SettingsPage() {
                     {waPairingMethod === 'code' ? (
                       <div className="space-y-4 w-full max-w-sm">
                         <div className="space-y-1 text-center">
-                          <h4 className="text-sm font-bold text-white">Link with Phone Number</h4>
-                          <p className="text-[11px] text-gray-400 leading-relaxed font-medium">
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">Link with Phone Number</h4>
+                          <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed font-medium">
                             Recommended for same phone! Enter your WhatsApp phone number (with country code, e.g. 919876543210) to get a secure linkage code.
                           </p>
                         </div>
@@ -1395,7 +1395,7 @@ export default function SettingsPage() {
                             placeholder="e.g. 919876543210"
                             value={waPairingPhone}
                             onChange={(e) => setWaPairingPhone(e.target.value)}
-                            className="flex-1 bg-black/50 border border-white/10 px-4 py-2.5 rounded-xl text-sm font-bold text-white placeholder-gray-600 focus:outline-none focus:border-[#3390ec]"
+                            className="flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-emerald-500 shadow-xs"
                           />
                           <button
                             type="button"
@@ -1412,7 +1412,7 @@ export default function SettingsPage() {
                               }
                               handleStartWaSession(formattedPhone);
                             }}
-                            className="px-5 py-2.5 bg-[#3390ec] hover:bg-[#2b7ad2] active:scale-95 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-semibold rounded-xl transition-all shadow-xs cursor-pointer"
                           >
                             Get Code
                           </button>
@@ -1421,15 +1421,15 @@ export default function SettingsPage() {
                     ) : (
                       <div className="space-y-4 text-center">
                         <div className="space-y-1">
-                          <h4 className="text-sm font-bold text-white">Link with QR Code</h4>
-                          <p className="text-[11px] text-gray-400 leading-relaxed font-medium max-w-sm mx-auto">
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">Link with QR Code</h4>
+                          <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed font-medium max-w-sm mx-auto">
                             Link by scanning a QR code with WhatsApp on another device (tablet/computer/second phone).
                           </p>
                         </div>
                         <button
                           type="button"
                           onClick={() => handleStartWaSession(null)}
-                          className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-black text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/10 mx-auto"
+                          className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs mx-auto"
                         >
                           <Scan className="w-4 h-4" />
                           Generate QR Code
@@ -1443,23 +1443,23 @@ export default function SettingsPage() {
                 {waSessionState === 'connecting' && (
                   <div className="flex flex-col items-center text-center py-10 space-y-4">
                     <div className="relative">
-                      <div className="w-14 h-14 border-2 border-[#3390ec]/20 border-t-[#3390ec] rounded-full animate-spin flex items-center justify-center" />
+                      <div className="w-14 h-14 border-2 border-slate-200 dark:border-zinc-800 border-t-emerald-600 rounded-full animate-spin flex items-center justify-center" />
                       <svg viewBox="0 0 175.216 175.552" className="w-6 h-6 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex-shrink-0">
                         <path fill="#FFF" d="M90.134 162.138c-12.084 0-23.941-3.142-34.404-9.083L14.316 163.66l10.829-39.517c-6.523-11.309-9.957-24.15-9.953-37.309C15.209 46.262 48.7 12.766 89.28 12.766c19.664 0 38.15 7.66 52.039 21.558 13.889 13.896 21.539 32.388 21.531 52.046-.017 40.579-33.518 73.768-72.716 75.768z" />
                         <path fill="#25D366" d="M90.134 23.99c-33.82 0-61.341 27.525-61.353 61.347a61.1 61.1 0 0 0 9.37 32.61l1.458 2.318-6.195 22.61 23.136-6.068 2.241 1.33A61.05 61.05 0 0 0 89.92 146.47h.023c33.81 0 61.332-27.524 61.348-61.348a61.13 61.13 0 0 0-17.951-43.375C121.849 30.197 106.524 23.99 90.134 23.99z" />
                         <path fill="#FFF" d="M118.91 103.88c-1.58-.79-9.35-4.61-10.79-5.14-1.44-.53-2.5-.79-3.56.79-1.06 1.58-4.09 5.14-5.01 6.2-.92 1.06-1.84 1.18-3.42.39-1.58-.79-6.67-2.46-12.71-7.85-4.7-4.19-7.87-9.37-8.79-10.95-.92-1.58-.1-2.44.69-3.22.71-.7 1.58-1.84 2.37-2.76.79-.92 1.06-1.58 1.58-2.63.53-1.06.26-1.97-.13-2.76-.39-.79-3.56-8.58-4.88-11.77-1.28-3.11-2.59-2.69-3.56-2.74-.92-.05-1.97-.05-3.03-.05-1.06 0-2.77.39-4.22 1.97-1.45 1.58-5.54 5.41-5.54 13.19s5.67 15.29 6.46 16.34c.79 1.06 11.16 17.04 27.04 23.9 3.78 1.63 6.72 2.61 9.02 3.35 3.8 1.21 7.26 1.04 10 0.63 3.05-.46 9.35-3.82 10.66-7.51 1.32-3.69 1.32-6.85 0.92-7.51-.39-.66-1.44-1.06-3.03-1.85z" />
                       </svg>
                     </div>
-                    <div className="space-y-1.5">
-                      <h4 className="text-sm font-bold text-white animate-pulse">Initializing Security Session</h4>
-                      <p className="text-[10px] text-gray-500 font-semibold tracking-wide">
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white animate-pulse">Initializing Security Session</h4>
+                      <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
                         Configuring virtual browser instance on cloud node...
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={handleDisconnectWa}
-                      className="px-4 py-2 mt-2 bg-white/5 hover:bg-white/10 active:scale-95 text-gray-400 hover:text-white text-[10px] font-bold uppercase tracking-wider rounded-lg border border-white/5 transition-all cursor-pointer"
+                      className="px-4 py-2 mt-2 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 active:scale-95 text-slate-600 dark:text-zinc-300 text-xs font-semibold rounded-xl border border-slate-200 dark:border-zinc-700 transition-all cursor-pointer"
                     >
                       Cancel & Reset Connection
                     </button>
@@ -1470,18 +1470,18 @@ export default function SettingsPage() {
                 {waSessionState === 'pairing_code_ready' && (
                   <div className="flex flex-col items-center text-center py-6 space-y-6">
                     <div className="space-y-2">
-                      <h4 className="text-base font-extrabold text-white">Enter This Pairing Code</h4>
-                      <p className="text-xs text-gray-400 max-w-sm leading-relaxed font-medium">
+                      <h4 className="text-base font-bold text-slate-900 dark:text-white">Enter This Pairing Code</h4>
+                      <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-sm leading-relaxed font-medium">
                         Open WhatsApp on your phone &rarr; **Linked Devices** &rarr; **Link a device** &rarr; Tap **Link with phone number instead** at the bottom, and enter:
                       </p>
                     </div>
 
                     {/* Massive Bold Code Box */}
-                    <div className="bg-[#1A1F2B] px-8 py-5 rounded-3xl border border-[#3390ec]/30 flex items-center justify-center select-all shadow-xl shadow-[#3390ec]/5">
-                      <span className="text-[#3390ec] font-mono text-4xl font-black tracking-widest uppercase">{waPairingCode}</span>
+                    <div className="bg-slate-100 dark:bg-zinc-900 px-8 py-5 rounded-2xl border border-emerald-500/30 flex items-center justify-center select-all shadow-xs">
+                      <span className="text-emerald-600 dark:text-emerald-400 font-mono text-3xl sm:text-4xl font-bold tracking-widest uppercase">{waPairingCode}</span>
                     </div>
 
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-wider animate-pulse">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold animate-pulse">
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '3s' }} />
                       Waiting for linking confirmation...
                     </div>
@@ -1489,58 +1489,37 @@ export default function SettingsPage() {
                     <button
                       type="button"
                       onClick={handleDisconnectWa}
-                      className="px-4 py-2 bg-white/5 hover:bg-white/10 active:scale-95 text-gray-400 hover:text-white text-[10px] font-bold uppercase tracking-wider rounded-lg border border-white/5 transition-all cursor-pointer"
+                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 active:scale-95 text-slate-600 dark:text-zinc-300 text-xs font-semibold rounded-xl border border-slate-200 dark:border-zinc-700 transition-all cursor-pointer"
                     >
                       Cancel & Reset Connection
                     </button>
                   </div>
                 )}
 
-                {/* STATE 3: QR Ready (Displaying QR Code Scanner Grid) */}
+                {/* STATE 3: QR Ready */}
                 {waSessionState === 'qr_ready' && (
                   <div className="flex flex-col items-center text-center py-4 space-y-5">
-                    {/* Glowing scanning target grid */}
-                    <div className="relative p-3 bg-white rounded-3xl border border-white/10 shadow-2xl shadow-emerald-500/5 group">
-                      
-                      {/* Interactive CSS Neon Scanning Line */}
-                      <div 
-                        className="absolute left-3 right-3 h-0.5 bg-emerald-500 shadow-[0_0_8px_#10B981] z-10 animate-scan"
-                        style={{
-                          animation: 'scan 2.5s linear infinite'
-                        }}
-                      />
-                      
-                      {/* CSS Scanner Keyframe Style Tag self-contained */}
-                      <style dangerouslySetInnerHTML={{__html: `
-                        @keyframes scan {
-                          0% { top: 12px; }
-                          50% { top: calc(100% - 14px); }
-                          100% { top: 12px; }
-                        }
-                      `}} />
-
-                      {/* Styled QR Code Frame */}
-                      <div className="w-40 h-40 bg-[#0f0f0f] flex items-center justify-center p-1 relative overflow-hidden rounded-2xl border border-white/10 select-none">
+                    <div className="relative p-3 bg-white rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm group">
+                      <div className="w-40 h-40 bg-slate-100 dark:bg-zinc-950 flex items-center justify-center p-1 relative overflow-hidden rounded-xl border border-slate-200 dark:border-zinc-800 select-none">
                         {waQrImage ? (
-                          <img src={waQrImage} alt="WhatsApp QR Code" className="w-full h-full object-contain bg-white rounded-xl p-1.5 animate-in fade-in duration-300" />
+                          <img src={waQrImage} alt="WhatsApp QR Code" className="w-full h-full object-contain bg-white rounded-lg p-1.5 animate-in fade-in duration-300" />
                         ) : (
-                          /* Glowing status loader */
                           <div className="flex flex-col items-center justify-center space-y-2.5 p-4 text-center">
-                            <div className="w-9 h-9 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
-                            <p className="text-[9px] font-black text-emerald-400 tracking-widest animate-pulse">GENERATING FRESH QR...</p>
-                            <p className="text-[8px] text-gray-500 leading-relaxed font-semibold">Please wait, retrieving secure barcode from gateway...</p>
+                            <div className="w-8 h-8 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
+                            <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 tracking-wider animate-pulse">GENERATING QR...</p>
+                            <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">Please wait...</p>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="space-y-2 max-w-sm">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-wider">
+                    <div className="space-y-1.5 max-w-sm">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-semibold">
                         <Clock className="w-3.5 h-3.5" />
                         QR Code expires in {waCountdown}s
                       </div>
-                      <h4 className="text-sm font-extrabold text-white">Scan to Connect Device</h4>
-                      <p className="text-[10px] text-gray-400 leading-normal font-semibold">
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">Scan to Connect Device</h4>
+                      <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed font-medium">
                         Open WhatsApp on your phone &rarr; Tap Menu or Settings &rarr; Linked Devices &rarr; Scan this QR.
                       </p>
                     </div>
@@ -1548,7 +1527,7 @@ export default function SettingsPage() {
                     <button
                       type="button"
                       onClick={() => setWaCountdown(45)}
-                      className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-lg border border-white/5 transition-all cursor-pointer flex items-center gap-1.5"
+                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white text-xs font-semibold rounded-xl border border-slate-200 dark:border-zinc-700 transition-all cursor-pointer flex items-center gap-1.5"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
                       Force Regenerate QR
@@ -1558,10 +1537,10 @@ export default function SettingsPage() {
 
                 {/* STATE 4: Connected Session */}
                 {waSessionState === 'connected' && (
-                  <div className="p-4 rounded-xl bg-emerald-500/[0.02] border border-emerald-500/10 space-y-4">
+                  <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-4">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center shrink-0">
+                        <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center justify-center shrink-0">
                           <svg viewBox="0 0 175.216 175.552" className="w-6 h-6 animate-pulse shrink-0">
                             <path fill="#FFF" d="M90.134 162.138c-12.084 0-23.941-3.142-34.404-9.083L14.316 163.66l10.829-39.517c-6.523-11.309-9.957-24.15-9.953-37.309C15.209 46.262 48.7 12.766 89.28 12.766c19.664 0 38.15 7.66 52.039 21.558 13.889 13.896 21.539 32.388 21.531 52.046-.017 40.579-33.518 73.768-72.716 75.768z" />
                             <path fill="#25D366" d="M90.134 23.99c-33.82 0-61.341 27.525-61.353 61.347a61.1 61.1 0 0 0 9.37 32.61l1.458 2.318-6.195 22.61 23.136-6.068 2.241 1.33A61.05 61.05 0 0 0 89.92 146.47h.023c33.81 0 61.332-27.524 61.348-61.348a61.13 61.13 0 0 0-17.951-43.375C121.849 30.197 106.524 23.99 90.134 23.99z" />
@@ -1570,10 +1549,10 @@ export default function SettingsPage() {
                         </div>
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-bold text-white">WhatsApp Session Linked</h4>
+                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">WhatsApp Session Linked</h4>
                             <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
                           </div>
-                          <p className="text-xs font-bold text-[#10B981] font-mono">{globalSettings.waConnectedNumber || 'Linked Device'}</p>
+                          <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono">{globalSettings.waConnectedNumber || 'Linked Device'}</p>
                         </div>
                       </div>
 
@@ -1584,14 +1563,14 @@ export default function SettingsPage() {
                             setTestPhone('');
                             setShowTestModal(true);
                           }}
-                          className="flex-1 sm:flex-none px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg border border-white/5 transition-all text-xs font-bold uppercase tracking-wider cursor-pointer"
+                          className="flex-1 sm:flex-none px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-xl border border-slate-200 dark:border-zinc-700 transition-all text-xs font-semibold shadow-xs cursor-pointer"
                         >
                           Send Test
                         </button>
                         <button
                           type="button"
                           onClick={handleDisconnectWa}
-                          className="flex-1 sm:flex-none px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg border border-rose-500/20 transition-all text-xs font-bold uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5"
+                          className="flex-1 sm:flex-none px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-xl border border-rose-500/20 transition-all text-xs font-semibold cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                           title="Disconnect WhatsApp Session"
                         >
                           <Power className="w-3.5 h-3.5" />
@@ -1601,17 +1580,17 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Operational metrics dashboard */}
-                    <div className="grid grid-cols-3 gap-2.5 pt-3 border-t border-white/[0.03] text-[9px] font-bold uppercase tracking-wider text-gray-500">
-                      <div className="bg-white/[0.01] rounded-lg p-2.5 text-center">
-                        <p className="text-gray-400 text-sm font-black mb-0.5 font-mono">Ready</p>
+                    <div className="grid grid-cols-3 gap-2.5 pt-3 border-t border-slate-200/60 dark:border-zinc-800 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                      <div className="bg-slate-50 dark:bg-zinc-950/60 rounded-xl p-2.5 text-center border border-slate-200/60 dark:border-zinc-800/60">
+                        <p className="text-slate-700 dark:text-zinc-300 text-sm font-bold mb-0.5 font-mono">Ready</p>
                         <span>Device Status</span>
                       </div>
-                      <div className="bg-white/[0.01] rounded-lg p-2.5 text-center">
-                        <p className="text-emerald-400 text-sm font-black mb-0.5 font-mono">100%</p>
+                      <div className="bg-slate-50 dark:bg-zinc-950/60 rounded-xl p-2.5 text-center border border-slate-200/60 dark:border-zinc-800/60">
+                        <p className="text-emerald-600 dark:text-emerald-400 text-sm font-bold mb-0.5 font-mono">100%</p>
                         <span>Success Rate</span>
                       </div>
-                      <div className="bg-white/[0.01] rounded-lg p-2.5 text-center">
-                        <p className="text-white text-sm font-black mb-0.5 font-mono">0 ms</p>
+                      <div className="bg-slate-50 dark:bg-zinc-950/60 rounded-xl p-2.5 text-center border border-slate-200/60 dark:border-zinc-800/60">
+                        <p className="text-slate-900 dark:text-white text-sm font-bold mb-0.5 font-mono">0 ms</p>
                         <span>Dispatch Latency</span>
                       </div>
                     </div>
@@ -1625,7 +1604,7 @@ export default function SettingsPage() {
 
         {/* WhatsApp Message Templates */}
         <Section 
-          icon={<Sparkles className="w-5.5 h-5.5 text-amber-400 fill-amber-400/10" />}
+          icon={<Sparkles className="w-5.5 h-5.5 text-amber-500 fill-amber-500/10" />}
           title="WhatsApp Message Templates" 
           description="Customize the automated messages sent to your members. These templates will be pre-filled in manual chat tabs or dispatched automatically via Autopilot."
         >
@@ -1633,11 +1612,11 @@ export default function SettingsPage() {
             {/* Welcome Template */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between px-1">
-                <label className="text-xs font-semibold text-gray-400">Welcome Message Template (New Members)</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Welcome Message Template (New Members)</label>
                 <button
                   type="button"
                   onClick={() => setGlobalSettings({...globalSettings, waTemplateWelcome: DEFAULT_WELCOME_TEMPLATE})}
-                  className="text-[10px] font-bold text-[#3390ec] hover:text-[#2b7ad2] uppercase tracking-wider cursor-pointer"
+                  className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline uppercase tracking-wider cursor-pointer"
                 >
                   Reset Default
                 </button>
@@ -1646,7 +1625,7 @@ export default function SettingsPage() {
                 rows={4}
                 value={globalSettings.waTemplateWelcome}
                 onChange={e => setGlobalSettings({...globalSettings, waTemplateWelcome: e.target.value})}
-                className="w-full bg-[#1c1c1c] border border-white/5 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#3390ec]/50 transition-all resize-y"
+                className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all resize-y shadow-xs"
                 placeholder="Welcome template..."
               />
             </div>
@@ -1654,11 +1633,11 @@ export default function SettingsPage() {
             {/* Expiry Soon Template */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between px-1">
-                <label className="text-xs font-semibold text-gray-400">Expiry Soon Reminder Template</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Expiry Soon Reminder Template</label>
                 <button
                   type="button"
                   onClick={() => setGlobalSettings({...globalSettings, waTemplateExpirySoon: DEFAULT_EXPIRY_SOON_TEMPLATE})}
-                  className="text-[10px] font-bold text-[#3390ec] hover:text-[#2b7ad2] uppercase tracking-wider cursor-pointer"
+                  className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline uppercase tracking-wider cursor-pointer"
                 >
                   Reset Default
                 </button>
@@ -1667,7 +1646,7 @@ export default function SettingsPage() {
                 rows={4}
                 value={globalSettings.waTemplateExpirySoon}
                 onChange={e => setGlobalSettings({...globalSettings, waTemplateExpirySoon: e.target.value})}
-                className="w-full bg-[#1c1c1c] border border-white/5 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#3390ec]/50 transition-all resize-y"
+                className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all resize-y shadow-xs"
                 placeholder="Expiry soon template..."
               />
             </div>
@@ -1675,11 +1654,11 @@ export default function SettingsPage() {
             {/* Expired Template */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between px-1">
-                <label className="text-xs font-semibold text-gray-400">Expired Plan Notification Template</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Expired Plan Notification Template</label>
                 <button
                   type="button"
                   onClick={() => setGlobalSettings({...globalSettings, waTemplateExpired: DEFAULT_EXPIRED_TEMPLATE})}
-                  className="text-[10px] font-bold text-[#3390ec] hover:text-[#2b7ad2] uppercase tracking-wider cursor-pointer"
+                  className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline uppercase tracking-wider cursor-pointer"
                 >
                   Reset Default
                 </button>
@@ -1688,7 +1667,7 @@ export default function SettingsPage() {
                 rows={4}
                 value={globalSettings.waTemplateExpired}
                 onChange={e => setGlobalSettings({...globalSettings, waTemplateExpired: e.target.value})}
-                className="w-full bg-[#1c1c1c] border border-white/5 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#3390ec]/50 transition-all resize-y"
+                className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all resize-y shadow-xs"
                 placeholder="Expired template..."
               />
             </div>
@@ -1696,11 +1675,11 @@ export default function SettingsPage() {
             {/* Left/Goodbye Template */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between px-1">
-                <label className="text-xs font-semibold text-gray-400">Goodbye Message Template (Members Leaving)</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Goodbye Message Template (Members Leaving)</label>
                 <button
                   type="button"
                   onClick={() => setGlobalSettings({...globalSettings, waTemplateLeft: DEFAULT_LEFT_TEMPLATE})}
-                  className="text-[10px] font-bold text-[#3390ec] hover:text-[#2b7ad2] uppercase tracking-wider cursor-pointer"
+                  className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline uppercase tracking-wider cursor-pointer"
                 >
                   Reset Default
                 </button>
@@ -1709,27 +1688,27 @@ export default function SettingsPage() {
                 rows={4}
                 value={globalSettings.waTemplateLeft}
                 onChange={e => setGlobalSettings({...globalSettings, waTemplateLeft: e.target.value})}
-                className="w-full bg-[#1c1c1c] border border-white/5 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#3390ec]/50 transition-all resize-y"
+                className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all resize-y shadow-xs"
                 placeholder="Goodbye template..."
               />
             </div>
-            <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-4.5 space-y-2.5">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Available placeholders:</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] font-medium text-gray-500">
+            <div className="bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4.5 space-y-2.5">
+              <p className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Available placeholders:</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-medium text-slate-600 dark:text-zinc-400">
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-mono text-emerald-400 font-bold">{"{{name}}"}</span>
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">{"{{name}}"}</span>
                   <span>Member's Full Name</span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-mono text-[#3390ec] font-bold">{"{{gymName}}"}</span>
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">{"{{gymName}}"}</span>
                   <span>Your Gym Name</span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-mono text-purple-400 font-bold">{"{{plan}}"}</span>
+                  <span className="font-mono text-purple-600 dark:text-purple-400 font-bold">{"{{plan}}"}</span>
                   <span>Membership Plan</span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-mono text-amber-500 font-bold">{"{{date}}"}</span>
+                  <span className="font-mono text-amber-600 dark:text-amber-500 font-bold">{"{{date}}"}</span>
                   <span>Expiry Date</span>
                 </div>
               </div>
@@ -1739,7 +1718,7 @@ export default function SettingsPage() {
               <button 
                 onClick={handleSaveGlobalSettings} 
                 disabled={savingSettings} 
-                className="px-6 py-2.5 bg-[#3390ec] hover:bg-[#2b7ad2] disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-all"
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-50 text-white font-semibold rounded-xl text-xs transition-all shadow-xs cursor-pointer"
               >
                 {savingSettings ? 'Saving...' : 'Save Templates'}
               </button>
@@ -1759,7 +1738,7 @@ export default function SettingsPage() {
               <select
                 value={globalSettings.currency}
                 onChange={e => setGlobalSettings({...globalSettings, currency: e.target.value})}
-                className="w-full bg-[#1c1c1c] border border-white/5 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#3390ec]/50 transition-all appearance-none"
+                className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all shadow-xs appearance-none"
               >
                 <option value="₹">₹ (INR)</option>
                 <option value="$">$ (USD)</option>
@@ -1769,7 +1748,11 @@ export default function SettingsPage() {
             </div>
           </div>
           <div className="pt-2">
-            <button onClick={handleSaveGlobalSettings} disabled={savingSettings} className="px-6 py-2 bg-[#3390ec] hover:bg-[#2b7ad2] disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-all">
+            <button 
+              onClick={handleSaveGlobalSettings} 
+              disabled={savingSettings} 
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-50 text-white font-semibold rounded-xl text-xs transition-all shadow-xs cursor-pointer"
+            >
               {savingSettings ? 'Saving...' : 'Save Settings'}
             </button>
           </div>
@@ -1790,19 +1773,23 @@ export default function SettingsPage() {
             <div className="flex items-center gap-4">
               <button 
                 onClick={() => setShowPasswords(!showPasswords)} 
-                className="text-xs font-medium text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-1.5"
+                className="text-xs font-medium text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 transition-colors flex items-center gap-1.5"
               >
                 {showPasswords ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 {showPasswords ? 'Hide Password' : 'Show Password'}
               </button>
               <button 
                 onClick={handleForgotPassword}
-                className="text-xs font-bold text-[#3390ec] hover:text-[#2b7ad2] transition-colors"
+                className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline transition-colors"
               >
                 Forgot Password?
               </button>
             </div>
-            <button onClick={handleChangePassword} disabled={savingPw} className="px-6 py-2 bg-[#3390ec] hover:bg-[#2b7ad2] text-white font-medium rounded-lg text-sm transition-all shadow-lg shadow-[#3390ec]/20">
+            <button 
+              onClick={handleChangePassword} 
+              disabled={savingPw} 
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-50 text-white font-semibold rounded-xl text-xs transition-all shadow-xs cursor-pointer"
+            >
               {savingPw ? 'Updating...' : 'Change Password'}
             </button>
           </div>
@@ -1814,8 +1801,12 @@ export default function SettingsPage() {
           title="Data Management" 
           description="Export your gym's data to CSV"
         >
-          <button onClick={handleExportCSV} disabled={exporting} className="flex items-center gap-2 px-6 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg text-sm font-medium transition-all border border-white/5">
-            <Download className="w-4 h-4" />
+          <button 
+            onClick={handleExportCSV} 
+            disabled={exporting} 
+            className="flex items-center gap-2 px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-semibold transition-all shadow-xs cursor-pointer"
+          >
+            <Download className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             {exporting ? 'Exporting...' : 'Export Member Data'}
           </button>
         </Section>
@@ -1831,20 +1822,20 @@ export default function SettingsPage() {
             {/* Left: Live Support Notice + Create Ticket Form */}
             <div className="lg:col-span-7 space-y-6">
               {/* Live Support Notice */}
-              <div className="bg-[#3390ec]/5 border border-[#3390ec]/10 rounded-2xl p-5 flex items-start gap-4 transition-all hover:bg-[#3390ec]/[0.07] duration-300">
-                <div className="w-10 h-10 rounded-xl bg-[#3390ec]/10 flex items-center justify-center text-[#3390ec] shrink-0 border border-[#3390ec]/20">
+              <div className="bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 rounded-2xl p-5 flex items-start gap-4 transition-all">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 border border-emerald-200 dark:border-emerald-700/50">
                   <LifeBuoy className="w-5 h-5 animate-pulse" />
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-sm font-bold text-white">Real-Time Support Integration</h4>
-                  <p className="text-xs text-gray-400 leading-relaxed font-medium">
-                    Submit your ticket below. The Support Team will respond promptly, and you will receive instant updates directly inside the <span className="text-[#3390ec] font-bold">Notifications</span> page in your sidebar menu.
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">Real-Time Support Integration</h4>
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed font-medium">
+                    Submit your ticket below. The Support Team will respond promptly, and you will receive instant updates directly inside the <span className="text-emerald-600 dark:text-emerald-400 font-bold">Notifications</span> page in your sidebar menu.
                   </p>
                 </div>
               </div>
 
               {/* Create Ticket Form */}
-              <form onSubmit={handleSubmitTicket} className="space-y-4 bg-white/[0.01] border border-white/5 p-6 rounded-2xl">
+              <form onSubmit={handleSubmitTicket} className="space-y-4 bg-slate-50/50 dark:bg-zinc-950/40 border border-slate-200 dark:border-zinc-800 p-6 rounded-2xl">
                 <Field 
                   label="Subject" 
                   id="ticket-subject" 
@@ -1855,11 +1846,11 @@ export default function SettingsPage() {
                 />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-400 px-1">Category</label>
+                    <label className="text-xs font-medium text-slate-700 dark:text-zinc-400 px-1">Category</label>
                     <select
                       value={ticket.category}
                       onChange={e => setTicket({...ticket, category: e.target.value})}
-                      className="w-full bg-[#1c1c1c] border border-white/5 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#3390ec]/50 transition-all cursor-pointer"
+                      className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 transition-all cursor-pointer shadow-xs"
                     >
                       <option value="other">General Inquiry</option>
                       <option value="technical">Technical Issue</option>
@@ -1868,11 +1859,11 @@ export default function SettingsPage() {
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-400 px-1">Priority</label>
+                    <label className="text-xs font-medium text-slate-700 dark:text-zinc-400 px-1">Priority</label>
                     <select
                       value={ticket.priority}
                       onChange={e => setTicket({...ticket, priority: e.target.value})}
-                      className="w-full bg-[#1c1c1c] border border-white/5 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#3390ec]/50 transition-all cursor-pointer"
+                      className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 transition-all cursor-pointer shadow-xs"
                     >
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
@@ -1881,12 +1872,12 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-gray-400 px-1">Description</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-zinc-400 px-1">Description</label>
                   <textarea
                     rows={4}
                     value={ticket.description}
                     onChange={e => setTicket({...ticket, description: e.target.value})}
-                    className="w-full bg-[#1c1c1c] border border-white/5 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#3390ec]/50 transition-all resize-none font-sans"
+                    className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition-all resize-none font-sans shadow-xs"
                     placeholder="Please describe your issue in detail..."
                   />
                 </div>
@@ -1894,7 +1885,7 @@ export default function SettingsPage() {
                   <button 
                     type="submit"
                     disabled={submittingTicket} 
-                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#3390ec] to-[#2b7ad2] hover:from-[#4aa1fa] hover:to-[#3390ec] disabled:opacity-50 text-white font-bold rounded-xl text-xs transition-all shadow-lg shadow-[#3390ec]/15"
+                    className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-50 text-white font-bold rounded-xl text-xs transition-all shadow-xs cursor-pointer"
                   >
                     <MessageSquare className="w-4 h-4" />
                     {submittingTicket ? 'Submitting...' : 'Submit Support Ticket'}
@@ -1905,25 +1896,25 @@ export default function SettingsPage() {
 
             {/* Right: Ticket History Tracking */}
             <div className="lg:col-span-5 space-y-4">
-              <h4 className="text-sm font-bold text-white uppercase tracking-wider px-1 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-gray-400" />
+              <h4 className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider px-1 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 Ticket History
               </h4>
               <div className="space-y-3 max-h-[460px] overflow-y-auto pr-1 custom-scrollbar">
                 {loadingTickets ? (
                   <div className="space-y-3">
                     {[1, 2].map(n => (
-                      <div key={n} className="bg-white/[0.01] border border-white/5 rounded-xl p-4 animate-pulse space-y-3">
-                        <div className="h-3.5 bg-white/10 rounded w-2/3" />
-                        <div className="h-2.5 bg-white/5 rounded w-1/2" />
+                      <div key={n} className="bg-slate-100 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 animate-pulse space-y-3">
+                        <div className="h-3.5 bg-slate-200 dark:bg-zinc-800 rounded w-2/3" />
+                        <div className="h-2.5 bg-slate-200 dark:bg-zinc-800 rounded w-1/2" />
                       </div>
                     ))}
                   </div>
                 ) : userTickets.length === 0 ? (
-                  <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-8 text-center">
-                    <MessageSquare className="w-8 h-8 text-gray-600 mx-auto mb-3" />
-                    <p className="text-xs text-gray-500 font-medium">No tickets logged yet</p>
-                    <p className="text-[10px] text-gray-600 mt-1 leading-relaxed">
+                  <div className="bg-slate-50/50 dark:bg-zinc-950/40 border border-slate-200 dark:border-zinc-800 rounded-2xl p-8 text-center">
+                    <MessageSquare className="w-8 h-8 text-slate-400 dark:text-zinc-600 mx-auto mb-3" />
+                    <p className="text-xs text-slate-600 dark:text-zinc-400 font-medium">No tickets logged yet</p>
+                    <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-1 leading-relaxed">
                       Your submitted tickets and support team responses will show up here.
                     </p>
                   </div>
@@ -1931,45 +1922,43 @@ export default function SettingsPage() {
                   userTickets.map(t => (
                     <div 
                       key={t.id} 
-                      className={`bg-white/[0.02] border border-white/5 hover:border-white/10 rounded-xl p-4 space-y-3 transition-all duration-300 relative group overflow-hidden ${
-                        t.admin_response?.trim() ? 'bg-gradient-to-r from-white/[0.02] to-[#3390ec]/[0.02]' : ''
-                      }`}
+                      className="bg-white dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 hover:border-emerald-500/40 rounded-xl p-4 space-y-3 transition-all duration-300 relative group overflow-hidden shadow-xs"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-1 min-w-0">
-                          <h5 className="text-xs font-bold text-white group-hover:text-[#3390ec] transition-colors truncate">
+                          <h5 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
                             {t.subject}
                           </h5>
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[10px] text-gray-500">
+                            <span className="text-[10px] text-slate-500 dark:text-zinc-400">
                               {new Date(t.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                             </span>
-                            <span className="w-1 h-1 bg-white/10 rounded-full" />
-                            <span className="text-[10px] text-gray-500 capitalize">{t.category}</span>
+                            <span className="w-1 h-1 bg-slate-300 dark:bg-zinc-700 rounded-full" />
+                            <span className="text-[10px] text-slate-500 dark:text-zinc-400 capitalize">{t.category}</span>
                           </div>
                         </div>
                         {/* Status Badges */}
                         {t.status === 'resolved' ? (
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">
                             Resolved
                           </span>
                         ) : t.status === 'in_progress' ? (
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#3390ec]/10 text-[#3390ec] border border-[#3390ec]/20 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 whitespace-nowrap">
                             In Progress
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 whitespace-nowrap">
                             Open
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center justify-between pt-1 border-t border-white/5">
-                        <span className={`text-[10px] font-bold ${t.priority === 'high' ? 'text-red-400' : t.priority === 'medium' ? 'text-amber-400' : 'text-gray-500'} capitalize`}>
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-zinc-800/80">
+                        <span className={`text-[10px] font-bold ${t.priority === 'high' ? 'text-red-500' : t.priority === 'medium' ? 'text-amber-500' : 'text-slate-500 dark:text-zinc-400'} capitalize`}>
                           {t.priority} Priority
                         </span>
                         <button 
                           onClick={() => setSelectedUserTicket(t)}
-                          className="flex items-center gap-1 text-[10px] font-bold text-[#3390ec] hover:text-[#4aa1fa] transition-colors"
+                          className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline transition-colors"
                         >
                           {t.admin_response?.trim() ? 'View Response' : 'View Ticket'}
                           <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
@@ -1983,20 +1972,20 @@ export default function SettingsPage() {
           </div>
         </Section>
 
-        <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-6 relative overflow-hidden">
+        <div className="bg-red-50/40 dark:bg-red-950/10 border border-red-200 dark:border-red-900/40 rounded-2xl p-6 relative overflow-hidden">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500">
+              <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800/50 flex items-center justify-center text-red-600 dark:text-red-400">
                 <AlertTriangle className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-red-500 font-bold text-lg">Danger Zone</h3>
-                <p className="text-red-400/70 text-xs mt-0.5">Irreversible actions for your gym data</p>
+                <h3 className="text-red-600 dark:text-red-400 font-bold text-base">Danger Zone</h3>
+                <p className="text-slate-600 dark:text-zinc-400 text-xs mt-0.5">Irreversible actions for your gym data</p>
               </div>
             </div>
             <button 
               onClick={() => setShowDangerModal(true)} 
-              className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-red-500/20 whitespace-nowrap"
+              className="px-5 py-2.5 bg-red-600 hover:bg-red-500 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-xs whitespace-nowrap cursor-pointer"
             >
               Wipe All Data
             </button>
@@ -2006,44 +1995,40 @@ export default function SettingsPage() {
         {/* Danger Modal */}
         {showDangerModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-            <div className="bg-[#1c1c1c] border border-red-500/30 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 relative overflow-hidden">
-              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-red-500/0 via-red-500 to-red-500/0" />
-              
-              <div className="flex flex-col items-center text-center space-y-4 mb-8">
-                <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-2 border border-red-500/20">
-                  <AlertTriangle className="w-8 h-8 text-red-500" />
-                </div>
+            <div className="bg-white dark:bg-zinc-900 border border-red-200 dark:border-red-900/50 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 relative overflow-hidden">
+              <div className="flex flex-col items-center text-center space-y-3 mb-6">
+                <AlertTriangle className="w-10 h-10 text-rose-600 dark:text-rose-500" />
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-2">Are you absolutely sure?</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    This action <strong className="text-red-400 font-bold">cannot be undone</strong>. This will permanently delete all your athletes, subscriptions, payments, and notifications.
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Are you absolutely sure?</h3>
+                  <p className="text-slate-600 dark:text-zinc-400 text-xs leading-relaxed">
+                    This action <strong className="text-rose-600 dark:text-rose-400 font-bold">cannot be undone</strong>. This will permanently delete all your athletes, subscriptions, payments, and notifications.
                   </p>
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div className="space-y-1.5 text-left">
-                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Type "DELETE" to confirm</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider px-1">Type "DELETE" to confirm</label>
                   <input 
                     type="text" 
                     value={deleteConfirm} 
                     onChange={e => setDeleteConfirm(e.target.value)} 
                     placeholder="DELETE" 
-                    className="w-full bg-[#121212] border border-red-500/20 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all text-center tracking-[0.2em] font-bold" 
+                    className="w-full bg-slate-50 dark:bg-zinc-950 border border-red-300 dark:border-red-900/60 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all text-center tracking-[0.2em] font-bold" 
                   />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <button 
                     onClick={() => { setShowDangerModal(false); setDeleteConfirm(''); }}
-                    className="px-4 py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl text-sm transition-colors"
+                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 font-semibold rounded-xl text-xs transition-colors"
                   >
                     Cancel
                   </button>
                   <button 
                     onClick={handleDeleteAllMembers} 
                     disabled={deleting || deleteConfirm !== 'DELETE'} 
-                    className="px-4 py-3 bg-red-500 hover:bg-red-600 disabled:opacity-30 disabled:hover:bg-red-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-red-500/20"
+                    className="px-4 py-2.5 bg-red-600 hover:bg-red-500 active:scale-95 disabled:opacity-30 disabled:hover:bg-red-600 text-white font-bold rounded-xl text-xs transition-all shadow-xs"
                   >
                     {deleting ? 'Erasing...' : 'Wipe Data'}
                   </button>
@@ -2055,22 +2040,20 @@ export default function SettingsPage() {
 
         {/* WhatsApp Test Message Modal */}
         {showTestModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in animate-duration-200">
-            <div className="bg-[#1c1c1c] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 relative overflow-hidden">
-              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500 to-emerald-500/0" />
-              
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 relative overflow-hidden">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                   <svg viewBox="0 0 175.216 175.552" className="w-5 h-5 shrink-0">
-                    <path fill="#FFF" d="M90.134 162.138c-12.084 0-23.941-3.142-34.404-9.083L14.316 163.66l10.829-39.517c-6.523-11.309-9.957-24.15-9.953-37.309C15.209 46.262 48.7 12.766 89.28 12.766c19.664 0 38.15 7.66 52.039 21.558 13.889 13.896 21.539 32.388 21.531 52.046-.017 40.579-33.518 73.768-72.716 75.768z" />
-                    <path fill="#25D366" d="M90.134 23.99c-33.82 0-61.341 27.525-61.353 61.347a61.1 61.1 0 0 0 9.37 32.61l1.458 2.318-6.195 22.61 23.136-6.068 2.241 1.33A61.05 61.05 0 0 0 89.92 146.47h.023c33.81 0 61.332-27.524 61.348-61.348a61.13 61.13 0 0 0-17.951-43.375C121.849 30.197 106.524 23.99 90.134 23.99z" />
-                    <path fill="#FFF" d="M118.91 103.88c-1.58-.79-9.35-4.61-10.79-5.14-1.44-.53-2.5-.79-3.56.79-1.06 1.58-4.09 5.14-5.01 6.2-.92 1.06-1.84 1.18-3.42.39-1.58-.79-6.67-2.46-12.71-7.85-4.7-4.19-7.87-9.37-8.79-10.95-.92-1.58-.1-2.44.69-3.22.71-.7 1.58-1.84 2.37-2.76.79-.92 1.06-1.58 1.58-2.63.53-1.06.26-1.97-.13-2.76-.39-.79-3.56-8.58-4.88-11.77-1.28-3.11-2.59-2.69-3.56-2.74-.92-.05-1.97-.05-3.03-.05-1.06 0-2.77.39-4.22 1.97-1.45 1.58-5.54 5.41-5.54 13.19s5.67 15.29 6.46 16.34c.79 1.06 11.16 17.04 27.04 23.9 3.78 1.63 6.72 2.61 9.02 3.35 3.8 1.21 7.26 1.04 10 0.63 3.05-.46 9.35-3.82 10.66-7.51 1.32-3.69 1.32-6.85 0.92-7.51-.39-.66-1.44-1.06-3.03-1.85z" />
+                    <path fill="#25D366" d="M90.134 162.138c-12.084 0-23.941-3.142-34.404-9.083L14.316 163.66l10.829-39.517c-6.523-11.309-9.957-24.15-9.953-37.309C15.209 46.262 48.7 12.766 89.28 12.766c19.664 0 38.15 7.66 52.039 21.558 13.889 13.896 21.539 32.388 21.531 52.046-.017 40.579-33.518 73.768-72.716 75.768z" />
+                    <path fill="#FFF" d="M90.134 23.99c-33.82 0-61.341 27.525-61.353 61.347a61.1 61.1 0 0 0 9.37 32.61l1.458 2.318-6.195 22.61 23.136-6.068 2.241 1.33A61.05 61.05 0 0 0 89.92 146.47h.023c33.81 0 61.332-27.524 61.348-61.348a61.13 61.13 0 0 0-17.951-43.375C121.849 30.197 106.524 23.99 90.134 23.99z" />
+                    <path fill="#25D366" d="M118.91 103.88c-1.58-.79-9.35-4.61-10.79-5.14-1.44-.53-2.5-.79-3.56.79-1.06 1.58-4.09 5.14-5.01 6.2-.92 1.06-1.84 1.18-3.42.39-1.58-.79-6.67-2.46-12.71-7.85-4.7-4.19-7.87-9.37-8.79-10.95-.92-1.58-.1-2.44.69-3.22.71-.7 1.58-1.84 2.37-2.76.79-.92 1.06-1.58 1.58-2.63.53-1.06.26-1.97-.13-2.76-.39-.79-3.56-8.58-4.88-11.77-1.28-3.11-2.59-2.69-3.56-2.74-.92-.05-1.97-.05-3.03-.05-1.06 0-2.77.39-4.22 1.97-1.45 1.58-5.54 5.41-5.54 13.19s5.67 15.29 6.46 16.34c.79 1.06 11.16 17.04 27.04 23.9 3.78 1.63 6.72 2.61 9.02 3.35 3.8 1.21 7.26 1.04 10 0.63 3.05-.46 9.35-3.82 10.66-7.51 1.32-3.69 1.32-6.85 0.92-7.51-.39-.66-1.44-1.06-3.03-1.85z" />
                   </svg>
-                  <h3 className="text-lg font-bold text-white">Send Test Message</h3>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Send Test WhatsApp</h3>
                 </div>
                 <button 
                   onClick={() => setShowTestModal(false)}
-                  className="p-1.5 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                   <CloseIcon className="w-4 h-4" />
                 </button>
@@ -2078,24 +2061,24 @@ export default function SettingsPage() {
 
               <form onSubmit={handleSendTestMessage} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Recipient Phone Number</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider px-1">Recipient Phone Number</label>
                   <input 
                     type="tel" 
                     required
                     placeholder="e.g. +91 98765 43210" 
                     value={testPhone}
                     onChange={e => setTestPhone(e.target.value)}
-                    className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all placeholder-gray-600 font-mono"
+                    className="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 transition-all placeholder-slate-400 dark:placeholder-zinc-600 font-mono shadow-xs"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Message Content</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider px-1">Message Content</label>
                   <textarea 
                     rows={3}
                     readOnly
                     value="Hello! This is a test message dispatched from Gymix Autopilot Gateway. Your device linking is fully operational! 🟢🚀"
-                    className="w-full bg-[#121212]/50 border border-white/5 rounded-xl px-4 py-3 text-xs text-gray-400 focus:outline-none transition-all resize-none font-sans"
+                    className="w-full bg-slate-100 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-slate-600 dark:text-zinc-400 focus:outline-none transition-all resize-none font-sans"
                   />
                 </div>
 
@@ -2103,17 +2086,17 @@ export default function SettingsPage() {
                   <button 
                     type="button"
                     onClick={() => setShowTestModal(false)}
-                    className="px-4 py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-colors"
+                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 font-semibold rounded-xl text-xs uppercase tracking-wider transition-colors"
                   >
                     Cancel
                   </button>
                   <button 
                     type="submit"
                     disabled={sendingTestMessage} 
-                    className="px-4 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-black font-black rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-500/10 flex items-center justify-center gap-1.5"
+                    className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-50 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     {sendingTestMessage ? (
-                      <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                      <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <>
                         <Zap className="w-3.5 h-3.5" />
@@ -2130,19 +2113,17 @@ export default function SettingsPage() {
         {/* Plan Editor Modal */}
         {showPlanModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-            <div className="bg-[#1c1c1c] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 relative overflow-hidden">
-              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#3390ec]/0 via-[#3390ec] to-[#3390ec]/0" />
-              
+            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 relative overflow-hidden">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-[#3390ec]" />
-                  <h3 className="text-lg font-bold text-white">
+                  <Calendar className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
                     {editingPlan ? 'Edit Membership Plan' : 'Create Membership Plan'}
                   </h3>
                 </div>
                 <button 
                   onClick={() => setShowPlanModal(false)}
-                  className="p-1.5 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                   <CloseIcon className="w-4 h-4" />
                 </button>
@@ -2150,11 +2131,11 @@ export default function SettingsPage() {
 
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Plan Name</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider px-1">Plan Name</label>
                   <input 
                     type="text" 
                     placeholder="e.g. Monthly Gold" 
-                    className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#3390ec]/50 transition-all placeholder-gray-600"
+                    className="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all placeholder-slate-400 dark:placeholder-zinc-600 shadow-xs"
                     value={planForm.name}
                     onChange={e => setPlanForm({...planForm, name: e.target.value})}
                   />
@@ -2162,21 +2143,21 @@ export default function SettingsPage() {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Duration (Days)</label>
+                    <label className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider px-1">Duration (Days)</label>
                     <input 
                       type="number" 
                       placeholder="30" 
-                      className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#3390ec]/50 transition-all placeholder-gray-600"
+                      className="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all placeholder-slate-400 dark:placeholder-zinc-600 shadow-xs"
                       value={planForm.duration_days}
                       onChange={e => setPlanForm({...planForm, duration_days: parseInt(e.target.value) || ''})}
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Price (₹)</label>
+                    <label className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider px-1">Price (₹)</label>
                     <input 
                       type="number" 
                       placeholder="Price" 
-                      className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#3390ec]/50 transition-all placeholder-gray-600"
+                      className="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-all placeholder-slate-400 dark:placeholder-zinc-600 shadow-xs"
                       value={planForm.price}
                       onChange={e => setPlanForm({...planForm, price: e.target.value === '' ? '' : parseFloat(e.target.value)})}
                     />
@@ -2186,14 +2167,14 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-2 gap-3 pt-4">
                   <button 
                     onClick={() => setShowPlanModal(false)}
-                    className="px-4 py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl text-sm transition-colors"
+                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 font-semibold rounded-xl text-xs transition-colors"
                   >
                     Cancel
                   </button>
                   <button 
                     onClick={handleSavePlan} 
                     disabled={loadingPlans} 
-                    className="px-4 py-3 bg-gradient-to-r from-[#3390ec] to-[#2b7ad2] hover:from-[#4aa1fa] hover:to-[#3390ec] text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-[#3390ec]/20"
+                    className="px-4 py-2.5 bg-violet-600 hover:bg-violet-500 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-xs cursor-pointer"
                   >
                     {loadingPlans ? 'Saving...' : 'Save Plan'}
                   </button>
@@ -2205,18 +2186,16 @@ export default function SettingsPage() {
 
         {/* Support Ticket Details Modal */}
         {selectedUserTicket && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in">
-            <div className="bg-[#1c1c1c] border border-white/10 rounded-2xl w-full max-w-2xl p-6 shadow-2xl animate-in zoom-in-95 relative overflow-hidden flex flex-col max-h-[90vh]">
-              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#3390ec]/0 via-[#3390ec] to-[#3390ec]/0" />
-              
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl w-full max-w-2xl p-6 shadow-2xl animate-in zoom-in-95 relative overflow-hidden flex flex-col max-h-[90vh]">
               <div className="flex items-center justify-between mb-6 shrink-0">
                 <div className="flex items-center gap-2">
-                  <LifeBuoy className="w-5 h-5 text-[#3390ec]" />
-                  <h3 className="text-lg font-bold text-white">Support Ticket Details</h3>
+                  <LifeBuoy className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Support Ticket Details</h3>
                 </div>
                 <button 
                   onClick={() => setSelectedUserTicket(null)}
-                  className="p-1.5 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                   <CloseIcon className="w-4 h-4" />
                 </button>
@@ -2225,36 +2204,36 @@ export default function SettingsPage() {
               {/* Scrollable conversation content */}
               <div className="flex-1 overflow-y-auto space-y-6 pr-1 custom-scrollbar">
                 {/* Meta details */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5 text-xs">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 text-xs">
                   <div>
-                    <span className="text-gray-500 block">Category</span>
-                    <span className="text-white font-semibold capitalize">{selectedUserTicket.category}</span>
+                    <span className="text-slate-500 dark:text-zinc-400 block">Category</span>
+                    <span className="text-slate-900 dark:text-white font-semibold capitalize">{selectedUserTicket.category}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500 block">Priority</span>
-                    <span className={`font-semibold capitalize ${selectedUserTicket.priority === 'high' ? 'text-red-400' : selectedUserTicket.priority === 'medium' ? 'text-amber-400' : 'text-gray-300'}`}>
+                    <span className="text-slate-500 dark:text-zinc-400 block">Priority</span>
+                    <span className={`font-semibold capitalize ${selectedUserTicket.priority === 'high' ? 'text-red-500' : selectedUserTicket.priority === 'medium' ? 'text-amber-500' : 'text-slate-600 dark:text-zinc-300'}`}>
                       {selectedUserTicket.priority}
                     </span>
                   </div>
                   <div>
-                    <span className="text-gray-500 block">Status</span>
+                    <span className="text-slate-500 dark:text-zinc-400 block">Status</span>
                     {selectedUserTicket.status === 'resolved' ? (
-                      <span className="text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Resolved
+                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Resolved
                       </span>
                     ) : selectedUserTicket.status === 'in_progress' ? (
-                      <span className="text-[#3390ec] font-semibold flex items-center gap-1 mt-0.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#3390ec]" /> In Progress
+                      <span className="text-blue-600 dark:text-blue-400 font-semibold flex items-center gap-1 mt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> In Progress
                       </span>
                     ) : (
-                      <span className="text-amber-400 font-semibold flex items-center gap-1 mt-0.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" /> Open
+                      <span className="text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1 mt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" /> Open
                       </span>
                     )}
                   </div>
                   <div>
-                    <span className="text-gray-500 block">Created On</span>
-                    <span className="text-white font-medium">
+                    <span className="text-slate-500 dark:text-zinc-400 block">Created On</span>
+                    <span className="text-slate-900 dark:text-white font-medium">
                       {new Date(selectedUserTicket.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
                   </div>
@@ -2262,10 +2241,10 @@ export default function SettingsPage() {
 
                 {/* Ticket Query */}
                 <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Your Query</h4>
-                  <div className="bg-[#121212] border border-white/5 rounded-2xl p-5 space-y-3">
-                    <h5 className="text-white font-bold text-sm leading-snug">{selectedUserTicket.subject}</h5>
-                    <p className="text-xs text-gray-300 leading-relaxed font-sans whitespace-pre-wrap">
+                  <h4 className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider px-1">Your Query</h4>
+                  <div className="bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 space-y-2">
+                    <h5 className="text-slate-900 dark:text-white font-bold text-sm leading-snug">{selectedUserTicket.subject}</h5>
+                    <p className="text-xs text-slate-600 dark:text-zinc-300 leading-relaxed font-sans whitespace-pre-wrap">
                       {selectedUserTicket.description}
                     </p>
                   </div>
@@ -2273,32 +2252,32 @@ export default function SettingsPage() {
 
                 {/* Team Response / Timeline */}
                 <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-[#3390ec] uppercase tracking-wider px-1 flex items-center gap-1">
+                  <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider px-1 flex items-center gap-1">
                     <CornerDownRight className="w-4 h-4 shrink-0" />
                     Response from Support Team
                   </h4>
                   {selectedUserTicket.admin_response?.trim() ? (
-                    <div className="bg-[#3390ec]/5 border border-[#3390ec]/15 rounded-2xl p-5 space-y-4 transition-all hover:bg-[#3390ec]/[0.08] relative overflow-hidden">
+                    <div className="bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 rounded-2xl p-5 space-y-3 transition-all relative overflow-hidden">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#3390ec] flex items-center justify-center text-white text-xs font-bold font-mono shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-bold font-mono shrink-0">
                           S
                         </div>
                         <div>
-                           <span className="text-xs font-bold text-white block">Gymix Support Agent</span>
-                          <span className="text-[10px] text-gray-500">
+                           <span className="text-xs font-bold text-slate-900 dark:text-white block">Gymix Support Agent</span>
+                          <span className="text-[10px] text-slate-500 dark:text-zinc-400">
                             Replied on {new Date(selectedUserTicket.resolved_at || selectedUserTicket.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                       </div>
-                      <div className="text-xs text-gray-200 leading-relaxed font-sans whitespace-pre-wrap pl-1 border-l-2 border-[#3390ec]/30">
+                      <div className="text-xs text-slate-700 dark:text-zinc-200 leading-relaxed font-sans whitespace-pre-wrap pl-1 border-l-2 border-emerald-500">
                         {selectedUserTicket.admin_response}
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-white/[0.01] border border-dashed border-white/10 rounded-2xl p-8 text-center">
-                      <Clock className="w-8 h-8 text-gray-600 mx-auto mb-3 animate-spin duration-3000" />
-                      <p className="text-xs text-gray-400 font-semibold">Under Active Review</p>
-                      <p className="text-[10px] text-gray-500 mt-1.5 leading-relaxed max-w-sm mx-auto">
+                    <div className="bg-slate-50/50 dark:bg-zinc-950/30 border border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl p-8 text-center">
+                      <Clock className="w-8 h-8 text-slate-400 dark:text-zinc-600 mx-auto mb-3 animate-spin duration-3000" />
+                      <p className="text-xs text-slate-600 dark:text-zinc-400 font-semibold">Under Active Review</p>
+                      <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-1.5 leading-relaxed max-w-sm mx-auto">
                         Our engineering and support team is checking this ticket. We appreciate your patience and will respond with details as soon as possible.
                       </p>
                     </div>
@@ -2307,10 +2286,10 @@ export default function SettingsPage() {
               </div>
 
               {/* Close footer button */}
-              <div className="pt-4 border-t border-white/5 flex justify-end shrink-0">
+              <div className="pt-4 border-t border-slate-200 dark:border-zinc-800 flex justify-end shrink-0">
                 <button 
                   onClick={() => setSelectedUserTicket(null)}
-                  className="px-6 py-2.5 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl text-xs transition-all border border-white/5"
+                  className="px-5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 font-bold rounded-xl text-xs transition-all border border-slate-200 dark:border-zinc-700"
                 >
                   Close Details
                 </button>
@@ -2320,22 +2299,22 @@ export default function SettingsPage() {
         )}
 
         {/* Sign Out */}
-        <div className="bg-[#212121] border border-white/5 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-[#1c1c1c] border border-white/5 flex items-center justify-center text-gray-500">
+            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-slate-500 dark:text-zinc-400">
               <User className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-white font-bold">Signed in as</h4>
-              <p className="text-gray-500 text-xs">{user?.email}</p>
+              <h4 className="text-slate-900 dark:text-white font-bold text-sm">Signed in as</h4>
+              <p className="text-slate-500 dark:text-zinc-400 text-xs font-mono">{user?.email}</p>
             </div>
           </div>
           <button 
             onClick={handleSignOut} 
             disabled={signingOut}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-white/5 hover:bg-red-500/10 hover:text-red-500 text-white rounded-lg text-sm font-medium transition-all border border-white/5"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 rounded-xl text-xs font-semibold transition-all border border-red-200 dark:border-red-900/40 cursor-pointer"
           >
-            {signingOut ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <LogOut className="w-4 h-4" />}
+            {signingOut ? <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" /> : <LogOut className="w-4 h-4" />}
             {signingOut ? 'Signing out...' : 'Sign Out'}
           </button>
         </div>

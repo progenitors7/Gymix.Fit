@@ -43,7 +43,7 @@ function Field({ label, required, children, error }) {
   )
 }
 
-const inputCls = 'w-full pl-12 pr-5 py-4 rounded-2xl bg-white/[0.03] border border-white/5 text-white placeholder-slate-600 text-sm font-medium focus:outline-none focus:bg-white/[0.05] focus:border-emerald-500/50 transition-all'
+const inputCls = 'w-full pl-12 pr-5 py-3.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all shadow-xs'
 
 const compressImage = (src, callback) => {
   const img = new Image()
@@ -280,10 +280,10 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
       )}
 
       {/* Premium Profile Photo Widget */}
-      <div className="flex flex-col items-center justify-center p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 relative overflow-hidden shadow-2xl backdrop-blur-md">
+      <div className="flex flex-col items-center justify-center p-8 rounded-2xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500" />
         
-        <div className="relative group w-32 h-32 rounded-full border-[3px] border-emerald-500/30 overflow-hidden shadow-2xl flex items-center justify-center bg-slate-900 transition-all duration-300 hover:border-emerald-500/80">
+        <div className="relative group w-32 h-32 rounded-full border-[3px] border-emerald-500/30 overflow-hidden shadow-md flex items-center justify-center bg-slate-100 dark:bg-zinc-800 transition-all duration-300 hover:border-emerald-500">
           {form.avatar_url ? (
             <img 
               src={form.avatar_url} 
@@ -291,9 +291,9 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
               className="w-full h-full object-cover" 
             />
           ) : (
-            <div className="flex flex-col items-center text-slate-500">
+            <div className="flex flex-col items-center text-slate-400 dark:text-zinc-500">
               <User className="w-12 h-12 stroke-[1.5]" />
-              <span className="text-[9px] font-black uppercase tracking-wider mt-1 text-slate-600">No Photo</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider mt-1 text-slate-400 dark:text-zinc-500">No Photo</span>
             </div>
           )}
           
@@ -311,15 +311,15 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
 
         {form.avatar_url && (
           <div className="mt-3 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-1.5 animate-in zoom-in-95 duration-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
               Photo Uploaded
             </span>
           </div>
         )}
 
         <div className="mt-5 flex flex-wrap gap-3 justify-center">
-          <label className="px-4 py-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] text-white border border-white/5 text-[10px] font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-2">
+          <label className="px-4 py-2 rounded-xl bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700 text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all flex items-center gap-2 shadow-xs">
             Upload Image
             <input 
               type="file" 
@@ -332,7 +332,7 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
           <button
             type="button"
             onClick={() => setShowCamera(true)}
-            className="px-4 py-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] text-white border border-white/5 text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2"
+            className="px-4 py-2 rounded-xl bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700 text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-2 shadow-xs"
           >
             Take Snapshot
           </button>
@@ -342,7 +342,7 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
               type="button"
               onClick={fetchGoogleProfile}
               disabled={fetchingGoogle}
-              className="px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2 disabled:opacity-50"
+              className="px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-2 disabled:opacity-50"
             >
               {fetchingGoogle ? 'Fetching...' : 'Fetch Google Avatar'}
             </button>
@@ -352,7 +352,7 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
             <button
               type="button"
               onClick={() => setForm(f => ({ ...f, avatar_url: '' }))}
-              className="px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-[10px] font-black uppercase tracking-wider transition-all"
+              className="px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-[10px] font-bold uppercase tracking-wider transition-all"
             >
               Clear
             </button>
@@ -362,34 +362,34 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
 
       {/* In Edit Mode: Show Read-Only Membership Information Card */}
       {mode === 'edit' && (
-        <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3">
+        <div className="p-5 rounded-2xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Membership Overview</span>
             <span className="text-[10px] font-bold text-slate-500">Managed via Subscriptions</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
-              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <Layers className="w-3 h-3 text-slate-400" />
+            <div className="p-3.5 rounded-xl bg-white dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/60">
+              <p className="text-[9px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Layers className="w-3 h-3 text-slate-400 dark:text-zinc-500" />
                 Current Plan
               </p>
-              <p className="text-sm font-black text-white mt-1 truncate">{form.membership_plan || 'No Active Plan'}</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white mt-1 truncate">{form.membership_plan || 'No Active Plan'}</p>
             </div>
-            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
-              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <Calendar className="w-3 h-3 text-slate-400" />
+            <div className="p-3.5 rounded-xl bg-white dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/60">
+              <p className="text-[9px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Calendar className="w-3 h-3 text-slate-400 dark:text-zinc-500" />
                 Joined On
               </p>
-              <p className="text-sm font-black text-white mt-1">
+              <p className="text-sm font-bold text-slate-900 dark:text-white mt-1">
                 {form.join_date ? new Date(form.join_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
               </p>
             </div>
-            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
-              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <Calendar className="w-3 h-3 text-slate-400" />
+            <div className="p-3.5 rounded-xl bg-white dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/60">
+              <p className="text-[9px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Calendar className="w-3 h-3 text-slate-400 dark:text-zinc-500" />
                 Expires On
               </p>
-              <p className="text-sm font-black text-emerald-400 mt-1">
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-1">
                 {form.expiry_date ? new Date(form.expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
               </p>
             </div>
@@ -527,14 +527,14 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
 
       {/* Quick Payment (Only in Add Mode) */}
       {mode === 'add' && (
-        <div className="p-6 rounded-[2rem] bg-emerald-500/5 border border-emerald-500/10 space-y-6">
+        <div className="p-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/15 dark:border-emerald-500/10 space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                <CreditCard className="w-5 h-5 text-emerald-400" />
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                <CreditCard className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <h4 className="text-sm font-black text-white uppercase tracking-wider">Initial Payment</h4>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Initial Payment</h4>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Collect fees right now?</p>
               </div>
             </div>
@@ -545,7 +545,7 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
                 checked={recordPayment}
                 onChange={e => setRecordPayment(e.target.checked)}
               />
-              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+              <div className="w-11 h-6 bg-slate-300 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
             </label>
           </div>
 
@@ -565,8 +565,8 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
                 />
               </Field>
               <div className="flex items-end pb-1">
-                <p className="text-[10px] font-bold text-emerald-500/60 uppercase tracking-widest leading-tight">
-                  Recording this will automatically mark the athlete as <span className="text-emerald-400">Active</span> and record the payment.
+                <p className="text-[10px] font-bold text-emerald-600/80 dark:text-emerald-500/60 uppercase tracking-widest leading-tight">
+                  Recording this will automatically mark the athlete as <span className="text-emerald-600 dark:text-emerald-400">Active</span> and record the payment.
                 </p>
               </div>
             </motion.div>
@@ -575,12 +575,12 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
       )}
 
       {/* Actions */}
-      <div className="flex flex-col sm:flex-row justify-end gap-4 pt-8">
+      <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-slate-200 dark:border-zinc-800">
         <button
           type="button"
           onClick={onCancel}
           disabled={submitting}
-          className="order-2 sm:order-1 px-8 py-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] text-slate-400 hover:text-white text-xs font-black uppercase tracking-widest transition-all border border-white/5 disabled:opacity-50"
+          className="order-2 sm:order-1 px-6 py-3 rounded-xl bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white text-xs font-bold uppercase tracking-widest transition-all border border-slate-200 dark:border-zinc-700 disabled:opacity-50"
         >
           Cancel
         </button>
@@ -589,10 +589,10 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
           type="button"
           onClick={handleSubmit}
           disabled={submitting}
-          className="order-1 sm:order-2 group relative px-10 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white text-xs font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-95"
+          className="order-1 sm:order-2 group relative px-8 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold uppercase tracking-[0.15em] transition-all shadow-md shadow-emerald-500/20 active:scale-95"
         >
           {submitting ? (
-            <span className="flex items-center justify-center gap-3">
+            <span className="flex items-center justify-center gap-2">
               <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               {mode === 'add' ? 'Processing…' : 'Saving…'}
             </span>
@@ -606,24 +606,24 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
 
       {/* Webcam Snapshot Modal Overlay */}
       {showCamera && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl relative">
-            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.01]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-2xl relative">
+            <div className="p-5 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-slate-50/50 dark:bg-zinc-900/50">
               <div>
-                <h3 className="text-sm font-black text-white uppercase tracking-wider">Live Camera Snapshot</h3>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Live Camera Snapshot</h3>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Align the athlete's face in the frame</p>
               </div>
               <button 
                 type="button" 
                 onClick={stopCamera}
-                className="w-8 h-8 rounded-full bg-white/[0.03] hover:bg-white/[0.1] text-slate-400 hover:text-white flex items-center justify-center text-sm font-black transition-all"
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center text-sm font-bold transition-all"
               >
                 ✕
               </button>
             </div>
             
-            <div className="p-8 flex flex-col items-center justify-center bg-slate-950 relative">
-              <div className="relative w-64 h-64 rounded-full border-2 border-dashed border-emerald-500/30 overflow-hidden bg-slate-900 shadow-inner flex items-center justify-center">
+            <div className="p-8 flex flex-col items-center justify-center bg-slate-900 relative">
+              <div className="relative w-64 h-64 rounded-full border-2 border-dashed border-emerald-500/30 overflow-hidden bg-slate-950 shadow-inner flex items-center justify-center">
                 <video 
                   ref={videoRef} 
                   autoPlay 
@@ -632,23 +632,23 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
                 />
                 
                 {/* Overlay guides */}
-                <div className="absolute inset-4 rounded-full border border-emerald-500/10 pointer-events-none" />
-                <div className="absolute inset-8 rounded-full border border-emerald-500/5 pointer-events-none" />
+                <div className="absolute inset-4 rounded-full border border-emerald-500/20 pointer-events-none" />
+                <div className="absolute inset-8 rounded-full border border-emerald-500/10 pointer-events-none" />
               </div>
             </div>
 
-            <div className="p-6 bg-white/[0.01] border-t border-white/5 flex gap-4 justify-end">
+            <div className="p-5 bg-slate-50/50 dark:bg-zinc-900/50 border-t border-slate-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={stopCamera}
-                className="px-6 py-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] text-slate-400 hover:text-white text-[10px] font-black uppercase tracking-wider transition-all"
+                className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white text-[10px] font-bold uppercase tracking-wider transition-all border border-slate-200 dark:border-zinc-700"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={captureSnapshot}
-                className="px-8 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white text-[10px] font-black uppercase tracking-[0.15em] transition-all shadow-lg shadow-emerald-500/20"
+                className="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-[0.15em] transition-all shadow-md shadow-emerald-500/20"
               >
                 Capture Snapshot
               </button>

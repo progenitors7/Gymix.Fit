@@ -5,7 +5,7 @@ export const notificationService = {
    * Syncs notifications by checking member statuses and creating alerts.
    * Replaced RPC with JS logic for "Trial Ending Today", "Plan Expired", "Plan Expiring Soon".
    */
-  async syncNotifications(gymId) {
+  async syncNotifications() {
     console.warn('[notificationService] syncNotifications is deprecated. Notifications are now synced via backend pg_cron.');
     return { success: true };
   },

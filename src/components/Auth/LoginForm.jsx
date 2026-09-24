@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { Mail, Lock, Eye, EyeOff, Loader2, LogIn } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { isSuperAdmin } from '../../config/admins'
 
 export default function LoginForm({ onSwitch, onForgotPassword }) {
   const { signIn, signInWithGoogle } = useAuth()
@@ -29,8 +30,12 @@ export default function LoginForm({ onSwitch, onForgotPassword }) {
     setError(null)
     setLoading(true)
     try {
-      await signIn(email, password)
-      navigate('/dashboard')
+      const { user: signedInUser } = await signIn(email, password)
+      if (isSuperAdmin(email) || isSuperAdmin(signedInUser?.email)) {
+        navigate('/super-admin')
+      } else {
+        navigate('/dashboard')
+      }
     } catch (err) {
       setError(err.message || 'Invalid email or password.')
     } finally {
@@ -57,10 +62,10 @@ export default function LoginForm({ onSwitch, onForgotPassword }) {
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-white/5"></div>
+          <div className="w-full border-t border-zinc-800"></div>
         </div>
         <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-[0.2em]">
-          <span className="bg-[#1A1F2B] px-4 text-slate-600">OR</span>
+          <span className="bg-[#11131E] px-4 text-zinc-500">OR</span>
         </div>
       </div>
 
@@ -68,19 +73,19 @@ export default function LoginForm({ onSwitch, onForgotPassword }) {
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="px-4 py-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest text-center"
+          className="p-4 rounded-xl bg-red-950/40 border border-red-900/50 text-red-400 text-xs font-medium"
         >
           {error}
         </motion.div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-2">
-          <label htmlFor="login-email" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-1.5">
+          <label htmlFor="login-email" className="block text-xs font-semibold text-zinc-300 ml-0.5">
             Email Address
           </label>
           <div className="relative group">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-emerald-500 transition-colors" />
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-violet-400 transition-colors" />
             <input
               id="login-email"
               type="email"
@@ -88,27 +93,27 @@ export default function LoginForm({ onSwitch, onForgotPassword }) {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="operator@gymrevenue.os"
-              className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-black/40 border border-white/5 text-white placeholder-slate-700 text-sm focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium"
+              placeholder="owner@yourgym.com"
+              className="w-full pl-11 pr-4 py-3 rounded-xl bg-zinc-950/70 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all font-medium shadow-xs"
             />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex justify-between items-end mb-1">
-            <label htmlFor="login-password" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+        <div className="space-y-1.5">
+          <div className="flex justify-between items-center mb-1">
+            <label htmlFor="login-password" className="block text-xs font-semibold text-zinc-300 ml-0.5">
               Password
             </label>
             <button
               type="button"
               onClick={onForgotPassword}
-              className="text-[10px] font-bold text-emerald-500 hover:text-emerald-400 transition-colors"
+              className="text-xs font-semibold text-violet-400 hover:text-violet-300 hover:underline transition-colors cursor-pointer"
             >
               Forgot Password?
             </button>
           </div>
           <div className="relative group">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-emerald-500 transition-colors" />
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-violet-400 transition-colors" />
             <input
               id="login-password"
               type={showPassword ? 'text' : 'password'}
@@ -117,12 +122,12 @@ export default function LoginForm({ onSwitch, onForgotPassword }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full pl-12 pr-12 py-3.5 rounded-2xl bg-black/40 border border-white/5 text-white placeholder-slate-700 text-sm focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium"
+              className="w-full pl-11 pr-11 py-3 rounded-xl bg-zinc-950/70 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all font-medium shadow-xs"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-emerald-500 transition-colors"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-200 transition-colors cursor-pointer"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -133,28 +138,28 @@ export default function LoginForm({ onSwitch, onForgotPassword }) {
           id="login-submit-btn"
           type="submit"
           disabled={loading}
-          className="w-full py-4 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold text-sm transition-all shadow-xl shadow-emerald-500/20 active:scale-[0.98] flex items-center justify-center gap-3 mt-4"
+          className="w-full py-3.5 px-6 rounded-xl bg-violet-600 hover:bg-violet-500 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm transition-all shadow-lg shadow-violet-600/25 flex items-center justify-center gap-2 mt-5 cursor-pointer"
         >
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Checking...
+              Signing in...
             </>
           ) : (
             <>
-              Login Now
+              Sign In
               <LogIn className="w-4 h-4" />
             </>
           )}
         </button>
       </form>
 
-      <p className="pt-6 text-center text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-        No account?{' '}
+      <p className="pt-4 text-center text-xs font-medium text-zinc-400">
+        Don't have an account?{' '}
         <button
           id="switch-to-signup"
           onClick={onSwitch}
-          className="text-emerald-500 hover:text-emerald-400 transition-colors"
+          className="text-violet-400 hover:text-violet-300 font-bold hover:underline transition-colors cursor-pointer ml-1"
         >
           Create Account
         </button>

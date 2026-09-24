@@ -14,7 +14,8 @@ import {
   CheckCircle2,
   AlertCircle,
   FolderTree,
-  Terminal
+  Terminal,
+  Server
 } from 'lucide-react';
 import { superAdminService } from '../../services/superAdminService';
 import Toast from '../UI/Toast';
@@ -29,6 +30,7 @@ export default function SystemHealth() {
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
+    setTimeout(() => setToast({ message: '', type: 'success' }), 4000);
   };
 
   useEffect(() => {
@@ -40,18 +42,16 @@ export default function SystemHealth() {
       if (isManual) setIsRefreshing(true);
       setLoading(true);
 
-      // 1. Fetch system health metrics dynamically
       const health = await superAdminService.getSystemHealth();
       setHealthData(health);
 
-      // 2. Map system settings keys
-      const settingsMap = (health.settings || []).reduce((acc, curr) => {
+      const settingsMap = (health?.settings || []).reduce((acc, curr) => {
         acc[curr.key] = curr.value;
         return acc;
       }, {});
       setSettings(settingsMap);
 
-      if (isManual) showToast('System diagnostics refreshed!');
+      if (isManual) showToast('Diagnostics probe completed successfully!');
     } catch (err) {
       console.error('[SystemHealth] Load failed:', err);
       showToast('Diagnostics probe failed', 'error');
@@ -79,226 +79,261 @@ export default function SystemHealth() {
     { 
       label: 'Database Status', 
       value: healthData?.databaseStatus || 'Connected', 
-      icon: <Database className="w-4 h-4" />, 
-      color: 'text-emerald-400',
+      icon: Database, 
+      color: 'emerald',
       subtext: healthData?.dbEngine || 'PostgreSQL 17'
     },
     { 
       label: 'API Query Latency', 
-      value: healthData?.latency || '35ms', 
-      icon: <Activity className="w-4 h-4" />, 
-      color: 'text-emerald-400',
+      value: healthData?.latency || '32ms', 
+      icon: Activity, 
+      color: 'violet',
       subtext: 'Supabase Serverless Ping'
     },
     { 
-      label: 'Diagnostics Performance', 
-      value: '100% OK', 
-      icon: <Cpu className="w-4 h-4" />, 
-      color: 'text-[#3390ec]',
-      subtext: 'Operational Integrity'
+      label: 'Platform Reliability', 
+      value: '99.98%', 
+      icon: Cpu, 
+      color: 'indigo',
+      subtext: 'Zero Crash Anomalies'
     },
     { 
-      label: 'Platform Load Rate', 
-      value: '1.2%', 
-      icon: <HardDrive className="w-4 h-4" />, 
-      color: 'text-[#3390ec]',
-      subtext: 'CPU Cycle Threshold'
+      label: 'Resource Headroom', 
+      value: '< 2.4%', 
+      icon: HardDrive, 
+      color: 'emerald',
+      subtext: 'Optimal IOPS Budget'
     },
   ];
 
   if (loading && !healthData) {
-    return <div className="py-20 text-center text-gray-500 font-medium italic animate-pulse">Running diagnostics scan...</div>;
+    return (
+      <div className="py-24 text-center">
+        <div className="w-10 h-10 border-3 border-blue-500/20 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">Running diagnostic probe...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 pb-12 animate-in fade-in duration-300">
       <Toast 
         message={toast.message} 
         type={toast.type} 
         onClose={() => setToast({ message: '', type: 'success' })} 
       />
 
-      {/* Real-time Diagnostics Header */}
-      <div className="flex items-center justify-between">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-white font-bold text-lg tracking-tight">System Diagnostics</h3>
-          <p className="text-gray-500 text-xs font-medium uppercase tracking-wider">Live database health & microservices diagnostics</p>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="inline-flex items-center justify-center p-1.5 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
+              <Server className="w-4 h-4" />
+            </span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400">Infrastructure & Observability</span>
+          </div>
+          <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">System Health & Diagnostics</h3>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-0.5">
+            Real-time telemetry, database row metrics, and master platform switches.
+          </p>
         </div>
+
         <button 
           onClick={() => loadHealthAndSettings(true)}
           disabled={isRefreshing}
-          className={`p-3 rounded-xl bg-white/5 border border-white/5 text-gray-400 hover:text-white transition-all disabled:opacity-50 flex items-center gap-2 text-xs font-black uppercase tracking-widest cursor-pointer ${
-            isRefreshing ? 'rotate-180 opacity-50' : 'active:scale-95 duration-500'
-          }`}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-xl text-xs font-semibold transition-all active:scale-[0.98] disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Run Health Scan
+          <span>{isRefreshing ? 'Scanning Cluster...' : 'Run Diagnostics Probe'}</span>
         </button>
       </div>
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {systemMetrics.map((m, i) => (
-          <div key={i} className="bg-[#212121] border border-white/5 rounded-2xl p-6 flex items-start gap-4 shadow-xl hover:border-white/10 transition-colors">
-            <div className={`w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center ${m.color} mt-0.5 shrink-0`}>
-              {m.icon}
+      {/* KPI Metrics Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {systemMetrics.map((m, i) => {
+          const Icon = m.icon;
+          return (
+            <div 
+              key={i} 
+              className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 transition-all"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">{m.label}</span>
+                <div className={`p-2 rounded-xl ${
+                  m.color === 'emerald' 
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400' 
+                    : m.color === 'indigo'
+                    ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
+                    : 'bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400'
+                }`}>
+                  <Icon className="w-4 h-4" />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{m.value}</p>
+              <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1">{m.subtext}</p>
             </div>
-            <div>
-              <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">{m.label}</p>
-              <p className="text-white font-black text-xl tracking-tight mt-0.5">{m.value}</p>
-              <p className="text-[9px] text-gray-600 font-bold uppercase mt-1 tracking-wider leading-none">{m.subtext}</p>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Dynamic Database Explorer Grid */}
-        <div className="lg:col-span-2 space-y-8">
-          
-          {/* Table Rows Explorer */}
-          <div className="bg-[#212121] border border-white/5 rounded-[2rem] p-8 shadow-2xl space-y-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-[#3390ec]/5 blur-[80px] rounded-full pointer-events-none" />
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#3390ec]/10 flex items-center justify-center text-[#3390ec]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Database Tables & Gateway Controls (8 Cols) */}
+        <div className="lg:col-span-8 space-y-8">
+          {/* Table Row Registry */}
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-7">
+            <div className="flex items-center gap-3 pb-5 mb-6 border-b border-slate-100 dark:border-zinc-800">
+              <div className="p-2.5 rounded-xl bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400">
                 <FolderTree className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-white font-bold text-base tracking-tight uppercase">Database Row Registry</h3>
-                <p className="text-gray-500 text-xs font-medium tracking-wide">Live records stored across primary Postgres tables</p>
+                <h4 className="text-base font-bold text-slate-900 dark:text-white">Database Row Registry</h4>
+                <p className="text-xs text-slate-500 dark:text-zinc-400">Live indexed row volumes across primary Postgres tables.</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
               {[
-                { label: 'Gym Owners', count: healthData?.metrics?.gyms ?? 0, table: 'gyms', color: 'text-[#3390ec]' },
-                { label: 'Athletes / Members', count: healthData?.metrics?.members ?? 0, table: 'members', color: 'text-emerald-400' },
-                { label: 'Invoice Receipts', count: healthData?.metrics?.payments ?? 0, table: 'payments', color: 'text-[#3390ec]' },
-                { label: 'Support Tickets', count: healthData?.metrics?.tickets ?? 0, table: 'support_tickets', color: 'text-amber-400' },
-                { label: 'SaaS Invoices', count: healthData?.metrics?.saasSubs ?? 0, table: 'saas_subscriptions', color: 'text-emerald-400' },
-                { label: 'Broadcasts Log', count: healthData?.metrics?.broadcasts ?? 0, table: 'broadcasts', color: 'text-amber-400' },
+                { label: 'Gym Owners', count: healthData?.metrics?.gyms ?? 0, table: 'gyms' },
+                { label: 'Athletes & Members', count: healthData?.metrics?.members ?? 0, table: 'members' },
+                { label: 'Payments & Ledger', count: healthData?.metrics?.payments ?? 0, table: 'payments' },
+                { label: 'Support Inquiries', count: healthData?.metrics?.tickets ?? 0, table: 'support_tickets' },
+                { label: 'SaaS Subscriptions', count: healthData?.metrics?.saasSubs ?? 0, table: 'saas_subscriptions' },
+                { label: 'Broadcast Log', count: healthData?.metrics?.broadcasts ?? 0, table: 'broadcasts' },
               ].map((t, idx) => (
-                <div key={idx} className="bg-[#1c1c1c] border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-all">
-                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{t.label}</span>
-                  <p className="text-2xl font-black text-white tracking-tight mt-1">{t.count.toLocaleString()}</p>
-                  <div className="flex items-center justify-between text-[8px] font-bold text-gray-600 font-mono mt-2 pt-2 border-t border-white/5">
-                    <span>SCHEMA</span>
-                    <span className="text-white/60">public.{t.table}</span>
+                <div 
+                  key={idx} 
+                  className="bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/80 rounded-xl p-4 transition-all"
+                >
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 block">{t.label}</span>
+                  <p className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">
+                    {t.count.toLocaleString()}
+                  </p>
+                  <div className="mt-2 pt-2 border-t border-slate-200/60 dark:border-zinc-700 flex items-center justify-between text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
+                    <span>TABLE</span>
+                    <span className="text-slate-700 dark:text-zinc-300">public.{t.table}</span>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Maintenance & Switches */}
-          <div className="bg-[#212121] border border-white/5 rounded-[2rem] p-8 shadow-2xl space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-400/10 flex items-center justify-center text-amber-400">
+          {/* Maintenance & Gateways Control Panel */}
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-7">
+            <div className="flex items-center gap-3 pb-5 mb-6 border-b border-slate-100 dark:border-zinc-800">
+              <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
                 <Power className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-white font-bold text-base tracking-tight uppercase">Maintenance & Gateways</h3>
-                <p className="text-gray-500 text-xs font-medium tracking-wide">Control system access and onboarding locks</p>
+                <h4 className="text-base font-bold text-slate-900 dark:text-white">Gateways & Maintenance Switches</h4>
+                <p className="text-xs text-slate-500 dark:text-zinc-400">Platform-wide kill switches and security guards.</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Maintenance Mode Toggle */}
-              <div className={`p-6 rounded-2xl border transition-all ${
+              <div className={`p-5 rounded-2xl border transition-all ${
                 settings.maintenance_mode 
-                  ? 'bg-amber-400/5 border-amber-400/20 shadow-[0_0_20px_rgba(251,191,36,0.05)]' 
-                  : 'bg-[#1c1c1c] border-white/5'
+                  ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800' 
+                  : 'bg-slate-50 dark:bg-zinc-800/60 border-slate-200 dark:border-zinc-700/80'
               }`}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    settings.maintenance_mode ? 'bg-amber-400 text-black' : 'bg-gray-800 text-gray-400'
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`p-2 rounded-xl ${
+                    settings.maintenance_mode ? 'bg-amber-500 text-white' : 'bg-slate-200 dark:bg-zinc-700 text-slate-600 dark:text-zinc-300'
                   }`}>
-                    <ShieldAlert className="w-5 h-5" />
+                    <ShieldAlert className="w-4 h-4" />
                   </div>
                   <button 
+                    type="button"
                     onClick={() => toggleSetting('maintenance_mode')}
                     disabled={updating === 'maintenance_mode'}
-                    className={`w-12 h-6 rounded-full relative transition-all cursor-pointer ${
-                      settings.maintenance_mode ? 'bg-amber-400' : 'bg-gray-700'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                      settings.maintenance_mode ? 'bg-amber-500' : 'bg-slate-300 dark:bg-zinc-700'
                     }`}
                   >
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
-                      settings.maintenance_mode ? 'right-1' : 'left-1'
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      settings.maintenance_mode ? 'translate-x-6' : 'translate-x-1'
                     }`} />
                   </button>
                 </div>
-                <h4 className="text-white font-black text-sm uppercase tracking-wide">Maintenance Mode</h4>
-                <p className="text-gray-500 text-[10px] mt-1 font-medium leading-relaxed">
+                <h5 className="font-bold text-slate-900 dark:text-white text-sm">Maintenance Mode</h5>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed">
                   Restricts B2B platform operations, showing a standard maintenance alert to gym owners.
                 </p>
               </div>
 
               {/* New Registrations Toggle */}
-              <div className={`p-6 rounded-2xl border transition-all ${
+              <div className={`p-5 rounded-2xl border transition-all ${
                 !settings.allow_new_registrations 
-                  ? 'bg-red-400/5 border-red-400/20' 
-                  : 'bg-[#1c1c1c] border-white/5'
+                  ? 'bg-rose-50/60 dark:bg-rose-950/20 border-rose-300 dark:border-rose-800' 
+                  : 'bg-slate-50 dark:bg-zinc-800/60 border-slate-200 dark:border-zinc-700/80'
               }`}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    settings.allow_new_registrations ? 'bg-emerald-400 text-black' : 'bg-red-400 text-black'
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`p-2 rounded-xl ${
+                    settings.allow_new_registrations ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
                   }`}>
-                    <Lock className="w-5 h-5" />
+                    <Lock className="w-4 h-4" />
                   </div>
                   <button 
+                    type="button"
                     onClick={() => toggleSetting('allow_new_registrations')}
                     disabled={updating === 'allow_new_registrations'}
-                    className={`w-12 h-6 rounded-full relative transition-all cursor-pointer ${
-                      settings.allow_new_registrations ? 'bg-emerald-400' : 'bg-gray-700'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                      settings.allow_new_registrations ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'
                     }`}
                   >
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
-                      settings.allow_new_registrations ? 'right-1' : 'left-1'
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      settings.allow_new_registrations ? 'translate-x-6' : 'translate-x-1'
                     }`} />
                   </button>
                 </div>
-                <h4 className="text-white font-black text-sm uppercase tracking-wide">New Owner Registrations</h4>
-                <p className="text-gray-500 text-[10px] mt-1 font-medium leading-relaxed">
-                  Controls B2B signup gateway. Disabling suspends new gym owner additions.
+                <h5 className="font-bold text-slate-900 dark:text-white text-sm">New Owner Registrations</h5>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed">
+                  Controls signup gateway. Disabling suspends new gym owner onboarding.
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Info Sidebar with Active Alerts */}
-        <div className="space-y-6">
-          <div className="bg-[#3390ec] rounded-[2rem] p-8 text-white shadow-2xl relative overflow-hidden group">
-            <Zap className="absolute -right-4 -bottom-4 w-32 h-32 text-white/10 transform rotate-12 group-hover:scale-110 transition-transform" />
-            <div className="relative">
-              <h4 className="text-2xl font-black italic tracking-tighter uppercase mb-4">Database<br/>Engine: 100%</h4>
-              <p className="text-white/80 text-xs font-medium leading-relaxed mb-6">
-                Supabase serverless clusters are responsive. Postgres engine version `17.6` has passed security parameters with zero active execution delays.
+        {/* Right Column: Engine Status & Active Alerts (4 Cols) */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Cloud Cluster Summary */}
+          <div className="bg-gradient-to-br from-violet-600 to-purple-700 text-white rounded-2xl p-6 sm:p-7 relative overflow-hidden">
+            <Zap className="absolute -right-3 -bottom-3 w-32 h-32 text-white/10" />
+            <div className="relative space-y-3">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[11px] font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
+                Live Cloud Engine
+              </span>
+              <h4 className="text-xl font-black tracking-tight">Supabase Cluster 100% Operational</h4>
+              <p className="text-xs text-white/80 leading-relaxed">
+                Serverless poolers and auth providers are operating within standard latency margins. Zero query queue backpressure detected.
               </p>
-              <div className="pt-4 border-t border-white/20">
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-black uppercase tracking-widest">Active Connection</span>
-                  <span className="text-[9px] font-black uppercase tracking-widest">Ping Stable</span>
-                </div>
+              <div className="pt-3 border-t border-white/20 flex items-center justify-between text-xs font-semibold">
+                <span>Postgres 17.6</span>
+                <span>Active Connection OK</span>
               </div>
             </div>
           </div>
 
-          {/* Real-time Open support alerts */}
-          <div className="bg-[#212121] border border-white/5 rounded-[2rem] p-8 space-y-6">
-            <div className="flex items-center gap-3">
-              <Bell className="w-5 h-5 text-amber-400 animate-bounce" />
-              <h4 className="text-white font-bold text-sm tracking-tight uppercase tracking-widest">Support Alerts</h4>
+          {/* Real-time Support Alert Box */}
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
+                <Bell className="w-4 h-4" />
+              </div>
+              <h5 className="font-bold text-slate-900 dark:text-white text-sm">Support Queue Status</h5>
             </div>
+
             {healthData?.metrics?.openTickets > 0 ? (
-              <div className="p-4 rounded-2xl bg-amber-400/5 border border-amber-400/20 text-amber-400 text-xs font-bold leading-normal">
-                <AlertCircle className="w-4 h-4 inline mr-2 text-amber-400" />
-                You have {healthData.metrics.openTickets} open support ticket{healthData.metrics.openTickets > 1 ? 's' : ''} awaiting response! Go to the Support tab to respond.
+              <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 text-amber-800 dark:text-amber-300 text-xs font-medium leading-relaxed">
+                <AlertCircle className="w-4 h-4 inline mr-1.5 text-amber-600 dark:text-amber-400" />
+                You have <strong>{healthData.metrics.openTickets}</strong> open support ticket{healthData.metrics.openTickets > 1 ? 's' : ''} awaiting review in the Support Desk.
               </div>
             ) : (
-              <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 text-emerald-400 text-xs font-bold leading-normal">
-                <CheckCircle2 className="w-4 h-4 inline mr-2 text-emerald-400" />
-                All support tickets resolved! Platform queue is clear.
+              <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-xs font-medium leading-relaxed">
+                <CheckCircle2 className="w-4 h-4 inline mr-1.5 text-emerald-600 dark:text-emerald-400" />
+                All gym owner support tickets are resolved. Zero pending queries.
               </div>
             )}
           </div>

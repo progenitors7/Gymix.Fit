@@ -9,18 +9,18 @@ import DatePicker from '../UI/DatePicker'
 import { planService } from '../../services/planService'
 import { useCurrentGym } from '../../hooks/useCurrentGym'
 
-const inputCls = 'w-full pl-12 pr-5 py-4 rounded-2xl bg-white/[0.03] border border-white/5 text-white placeholder-slate-600 text-sm font-medium focus:outline-none focus:bg-white/[0.05] focus:border-emerald-500/50 transition-all'
+const inputCls = 'w-full pl-11 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/80 text-slate-900 dark:text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-violet-500 transition-colors shadow-xs'
 
 function Field({ label, required, children, error }) {
   return (
-    <div className="space-y-2">
-      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">
+    <div className="space-y-1.5">
+      <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300">
         {label} {required && <span className="text-rose-500">*</span>}
       </label>
       <div className="relative group">
         {children}
       </div>
-      {error && <p className="mt-1 text-[10px] font-bold text-rose-400 uppercase tracking-wider ml-1">{error}</p>}
+      {error && <p className="text-[11px] font-medium text-rose-500">{error}</p>}
     </div>
   )
 }
@@ -130,24 +130,25 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
 
   return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-xl bg-[#151922] border border-white/5 rounded-[2.5rem] p-6 sm:p-8 overflow-hidden shadow-2xl max-h-[90vh] flex flex-col justify-between"
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.97 }}
+          transition={{ duration: 0.15 }}
+          className="relative w-full max-w-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-7 overflow-hidden shadow-2xl max-h-[90vh] flex flex-col justify-between"
         >
           {/* Close button */}
           <button 
             onClick={onClose}
-            className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center text-slate-500 hover:text-white rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.08] active:scale-95 transition-all cursor-pointer z-10"
+            className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer z-10"
           >
             <X className="w-4 h-4" />
           </button>
 
-          {/* Header with High-Res Athlete Identity */}
-          <div className="pb-5 border-b border-white/5 flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-slate-800 border-2 border-emerald-500/30 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-lg">
+          {/* Header with Athlete Identity */}
+          <div className="pb-4 border-b border-slate-200 dark:border-zinc-800 flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 overflow-hidden flex-shrink-0 flex items-center justify-center">
               {request.profiles?.avatar_url ? (
                 <img
                   src={request.profiles.avatar_url}
@@ -155,42 +156,42 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="text-white text-lg font-black uppercase">
-                  {request.profiles?.full_name?.slice(0, 2) || 'M'}
+                <span className="text-slate-700 dark:text-zinc-300 text-sm font-bold uppercase">
+                  {request.profiles?.full_name?.slice(0, 2) || 'AT'}
                 </span>
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <span className="text-[9px] font-black text-emerald-400 uppercase tracking-[0.2em] leading-none">
-                Smart Onboarding Approval
+              <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider leading-none">
+                Onboarding Request
               </span>
-              <h3 className="text-lg sm:text-xl font-black text-white uppercase italic tracking-tight pt-0.5 break-words">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate mt-0.5">
                 {request.profiles?.full_name || 'Athlete Profile'}
               </h3>
-              <p className="text-slate-400 text-xs truncate mt-0.5">
+              <p className="text-slate-500 dark:text-zinc-400 text-xs truncate">
                 {request.profiles?.email}
               </p>
             </div>
           </div>
 
           {/* Scrollable form body */}
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto py-6 space-y-6 pr-2 -mr-2 hide-scrollbar">
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto py-5 space-y-4 pr-1 hide-scrollbar">
             {error && (
-              <div className="px-4.5 py-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-bold uppercase tracking-wider animate-shake">
-                <AlertCircle className="w-4 h-4 inline mr-2" />
-                {error}
+              <div className="px-3.5 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400 text-xs font-medium flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{error}</span>
               </div>
             )}
 
             {loadingPlans ? (
               <div className="py-12 flex justify-center">
-                <div className="w-8 h-8 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
+                <div className="w-7 h-7 border-2 border-violet-500/20 border-t-violet-500 rounded-full animate-spin" />
               </div>
             ) : (
               <>
                 {/* Row 1: Plan Selection */}
                 <Field label="Membership Plan" required>
-                  <Award className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
+                  <Award className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   <select
                     value={form.membership_plan}
                     onChange={set('membership_plan')}
@@ -207,7 +208,7 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
                 </Field>
 
                 {/* Row 2: Join Date & Calculated Expiry */}
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid sm:grid-cols-2 gap-3.5">
                   <Field label="Membership Start Date" required>
                     <DatePicker
                       value={form.join_date}
@@ -224,14 +225,14 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
                 </div>
 
                 {/* Optional profile updates */}
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid sm:grid-cols-2 gap-3.5">
                   <Field label="Phone Number">
                     <input
                       type="tel"
                       value={form.phone_number}
                       onChange={set('phone_number')}
                       placeholder="e.g. 9876543210"
-                      className={inputCls}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/80 text-slate-900 dark:text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-violet-500 transition-colors shadow-xs"
                     />
                   </Field>
 
@@ -239,7 +240,7 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
                     <select
                       value={form.gender}
                       onChange={set('gender')}
-                      className={inputCls}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/80 text-slate-900 dark:text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-violet-500 transition-colors shadow-xs cursor-pointer"
                     >
                       <option value="">Choose gender...</option>
                       <option value="male">Male</option>
@@ -250,15 +251,13 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
                 </div>
 
                 {/* Initial Payment Panel */}
-                <div className="p-6 rounded-[2rem] bg-emerald-500/5 border border-emerald-500/10 space-y-5">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                        <CreditCard className="w-5 h-5 text-emerald-400" />
-                      </div>
+                    <div className="flex items-center gap-2.5">
+                      <CreditCard className="w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0" />
                       <div>
-                        <h4 className="text-xs font-black text-white uppercase tracking-wider">Record Initial Payment</h4>
-                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Collect subscription fee now?</p>
+                        <h4 className="text-xs font-semibold text-slate-900 dark:text-white">Record Initial Payment</h4>
+                        <p className="text-[11px] text-slate-500 dark:text-zinc-400">Collect membership fee upon approval</p>
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -268,7 +267,7 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
                         checked={recordPayment}
                         onChange={e => setRecordPayment(e.target.checked)}
                       />
-                      <div className="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                      <div className="w-9 h-5 bg-slate-300 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
                     </label>
                   </div>
 
@@ -276,7 +275,7 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
                     <motion.div 
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
-                      className="grid sm:grid-cols-2 gap-4 pt-2"
+                      className="grid sm:grid-cols-2 gap-3.5 pt-1 border-t border-slate-200/60 dark:border-zinc-800/80"
                     >
                       <Field label="Amount Paid (₹)" required>
                         <input
@@ -284,7 +283,7 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
                           value={amountPaid}
                           onChange={e => setAmountPaid(e.target.value)}
                           placeholder="0"
-                          className={inputCls}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 text-slate-900 dark:text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-violet-500 transition-colors shadow-xs"
                         />
                       </Field>
 
@@ -292,7 +291,7 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
                         <select
                           value={paymentMethod}
                           onChange={e => setPaymentMethod(e.target.value)}
-                          className={inputCls}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 text-slate-900 dark:text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-violet-500 transition-colors shadow-xs cursor-pointer"
                         >
                           <option value="cash">Cash / Physical</option>
                           <option value="upi">UPI / Online Transfer</option>
@@ -307,26 +306,26 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
           </form>
 
           {/* Footer Actions */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-white/5">
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-200 dark:border-zinc-800">
             <button
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="order-2 sm:order-1 flex-1 py-4 bg-white/[0.03] hover:bg-white/[0.08] text-slate-400 hover:text-white rounded-2xl text-xs font-black uppercase tracking-widest border border-white/5 cursor-pointer disabled:opacity-50"
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 rounded-xl text-xs font-semibold cursor-pointer disabled:opacity-50 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={submitting || loadingPlans}
-              className="order-1 sm:order-2 flex-1 py-4 bg-emerald-500 hover:bg-emerald-400 text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               {submitting ? (
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  <Check className="w-4 h-4" />
-                  Approve & Activate
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Approve & Activate</span>
                 </>
               )}
             </button>

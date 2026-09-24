@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Hourglass, ArrowUpRight, User } from 'lucide-react';
-import { motion } from 'framer-motion';
 import QuickRenewModal from '../UI/QuickRenewModal';
 
 export default function ExpiringWidget({ members, onRefresh }) {
@@ -16,56 +15,51 @@ export default function ExpiringWidget({ members, onRefresh }) {
 
   if (!members || members.length === 0) {
     return (
-      <div className="glass-card rounded-3xl p-6 h-full flex flex-col relative overflow-hidden group">
-        <h3 className="text-[#F8FAFC] font-extrabold text-lg mb-4 flex items-center gap-3 relative z-10">
-          <div className="w-10 h-10 rounded-2xl bg-[#F59E0B]/10 flex items-center justify-center border border-[#F59E0B]/20 shadow-inner">
-            <Hourglass className="w-5 h-5 text-[#F59E0B]" />
-          </div>
-          Expiring Soon
-        </h3>
-        <div className="flex-1 flex items-center justify-center relative z-10">
-          <p className="text-[#64748B] text-xs font-semibold uppercase tracking-widest text-center">No upcoming expirations</p>
+      <div className="bg-white/60 dark:bg-zinc-900/30 border border-slate-200/80 dark:border-white/[0.06] rounded-2xl p-4.5 text-left shadow-xs">
+        <div className="flex items-center gap-2 mb-3">
+          <Hourglass className="w-4 h-4 text-amber-500" />
+          <h3 className="text-slate-900 dark:text-white font-semibold text-sm">Expiring Soon</h3>
+          <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono ml-auto">0 alerts</span>
         </div>
+        <p className="text-slate-400 dark:text-zinc-500 text-xs py-2 text-center">No upcoming expirations in the next 3 days</p>
       </div>
     );
   }
 
   return (
     <>
-      <div className="glass-card rounded-3xl p-6 h-full flex flex-col relative overflow-hidden group">
+      <div className="bg-white/60 dark:bg-zinc-900/30 border border-slate-200/80 dark:border-white/[0.06] rounded-2xl p-4.5 text-left shadow-xs">
         
-        <div className="flex items-center justify-between mb-6 relative z-10">
-          <h3 className="text-[#F8FAFC] font-extrabold text-lg flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#F59E0B]/10 flex items-center justify-center border border-[#F59E0B]/20 shadow-inner">
-              <Hourglass className="w-5 h-5 text-[#F59E0B]" />
-            </div>
-            Expiring Soon
-          </h3>
-          <Link to="/members" className="p-2 bg-white/5 border border-white/10 rounded-xl text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-white/10 transition-all shadow-sm">
+        <div className="flex items-center justify-between mb-3.5">
+          <div className="flex items-center gap-2">
+            <Hourglass className="w-4 h-4 text-amber-500" />
+            <h3 className="text-slate-900 dark:text-white font-semibold text-sm">Expiring Soon</h3>
+          </div>
+          <Link to="/members" className="p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
             <ArrowUpRight className="w-4 h-4" />
           </Link>
         </div>
         
-        <div className="space-y-3 relative z-10">
-          {members.map((member, i) => (
+        <div className="space-y-2.5">
+          {members.map((member) => (
             <div 
               key={member.id} 
-              className="group/item flex items-center justify-between p-3.5 bg-white/[0.02] hover:bg-white/[0.06] rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-300"
+              className="flex items-center justify-between p-3 bg-slate-50 dark:bg-zinc-800/50 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl border border-slate-200 dark:border-zinc-800 transition-colors"
             >
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-full bg-[#1E293B] flex items-center justify-center border border-white/10 shadow-sm group-hover/item:border-[#3B82F6]/30 transition-colors">
-                  <User className="w-4 h-4 text-[#94A3B8] group-hover/item:text-[#3B82F6] transition-colors" />
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-zinc-700 flex items-center justify-center shrink-0 text-slate-600 dark:text-zinc-300">
+                  <User className="w-4 h-4" />
                 </div>
-                <div>
-                  <p className="text-[13px] font-bold text-[#F8FAFC] group-hover/item:text-[#3B82F6] transition-colors">{member.full_name}</p>
-                  <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest mt-0.5">{member.phone_number}</p>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-900 dark:text-zinc-100 truncate">{member.full_name}</p>
+                  <p className="text-[10px] text-slate-400 dark:text-zinc-500 truncate">{member.phone_number || 'No phone'}</p>
                 </div>
               </div>
-              <div className="text-right flex flex-col items-end justify-center">
-                <span className={`inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider mb-1.5 shadow-sm ${
+              <div className="text-right shrink-0 ml-2">
+                <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold ${
                   new Date(member.expiry_date) < new Date() 
-                    ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
-                    : 'bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/20'
+                    ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
                 }`}>
                   {(() => {
                     const d = new Date(member.expiry_date);
@@ -74,9 +68,9 @@ export default function ExpiringWidget({ members, onRefresh }) {
                 </span>
                 <button 
                   onClick={() => handleRenewClick(member)}
-                  className="text-[10px] font-bold text-[#3B82F6] hover:text-[#60A5FA] uppercase tracking-widest transition-colors cursor-pointer"
+                  className="block text-[10px] font-bold text-violet-600 dark:text-violet-400 hover:underline mt-1 cursor-pointer"
                 >
-                  Renew Now
+                  Renew
                 </button>
               </div>
             </div>
@@ -93,5 +87,3 @@ export default function ExpiringWidget({ members, onRefresh }) {
     </>
   );
 }
-
-

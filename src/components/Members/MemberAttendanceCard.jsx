@@ -60,15 +60,15 @@ export default function MemberAttendanceCard({ memberId, memberName, joinDate })
       let dotColor = ''
 
       if (hasCheckedIn) {
-        dayClass += 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-black'
-        dotColor = 'bg-emerald-400'
+        dayClass += 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold'
+        dotColor = 'bg-emerald-500'
       } else if (isToday) {
-        dayClass += 'bg-white/5 border border-white/10 text-white animate-pulse'
+        dayClass += 'bg-slate-200 dark:bg-zinc-700 border border-slate-300 dark:border-zinc-600 text-slate-900 dark:text-white font-bold animate-pulse'
       } else if (isPast && joinDate && dateStr >= joinDate) {
-        dayClass += 'bg-white/[0.01] border border-white/5 text-slate-600'
-        dotColor = 'bg-rose-500/10'
+        dayClass += 'bg-slate-100/70 dark:bg-zinc-800/40 border border-slate-200/60 dark:border-zinc-800 text-slate-400 dark:text-zinc-600'
+        dotColor = 'bg-rose-400/40'
       } else {
-        dayClass += 'text-slate-600 opacity-30'
+        dayClass += 'text-slate-400 dark:text-zinc-600 opacity-40'
       }
 
       days.push(
@@ -86,14 +86,14 @@ export default function MemberAttendanceCard({ memberId, memberName, joinDate })
     return (
       <div className="py-12 text-center">
         <div className="w-8 h-8 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Parsing attendance records...</p>
+        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Parsing attendance records...</p>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="p-5 rounded-2xl bg-rose-500/5 border border-rose-500/10 text-rose-400 text-xs font-semibold text-center">
+      <div className="p-5 rounded-2xl bg-rose-500/5 border border-rose-500/10 text-rose-500 text-xs font-semibold text-center">
         Error loading attendance: {error}
       </div>
     )
@@ -102,13 +102,13 @@ export default function MemberAttendanceCard({ memberId, memberName, joinDate })
   return (
     <div className="space-y-6">
       {/* 1. Monthly Calendar Card */}
-      <div className="p-6 rounded-[2rem] bg-white/[0.01] border border-white/5 space-y-4">
+      <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xs space-y-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
-            <Calendar className="w-4.5 h-4.5" />
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+            <Calendar className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs font-black text-white uppercase tracking-wider">Attendance Calendar</h4>
+            <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Attendance Calendar</h4>
             <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
               {new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
             </p>
@@ -116,7 +116,7 @@ export default function MemberAttendanceCard({ memberId, memberName, joinDate })
         </div>
 
         {/* Days of Week Header */}
-        <div className="grid grid-cols-7 gap-2 text-center text-[8px] font-black text-slate-500 uppercase tracking-widest pb-2 border-b border-white/5">
+        <div className="grid grid-cols-7 gap-2 text-center text-[8px] font-bold text-slate-400 uppercase tracking-widest pb-2 border-b border-slate-200 dark:border-zinc-800">
           {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
             <div key={day}>{day}</div>
           ))}
@@ -129,16 +129,16 @@ export default function MemberAttendanceCard({ memberId, memberName, joinDate })
       </div>
 
       {/* 2. Timeline Card */}
-      <div className="p-6 rounded-[2rem] bg-white/[0.01] border border-white/5 space-y-4">
+      <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Check-in / Check-out Feed</p>
-          <span className="text-[8px] font-black uppercase bg-white/5 px-2 py-0.5 rounded text-slate-400">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500">Check-in / Check-out Feed</p>
+          <span className="text-[8px] font-bold uppercase bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700">
             {logs.length} sessions
           </span>
         </div>
 
         {logs.length === 0 ? (
-          <div className="text-center py-8 text-slate-500 text-xs font-semibold">
+          <div className="text-center py-8 text-slate-400 dark:text-zinc-500 text-xs font-medium">
             No check-in history logged.
           </div>
         ) : (
@@ -147,16 +147,16 @@ export default function MemberAttendanceCard({ memberId, memberName, joinDate })
               const checkIn = new Date(log.check_in_time)
               const checkOut = log.check_out_time ? new Date(log.check_out_time) : null
               return (
-                <div key={index} className="p-3 rounded-xl bg-white/[0.01] border border-white/5 hover:border-white/10 transition-all flex items-center justify-between">
+                <div key={index} className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200/80 dark:border-zinc-700/60 hover:border-slate-300 dark:hover:border-zinc-600 transition-all flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                       <LogIn className="w-3.5 h-3.5" />
                     </div>
                     <div className="space-y-0.5">
-                      <span className="text-[11px] font-black text-white">
+                      <span className="text-[11px] font-bold text-slate-900 dark:text-white">
                         {checkIn.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                       </span>
-                      <p className="text-[9px] text-slate-500 font-bold">
+                      <p className="text-[9px] text-slate-500 font-medium">
                         In: {checkIn.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
@@ -164,15 +164,15 @@ export default function MemberAttendanceCard({ memberId, memberName, joinDate })
                   <div className="text-right">
                     {checkOut ? (
                       <div className="space-y-0.5">
-                        <span className="text-[8px] font-black uppercase text-slate-400 bg-white/5 border border-white/5 px-1.5 py-0.5 rounded">
+                        <span className="text-[8px] font-bold uppercase text-slate-600 dark:text-zinc-400 bg-slate-200/60 dark:bg-zinc-700 px-1.5 py-0.5 rounded">
                           Checked Out
                         </span>
-                        <p className="text-[9px] text-slate-500 font-bold mt-0.5">
+                        <p className="text-[9px] text-slate-500 font-medium mt-0.5">
                           Out: {checkOut.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                     ) : (
-                      <span className="text-[8px] font-black uppercase text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 px-1.5 py-0.5 rounded animate-pulse">
+                      <span className="text-[8px] font-bold uppercase text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded animate-pulse">
                         Active ⚡
                       </span>
                     )}

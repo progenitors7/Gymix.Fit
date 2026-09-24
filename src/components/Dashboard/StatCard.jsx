@@ -1,40 +1,29 @@
-export default function StatCard({ title, value, subtitle, icon, colorClass, trend }) {
-  const colors = {
-    emerald: 'text-[#22C55E] bg-[#22C55E]/10 border-[#22C55E]/20',
-    sky: 'text-[#0EA5E9] bg-[#0EA5E9]/10 border-[#0EA5E9]/20',
-    indigo: 'text-[#6366F1] bg-[#6366F1]/10 border-[#6366F1]/20',
-    amber: 'text-[#F59E0B] bg-[#F59E0B]/10 border-[#F59E0B]/20',
-    rose: 'text-[#EF4444] bg-[#EF4444]/10 border-[#EF4444]/20',
-    slate: 'text-[#94A3B8] bg-[#94A3B8]/10 border-[#94A3B8]/20',
-    primary: 'text-[#3B82F6] bg-[#3B82F6]/10 border-[#3B82F6]/20'
-  };
-
-  const selectedColor = colors[colorClass] || colors.slate;
-
+export default function StatCard({ title, value, subtitle, icon, trend }) {
   return (
-    <div className="p-4 sm:p-6 rounded-3xl glass-card flex flex-col h-full group relative overflow-hidden text-left">
+    <div className="p-3.5 sm:p-4 rounded-2xl bg-white/60 dark:bg-zinc-900/30 border border-slate-200/80 dark:border-white/[0.05] hover:border-violet-500/30 transition-all flex flex-col justify-between text-left group shadow-xs">
       
-      <div className="flex items-start justify-between mb-4 sm:mb-6 relative z-10">
-        <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center border shadow-inner transition-all duration-300 ${selectedColor}`}>
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="text-slate-400 dark:text-zinc-400 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
           {icon}
         </div>
         {trend && (
-          <span className={`text-[9px] sm:text-[11px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-sm ${
-            trend.startsWith('+') ? 'text-[#22C55E] bg-[#22C55E]/10 border border-[#22C55E]/20' : 
-            trend.startsWith('-') ? 'text-[#EF4444] bg-[#EF4444]/10 border border-[#EF4444]/20' : 
-            'text-[#94A3B8] bg-[#94A3B8]/10 border border-[#94A3B8]/20'
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+            trend.startsWith('+') ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 
+            trend.startsWith('-') ? 'text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20' : 
+            'text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700'
           }`}>
             {trend}
           </span>
         )}
       </div>
       
-      <div className="mt-auto relative z-10">
-        <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#F8FAFC] mb-1.5 tracking-tight leading-none">{value}</h3>
-        <p className="text-[9px] sm:text-[11px] font-bold text-[#94A3B8] uppercase tracking-widest">{title}</p>
-        {subtitle && <p className="text-[10px] sm:text-xs text-[#64748B] font-medium mt-1 sm:mt-1.5 line-clamp-1">{subtitle}</p>}
+      <div>
+        <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">{value}</h3>
+        <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400 mt-0.5">{title}</p>
+        {subtitle && (
+          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5 line-clamp-1">{subtitle}</p>
+        )}
       </div>
     </div>
   );
 }
-

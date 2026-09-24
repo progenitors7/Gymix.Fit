@@ -34,7 +34,7 @@ export const razorpayService = {
           }
         },
         theme: {
-          color: '#3390ec'
+          color: '#059669'
         }
       });
 

@@ -28,3 +28,18 @@ workbox-*.js
 .wwebjs_cache/
 .baileys_auth/
 auth_failures.json
+
+# Keystores & Certificates (Never commit release signing keys!)
+*.jks
+*.keystore
+*.p12
+*.key
+
+# Android Local & Cache
+android/.gradle/
+android/local.properties
+android/app/build/
+android/build/
+
+# Agent & AI Config
+.agents/

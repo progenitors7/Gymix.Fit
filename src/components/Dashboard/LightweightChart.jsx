@@ -18,7 +18,7 @@ export default function LightweightChart({ data, height = 300 }) {
         return (
           <div key={index} className="flex-1 flex flex-col items-center group relative h-full justify-end">
             {/* Tooltip on hover */}
-            <div className="opacity-0 group-hover:opacity-100 absolute -top-10 bg-[#1A1F2B] text-white text-xs py-1.5 px-3 rounded-lg pointer-events-none transition-all duration-200 transform group-hover:-translate-y-1 whitespace-nowrap z-20 shadow-xl border border-white/10 font-bold">
+            <div className="opacity-0 group-hover:opacity-100 absolute -top-10 bg-slate-900 dark:bg-zinc-800 text-white text-xs py-1.5 px-3 rounded-lg pointer-events-none transition-all duration-200 transform group-hover:-translate-y-1 whitespace-nowrap z-20 border border-slate-700 dark:border-zinc-700 font-semibold">
               ₹{item.value.toLocaleString()}
             </div>
             

@@ -8,32 +8,29 @@ export default function ConfirmModal({ open, title, message, confirmLabel = 'Del
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-300"
+        className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
         onClick={!loading ? onCancel : undefined}
       />
 
       {/* Dialog */}
-      <div className="relative bg-slate-950 border border-white/10 rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] w-full max-w-sm p-8 overflow-hidden animate-in zoom-in-95 duration-300">
-        {/* Glow effect */}
-        <div className="absolute -top-24 -left-24 w-48 h-48 bg-rose-500/20 rounded-full blur-[80px]" />
-        
+      <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl w-full max-w-sm p-6 overflow-hidden">
         {/* Icon */}
-        <div className="relative w-16 h-16 rounded-[1.5rem] bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-rose-500/5">
-          <AlertTriangle className="w-8 h-8 text-rose-400" />
+        <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 flex items-center justify-center mx-auto mb-4 text-rose-600 dark:text-rose-400">
+          <AlertTriangle className="w-5 h-5" />
         </div>
 
-        <h3 className="relative text-white font-black text-center text-xl mb-3 tracking-tight">{title}</h3>
-        <p className="relative text-slate-400 text-sm text-center mb-8 leading-relaxed font-medium px-2">{message}</p>
+        <h3 className="text-slate-900 dark:text-white font-bold text-center text-base mb-1.5 tracking-tight">{title}</h3>
+        <p className="text-slate-500 dark:text-zinc-400 text-xs text-center mb-6 leading-relaxed font-medium">{message}</p>
 
-        <div className="relative flex gap-4">
+        <div className="flex items-center gap-2.5">
           <button
             id="confirm-modal-cancel"
             onClick={onCancel}
             disabled={loading}
-            className="flex-1 px-6 py-4 rounded-2xl border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 text-sm font-bold transition-all disabled:opacity-50 active:scale-95"
+            className="flex-1 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
           >
             Cancel
           </button>
@@ -41,11 +38,11 @@ export default function ConfirmModal({ open, title, message, confirmLabel = 'Del
             id="confirm-modal-confirm"
             onClick={onConfirm}
             disabled={loading}
-            className="flex-1 px-6 py-4 rounded-2xl bg-gradient-to-br from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 disabled:opacity-50 text-white text-sm font-bold transition-all shadow-lg shadow-rose-500/20 active:scale-95"
+            className="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-semibold transition-all active:scale-95 cursor-pointer"
           >
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span className="flex items-center justify-center gap-1.5">
+                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 Wait…
               </span>
             ) : confirmLabel}

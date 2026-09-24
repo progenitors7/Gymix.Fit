@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Store, Plus, Edit, Eye, EyeOff, Trash2, 
-  Check, X, Clipboard, ArrowRight, ShieldCheck, 
-  Package, ShoppingCart, Image as ImageIcon, AlertTriangle, Info, Clock, CheckCircle
+  Plus, Edit, Eye, EyeOff, Trash2, 
+  Check, X, Package, ShoppingCart, Image as ImageIcon, Info
 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useGym } from '../hooks/useGym'
@@ -27,8 +26,6 @@ export default function StoreManagerPage() {
   const [prodImage, setProdImage] = useState('')
   const [prodActive, setProdActive] = useState(true)
   const [processingProduct, setProcessingProduct] = useState(false)
-  const [compressedSizeKB, setCompressedSizeKB] = useState(null)
-
 
   // Orders states
   const [orders, setOrders] = useState([])
@@ -123,30 +120,21 @@ export default function StoreManagerPage() {
 
         canvas.width = width
         canvas.height = height
-
         const ctx = canvas.getContext('2d')
         ctx.drawImage(img, 0, 0, width, height)
 
-        // Compress JPEG to 0.5 quality
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5)
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7)
         setProdImage(compressedBase64)
-        
-        // Calculate size
-        const stringLength = compressedBase64.length - 'data:image/jpeg;base64,'.length
-        const sizeInBytes = 4 * Math.ceil(stringLength / 3) * 0.562489633
-        setCompressedSizeKB((sizeInBytes / 1024).toFixed(1))
-        
-        toast.success('Product image uploaded! 📸')
       }
       img.src = event.target.result
     }
     reader.readAsDataURL(file)
   }
 
-  // Open Add Product Modal
+  // Open add modal
   const openAddModal = () => {
     if (products.length >= PRODUCT_LIMIT) {
-      toast.error(`Free Beta tier limit reached! You can list a maximum of ${PRODUCT_LIMIT} products.`)
+      toast.error(`Store limit reached (${PRODUCT_LIMIT} products). Delete or edit existing listings.`)
       return
     }
     setEditingProduct(null)
@@ -156,69 +144,72 @@ export default function StoreManagerPage() {
     setProdStock('10')
     setProdImage('')
     setProdActive(true)
-    setCompressedSizeKB(null)
     setShowProductModal(true)
   }
 
-  // Open Edit Product Modal
+  // Open edit modal
   const openEditModal = (product) => {
     setEditingProduct(product)
-    setProdName(product.name)
+    setProdName(product.name || '')
     setProdDesc(product.description || '')
-    setProdPrice(product.price.toString())
-    setProdStock(product.stock_quantity.toString())
+    setProdPrice(product.price?.toString() || '')
+    setProdStock(product.stock_quantity?.toString() || '0')
     setProdImage(product.image_url || '')
-    setProdActive(product.is_active)
-    setCompressedSizeKB(null)
+    setProdActive(product.is_active ?? true)
     setShowProductModal(true)
   }
 
-  // Save/Update product
+  // Save product
   const handleSaveProduct = async (e) => {
     e.preventDefault()
-    if (!prodName.trim() || !prodPrice.trim()) return
+    if (!gym?.id) return
+
+    if (!prodName.trim() || !prodPrice) {
+      toast.error('Product title and price are required.')
+      return
+    }
+
     setProcessingProduct(true)
-
     try {
-      const payload = {
-        gym_id: gym.id,
-        name: prodName.trim(),
-        description: prodDesc.trim() || null,
-        price: parseFloat(prodPrice),
-        stock_quantity: parseInt(prodStock) || 0,
-        image_url: prodImage || null,
-        is_active: prodActive
-      }
-
       if (editingProduct) {
-        // Update product
+        // Update
         const { error } = await supabase
           .from('store_products')
-          .update(payload)
+          .update({
+            name: prodName.trim(),
+            description: prodDesc.trim() || null,
+            price: parseFloat(prodPrice),
+            stock_quantity: parseInt(prodStock, 10) || 0,
+            image_url: prodImage || null,
+            is_active: prodActive
+          })
           .eq('id', editingProduct.id)
 
         if (error) throw error
-        toast.success('Product updated successfully! ✨')
+        toast.success('Product updated successfully!')
       } else {
-        // Double check limit before insert
-        if (products.length >= PRODUCT_LIMIT) {
-          throw new Error(`Cannot add product. Product limit of ${PRODUCT_LIMIT} reached on Free Beta tier.`)
-        }
-        
-        // Insert product
+        // Insert
         const { error } = await supabase
           .from('store_products')
-          .insert(payload)
+          .insert({
+            gym_id: gym.id,
+            name: prodName.trim(),
+            description: prodDesc.trim() || null,
+            price: parseFloat(prodPrice),
+            stock_quantity: parseInt(prodStock, 10) || 0,
+            image_url: prodImage || null,
+            is_active: prodActive
+          })
 
         if (error) throw error
-        toast.success('Product added to inventory! 📦')
+        toast.success('Product added to catalog!')
       }
 
       setShowProductModal(false)
       fetchInventory()
     } catch (err) {
       console.error('[Store] Error saving product:', err)
-      toast.error(err.message || 'Failed to save product details.')
+      toast.error('Failed to save product.')
     } finally {
       setProcessingProduct(false)
     }
@@ -226,8 +217,8 @@ export default function StoreManagerPage() {
 
   // Delete product
   const handleDeleteProduct = async (productId) => {
-    if (!window.confirm('Are you sure you want to permanently delete this product? This action cannot be undone.')) return
-    
+    if (!window.confirm('Are you sure you want to delete this product listing?')) return
+
     try {
       const { error } = await supabase
         .from('store_products')
@@ -235,7 +226,7 @@ export default function StoreManagerPage() {
         .eq('id', productId)
 
       if (error) throw error
-      toast.success('Product deleted from inventory.')
+      toast.success('Product deleted.')
       fetchInventory()
     } catch (err) {
       console.error('[Store] Error deleting product:', err)
@@ -243,7 +234,7 @@ export default function StoreManagerPage() {
     }
   }
 
-  // Toggle active status quickly
+  // Toggle active status
   const handleToggleActive = async (product) => {
     try {
       const { error } = await supabase
@@ -252,7 +243,7 @@ export default function StoreManagerPage() {
         .eq('id', product.id)
 
       if (error) throw error
-      toast.success(product.is_active ? 'Product deactivated.' : 'Product activated!')
+      toast.success(product.is_active ? 'Product hidden from catalog.' : 'Product visible in catalog.')
       fetchInventory()
     } catch (err) {
       console.error('[Store] Error toggling status:', err)
@@ -269,7 +260,7 @@ export default function StoreManagerPage() {
         .eq('id', orderId)
 
       if (error) throw error
-      toast.success(`Order status updated to "${newStatus.toUpperCase()}"!`)
+      toast.success(`Order marked as ${newStatus}!`)
       fetchOrders()
     } catch (err) {
       console.error('[Store] Error updating order:', err)
@@ -277,136 +268,128 @@ export default function StoreManagerPage() {
     }
   }
 
-  // Grouped/filtered orders
+  // Filtered orders
   const filteredOrders = orders.filter(order => {
     if (orderStatusFilter === 'all') return true
     return order.status === orderStatusFilter
   })
 
   return (
-    <div className="onboarding-store-container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-slate-100">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       
-      {/* Page Title Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
-        <div className="flex items-center gap-3 text-left">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#3B82F6] to-[#6366F1] flex items-center justify-center shadow-lg text-white">
-            <Store className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-white leading-none">Store Manager</h1>
-            <p className="text-slate-400 text-xs mt-1.5 uppercase tracking-widest font-semibold">Manage Gym Catalog & Orders Log</p>
-          </div>
-        </div>
-
-        {/* Tab Selector Buttons */}
-        <div className="flex bg-[#1A1F2B] p-1.5 rounded-2xl border border-white/5 self-start">
-          <button
-            onClick={() => setActiveSubTab('inventory')}
-            className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-              activeSubTab === 'inventory' 
-                ? 'bg-blue-500 text-white shadow-md' 
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Package className="w-4 h-4" />
-            <span>Catalog ({products.length}/{PRODUCT_LIMIT})</span>
-          </button>
-          <button
-            onClick={() => setActiveSubTab('orders')}
-            className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-              activeSubTab === 'orders' 
-                ? 'bg-blue-500 text-white shadow-md' 
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <ShoppingCart className="w-4 h-4" />
-            <span>Orders Log ({orders.filter(o => o.status === 'pending').length} New)</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Premium Beta Warning notice card */}
-      <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-950/20 to-indigo-950/20 border border-blue-500/15 flex flex-col md:flex-row items-start md:items-center gap-4 text-left">
-        <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 text-blue-400 flex-shrink-0">
-          <Info className="w-5 h-5 animate-pulse" />
-        </div>
-        <div className="flex-1 space-y-1">
-          <h5 className="text-xs font-black text-white uppercase tracking-wider">Gymix Store White-Label Beta</h5>
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            Your store is currently running in <strong>Free Beta Mode</strong>. In this tier, active catalog listings are capped at <strong>{PRODUCT_LIMIT} items max</strong>. Future updates may introduce premium billing options.
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-5">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+            Store Manager
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5 font-medium">
+            Manage supplements, gear, and member orders
           </p>
         </div>
-      </div>
 
-      {/* Primary Tab Panels */}
-      {activeSubTab === 'inventory' ? (
-        // INVENTORY SECTION
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <div className="text-left">
-              <h3 className="text-sm font-black text-white uppercase tracking-wider">Active Inventory</h3>
-              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mt-0.5">
-                List products for members to buy
-              </p>
-            </div>
-            
+        {/* View Switcher Tabs & Actions - Clean Floating Pills */}
+        <div className="flex items-center gap-3 self-start sm:self-auto">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveSubTab('inventory')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-150 flex items-center gap-2 cursor-pointer ${
+                activeSubTab === 'inventory' 
+                  ? 'bg-violet-600 text-white' 
+                  : 'bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Package className="w-4 h-4" />
+              <span>Catalog ({products.length}/{PRODUCT_LIMIT})</span>
+            </button>
+            <button
+              onClick={() => setActiveSubTab('orders')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-150 flex items-center gap-2 cursor-pointer ${
+                activeSubTab === 'orders' 
+                  ? 'bg-violet-600 text-white' 
+                  : 'bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <span>Orders ({orders.filter(o => o.status === 'pending').length} new)</span>
+            </button>
+          </div>
+
+          {activeSubTab === 'inventory' && (
             <button
               onClick={openAddModal}
-              className="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 active:scale-95 shadow-md cursor-pointer"
+              className="px-3.5 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 active:scale-95 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Add Product</span>
             </button>
-          </div>
+          )}
+        </div>
+      </div>
 
+      {/* Free Tier Notice Banner */}
+      <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 flex items-start sm:items-center gap-3 text-left">
+        <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5 sm:mt-0" />
+        <div className="text-xs text-blue-900 dark:text-blue-200 leading-relaxed font-medium">
+          <strong>Store White-Label Beta:</strong> Active catalog listings are capped at {PRODUCT_LIMIT} items max in this tier. Members can order directly from their athlete app for front-desk pickup.
+        </div>
+      </div>
+
+      {/* Primary Tab Content */}
+      {activeSubTab === 'inventory' ? (
+        /* ── INVENTORY CATALOG ── */
+        <div className="space-y-4">
           {productsLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="bg-[#1A1F2B] border border-white/5 rounded-2xl h-60 animate-pulse" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl h-64 animate-pulse" />
               ))}
             </div>
           ) : products.length === 0 ? (
-            <div className="p-12 text-center bg-[#1A1F2B] border border-white/5 rounded-2xl space-y-4">
-              <Package className="w-12 h-12 text-slate-700 mx-auto" />
-              <div className="space-y-1">
-                <h4 className="text-white text-sm font-bold uppercase tracking-wider">No Products Found</h4>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  Get started by adding gym supplements, shakes, or merchandise to list them on the member store.
+            <div className="p-12 text-center bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center mx-auto text-slate-400 dark:text-zinc-500">
+                <Package className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="text-slate-900 dark:text-white font-bold text-sm">No Products in Catalog</h4>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-sm mx-auto mt-1">
+                  Add gym supplements, protein bars, shakes, or gym merchandise to sell to your members.
                 </p>
               </div>
               <button
                 onClick={openAddModal}
-                className="px-4 py-2 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 text-blue-400 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                className="mt-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition-all inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
               >
-                Create First Product
+                <Plus className="w-3.5 h-3.5" />
+                Add First Product
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {products.map((product) => (
                 <div 
                   key={product.id}
-                  className={`bg-[#1A1F2B] border rounded-2xl overflow-hidden flex flex-col justify-between hover:border-white/10 transition-all text-left ${
-                    product.is_active ? 'border-white/5' : 'border-rose-500/20 opacity-60'
+                  className={`bg-white dark:bg-zinc-900 border rounded-2xl overflow-hidden flex flex-col justify-between hover:border-slate-300 dark:hover:border-zinc-700 transition-colors text-left ${
+                    product.is_active ? 'border-slate-200 dark:border-zinc-800' : 'border-rose-300 dark:border-rose-500/30 opacity-70'
                   }`}
                 >
                   {/* Thumbnail */}
-                  <div className="relative aspect-square w-full bg-slate-950/40 border-b border-white/5 flex items-center justify-center overflow-hidden">
+                  <div className="relative aspect-square w-full bg-slate-100 dark:bg-zinc-800/60 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-center overflow-hidden">
                     {product.image_url ? (
                       <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
                     ) : (
-                      <ImageIcon className="w-10 h-10 text-slate-700" />
+                      <ImageIcon className="w-10 h-10 text-slate-300 dark:text-zinc-600" />
                     )}
                     
-                    {/* Floating Status Badges */}
-                    <div className="absolute top-3 left-3 flex gap-1.5">
+                    {/* Status Badges */}
+                    <div className="absolute top-2.5 left-2.5 flex flex-col gap-1">
                       {!product.is_active && (
-                        <span className="px-2.5 py-1 rounded-lg bg-rose-500/20 border border-rose-500/30 text-rose-400 text-[8px] font-black uppercase tracking-wider">
-                          Inactive
+                        <span className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-[9px] font-bold">
+                          Hidden
                         </span>
                       )}
                       {product.stock_quantity === 0 && (
-                        <span className="px-2.5 py-1 rounded-lg bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-[8px] font-black uppercase tracking-wider">
+                        <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[9px] font-bold">
                           Out of Stock
                         </span>
                       )}
@@ -414,49 +397,53 @@ export default function StoreManagerPage() {
                   </div>
 
                   {/* Body Details */}
-                  <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between items-start gap-1.5">
-                        <h4 className="text-xs font-black text-white uppercase truncate">{product.name}</h4>
-                        <span className="text-xs font-mono font-black text-blue-400">Rs. {product.price}</span>
+                  <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-start gap-2">
+                        <h4 className="text-sm font-semibold text-slate-900 dark:text-white truncate" title={product.name}>
+                          {product.name}
+                        </h4>
+                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 shrink-0 font-mono">
+                          ₹{product.price}
+                        </span>
                       </div>
                       {product.description && (
-                        <p className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed">
+                        <p className="text-xs text-slate-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
                           {product.description}
                         </p>
                       )}
-                      <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">
-                        Stock Remaining: <span className="text-slate-300">{product.stock_quantity} units</span>
-                      </div>
+                      <p className="text-[11px] text-slate-400 dark:text-zinc-500 font-medium">
+                        Stock: <strong className="text-slate-700 dark:text-zinc-300">{product.stock_quantity} units</strong>
+                      </p>
                     </div>
 
-                    {/* Actions Panel */}
-                    <div className="grid grid-cols-3 gap-1.5 pt-1">
+                    {/* Actions Row */}
+                    <div className="pt-2 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-between gap-2">
                       <button
                         onClick={() => handleToggleActive(product)}
-                        className={`py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center cursor-pointer ${
-                          product.is_active 
-                            ? 'bg-slate-950/30 text-slate-400 border border-white/5 hover:bg-white/5 hover:text-white' 
-                            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
-                        }`}
-                        title={product.is_active ? 'Deactivate Listing' : 'Activate Listing'}
+                        className="text-xs font-medium text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+                        title={product.is_active ? 'Hide from store' : 'Make visible in store'}
                       >
                         {product.is_active ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        <span>{product.is_active ? 'Hide' : 'Show'}</span>
                       </button>
-                      <button
-                        onClick={() => openEditModal(product)}
-                        className="py-2 bg-slate-950/30 text-slate-400 border border-white/5 hover:bg-white/5 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center cursor-pointer"
-                        title="Edit Details"
-                      >
-                        <Edit className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProduct(product.id)}
-                        className="py-2 bg-rose-500/5 text-rose-400 border border-rose-500/10 hover:bg-rose-500/10 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center cursor-pointer"
-                        title="Delete Product"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => openEditModal(product)}
+                          className="p-1.5 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
+                          title="Edit Product"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProduct(product.id)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                          title="Delete Product"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -465,141 +452,126 @@ export default function StoreManagerPage() {
           )}
         </div>
       ) : (
-        // ORDERS LOG SECTION
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="text-left">
-              <h3 className="text-sm font-black text-white uppercase tracking-wider">Fulfillment Logs</h3>
-              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mt-0.5">
-                Process placed orders
-              </p>
-            </div>
-
-            {/* Filter buttons */}
-            <div className="flex flex-wrap gap-1.5">
-              {['all', 'pending', 'ready', 'completed', 'cancelled'].map(filter => (
-                <button
-                  key={filter}
-                  onClick={() => setOrderStatusFilter(filter)}
-                  className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-                    orderStatusFilter === filter 
-                      ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold' 
-                      : 'bg-slate-950/30 border border-white/5 text-slate-500 hover:text-slate-300'
-                  }`}
-                >
-                  {filter}
-                </button>
-              ))}
-            </div>
+        /* ── ORDERS LOG ── */
+        <div className="space-y-4">
+          {/* Order Status Filters - Clean Floating Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {['all', 'pending', 'ready', 'completed', 'cancelled'].map((st) => (
+              <button
+                key={st}
+                onClick={() => setOrderStatusFilter(st)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize whitespace-nowrap transition-colors duration-150 cursor-pointer ${
+                  orderStatusFilter === st
+                    ? 'bg-violet-600 text-white'
+                    : 'bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                {st}
+              </button>
+            ))}
           </div>
 
           {ordersLoading ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {[1, 2].map(i => (
-                <div key={i} className="bg-[#1A1F2B] border border-white/5 rounded-2xl h-36 animate-pulse" />
+                <div key={i} className="h-32 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl animate-pulse" />
               ))}
             </div>
           ) : filteredOrders.length === 0 ? (
-            <div className="p-12 text-center bg-[#1A1F2B] border border-white/5 rounded-2xl space-y-3">
-              <ShoppingCart className="w-12 h-12 text-slate-700 mx-auto" />
-              <h4 className="text-white text-sm font-bold uppercase tracking-wider">No Orders Logged</h4>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            <div className="p-12 text-center bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl space-y-2">
+              <ShoppingCart className="w-10 h-10 text-slate-400 dark:text-zinc-600 mx-auto" />
+              <h4 className="text-slate-900 dark:text-white font-bold text-sm">No Orders Found</h4>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-sm mx-auto">
                 No orders match your selected filter. Placed orders from member storefront will show up here.
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {filteredOrders.map((order) => (
                 <div 
                   key={order.id}
-                  className={`bg-[#1A1F2B] border rounded-2xl p-5 flex flex-col md:flex-row justify-between gap-6 text-left hover:border-white/10 transition-colors ${
-                    order.status === 'pending' ? 'border-[#3B82F6]/25 bg-blue-950/5' : 'border-white/5'
-                  }`}
+                  className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 flex flex-col md:flex-row justify-between gap-5 text-left hover:border-slate-300 dark:hover:border-zinc-700 transition-colors"
                 >
                   {/* Order info details */}
-                  <div className="flex-1 space-y-4">
-                    <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex-1 space-y-3">
+                    <div className="flex flex-wrap items-center gap-2.5">
                       {/* Avatar & Name */}
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-slate-800 to-slate-700 flex items-center justify-center font-bold text-[10px] text-white overflow-hidden border border-white/10">
+                        <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center font-bold text-[10px] text-slate-700 dark:text-zinc-300 overflow-hidden border border-slate-200 dark:border-zinc-700">
                           {order.members?.avatar_url ? (
                             <img src={order.members.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                           ) : (
-                            order.members?.full_name?.slice(0,2).toUpperCase() || 'M'
+                            order.members?.full_name?.slice(0, 2).toUpperCase() || 'M'
                           )}
                         </div>
-                        <span className="text-xs font-black text-white uppercase">{order.members?.full_name || 'Anonymous Athlete'}</span>
+                        <span className="text-xs font-bold text-slate-900 dark:text-white">{order.members?.full_name || 'Member'}</span>
                       </div>
                       
-                      {/* Divider */}
-                      <span className="hidden sm:inline text-slate-700">|</span>
+                      <span className="text-slate-300 dark:text-zinc-700">|</span>
                       
-                      <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">
-                        ID: #{order.id.slice(0, 8)}
+                      <span className="text-[11px] font-mono text-slate-500 dark:text-zinc-400 font-medium">
+                        #{order.id.slice(0, 8)}
                       </span>
                       
-                      <span className="text-slate-700 hidden sm:inline">|</span>
+                      <span className="text-slate-300 dark:text-zinc-700">|</span>
 
-                      <span className="text-[10px] text-slate-500 font-bold uppercase">
+                      <span className="text-[11px] text-slate-400 dark:text-zinc-500 font-medium">
                         {new Date(order.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
 
-                    {/* Items stack */}
-                    <div className="p-4.5 rounded-xl bg-slate-950/40 border border-white/5 space-y-2">
-                      <span className="text-[9px] font-black uppercase text-slate-500 tracking-wider block">Ordered Items</span>
-                      <div className="space-y-1.5">
+                    {/* Items list */}
+                    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-800 space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 block">Ordered Items</span>
+                      <div className="space-y-1">
                         {Array.isArray(order.items) && order.items.map((item, idx) => (
                           <div key={idx} className="flex justify-between items-center text-xs">
-                            <span className="text-slate-300">
-                              <span className="text-blue-400 font-bold font-mono mr-1.5">{item.quantity}x</span> 
-                              <span className="font-semibold uppercase">{item.name}</span>
+                            <span className="text-slate-700 dark:text-zinc-300">
+                              <span className="text-emerald-600 dark:text-emerald-400 font-bold mr-1.5">{item.quantity}x</span> 
+                              <span>{item.name}</span>
                             </span>
-                            <span className="font-mono text-slate-400">Rs. {item.price * item.quantity}</span>
+                            <span className="font-mono text-slate-500 dark:text-zinc-400 font-medium">₹{item.price * item.quantity}</span>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     {order.notes && (
-                      <div className="text-xs">
-                        <span className="text-[9px] font-black uppercase text-slate-500 tracking-wider block">Member Pickup Notes</span>
-                        <p className="mt-1 text-slate-400 font-semibold italic">"{order.notes}"</p>
-                      </div>
+                      <p className="text-xs text-slate-500 dark:text-zinc-400 italic">
+                        Notes: "{order.notes}"
+                      </p>
                     )}
                   </div>
 
                   {/* Order Total & Fulfillment Actions */}
-                  <div className="md:w-64 flex flex-col justify-between items-start md:items-end gap-4 md:border-l md:border-white/5 md:pl-6">
-                    <div className="text-left md:text-right space-y-1.5">
-                      <span className="text-[9px] font-black uppercase text-slate-500 tracking-wider block">Order Subtotal</span>
-                      <span className="text-blue-400 font-mono text-lg font-black block leading-none">Rs. {order.total_amount}</span>
+                  <div className="md:w-56 flex flex-col justify-between items-start md:items-end gap-3 md:border-l md:border-slate-100 dark:md:border-zinc-800/80 md:pl-5">
+                    <div className="text-left md:text-right space-y-1">
+                      <span className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block">Total Amount</span>
+                      <span className="text-slate-900 dark:text-white font-mono text-lg font-bold block leading-none">₹{order.total_amount}</span>
                       
-                      {/* Active Status Badge */}
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border mt-1.5 ${
-                        order.status === 'pending' ? 'bg-[#3B82F6]/10 border-[#3B82F6]/25 text-[#3B82F6]' :
-                        order.status === 'ready' ? 'bg-yellow-500/10 border-yellow-500/25 text-yellow-400' :
-                        order.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400' :
-                        'bg-rose-500/10 border-rose-500/25 text-rose-400'
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold capitalize border mt-1.5 ${
+                        order.status === 'pending' ? 'bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400' :
+                        order.status === 'ready' ? 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400' :
+                        order.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
+                        'bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-400'
                       }`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${
-                          order.status === 'pending' ? 'bg-[#3B82F6]' :
-                          order.status === 'ready' ? 'bg-yellow-400' :
-                          order.status === 'completed' ? 'bg-emerald-400' :
-                          'bg-rose-400'
+                          order.status === 'pending' ? 'bg-blue-500' :
+                          order.status === 'ready' ? 'bg-amber-500' :
+                          order.status === 'completed' ? 'bg-emerald-500' :
+                          'bg-rose-500'
                         }`} />
                         <span>{order.status}</span>
                       </span>
                     </div>
 
-                    {/* Progress Control Panel */}
-                    <div className="w-full space-y-2">
-                      <span className="text-[9px] font-black uppercase text-slate-500 tracking-wider block text-left md:text-right">Fulfillment Action</span>
+                    {/* Progress Control Actions */}
+                    <div className="w-full space-y-1.5">
                       <div className="flex gap-1.5 w-full">
                         {order.status === 'pending' && (
                           <button
                             onClick={() => handleUpdateOrderStatus(order.id, 'ready')}
-                            className="flex-1 py-2 bg-yellow-500 hover:bg-yellow-600 text-black text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer text-center active:scale-95"
+                            className="flex-1 py-1.5 bg-amber-500 hover:bg-amber-400 text-black text-xs font-semibold rounded-lg transition-all cursor-pointer text-center active:scale-95"
                           >
                             Mark Ready
                           </button>
@@ -607,24 +579,19 @@ export default function StoreManagerPage() {
                         {order.status === 'ready' && (
                           <button
                             onClick={() => handleUpdateOrderStatus(order.id, 'completed')}
-                            className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-black text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer text-center active:scale-95"
+                            className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer text-center active:scale-95"
                           >
-                            Mark Picked Up
+                            Mark Delivered
                           </button>
                         )}
                         {['pending', 'ready'].includes(order.status) && (
                           <button
                             onClick={() => handleUpdateOrderStatus(order.id, 'cancelled')}
-                            className="py-2 px-3 bg-rose-500/5 hover:bg-rose-500/10 text-rose-400 border border-rose-500/10 hover:border-rose-500/25 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer text-center active:scale-95"
+                            className="py-1.5 px-2.5 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 rounded-lg text-xs font-medium transition-all cursor-pointer text-center active:scale-95"
                             title="Cancel Order"
                           >
                             Cancel
                           </button>
-                        )}
-                        {['completed', 'cancelled'].includes(order.status) && (
-                          <span className="text-[10px] text-slate-500 font-semibold italic text-left md:text-right w-full block">
-                            Order is finalized.
-                          </span>
                         )}
                       </div>
                     </div>
@@ -636,62 +603,58 @@ export default function StoreManagerPage() {
         </div>
       )}
 
-      {/* CREATE & EDIT PRODUCT DIALOG OVERLAY */}
+      {/* CREATE & EDIT PRODUCT MODAL */}
       <AnimatePresence>
         {showProductModal && (
-          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/60 backdrop-blur-xs">
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-lg bg-[#151922] border border-white/10 rounded-2xl p-6 relative shadow-2xl flex flex-col gap-6"
+              initial={{ scale: 0.96, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.96, opacity: 0, y: 10 }}
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full max-w-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 relative flex flex-col gap-5 text-slate-900 dark:text-white"
             >
-              <div className="absolute top-4 right-4 z-[10]">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-zinc-800">
+                <div className="flex items-center gap-2.5">
+                  <Package className="w-5 h-5 text-violet-600 dark:text-violet-400 shrink-0" />
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                      {editingProduct ? 'Edit Product' : 'Add Catalog Product'}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-zinc-400">
+                      Configure details for member storefront
+                    </p>
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={() => setShowProductModal(false)}
-                  className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer"
+                  className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center transition-colors cursor-pointer"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                 </button>
-              </div>
-
-              {/* Modal Title */}
-              <div className="flex items-center gap-3 text-left">
-                <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 text-blue-400">
-                  <Package className="w-4.5 h-4.5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-black text-white uppercase tracking-wider">
-                    {editingProduct ? 'Edit Catalog Product' : 'Add Catalog Product'}
-                  </h3>
-                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
-                    {editingProduct ? 'Configure product listing settings' : 'Create new white label store listing'}
-                  </p>
-                </div>
               </div>
 
               {/* Form */}
               <form onSubmit={handleSaveProduct} className="space-y-4 text-left">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Left Column: Details */}
-                  <div className="space-y-4">
-                    {/* Name */}
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Product Title</label>
-                      <input 
-                        type="text" 
-                        required
-                        value={prodName}
-                        onChange={(e) => setProdName(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl bg-slate-950/40 border border-white/5 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:border-blue-500/50 transition-all"
-                        placeholder="E.g., Whey Protein 1KG"
-                      />
-                    </div>
+                <div className="space-y-3">
+                  {/* Name */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Product Title *</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={prodName}
+                      onChange={(e) => setProdName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 text-xs font-medium focus:border-violet-500 outline-none transition-colors"
+                      placeholder="e.g. Whey Protein 1KG, Gym Shaker, BCAA"
+                    />
+                  </div>
 
+                  <div className="grid grid-cols-2 gap-3">
                     {/* Price */}
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Selling Price (Rs.)</label>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Selling Price (₹) *</label>
                       <input 
                         type="number" 
                         required
@@ -699,119 +662,108 @@ export default function StoreManagerPage() {
                         step="0.01"
                         value={prodPrice}
                         onChange={(e) => setProdPrice(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl bg-slate-950/40 border border-white/5 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:border-blue-500/50 transition-all"
-                        placeholder="E.g., 2999"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 text-xs font-medium focus:border-violet-500 outline-none transition-colors"
+                        placeholder="2999"
                       />
                     </div>
 
                     {/* Stock */}
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Stock Quantity</label>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Stock Units *</label>
                       <input 
                         type="number" 
                         required
                         min="0"
                         value={prodStock}
                         onChange={(e) => setProdStock(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl bg-slate-950/40 border border-white/5 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:border-blue-500/50 transition-all"
-                        placeholder="E.g., 10"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 text-xs font-medium focus:border-violet-500 outline-none transition-colors"
+                        placeholder="10"
                       />
                     </div>
                   </div>
 
-                  {/* Right Column: Image and Status */}
-                  <div className="space-y-4 flex flex-col justify-between">
-                    {/* Image Upload box */}
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Product Photo</label>
-                      <div className="relative border border-dashed border-white/10 rounded-xl p-4 bg-slate-950/20 hover:bg-slate-950/40 hover:border-white/20 transition-all flex flex-col items-center justify-center min-h-[140px] text-center gap-2">
-                        {prodImage ? (
-                          <>
-                            <img src={prodImage} alt="Preview" className="max-h-[110px] object-contain rounded-lg border border-white/5" />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setProdImage('');
-                                setCompressedSizeKB(null);
-                              }}
-                              className="absolute top-2 right-2 p-1.5 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-all active:scale-95 cursor-pointer"
-                              title="Clear Image"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                            {prodImage && (
-                              <span className="text-[8px] font-black uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 absolute bottom-2 left-2">
-                                Optimized Photo ✨
-                              </span>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            <ImageIcon className="w-7 h-7 text-slate-700" />
-                            <div className="space-y-0.5">
-                              <span className="text-[10px] font-bold text-slate-400 block">Select Image File</span>
-                              <span className="text-[8px] font-semibold text-slate-500 block uppercase tracking-wider">Auto-optimized for Mobile Speed</span>
-                            </div>
-                            <input 
-                              type="file" 
-                              accept="image/*"
-                              id="owner-product-image-upload"
-                              onChange={handleImageChange}
-                              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                            />
-                          </>
-                        )}
-                      </div>
+                  {/* Image Upload box */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Product Image (Optional)</label>
+                    <div className="relative border border-dashed border-slate-200 dark:border-zinc-700 rounded-xl p-3 bg-slate-50 dark:bg-zinc-800/40 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center min-h-[90px] text-center gap-2">
+                      {prodImage ? (
+                        <div className="relative flex items-center gap-3">
+                          <img src={prodImage} alt="Preview" className="h-16 w-16 object-cover rounded-lg border border-slate-200 dark:border-zinc-700" />
+                          <button
+                            type="button"
+                            onClick={() => setProdImage('')}
+                            className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-lg text-xs font-medium flex items-center gap-1 cursor-pointer transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <ImageIcon className="w-6 h-6 text-slate-400 dark:text-zinc-500" />
+                          <div className="text-left">
+                            <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300 block">Upload Photo</span>
+                            <span className="text-[11px] text-slate-400 dark:text-zinc-500 block">Auto-compressed for fast loading</span>
+                          </div>
+                          <input 
+                            type="file" 
+                            accept="image/*"
+                            id="owner-product-image-upload"
+                            onChange={handleImageChange}
+                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                          />
+                        </>
+                      )}
                     </div>
+                  </div>
 
-                    {/* Active Toggle Switch */}
-                    <div className="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5">
-                      <div className="text-left space-y-0.5">
-                        <span className="text-[9px] font-black uppercase text-slate-500 tracking-wider block">Listing Status</span>
-                        <span className="text-[10px] font-bold text-slate-300 block">
-                          {prodActive ? 'Visible to members' : 'Hidden from store'}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setProdActive(!prodActive)}
-                        className={`w-12 h-6.5 rounded-full p-0.5 transition-colors cursor-pointer outline-none ${
-                          prodActive ? 'bg-blue-500' : 'bg-slate-800'
-                        }`}
-                      >
-                        <div className={`w-5.5 h-5.5 rounded-full bg-white transition-transform ${
-                          prodActive ? 'translate-x-5.5' : 'translate-x-0'
-                        }`} />
-                      </button>
+                  {/* Description */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Description (Optional)</label>
+                    <textarea 
+                      value={prodDesc}
+                      onChange={(e) => setProdDesc(e.target.value)}
+                      rows={2}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 text-xs font-medium focus:border-violet-500 outline-none transition-colors resize-none"
+                      placeholder="e.g. 24g protein per scoop, rich chocolate flavour."
+                    />
+                  </div>
+
+                  {/* Active Toggle Switch */}
+                  <div className="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-800">
+                    <div>
+                      <span className="text-xs font-semibold text-slate-900 dark:text-white block">Listing Visibility</span>
+                      <span className="text-[11px] text-slate-500 dark:text-zinc-400 block">
+                        {prodActive ? 'Visible to athletes in mobile store' : 'Hidden from athlete store'}
+                      </span>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setProdActive(!prodActive)}
+                      className={`w-11 h-6 rounded-full p-0.5 transition-colors cursor-pointer outline-none ${
+                        prodActive ? 'bg-violet-600' : 'bg-slate-300 dark:bg-zinc-700'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                        prodActive ? 'translate-x-5' : 'translate-x-0'
+                      }`} />
+                    </button>
                   </div>
                 </div>
 
-                {/* Description */}
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Short Description (Optional)</label>
-                  <textarea 
-                    value={prodDesc}
-                    onChange={(e) => setProdDesc(e.target.value)}
-                    rows={2.5}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-950/40 border border-white/5 text-white placeholder-slate-600 text-xs font-semibold focus:outline-none focus:border-blue-500/50 transition-all resize-none"
-                    placeholder="E.g., High quality Whey Isolate, 24g protein per serving."
-                  />
-                </div>
-
-                {/* Submit action */}
-                <div className="grid grid-cols-2 gap-2 pt-2">
+                {/* Submit actions */}
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-zinc-800">
                   <button
                     type="button"
                     onClick={() => setShowProductModal(false)}
-                    className="py-3 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-slate-300 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer text-center active:scale-95"
+                    className="px-4 py-2.5 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={processingProduct}
-                    className="py-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+                    className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
                   >
                     {processingProduct ? (
                       <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
