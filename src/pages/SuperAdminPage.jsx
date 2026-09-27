@@ -17,7 +17,6 @@ import {
   Ticket, 
   LogOut, 
   SlidersHorizontal, 
-  ArrowUpRight, 
   Menu, 
   X, 
   Package, 
@@ -45,37 +44,37 @@ const containerVariants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.08
-    }
+    transition: { duration: 0.15 }
   }
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 15 },
-  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 320, damping: 25 } }
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { duration: 0.15 } }
 };
 
 function StatCard({ title, value, icon, trend, subtext }) {
   return (
     <motion.div 
       variants={itemVariants}
-      className="bg-white/60 dark:bg-zinc-900/40 backdrop-blur-xs border border-slate-200/80 dark:border-white/[0.06] rounded-2xl p-5 transition-colors hover:border-slate-300 dark:hover:border-white/[0.12] relative overflow-hidden group"
+      className="bg-white/80 dark:bg-zinc-900/60 backdrop-blur-xs border border-slate-200/80 dark:border-white/[0.06] rounded-2xl p-3.5 sm:p-5 transition-colors hover:border-slate-300 dark:hover:border-white/[0.12] relative overflow-hidden group flex flex-col justify-between"
     >
-      <div className="flex items-center justify-between mb-3 relative z-10">
-        <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400">
-          <span className="text-violet-600 dark:text-violet-400">{icon}</span>
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">{title}</span>
-        </div>
-        {trend && (
-          <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/5 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight">
-            <TrendingUp className="w-3 h-3" />
-            {trend}
+      <div>
+        <div className="flex items-center justify-between gap-1 mb-2 sm:mb-3 relative z-10">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-slate-500 dark:text-zinc-400 min-w-0">
+            <span className="text-violet-600 dark:text-violet-400 shrink-0">{icon}</span>
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 truncate">{title}</span>
           </div>
-        )}
+          {trend && (
+            <div className="hidden xs:flex items-center gap-0.5 sm:gap-1 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/5 px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold tracking-tight shrink-0">
+              <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+              <span>{trend}</span>
+            </div>
+          )}
+        </div>
+        <p className="text-xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">{value}</p>
       </div>
-      <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">{value}</p>
-      {subtext && <p className="text-slate-500 dark:text-zinc-400 text-[11px] mt-1.5 font-medium leading-relaxed">{subtext}</p>}
+      {subtext && <p className="text-slate-500 dark:text-zinc-400 text-[10px] sm:text-[11px] mt-1.5 font-medium leading-tight truncate">{subtext}</p>}
     </motion.div>
   );
 }
@@ -116,19 +115,18 @@ export default function SuperAdminPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 transition-colors duration-200">
         <div className="flex flex-col items-center gap-4 text-center max-w-sm px-6">
-          <div className="relative flex items-center justify-center">
-            <div className="absolute w-20 h-20 rounded-full bg-violet-500/10 dark:bg-violet-500/15 blur-xl animate-pulse" />
-            <Logo className="w-14 h-14 relative z-10" />
+          <div className="flex items-center justify-center">
+            <Logo className="w-12 h-12" />
           </div>
-          <div className="space-y-1.5">
-            <p className="text-xs font-bold tracking-widest uppercase text-slate-900 dark:text-white">
-              Initializing Master Command Center
+          <div className="space-y-1">
+            <p className="text-xs font-bold tracking-wider uppercase text-slate-900 dark:text-white">
+              Loading Super Admin
             </p>
             <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">
-              Synchronizing platform telemetry & system metrics...
+              Fetching platform records & analytics...
             </p>
           </div>
-          <div className="w-7 h-7 border-2 border-violet-500/20 border-t-violet-600 dark:border-t-violet-400 rounded-full animate-spin mt-1" />
+          <div className="w-6 h-6 border-2 border-violet-500/20 border-t-violet-600 dark:border-t-violet-400 rounded-full animate-spin mt-1" />
         </div>
       </div>
     );
@@ -141,9 +139,9 @@ export default function SuperAdminPage() {
           <div className="w-12 h-12 bg-red-100 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-2xl flex items-center justify-center text-red-600 dark:text-red-400 text-xl mx-auto">
             ⚠️
           </div>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Failed to Connect to Platform</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Unable to Connect</h2>
           <p className="text-slate-600 dark:text-zinc-400 text-xs leading-relaxed">
-            {error || 'Unable to retrieve Super Admin telemetry metrics.'}
+            {error || 'Unable to load dashboard data. Please check your connection and try again.'}
           </p>
           <div className="space-y-2 pt-2">
             <button
@@ -168,34 +166,34 @@ export default function SuperAdminPage() {
     {
       title: 'CORE',
       items: [
-        { id: 'dashboard', label: 'Overview', icon: <LayoutGrid className="w-4 h-4" />, subtext: 'Platform analytics & summary' }
+        { id: 'dashboard', label: 'Overview', icon: <LayoutGrid className="w-4 h-4" />, subtext: 'Platform analytics & metrics' }
       ]
     },
     {
-      title: 'FINANCIALS & COMMERCE',
+      title: 'FINANCE & BILLING',
       items: [
-        { id: 'financials', label: 'SaaS Financials', icon: <IndianRupee className="w-4 h-4" />, badge: 'REV', subtext: 'Subscription ledger & payments' },
-        { id: 'orders', label: 'Hardware & Store Orders', icon: <Package className="w-4 h-4" />, subtext: 'Fulfillment & customer orders' },
-        { id: 'plans', label: 'SaaS Plans', icon: <CreditCard className="w-4 h-4" />, subtext: 'Pricing tiers & feature limits' },
-        { id: 'promo', label: 'Promo Codes', icon: <Ticket className="w-4 h-4" />, subtext: 'Platform coupon engine' },
+        { id: 'financials', label: 'Revenue & Ledger', icon: <IndianRupee className="w-4 h-4" />, badge: 'REV', subtext: 'Subscription payments & transactions' },
+        { id: 'orders', label: 'Store Orders', icon: <Package className="w-4 h-4" />, subtext: 'Hardware & customer orders' },
+        { id: 'plans', label: 'Subscription Plans', icon: <CreditCard className="w-4 h-4" />, subtext: 'Plan pricing & feature limits' },
+        { id: 'promo', label: 'Discount Coupons', icon: <Ticket className="w-4 h-4" />, subtext: 'Promo codes & discounts' },
       ]
     },
     {
-      title: 'TENANTS & USERS',
+      title: 'GYMS & MEMBERS',
       items: [
-        { id: 'gyms', label: 'Gym Directory', icon: <Building2 className="w-4 h-4" />, badge: stats?.totalGyms ? `${stats.totalGyms}` : null, subtext: 'Gym owners, subs & activations' },
-        { id: 'athletes', label: 'Athletes Master', icon: <Users className="w-4 h-4" />, badge: stats?.totalMembers ? `${stats.totalMembers}` : null, subtext: 'Cross-tenant member records' },
-        { id: 'users', label: 'User Security & Auth', icon: <ShieldCheck className="w-4 h-4" />, subtext: 'Profile directory & RBAC control' },
+        { id: 'gyms', label: 'Gyms', icon: <Building2 className="w-4 h-4" />, badge: stats?.totalGyms ? `${stats.totalGyms}` : null, subtext: 'Gym owners & memberships' },
+        { id: 'athletes', label: 'Members', icon: <Users className="w-4 h-4" />, badge: stats?.totalMembers ? `${stats.totalMembers}` : null, subtext: 'All registered gym members' },
+        { id: 'users', label: 'Admin Accounts', icon: <ShieldCheck className="w-4 h-4" />, subtext: 'User roles & access control' },
       ]
     },
     {
-      title: 'OPERATIONS & ENGINE',
+      title: 'SETTINGS & TOOLS',
       items: [
-        { id: 'push', label: 'Push Notifications', icon: <Smartphone className="w-4 h-4" />, subtext: 'Firebase mobile broadcasts' },
-        { id: 'broadcast', label: 'In-App Broadcasts', icon: <Megaphone className="w-4 h-4" />, subtext: 'Global announcement banner' },
-        { id: 'support', label: 'Support Desk', icon: <LifeBuoy className="w-4 h-4" />, subtext: 'Inquiries & owner assistance' },
-        { id: 'health', label: 'Engine Health', icon: <Activity className="w-4 h-4" />, badge: 'LIVE', subtext: 'Database latency & logs' },
-        { id: 'settings', label: 'Global Settings', icon: <Settings2 className="w-4 h-4" />, subtext: 'Universal switches & config' },
+        { id: 'push', label: 'Push Notifications', icon: <Smartphone className="w-4 h-4" />, subtext: 'Send mobile app notifications' },
+        { id: 'broadcast', label: 'Announcements', icon: <Megaphone className="w-4 h-4" />, subtext: 'Platform announcement banner' },
+        { id: 'support', label: 'Help & Support', icon: <LifeBuoy className="w-4 h-4" />, subtext: 'Owner inquiries & tickets' },
+        { id: 'health', label: 'System Status', icon: <Activity className="w-4 h-4" />, badge: 'LIVE', subtext: 'Database & server status' },
+        { id: 'settings', label: 'Platform Settings', icon: <Settings2 className="w-4 h-4" />, subtext: 'Global switches & configuration' },
       ]
     }
   ];
@@ -236,7 +234,7 @@ export default function SuperAdminPage() {
                   Super Admin
                 </span>
               </div>
-              <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider mt-1">Enterprise Console</p>
+              <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider mt-1">Super Admin</p>
             </div>
           </div>
           <button 
@@ -278,7 +276,7 @@ export default function SuperAdminPage() {
                     {item.badge && (
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                         item.badge === 'LIVE'
-                          ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 animate-pulse'
+                          ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30'
                           : isActive
                             ? 'bg-violet-500/20 text-violet-800 dark:text-violet-300 font-extrabold'
                             : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 group-hover:bg-slate-200 dark:group-hover:bg-zinc-700'
@@ -295,20 +293,6 @@ export default function SuperAdminPage() {
 
         {/* Sidebar Footer User & Controls */}
         <div className="p-3.5 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/80 dark:bg-zinc-900/60 space-y-2.5">
-          {/* Switch to Gym Portal Button */}
-          <button
-            onClick={() => {
-              setMobileMenuOpen(false);
-              navigate('/dashboard');
-            }}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-white hover:bg-slate-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 active:scale-95 border border-slate-200 dark:border-zinc-800 text-xs font-bold text-slate-700 dark:text-zinc-200 transition-all cursor-pointer group"
-          >
-            <div className="flex items-center gap-2">
-              <ArrowUpRight className="w-4 h-4 text-violet-600 dark:text-violet-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-              <span>Gym Owner Portal</span>
-            </div>
-            <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-bold">Switch &rarr;</span>
-          </button>
 
           {/* Profile Card */}
           <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800">
@@ -317,7 +301,7 @@ export default function SuperAdminPage() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{user?.email}</p>
-              <p className="text-[9px] text-violet-600 dark:text-violet-400 font-extrabold uppercase tracking-wider">Root Administrator</p>
+              <p className="text-[9px] text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider">Super Admin</p>
             </div>
           </div>
 
@@ -347,8 +331,8 @@ export default function SuperAdminPage() {
       {/* ── Main Content Area with Header ── */}
       <div ref={mainContentRef} className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
         {/* Top Header */}
-        <header className="sticky top-0 z-30 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl border-b border-slate-200 dark:border-zinc-800 px-3 sm:px-8 py-3 flex items-center justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <header className="sticky top-0 z-30 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl border-b border-slate-200 dark:border-zinc-800 px-3 sm:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white cursor-pointer active:scale-95 shrink-0"
@@ -358,12 +342,9 @@ export default function SuperAdminPage() {
             </button>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <h2 className="text-sm sm:text-lg font-black text-slate-900 dark:text-white tracking-tight truncate">
+                <h2 className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate">
                   {currentItem.label}
                 </h2>
-                <span className="text-[9px] sm:text-[10px] font-extrabold uppercase px-1.5 sm:px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-700 dark:text-violet-400 border border-violet-500/20 shrink-0">
-                  Control Center
-                </span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-zinc-400 font-medium hidden sm:block truncate">
                 {currentItem.subtext}
@@ -372,31 +353,26 @@ export default function SuperAdminPage() {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-            {/* Quick Gym App link */}
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-zinc-900 hover:bg-slate-200 dark:hover:bg-zinc-800 active:scale-95 border border-slate-200 dark:border-zinc-800 text-[11px] font-bold text-slate-700 dark:text-zinc-300 hover:text-violet-600 dark:hover:text-violet-400 transition-all cursor-pointer"
-              title="Open Gym Owner Portal"
-            >
-              <ArrowUpRight className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
-              <span className="hidden xs:inline">Gym App</span>
-            </button>
 
             {/* Theme Toggle */}
-            <ThemeToggle variant="segmented" className="hidden sm:inline-flex" />
-            <ThemeToggle variant="compact" className="sm:hidden" />
+            <div className="hidden sm:inline-flex">
+              <ThemeToggle variant="segmented" />
+            </div>
+            <div className="sm:hidden flex items-center">
+              <ThemeToggle variant="compact" />
+            </div>
 
             {/* Live DB Indicator */}
-            <div className="hidden md:flex items-center gap-2 bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-3 py-1.5 rounded-xl text-[11px] font-bold text-slate-700 dark:text-zinc-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>DB Online</span>
+            <div className="hidden md:flex items-center gap-2 bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-3 py-1.5 rounded-xl text-[11px] font-semibold text-slate-700 dark:text-zinc-300">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span>Online</span>
             </div>
 
             {/* Sync Button */}
             <button
               onClick={handleSync}
               disabled={syncing}
-              className="p-2 sm:px-3 sm:py-1.5 bg-slate-100 dark:bg-zinc-900 hover:bg-slate-200 dark:hover:bg-zinc-800 active:scale-95 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-bold text-slate-700 dark:text-zinc-200 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="w-9 h-9 sm:w-auto p-2 sm:px-3 sm:py-1.5 bg-slate-100 dark:bg-zinc-900 hover:bg-slate-200 dark:hover:bg-zinc-800 active:scale-95 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-bold text-slate-700 dark:text-zinc-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
               title="Sync Platform Data"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin text-violet-500' : ''}`} />
@@ -413,7 +389,7 @@ export default function SuperAdminPage() {
         />
 
         {/* ── Main Tab Content ── */}
-        <main className="flex-1 p-3.5 sm:p-8 pb-24 lg:pb-8 max-w-7xl w-full mx-auto space-y-6 sm:space-y-8">
+        <main className="flex-1 p-3.5 sm:p-8 pb-28 sm:pb-32 lg:pb-8 max-w-7xl w-full mx-auto space-y-6 sm:space-y-8">
         {error && (
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
@@ -435,7 +411,7 @@ export default function SuperAdminPage() {
                 className="space-y-8"
               >
                 {/* Platform Summary KPI Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-5">
                   <StatCard 
                     title="Total Registered Gyms"
                     value={stats?.totalGyms || 0}
@@ -444,23 +420,23 @@ export default function SuperAdminPage() {
                     subtext={`Active: ${stats?.activeGyms || 0} | Expired: ${stats?.expiredGyms || 0} | Pending: ${stats?.pendingGyms || 0}`}
                   />
                   <StatCard 
-                    title="Platform Athlete Base"
+                    title="Total Gym Members"
                     value={stats?.totalMembers || 0}
                     icon={<Users className="w-5 h-5" />}
-                    subtext="Aggregated across all verified gyms"
+                    subtext="Across all verified gyms"
                   />
                   <StatCard 
-                    title="Aggregated SaaS Revenue"
+                    title="Total Revenue"
                     value={`₹${(stats?.totalRevenue || 0).toLocaleString('en-IN')}`}
                     icon={<IndianRupee className="w-5 h-5" />}
-                    subtext="Completed SaaS plan collections"
+                    subtext="Collected subscription revenue"
                   />
                   <StatCard 
                     title="Attention Required"
                     value={stats?.expiredGyms || 0}
                     icon={<Activity className="w-5 h-5" />}
-                    trend={stats?.expiredGyms > 0 ? "Expired Plans" : "Clean State"}
-                    subtext={`${stats?.pendingGyms || 0} gym accounts awaiting activation`}
+                    trend={stats?.expiredGyms > 0 ? "Expired Plans" : "All Clear"}
+                    subtext={`${stats?.pendingGyms || 0} gyms awaiting activation`}
                   />
                 </div>
 
@@ -473,20 +449,20 @@ export default function SuperAdminPage() {
                     <div>
                       <div className="flex items-center gap-2 mb-1.5">
                         <Zap className="w-5 h-5 text-emerald-500" />
-                        <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">Master Control Station</h2>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Quick Actions</h2>
                       </div>
                       <p className="text-slate-500 dark:text-zinc-400 text-xs font-medium max-w-xl">
-                        Direct access to core administrative engines. Configure plans, manage tenants, broadcast announcements, and audit database health.
+                        Quickly access gyms, review transactions, handle support, and configure platform settings.
                       </p>
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0">
                       <button 
                         onClick={() => setActiveTab('gyms')}
-                        className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all active:scale-95 cursor-pointer"
+                        className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-5 py-3 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 cursor-pointer"
                       >
                         <Building2 className="w-4 h-4" />
-                        Open Gym Directory
+                        View Gyms
                       </button>
                     </div>
                   </div>
@@ -498,8 +474,8 @@ export default function SuperAdminPage() {
                       className="bg-slate-50 dark:bg-zinc-800/50 hover:bg-slate-100 dark:hover:bg-zinc-800 p-4 rounded-2xl border border-slate-200/90 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 text-left transition-all group cursor-pointer"
                     >
                       <IndianRupee className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mb-2 group-hover:scale-110 transition-transform" />
-                      <p className="text-slate-900 dark:text-white text-xs font-bold">SaaS Financials</p>
-                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Razorpay ledger & MRR</p>
+                      <p className="text-slate-900 dark:text-white text-xs font-bold">Revenue & Ledger</p>
+                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Transactions & payments</p>
                     </button>
 
                     <button
@@ -507,8 +483,8 @@ export default function SuperAdminPage() {
                       className="bg-slate-50 dark:bg-zinc-800/50 hover:bg-slate-100 dark:hover:bg-zinc-800 p-4 rounded-2xl border border-slate-200/90 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 text-left transition-all group cursor-pointer"
                     >
                       <Package className="w-5 h-5 text-amber-600 dark:text-amber-400 mb-2 group-hover:scale-110 transition-transform" />
-                      <p className="text-slate-900 dark:text-white text-xs font-bold">Hardware Orders</p>
-                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Fulfillment & WhatsApp</p>
+                      <p className="text-slate-900 dark:text-white text-xs font-bold">Store Orders</p>
+                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Orders & fulfillment</p>
                     </button>
 
                     <button
@@ -516,8 +492,8 @@ export default function SuperAdminPage() {
                       className="bg-slate-50 dark:bg-zinc-800/50 hover:bg-slate-100 dark:hover:bg-zinc-800 p-4 rounded-2xl border border-slate-200/90 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 text-left transition-all group cursor-pointer"
                     >
                       <ShieldCheck className="w-5 h-5 text-purple-600 dark:text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
-                      <p className="text-slate-900 dark:text-white text-xs font-bold">User Security</p>
-                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">RBAC & Password resets</p>
+                      <p className="text-slate-900 dark:text-white text-xs font-bold">Admin Accounts</p>
+                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Roles & permissions</p>
                     </button>
 
                     <button
@@ -526,7 +502,7 @@ export default function SuperAdminPage() {
                     >
                       <Smartphone className="w-5 h-5 text-blue-600 dark:text-blue-400 mb-2 group-hover:scale-110 transition-transform" />
                       <p className="text-slate-900 dark:text-white text-xs font-bold">Push Notifications</p>
-                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Firebase mobile alerts</p>
+                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Mobile app notifications</p>
                     </button>
 
                     <button
@@ -534,8 +510,8 @@ export default function SuperAdminPage() {
                       className="bg-slate-50 dark:bg-zinc-800/50 hover:bg-slate-100 dark:hover:bg-zinc-800 p-4 rounded-2xl border border-slate-200/90 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 text-left transition-all group cursor-pointer"
                     >
                       <Building2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mb-2 group-hover:scale-110 transition-transform" />
-                      <p className="text-slate-900 dark:text-white text-xs font-bold">Gym Directory</p>
-                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Activate plans & toggles</p>
+                      <p className="text-slate-900 dark:text-white text-xs font-bold">Gyms</p>
+                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Manage gyms & plans</p>
                     </button>
 
                     <button
@@ -543,8 +519,8 @@ export default function SuperAdminPage() {
                       className="bg-slate-50 dark:bg-zinc-800/50 hover:bg-slate-100 dark:hover:bg-zinc-800 p-4 rounded-2xl border border-slate-200/90 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 text-left transition-all group cursor-pointer"
                     >
                       <Users className="w-5 h-5 text-blue-600 dark:text-blue-400 mb-2 group-hover:scale-110 transition-transform" />
-                      <p className="text-slate-900 dark:text-white text-xs font-bold">Athletes Master</p>
-                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Cross-gym user directory</p>
+                      <p className="text-slate-900 dark:text-white text-xs font-bold">Members</p>
+                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">All registered members</p>
                     </button>
 
                     <button
@@ -552,8 +528,8 @@ export default function SuperAdminPage() {
                       className="bg-slate-50 dark:bg-zinc-800/50 hover:bg-slate-100 dark:hover:bg-zinc-800 p-4 rounded-2xl border border-slate-200/90 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 text-left transition-all group cursor-pointer"
                     >
                       <CreditCard className="w-5 h-5 text-purple-600 dark:text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
-                      <p className="text-slate-900 dark:text-white text-xs font-bold">SaaS Plans</p>
-                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Tiers, pricing & limits</p>
+                      <p className="text-slate-900 dark:text-white text-xs font-bold">Subscription Plans</p>
+                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Plans & pricing tiers</p>
                     </button>
 
                     <button
@@ -561,8 +537,8 @@ export default function SuperAdminPage() {
                       className="bg-slate-50 dark:bg-zinc-800/50 hover:bg-slate-100 dark:hover:bg-zinc-800 p-4 rounded-2xl border border-slate-200/90 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 text-left transition-all group cursor-pointer"
                     >
                       <Ticket className="w-5 h-5 text-pink-600 dark:text-pink-400 mb-2 group-hover:scale-110 transition-transform" />
-                      <p className="text-slate-900 dark:text-white text-xs font-bold">Promo Codes</p>
-                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Discounts & Free trials</p>
+                      <p className="text-slate-900 dark:text-white text-xs font-bold">Discount Coupons</p>
+                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Promo codes & discounts</p>
                     </button>
 
                     <button
@@ -570,7 +546,7 @@ export default function SuperAdminPage() {
                       className="bg-slate-50 dark:bg-zinc-800/50 hover:bg-slate-100 dark:hover:bg-zinc-800 p-4 rounded-2xl border border-slate-200/90 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 text-left transition-all group cursor-pointer"
                     >
                       <Megaphone className="w-5 h-5 text-amber-600 dark:text-amber-400 mb-2 group-hover:scale-110 transition-transform" />
-                      <p className="text-slate-900 dark:text-white text-xs font-bold">In-App Broadcasts</p>
+                      <p className="text-slate-900 dark:text-white text-xs font-bold">Announcements</p>
                       <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Platform announcements</p>
                     </button>
 
@@ -579,8 +555,8 @@ export default function SuperAdminPage() {
                       className="bg-slate-50 dark:bg-zinc-800/50 hover:bg-slate-100 dark:hover:bg-zinc-800 p-4 rounded-2xl border border-slate-200/90 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 text-left transition-all group cursor-pointer"
                     >
                       <LifeBuoy className="w-5 h-5 text-cyan-600 dark:text-cyan-400 mb-2 group-hover:scale-110 transition-transform" />
-                      <p className="text-slate-900 dark:text-white text-xs font-bold">Support Tickets</p>
-                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Resolve owner issues</p>
+                      <p className="text-slate-900 dark:text-white text-xs font-bold">Help & Support</p>
+                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Customer requests & queries</p>
                     </button>
 
                     <button
@@ -588,8 +564,8 @@ export default function SuperAdminPage() {
                       className="bg-slate-50 dark:bg-zinc-800/50 hover:bg-slate-100 dark:hover:bg-zinc-800 p-4 rounded-2xl border border-slate-200/90 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 text-left transition-all group cursor-pointer"
                     >
                       <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mb-2 group-hover:scale-110 transition-transform" />
-                      <p className="text-slate-900 dark:text-white text-xs font-bold">Engine Diagnostics</p>
-                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Database & Latency</p>
+                      <p className="text-slate-900 dark:text-white text-xs font-bold">System Status</p>
+                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Database & server health</p>
                     </button>
 
                     <button
@@ -597,8 +573,8 @@ export default function SuperAdminPage() {
                       className="bg-slate-50 dark:bg-zinc-800/50 hover:bg-slate-100 dark:hover:bg-zinc-800 p-4 rounded-2xl border border-slate-200/90 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 text-left transition-all group cursor-pointer"
                     >
                       <Settings2 className="w-5 h-5 text-slate-600 dark:text-slate-300 mb-2 group-hover:scale-110 transition-transform" />
-                      <p className="text-slate-900 dark:text-white text-xs font-bold">System Config</p>
-                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Maintenance & Defaults</p>
+                      <p className="text-slate-900 dark:text-white text-xs font-bold">Platform Settings</p>
+                      <p className="text-slate-500 dark:text-zinc-400 text-[10px] font-medium mt-0.5">Global configuration</p>
                     </button>
                   </div>
                 </motion.div>
@@ -651,7 +627,7 @@ export default function SuperAdminPage() {
             { id: 'dashboard', label: 'Overview', icon: LayoutGrid },
             { id: 'gyms', label: 'Gyms', icon: Building2, badge: stats?.totalGyms },
             { id: 'financials', label: 'Finance', icon: IndianRupee },
-            { id: 'athletes', label: 'Athletes', icon: Users, badge: stats?.totalMembers },
+            { id: 'athletes', label: 'Members', icon: Users, badge: stats?.totalMembers },
             { id: '__more__', label: 'Menu', icon: SlidersHorizontal, isAction: true },
           ].map((tab) => {
             const isActive = activeTab === tab.id;

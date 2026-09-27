@@ -102,43 +102,39 @@ export default function PushBroadcaster() {
     <div className="space-y-6 animate-in fade-in duration-200">
       <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: 'success' })} />
 
-      {/* ── Push Fleet Status KPI Cards (90% Neutral Canvas) ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-5 transition-colors">
-          <div className="flex items-center justify-between mb-3">
-            <Smartphone className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-            <span className="text-[10px] font-black uppercase text-violet-700 dark:text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded-md border border-violet-500/20">
-              Fleet
-            </span>
+      {/* ── Push Fleet Status KPI Cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-2">
+              <span className="text-xs font-semibold">Registered Handsets</span>
+              <Smartphone className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+            </div>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{tokens.length}</p>
           </div>
-          <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Registered Handsets</p>
-          <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">{tokens.length}</p>
-          <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-1 font-medium">Capacitor Android & PWA devices</p>
+          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1.5 font-normal">Capacitor Android & PWA devices</p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-5 transition-colors">
-          <div className="flex items-center justify-between mb-3">
-            <Radio className="w-5 h-5 text-slate-500 dark:text-zinc-400" />
-            <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              Active
-            </span>
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-2">
+              <span className="text-xs font-semibold">Delivery Mode</span>
+              <Radio className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">Dual Relay</p>
           </div>
-          <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Delivery Mode</p>
-          <p className="text-xl font-black text-slate-900 dark:text-white mt-1">Dual Relay</p>
-          <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-1 font-medium">Native FCM push + In-app notification fallback</p>
+          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1.5 font-normal">Native FCM push + In-app notification</p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-5 transition-colors">
-          <div className="flex items-center justify-between mb-3">
-            <Users className="w-5 h-5 text-slate-500 dark:text-zinc-400" />
-            <span className="text-[10px] font-black uppercase text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-zinc-700">
-              Audience
-            </span>
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-2">
+              <span className="text-xs font-semibold">Target Audience</span>
+              <Users className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
+            </div>
+            <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Owners & Members</p>
           </div>
-          <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Target Reach</p>
-          <p className="text-xl font-black text-slate-900 dark:text-white mt-1">Gym Owners & Members</p>
-          <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-1 font-medium">Segmentable by role or platform-wide</p>
+          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1.5 font-normal">Segmentable by user role or platform-wide</p>
         </div>
       </div>
 
@@ -355,7 +351,7 @@ export default function PushBroadcaster() {
                       {timeStr ? new Date(timeStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent'}
                     </td>
                     <td className="px-5 py-3.5 text-right">
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                         Online
                       </span>

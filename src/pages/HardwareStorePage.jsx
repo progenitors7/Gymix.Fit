@@ -194,7 +194,7 @@ export default function HardwareStorePage() {
         </div>
 
         {/* Filter Controls (Search + Category + Brand) */}
-        <div className="p-6 rounded-[2rem] bg-white/[0.01] border border-white/5 backdrop-blur-md max-w-5xl mx-auto space-y-4">
+        <div className="p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] bg-white/[0.01] border border-white/5 backdrop-blur-md max-w-5xl mx-auto space-y-4">
           <div className="flex flex-col md:flex-row gap-4">
             
             {/* Search */}
@@ -209,7 +209,7 @@ export default function HardwareStorePage() {
               />
               {searchQuery && (
                 <button 
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => setSearchQuery('')} 
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-white/5 rounded text-gray-500 hover:text-white"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -218,7 +218,7 @@ export default function HardwareStorePage() {
             </div>
 
             {/* Category Filter */}
-            <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+            <div className="-mx-4 px-4 sm:mx-0 sm:px-0 flex gap-2 overflow-x-auto pb-1 md:pb-0 no-scrollbar w-[calc(100%+2rem)] sm:w-auto">
               {['All', 'Fingerprint', 'Face Recognition', 'Maintenance & Tools'].map(cat => (
                 <button
                   key={cat}
@@ -232,10 +232,11 @@ export default function HardwareStorePage() {
                   {cat}
                 </button>
               ))}
+              <div className="shrink-0 w-4 sm:hidden" aria-hidden="true" />
             </div>
 
             {/* Brand Filter */}
-            <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+            <div className="-mx-4 px-4 sm:mx-0 sm:px-0 flex gap-2 overflow-x-auto pb-1 md:pb-0 no-scrollbar w-[calc(100%+2rem)] sm:w-auto">
               {['All', 'AGARO', 'Portronics', 'eSSL', 'ZKTeco'].map(brand => (
                 <button
                   key={brand}
@@ -249,6 +250,7 @@ export default function HardwareStorePage() {
                   {brand}
                 </button>
               ))}
+              <div className="shrink-0 w-4 sm:hidden" aria-hidden="true" />
             </div>
 
           </div>

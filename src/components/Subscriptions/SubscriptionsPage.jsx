@@ -350,7 +350,7 @@ export default function SubscriptionsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="p-6 sm:p-8 max-w-7xl mx-auto space-y-10"
+        className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-10"
       >
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -389,7 +389,7 @@ export default function SubscriptionsPage() {
               </button>
             )}
           </div>
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          <div className="-mx-4 px-4 sm:mx-0 sm:px-0 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-[calc(100%+2rem)] sm:w-auto">
             {['all', 'active', 'expiring_soon', 'expired'].map((filterKey) => {
               const active = statusFilter === filterKey;
               return (
@@ -406,6 +406,7 @@ export default function SubscriptionsPage() {
                 </button>
               );
             })}
+            <div className="shrink-0 w-4 sm:hidden" aria-hidden="true" />
           </div>
         </div>
 

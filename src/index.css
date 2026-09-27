@@ -54,53 +54,51 @@
 }
 
 .dark.theme-abyss, [data-theme="abyss"] {
-  /* Tier-1 Tech Color Palette - Midnight Abyss (Deep Navy Blue / VS Code Abyss standard) */
-  --color-bg-base: #080C16;
-  --color-bg-surface: #0F172A;
-  --color-bg-surface-elevated: #1E293B;
+  /* Original Classic SaaS Color Palette (Classic Blue & Slate Navy) */
+  --color-bg-base: #0F1117;
+  --color-bg-surface: #1A1F2B;
+  --color-bg-surface-elevated: #242B3B;
   --color-text-primary: #F8FAFC;
   --color-text-secondary: #94A3B8;
   --color-text-muted: #64748B;
-  --border-subtle: #1E293B;
-  --border-highlight: #334155;
-  --divider: #1E293B;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-highlight: rgba(255, 255, 255, 0.16);
+  --divider: rgba(255, 255, 255, 0.08);
 
-  --color-brand-primary: #818CF8;
-  --color-brand-secondary: #6366F1;
+  --color-brand-primary: #3B82F6;
+  --color-brand-secondary: #2563EB;
 
   --color-success: #22C55E;
   --color-warning: #F59E0B;
   --color-danger: #EF4444;
-  --color-info: #38BDF8;
+  --color-info: #0EA5E9;
 
   color-scheme: dark;
 }
 
-/* ── Midnight Abyss Theme Utility Mappings ── */
-.theme-abyss .bg-zinc-950,
-[data-theme="abyss"] .bg-zinc-950 {
-  background-color: #080C16 !important;
+/* ── Original Classic Dark Theme Utility Mappings ── */
+html.theme-abyss,
+html[data-theme="abyss"],
+.dark.theme-abyss,
+[data-theme="abyss"].dark {
+  --color-zinc-950: #0F1117 !important;
+  --color-zinc-900: #1A1F2B !important;
+  --color-zinc-800: #242B3B !important;
+  --color-zinc-700: #334155 !important;
+  --color-zinc-600: #475569 !important;
+  --color-bg-base: #0F1117 !important;
+  --color-bg-surface: #1A1F2B !important;
+  --color-bg-surface-elevated: #242B3B !important;
+  background-color: #0F1117 !important;
 }
 
-.theme-abyss .bg-zinc-900,
-[data-theme="abyss"] .bg-zinc-900 {
-  background-color: #0F172A !important;
+html.theme-abyss body,
+html[data-theme="abyss"] body,
+html.theme-abyss #root,
+html[data-theme="abyss"] #root {
+  background-color: #0F1117 !important;
 }
 
-.theme-abyss .bg-zinc-800,
-[data-theme="abyss"] .bg-zinc-800 {
-  background-color: #1E293B !important;
-}
-
-.theme-abyss .border-zinc-800,
-[data-theme="abyss"] .border-zinc-800 {
-  border-color: #1E293B !important;
-}
-
-.theme-abyss .border-zinc-700,
-[data-theme="abyss"] .border-zinc-700 {
-  border-color: #334155 !important;
-}
 
 /* ── Base ── */
 *, *::before, *::after { 

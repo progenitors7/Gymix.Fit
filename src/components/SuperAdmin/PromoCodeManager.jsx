@@ -158,18 +158,18 @@ export default function PromoCodeManager() {
       </div>
 
       {/* Metric Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4">
-          <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">Total Coupons Created</p>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{codes.length}</p>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-3 sm:p-4">
+          <p className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider truncate">Total Coupons</p>
+          <p className="text-lg sm:text-2xl font-black text-slate-900 dark:text-white mt-0.5">{codes.length}</p>
         </div>
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4">
-          <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">Active & Redeemable</p>
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{activeCount}</p>
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-3 sm:p-4">
+          <p className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider truncate">Active</p>
+          <p className="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{activeCount}</p>
         </div>
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4">
-          <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">Total Redemptions</p>
-          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{totalRedemptions}</p>
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-3 sm:p-4">
+          <p className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider truncate">Redemptions</p>
+          <p className="text-lg sm:text-2xl font-black text-blue-600 dark:text-blue-400 mt-0.5">{totalRedemptions}</p>
         </div>
       </div>
 

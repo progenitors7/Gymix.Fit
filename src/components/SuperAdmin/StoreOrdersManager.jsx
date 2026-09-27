@@ -19,7 +19,9 @@ import {
   X,
   Send,
   MessageCircle,
-  FileText
+  FileText,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { superAdminService } from '../../services/superAdminService';
 import Toast from '../UI/Toast';
@@ -118,15 +120,15 @@ export default function StoreOrdersManager() {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'completed':
-        return 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25';
+        return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400';
       case 'pending':
-        return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25';
+        return 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400';
       case 'shipped':
-        return 'bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/25';
+        return 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400';
       case 'cancelled':
-        return 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/25';
+        return 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400';
       default:
-        return 'bg-slate-500/10 text-slate-700 dark:text-slate-400 border-slate-500/25';
+        return 'bg-slate-100 text-slate-700 dark:bg-zinc-850 dark:text-slate-300';
     }
   };
 
@@ -135,61 +137,49 @@ export default function StoreOrdersManager() {
       <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: 'success' })} />
 
       {/* ── Order Metrics Summary ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-5 relative">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
-              <ShoppingBag className="w-5 h-5" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-2">
+              <span className="text-xs font-semibold">Total Orders</span>
+              <ShoppingBag className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
             </div>
-            <span className="text-[10px] font-black uppercase text-purple-700 dark:text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-full">
-              Store Velocity
-            </span>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{stats.totalCount}</p>
           </div>
-          <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Total Orders Placed</p>
-          <p className="text-3xl font-black text-slate-900 dark:text-white mt-1">{stats.totalCount}</p>
-          <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-2 font-medium">Store & hardware checkout requests</p>
+          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1.5 font-normal">All store customer orders</p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-5 relative">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400">
-              <Clock className="w-5 h-5" />
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-2">
+              <span className="text-xs font-semibold">Pending Orders</span>
+              <Clock className="w-4 h-4 text-amber-500" />
             </div>
-            <span className="text-[10px] font-black uppercase text-amber-700 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
-              Action Required
-            </span>
+            <p className="text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400">{stats.pendingCount}</p>
           </div>
-          <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Pending Orders</p>
-          <p className="text-3xl font-black text-amber-600 dark:text-amber-400 mt-1">{stats.pendingCount}</p>
-          <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-2 font-medium">Awaiting packaging or dispatch</p>
+          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1.5 font-normal">Awaiting dispatch</p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-5 relative">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="w-5 h-5" />
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-2">
+              <span className="text-xs font-semibold">Completed Orders</span>
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
             </div>
-            <span className="text-[10px] font-black uppercase text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-              Fulfillment
-            </span>
+            <p className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">{stats.completedCount}</p>
           </div>
-          <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Completed Orders</p>
-          <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{stats.completedCount}</p>
-          <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-2 font-medium">Delivered & verified purchases</p>
+          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1.5 font-normal">Delivered to customers</p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-5 relative">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <IndianRupee className="w-5 h-5" />
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-2">
+              <span className="text-xs font-semibold">Store Sales</span>
+              <IndianRupee className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
             </div>
-            <span className="text-[10px] font-black uppercase text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-              Store GMV
-            </span>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">₹{stats.totalGMV.toLocaleString('en-IN')}</p>
           </div>
-          <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Gross Merchandise Value</p>
-          <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">₹{stats.totalGMV.toLocaleString('en-IN')}</p>
-          <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-2 font-medium">Aggregate value of all orders</p>
+          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1.5 font-normal">Total value of orders</p>
         </div>
       </div>
 
@@ -211,7 +201,7 @@ export default function StoreOrdersManager() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-full sm:w-auto">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-[calc(100%+1.75rem)] sm:w-auto -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
           {[
             { key: 'all', label: 'All Orders', count: orders.length },
             { key: 'pending', label: 'Pending', count: orders.filter(o => o.status === 'pending').length },
@@ -252,6 +242,8 @@ export default function StoreOrdersManager() {
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-violet-500' : ''}`} />
           </button>
+
+          <div className="shrink-0 w-3.5 sm:hidden" aria-hidden="true" />
         </div>
       </div>
 
@@ -319,7 +311,7 @@ export default function StoreOrdersManager() {
                         </td>
 
                         <td className="px-5 py-3.5">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider border ${getStatusBadge(order.status)}`}>
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${getStatusBadge(order.status)}`}>
                             <span className="w-1.5 h-1.5 rounded-full bg-current" />
                             {order.status || 'pending'}
                           </span>
@@ -333,7 +325,7 @@ export default function StoreOrdersManager() {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => setSelectedOrder(order)}
-                              className="p-2 bg-slate-100 dark:bg-zinc-800 hover:bg-emerald-500/15 hover:text-emerald-600 dark:hover:text-emerald-400 text-slate-600 dark:text-zinc-300 rounded-xl transition-all cursor-pointer"
+                              className="p-2 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 rounded-lg transition-all cursor-pointer"
                               title="Inspect Order Details & Fulfill"
                             >
                               <Eye className="w-4 h-4" />
@@ -358,12 +350,12 @@ export default function StoreOrdersManager() {
                         <p className="text-slate-900 dark:text-white font-bold text-sm leading-tight">{order.members?.full_name || 'Customer'}</p>
                         <p className="text-[10px] text-slate-500 dark:text-zinc-400 mt-0.5">{order.gyms?.gym_name || 'Gym'}</p>
                       </div>
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${getStatusBadge(order.status)}`}>
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${getStatusBadge(order.status)}`}>
                         {order.status || 'pending'}
                       </span>
                     </div>
 
-                    <div className="bg-slate-50 dark:bg-zinc-800/50 border border-slate-200/80 dark:border-zinc-800 rounded-xl p-3 space-y-1.5 text-xs">
+                    <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-xl p-3 space-y-1.5 text-xs">
                       {items.map((it, idx) => (
                         <div key={idx} className="flex justify-between text-slate-700 dark:text-zinc-300">
                           <span className="truncate pr-2">{it.name} (x{it.quantity || 1})</span>
@@ -384,7 +376,7 @@ export default function StoreOrdersManager() {
                             href={`https://wa.me/91${order.members.phone_number.replace(/\D/g, '')}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-xl"
+                            className="p-2 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 rounded-lg hover:bg-emerald-100 transition-colors"
                             title="Chat on WhatsApp"
                           >
                             <MessageCircle className="w-4 h-4" />
@@ -412,44 +404,64 @@ export default function StoreOrdersManager() {
 
             {/* ── Pagination Controls ── */}
             {filtered.length > 0 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 bg-slate-50/80 dark:bg-zinc-950/60 border-t border-slate-200 dark:border-zinc-800 text-xs text-slate-500 dark:text-zinc-400">
-                <div className="flex items-center gap-3">
-                  <span>
-                    Showing <strong className="text-slate-900 dark:text-white">{(page - 1) * perPage + 1}</strong> to <strong className="text-slate-900 dark:text-white">{Math.min(page * perPage, filtered.length)}</strong> of <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{filtered.length}</strong> orders
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-3.5 sm:px-5 py-3.5 bg-slate-50/80 dark:bg-zinc-950/60 border-t border-slate-200 dark:border-zinc-800 text-xs text-slate-500 dark:text-zinc-400">
+                <div className="flex items-center justify-between w-full sm:w-auto gap-2">
+                  <span className="text-[11px] sm:text-xs">
+                    Showing <strong className="text-slate-900 dark:text-white font-bold">{(page - 1) * perPage + 1}</strong> to <strong className="text-slate-900 dark:text-white font-bold">{Math.min(page * perPage, filtered.length)}</strong> of <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{filtered.length}</strong> orders
                   </span>
-                  <div className="flex items-center gap-1.5 ml-2 border-l border-slate-200 dark:border-zinc-800 pl-3">
-                    <span>Rows:</span>
+                  <div className="flex items-center gap-1.5 shrink-0 pl-2.5 sm:pl-3 border-l border-slate-200 dark:border-zinc-800">
+                    <span className="text-[11px] sm:text-xs">Rows:</span>
                     <select
                       value={perPage}
                       onChange={(e) => setPerPage(Number(e.target.value))}
-                      className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-emerald-500 cursor-pointer"
+                      aria-label="Rows per page"
+                      className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white rounded-lg px-2 py-1 text-xs font-semibold focus:outline-none focus:border-emerald-500 cursor-pointer"
                     >
                       <option value={10}>10</option>
+                      <option value={15}>15</option>
                       <option value={20}>20</option>
+                      <option value={25}>25</option>
                       <option value={50}>50</option>
+                      <option value={100}>100</option>
                     </select>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2 pt-1 sm:pt-0 border-t border-slate-200/60 dark:border-zinc-800/60 sm:border-0">
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page <= 1}
-                    className="px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all font-bold"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all font-bold text-xs shadow-2xs active:scale-95"
                   >
-                    Previous
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Previous</span>
                   </button>
 
-                  <span className="px-3 text-xs font-bold text-slate-900 dark:text-white">
-                    Page {page} of {totalPages}
-                  </span>
+                  <div className="flex items-center gap-1.5 bg-white dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-lg px-2.5 py-1 text-xs font-semibold shadow-2xs">
+                    <span className="text-slate-500 dark:text-zinc-400 text-[11px]">Page</span>
+                    <select
+                      value={page}
+                      onChange={(e) => setPage(Number(e.target.value))}
+                      aria-label="Select page"
+                      className="bg-transparent text-slate-900 dark:text-white font-extrabold focus:outline-none cursor-pointer py-0.5 text-xs text-center"
+                    >
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                        <option key={p} value={p} className="bg-white dark:bg-zinc-900 text-slate-900 dark:text-white">
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="text-slate-400 dark:text-zinc-600">/</span>
+                    <span className="text-slate-700 dark:text-zinc-300 font-extrabold text-xs">{totalPages}</span>
+                  </div>
 
                   <button
                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
-                    className="px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all font-bold"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all font-bold text-xs shadow-2xs active:scale-95"
                   >
-                    Next
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -526,8 +538,8 @@ export default function StoreOrdersManager() {
 
               {/* Customer Notes */}
               {selectedOrder.notes && (
-                <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 text-xs">
-                  <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">Customer / Delivery Note</p>
+                <div className="bg-amber-50/70 dark:bg-amber-950/30 rounded-xl p-3.5 text-xs">
+                  <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider mb-1">Customer / Delivery Note</p>
                   <p className="text-slate-700 dark:text-zinc-300 italic">"{selectedOrder.notes}"</p>
                 </div>
               )}

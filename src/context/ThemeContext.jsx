@@ -90,7 +90,7 @@ export function ThemeProvider({ children }) {
     // Dynamic mobile browser address bar color sync
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', isAbyss ? '#080C16' : isDark ? '#09090B' : '#FFFFFF');
+      metaThemeColor.setAttribute('content', isAbyss ? '#0F1117' : isDark ? '#09090B' : '#FFFFFF');
     }
   }, [isDark, isAbyss]);
 

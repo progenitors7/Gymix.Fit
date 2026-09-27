@@ -20,6 +20,8 @@ import {
   User,
   ExternalLink,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Edit2,
   Sliders,
   ToggleLeft,
@@ -63,27 +65,70 @@ function PaginationControls({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-slate-50/80 dark:bg-zinc-950/60 border-t border-slate-200 dark:border-zinc-800 text-xs text-slate-500 dark:text-zinc-400">
-      <div className="flex items-center gap-3">
-        <span>
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-3.5 sm:px-6 py-3 sm:py-4 bg-slate-50/80 dark:bg-zinc-950/60 border-t border-slate-200 dark:border-zinc-800 text-xs text-slate-500 dark:text-zinc-400">
+      <div className="flex items-center justify-between w-full sm:w-auto gap-2">
+        <span className="text-[11px] sm:text-xs">
           Showing <strong className="text-slate-900 dark:text-white font-bold">{startItem}</strong> to <strong className="text-slate-900 dark:text-white font-bold">{endItem}</strong> of <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{totalItems}</strong> {itemName}
         </span>
-        <div className="flex items-center gap-1.5 ml-2 border-l border-slate-200 dark:border-zinc-800 pl-3">
-          <span>Rows:</span>
+        <div className="flex items-center gap-1.5 shrink-0 pl-2.5 sm:pl-3 border-l border-slate-200 dark:border-zinc-800">
+          <span className="text-[11px] sm:text-xs">Rows:</span>
           <select
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-emerald-500 cursor-pointer"
+            aria-label="Rows per page"
+            className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white rounded-lg px-2 py-1 text-xs font-semibold focus:outline-none focus:border-emerald-500 cursor-pointer"
           >
             <option value={10}>10</option>
+            <option value={15}>15</option>
             <option value={20}>20</option>
+            <option value={25}>25</option>
             <option value={50}>50</option>
             <option value={100}>100</option>
           </select>
         </div>
       </div>
 
-      <div className="flex items-center gap-1">
+      {/* Mobile Pagination Controls (< sm) */}
+      <div className="flex sm:hidden items-center justify-between w-full gap-2 pt-1 border-t border-slate-200/60 dark:border-zinc-800/60">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage <= 1}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all font-bold text-xs shadow-2xs active:scale-95"
+        >
+          <ChevronLeft className="w-3.5 h-3.5" />
+          <span>Prev</span>
+        </button>
+
+        <div className="flex items-center gap-1.5 bg-white dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-lg px-2.5 py-1 text-xs font-semibold shadow-2xs">
+          <span className="text-slate-500 dark:text-zinc-400 text-[11px]">Page</span>
+          <select
+            value={currentPage}
+            onChange={(e) => onPageChange(Number(e.target.value))}
+            aria-label="Select page"
+            className="bg-transparent text-slate-900 dark:text-white font-extrabold focus:outline-none cursor-pointer py-0.5 text-xs text-center"
+          >
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <option key={p} value={p} className="bg-white dark:bg-zinc-900 text-slate-900 dark:text-white">
+                {p}
+              </option>
+            ))}
+          </select>
+          <span className="text-slate-400 dark:text-zinc-600">/</span>
+          <span className="text-slate-700 dark:text-zinc-300 font-extrabold text-xs">{totalPages}</span>
+        </div>
+
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all font-bold text-xs shadow-2xs active:scale-95"
+        >
+          <span>Next</span>
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Desktop Pagination Controls (>= sm) */}
+      <div className="hidden sm:flex items-center gap-1">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 1}
@@ -102,7 +147,7 @@ function PaginationControls({
                 onClick={() => onPageChange(p)}
                 className={`min-w-[32px] h-8 rounded-lg text-xs font-black transition-all cursor-pointer ${
                   currentPage === p
-                    ? 'bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-black'
+                    ? 'bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-black shadow-xs'
                     : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700'
                 }`}
               >
@@ -147,7 +192,7 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
   const [membersSearch, setMembersSearch] = useState('');
   const [membersStatusFilter, setMembersStatusFilter] = useState('all');
   const [membersPage, setMembersPage] = useState(1);
-  const [membersPerPage, setMembersPerPage] = useState(15);
+  const [membersPerPage, setMembersPerPage] = useState(10);
 
   // Shared Action States
   const navigate = useNavigate();
@@ -433,7 +478,7 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
           {/* Quick Status Filter Summary Cards */}
           {/* Quick Status Filter Floating Pills - Matching Subscriptions */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-[calc(100%+1.75rem)] sm:w-auto -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
             {[
               { key: 'all', label: 'All Gyms', count: gyms.length },
               { key: 'active', label: 'Active Plans', count: gyms.filter(g => g.status === 'active').length },
@@ -463,6 +508,7 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
                 </button>
               );
             })}
+            <div className="shrink-0 w-3.5 sm:hidden" aria-hidden="true" />
           </div>
 
           {/* Filters & Search - Floating on Canvas */}
@@ -521,7 +567,7 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
                     <tr key={gym.id} className="block sm:table-row bg-white dark:bg-zinc-900 sm:bg-transparent rounded-2xl sm:rounded-none mb-4 sm:mb-0 border border-slate-200 dark:border-zinc-800 sm:border-none p-4 sm:p-0 hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors group relative">
                       <td className="block sm:table-cell px-2 py-3 sm:px-6 sm:py-4">
                         <div className="flex items-center gap-3.5">
-                          <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-black text-base border border-slate-200 dark:border-zinc-700 overflow-hidden shrink-0">
+                          <div className="w-11 h-11 rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-base overflow-hidden shrink-0">
                             {gym.owner_profile?.avatar_url ? (
                               <img src={gym.owner_profile.avatar_url} alt="Owner" className="w-full h-full object-cover" />
                             ) : (
@@ -557,7 +603,7 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
                       </td>
                       <td className="block sm:table-cell px-2 py-2 sm:px-6 sm:py-4">
                         <span className="sm:hidden text-[10px] text-slate-400 uppercase font-bold mr-2">Plan:</span>
-                        <span className="bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wide">
+                        <span className="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase tracking-wide">
                           {gym.saas_plans?.name || 'Starter Plan'}
                         </span>
                       </td>
@@ -571,17 +617,17 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
                             </div>
                             <div>
                               {gym.days_left > 0 ? (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
                                   <Clock className="w-3 h-3" />
                                   {gym.days_left} {gym.days_left === 1 ? 'day' : 'days'} left
                                 </span>
                               ) : gym.days_left === 0 ? (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
                                   <Clock className="w-3 h-3" />
                                   Expires Today
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400">
                                   <Clock className="w-3 h-3" />
                                   Expired ({Math.abs(gym.days_left)}d ago)
                                 </span>
@@ -599,10 +645,10 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
                       <td className="block sm:table-cell px-2 py-3 sm:px-6 sm:py-4">
                         <span className="sm:hidden text-[10px] text-slate-400 uppercase font-bold mr-2">Status:</span>
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                          gym.status === 'active' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20' : 
-                          gym.status === 'expired' ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20' : 
-                          gym.status === 'blocked' ? 'bg-slate-500/10 text-slate-700 dark:text-slate-400 border border-slate-500/20' : 
-                          'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20'
+                          gym.status === 'active' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' : 
+                          gym.status === 'expired' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' : 
+                          gym.status === 'blocked' ? 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-slate-400' : 
+                          'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
                         }`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${
                             gym.status === 'active' ? 'bg-emerald-500' : 
@@ -725,10 +771,10 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
       {activeSubTab === 'members' && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
           {/* Quick Status Filter Floating Pills - Matching Subscriptions & Owners */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-[calc(100%+1.75rem)] sm:w-auto -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
             {[
-              { key: 'all', label: 'All Athletes', count: members.length },
-              { key: 'active', label: 'Active Pass', count: members.filter(m => m.status === 'active').length },
+              { key: 'all', label: 'All Members', count: members.length },
+              { key: 'active', label: 'Active', count: members.filter(m => m.status === 'active').length },
               { key: 'expired', label: 'Expired', count: members.filter(m => m.status === 'expired').length },
               { key: 'expiring_soon', label: 'Expiring Soon', count: members.filter(m => m.status === 'expiring_soon').length },
             ].map((tab) => {
@@ -754,6 +800,7 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
                 </button>
               );
             })}
+            <div className="shrink-0 w-3.5 sm:hidden" aria-hidden="true" />
           </div>
 
           {/* Filters & Search - Floating on Canvas */}
@@ -762,7 +809,7 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-zinc-500 group-focus-within:text-violet-500 transition-colors" />
               <input
                 type="text"
-                placeholder="Search athlete by name, phone, email, gym..."
+                placeholder="Search member by name, phone, email, gym..."
                 value={membersSearch}
                 onChange={(e) => setMembersSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors"
@@ -774,8 +821,8 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
                 onChange={(e) => setMembersStatusFilter(e.target.value)}
                 className="w-full sm:w-auto appearance-none bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl pl-4 pr-10 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-200 transition-colors focus:outline-none focus:border-violet-500 cursor-pointer"
               >
-                <option value="all">All Pass Status</option>
-                <option value="active">Active Pass</option>
+                <option value="all">All Status</option>
+                <option value="active">Active Members</option>
                 <option value="expired">Expired Pass</option>
                 <option value="expiring_soon">Expiring Soon</option>
               </select>
@@ -791,123 +838,218 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
             </button>
           </div>
 
-          {/* Members Table */}
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl overflow-hidden relative">
-            <div className="overflow-x-auto">
+            {/* Members Table */}
+            <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl overflow-hidden relative">
               {membersLoading && members.length === 0 ? (
                 <div className="py-20 text-center text-slate-500 dark:text-zinc-400 font-medium text-xs">Loading athlete directory...</div>
               ) : (
                 <>
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50/80 dark:bg-zinc-950/60 border-b border-slate-200 dark:border-zinc-800">
-                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Athlete Details</th>
-                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Connected Gym</th>
-                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Join & Expiry</th>
-                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Plan / Package</th>
-                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Status</th>
-                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/80">
-                      {paginatedMembers.map((member) => (
-                        <tr key={member.id} className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors group">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3.5">
-                              <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-violet-600 dark:text-violet-400 font-black text-base border border-slate-200 dark:border-zinc-700 overflow-hidden shrink-0">
-                                {(member.avatar_url || member.profiles?.avatar_url) ? (
-                                  <img src={member.avatar_url || member.profiles.avatar_url} alt="Athlete" className="w-full h-full object-cover" />
-                                ) : (
-                                  member.full_name ? member.full_name.charAt(0).toUpperCase() : 'M'
-                                )}
-                              </div>
-                              <div className="space-y-0.5 min-w-0">
-                                <p className="text-slate-900 dark:text-white font-bold text-sm tracking-tight truncate">{member.full_name || 'No Name Athlete'}</p>
-                                <div className="flex flex-col">
-                                  <div className="flex items-center gap-1 text-slate-600 dark:text-zinc-400 text-[11px] font-semibold truncate">
-                                    <Phone className="w-3 h-3 text-slate-400 dark:text-zinc-500 shrink-0" />
-                                    <span>{member.phone_number || 'No Phone'}</span>
-                                  </div>
-                                  {member.profiles?.email && (
-                                    <div className="flex items-center gap-1 text-slate-400 dark:text-zinc-500 text-[10px] font-mono truncate">
-                                      <Mail className="w-2.5 h-2.5 shrink-0" />
-                                      <span className="truncate">{member.profiles.email}</span>
-                                    </div>
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50/80 dark:bg-zinc-950/60 border-b border-slate-200 dark:border-zinc-800">
+                          <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Athlete Details</th>
+                          <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Connected Gym</th>
+                          <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Join & Expiry</th>
+                          <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Plan / Package</th>
+                          <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Status</th>
+                          <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/80">
+                        {paginatedMembers.map((member) => (
+                          <tr key={member.id} className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors group">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3.5">
+                                <div className="w-11 h-11 rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-violet-600 dark:text-violet-400 font-bold text-base overflow-hidden shrink-0">
+                                  {(member.avatar_url || member.profiles?.avatar_url) ? (
+                                    <img src={member.avatar_url || member.profiles.avatar_url} alt="Athlete" className="w-full h-full object-cover" />
+                                  ) : (
+                                    member.full_name ? member.full_name.charAt(0).toUpperCase() : 'M'
                                   )}
                                 </div>
+                                <div className="space-y-0.5 min-w-0">
+                                  <p className="text-slate-900 dark:text-white font-bold text-sm tracking-tight truncate">{member.full_name || 'No Name Athlete'}</p>
+                                  <div className="flex flex-col">
+                                    <div className="flex items-center gap-1 text-slate-600 dark:text-zinc-400 text-[11px] font-semibold truncate">
+                                      <Phone className="w-3 h-3 text-slate-400 dark:text-zinc-500 shrink-0" />
+                                      <span>{member.phone_number || 'No Phone'}</span>
+                                    </div>
+                                    {member.profiles?.email && (
+                                      <div className="flex items-center gap-1 text-slate-400 dark:text-zinc-500 text-[10px] font-mono truncate">
+                                        <Mail className="w-2.5 h-2.5 shrink-0" />
+                                        <span className="truncate">{member.profiles.email}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            {member.gyms ? (
-                              <div className="space-y-1">
-                                <p className="text-slate-900 dark:text-white font-bold text-xs flex items-center gap-1.5">
-                                  <Building2 className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500" />
-                                  {member.gyms.gym_name}
+                            </td>
+                            <td className="px-6 py-4">
+                              {member.gyms ? (
+                                <div className="space-y-1">
+                                  <p className="text-slate-900 dark:text-white font-bold text-xs flex items-center gap-1.5">
+                                    <Building2 className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500" />
+                                    {member.gyms.gym_name}
+                                  </p>
+                                  <span className="text-violet-600 dark:text-violet-400 font-mono text-[10px] font-semibold bg-violet-50 dark:bg-violet-950/40 px-2 py-0.5 rounded inline-block">
+                                    Code: {member.gyms.unique_code}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-slate-400 dark:text-zinc-600 text-xs font-bold">Unlinked</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="space-y-1 text-[11px] font-medium">
+                                <p className="text-slate-600 dark:text-zinc-400 flex items-center gap-1">
+                                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                  <span>Join: {member.join_date ? new Date(member.join_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'}</span>
                                 </p>
-                                <span className="text-violet-600 dark:text-violet-400 font-mono text-[9px] font-black tracking-widest uppercase bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-md inline-block">
-                                  Code: {member.gyms.unique_code}
-                                </span>
+                                <p className="text-rose-600 dark:text-rose-400 flex items-center gap-1 font-semibold">
+                                  <Calendar className="w-3.5 h-3.5 text-rose-500/60" />
+                                  <span>Expr: {member.expiry_date ? new Date(member.expiry_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
+                                </p>
                               </div>
-                            ) : (
-                              <span className="text-slate-400 dark:text-zinc-600 text-xs font-bold">Unlinked</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="space-y-1 text-[11px] font-medium">
-                              <p className="text-slate-600 dark:text-zinc-400 flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5 text-slate-400" />
-                                <span>Join: {member.join_date ? new Date(member.join_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'}</span>
-                              </p>
-                              <p className="text-rose-600 dark:text-rose-400 flex items-center gap-1 font-semibold">
-                                <Calendar className="w-3.5 h-3.5 text-rose-500/60" />
-                                <span>Expr: {member.expiry_date ? new Date(member.expiry_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
-                              </p>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-[11px] font-medium px-2 py-0.5 rounded-md">
+                                <Tag className="w-3.5 h-3.5 text-violet-500 shrink-0" />
+                                {member.membership_plan || 'General Plan'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                                member.status === 'active' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' : 
+                                member.status === 'expired' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' : 
+                                'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                  member.status === 'active' ? 'bg-emerald-500' : 
+                                  member.status === 'expired' ? 'bg-rose-500' : 
+                                  'bg-amber-500'
+                                }`} />
+                                {member.status || 'active'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  onClick={() => setEditMemberModal({ isOpen: true, member: { ...member } })}
+                                  className="p-2 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 rounded-lg transition-all cursor-pointer"
+                                  title="Edit Athlete Details & Expiry Date"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteMember(member.id)}
+                                  disabled={updatingId === member.id}
+                                  className="p-2 bg-slate-100 dark:bg-zinc-800 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 text-slate-600 dark:text-zinc-300 rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                                  title="Delete Athlete Record & Auth Profile"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile Stacked Athlete Cards */}
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-zinc-800">
+                    {paginatedMembers.map((member) => (
+                      <div key={member.id} className="p-4 space-y-3 hover:bg-slate-50/60 dark:hover:bg-zinc-800/30 transition-colors">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center font-bold text-slate-700 dark:text-zinc-300 text-sm shrink-0 overflow-hidden">
+                              {(member.avatar_url || member.profiles?.avatar_url) ? (
+                                <img src={member.avatar_url || member.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                member.full_name ? member.full_name.charAt(0).toUpperCase() : 'M'
+                              )}
                             </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-[11px] font-bold px-2.5 py-1 rounded-xl border border-slate-200 dark:border-zinc-700">
-                              <Tag className="w-3.5 h-3.5 text-violet-500 shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-slate-900 dark:text-white font-bold text-sm truncate">{member.full_name || 'No Name Athlete'}</p>
+                              <p className="text-[11px] text-slate-500 dark:text-zinc-400 font-mono truncate">{member.profiles?.email || member.phone_number || 'No email'}</p>
+                            </div>
+                          </div>
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider shrink-0 ${
+                            member.status === 'active' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' : 
+                            member.status === 'expired' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' : 
+                            'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              member.status === 'active' ? 'bg-emerald-500' : 
+                              member.status === 'expired' ? 'bg-rose-500' : 
+                              'bg-amber-500'
+                            }`} />
+                            {member.status || 'active'}
+                          </span>
+                        </div>
+
+                        {/* Connected Gym & Package */}
+                        <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-xl p-3 space-y-2 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500 dark:text-zinc-400 text-[11px]">Gym:</span>
+                            <span className="font-bold text-slate-800 dark:text-zinc-200 flex items-center gap-1 truncate max-w-[190px]">
+                              <Building2 className="w-3 h-3 text-slate-400" />
+                              {member.gyms?.gym_name || 'Unlinked'}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500 dark:text-zinc-400 text-[11px]">Plan:</span>
+                            <span className="font-semibold text-slate-900 dark:text-white bg-slate-200/60 dark:bg-zinc-700/60 px-2 py-0.5 rounded-md text-[10px]">
                               {member.membership_plan || 'General Plan'}
                             </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                              member.status === 'active' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20' : 
-                              member.status === 'expired' ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20' : 
-                              'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20'
-                            }`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${
-                                member.status === 'active' ? 'bg-emerald-500' : 
-                                member.status === 'expired' ? 'bg-rose-500' : 
-                                'bg-amber-500'
-                              }`} />
-                              {member.status || 'active'}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500 dark:text-zinc-400 text-[11px]">Expires:</span>
+                            <span className={`font-bold text-[11px] ${member.status === 'expired' ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-zinc-300'}`}>
+                              {member.expiry_date ? new Date(member.expiry_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
                             </span>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
-                              <button
-                                onClick={() => setEditMemberModal({ isOpen: true, member: { ...member } })}
-                                className="p-2 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 rounded-xl transition-all cursor-pointer"
-                                title="Edit Athlete Details & Expiry Date"
+                          </div>
+                        </div>
+
+                        {/* Footer Actions */}
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="flex items-center gap-2">
+                            {member.phone_number && (
+                              <a
+                                href={`https://wa.me/91${member.phone_number.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 rounded-lg flex items-center gap-1.5 text-xs font-semibold"
+                                title="Chat on WhatsApp"
                               >
-                                <Edit2 className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteMember(member.id)}
-                                disabled={updatingId === member.id}
-                                className="p-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-700 dark:text-rose-400 rounded-xl transition-all cursor-pointer disabled:opacity-50"
-                                title="Delete Athlete Record & Auth Profile"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                                <Phone className="w-3 h-3" />
+                                <span>{member.phone_number}</span>
+                              </a>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setEditMemberModal({ isOpen: true, member: { ...member } })}
+                              className="px-3 py-1.5 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                            >
+                              <Edit2 className="w-3 h-3" />
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteMember(member.id)}
+                              disabled={updatingId === member.id}
+                              className="p-1.5 bg-slate-100 dark:bg-zinc-800 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 text-slate-600 dark:text-zinc-300 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                              title="Delete Athlete"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                   <PaginationControls
                     currentPage={membersPage}
                     totalPages={totalMemberPages}
@@ -915,25 +1057,24 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
                     pageSize={membersPerPage}
                     onPageChange={setMembersPage}
                     onPageSizeChange={setMembersPerPage}
-                    itemName="athletes"
+                    itemName="members"
                   />
                 </>
               )}
               {filteredMembers.length === 0 && !membersLoading && (
                 <div className="py-20 text-center">
                   <AlertCircle className="w-10 h-10 text-slate-400 dark:text-zinc-600 mx-auto mb-3" />
-                  <p className="text-slate-600 dark:text-zinc-400 font-bold text-xs">No athletes found matching your query.</p>
+                  <p className="text-slate-600 dark:text-zinc-400 font-bold text-xs">No members found matching your search.</p>
                 </div>
               )}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Activation Modal */}
       {activationModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-7 w-full max-w-md relative zoom-in-95 animate-in duration-150">
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 sm:p-7 w-full max-w-md relative zoom-in-95 animate-in duration-150 max-h-[90vh] overflow-y-auto">
             <button 
               onClick={() => setActivationModal({ isOpen: false, gymId: null, gymName: '' })}
               className="absolute top-5 right-5 p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
@@ -1027,7 +1168,7 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
       {/* Edit Athlete / Member Modal */}
       {editMemberModal.isOpen && editMemberModal.member && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-7 w-full max-w-md relative zoom-in-95 animate-in duration-150">
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 sm:p-7 w-full max-w-md relative zoom-in-95 animate-in duration-150 max-h-[90vh] overflow-y-auto">
             <button 
               onClick={() => setEditMemberModal({ isOpen: false, member: null })}
               className="absolute top-5 right-5 p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"

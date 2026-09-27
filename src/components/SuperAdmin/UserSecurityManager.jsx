@@ -20,6 +20,8 @@ import {
   MoreVertical,
   ExternalLink,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Lock,
   Trash2,
   ArrowUpDown,
@@ -198,28 +200,28 @@ export default function UserSecurityManager() {
     switch (role) {
       case 'super_admin':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/15 text-rose-300 border border-rose-500/30">
-            <ShieldAlert className="w-3 h-3 text-rose-400" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400">
+            <ShieldAlert className="w-3 h-3" />
             Super Admin
           </span>
         );
       case 'owner':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-            <Building2 className="w-3 h-3 text-indigo-400" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400">
+            <Building2 className="w-3 h-3" />
             Gym Owner
           </span>
         );
       case 'member':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-            <Users className="w-3 h-3 text-emerald-400" />
-            Athlete / Member
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+            <Users className="w-3 h-3" />
+            Member
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-500/15 text-slate-300 border border-slate-500/30">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300">
             {role || 'User'}
           </span>
         );
@@ -231,21 +233,19 @@ export default function UserSecurityManager() {
       {/* ── Top Header & Sync ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-zinc-800">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-              <ShieldCheck className="w-5 h-5" />
-            </span>
-            <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">User Security & Identity Governance</h2>
+          <div className="flex items-center gap-2.5">
+            <ShieldCheck className="w-5 h-5 text-purple-600 dark:text-purple-400 shrink-0" />
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Admin Accounts & User Access</h2>
           </div>
-          <p className="text-slate-500 dark:text-zinc-400 text-xs font-semibold mt-1">
-            Centrally govern all 147+ platform accounts, enforce RBAC roles, trigger password recoveries, and inspect tenant links.
+          <p className="text-slate-500 dark:text-zinc-400 text-xs font-normal mt-1">
+            Manage user accounts, roles, password resets, and gym affiliations.
           </p>
         </div>
 
         <button
           onClick={fetchUsers}
           disabled={loading}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-750 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-750 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-semibold transition-all disabled:opacity-50 cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-purple-600 dark:text-purple-400' : ''}`} />
           <span>Refresh Accounts</span>
@@ -256,11 +256,11 @@ export default function UserSecurityManager() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
           <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider mb-2">
-            <span>Total Profiles</span>
+            <span>Total Users</span>
             <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
           </div>
           <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">{metrics.total}</p>
-          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1 font-medium">Registered identity records</p>
+          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1 font-medium">Registered user accounts</p>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
@@ -269,16 +269,16 @@ export default function UserSecurityManager() {
             <Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
           </div>
           <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">{metrics.owners}</p>
-          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1 font-medium">Tenant administrators</p>
+          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1 font-medium">Verified gym owners</p>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
           <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2">
-            <span>Athletes & Members</span>
+            <span>Gym Members</span>
             <UserCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
           <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">{metrics.members}</p>
-          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1 font-medium">End-user gym members</p>
+          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1 font-medium">Active gym members</p>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
@@ -287,7 +287,7 @@ export default function UserSecurityManager() {
             <ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400" />
           </div>
           <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">{metrics.superAdmins}</p>
-          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1 font-medium">Root authority accounts</p>
+          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1 font-medium">Full access admin accounts</p>
         </div>
       </div>
 
@@ -315,11 +315,11 @@ export default function UserSecurityManager() {
           </div>
 
           {/* Role Filter Floating Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-[calc(100%+1.75rem)] sm:w-auto -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
             {[
               { id: 'all', label: 'All Roles', count: metrics.total },
               { id: 'owner', label: 'Gym Owners', count: metrics.owners },
-              { id: 'member', label: 'Athletes', count: metrics.members },
+              { id: 'member', label: 'Members', count: metrics.members },
               { id: 'super_admin', label: 'Super Admins', count: metrics.superAdmins }
             ].map(tab => {
               const isActive = roleFilter === tab.id;
@@ -344,6 +344,7 @@ export default function UserSecurityManager() {
                 </button>
               );
             })}
+            <div className="shrink-0 w-3.5 sm:hidden" aria-hidden="true" />
           </div>
         </div>
 
@@ -358,7 +359,7 @@ export default function UserSecurityManager() {
             >
               <option value="all">All Profiles</option>
               <option value="has_gym">Owns a Gym</option>
-              <option value="has_member">Active Athlete</option>
+              <option value="has_member">Gym Member</option>
               <option value="unlinked">Unlinked Accounts</option>
             </select>
           </div>
@@ -384,8 +385,8 @@ export default function UserSecurityManager() {
       {/* ── Content View: Mobile Cards & Desktop Table ── */}
       {loading ? (
         <div className="py-20 flex flex-col items-center justify-center bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800">
-          <RefreshCw className="w-8 h-8 text-purple-600 dark:text-purple-400 animate-spin mb-3" />
-          <p className="text-slate-500 dark:text-zinc-400 text-xs font-bold uppercase tracking-widest">Loading User Security Matrix...</p>
+          <RefreshCw className="w-6 h-6 text-violet-600 dark:text-violet-400 animate-spin mb-3" />
+          <p className="text-slate-500 dark:text-zinc-400 text-xs font-semibold">Loading user accounts...</p>
         </div>
       ) : filteredUsers.length === 0 ? (
         <div className="py-16 text-center bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6">
@@ -405,7 +406,7 @@ export default function UserSecurityManager() {
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center font-bold text-purple-600 dark:text-purple-400 text-sm shrink-0 overflow-hidden">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center font-bold text-slate-700 dark:text-zinc-300 text-sm shrink-0 overflow-hidden">
                       {u.avatar_url ? (
                         <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -423,7 +424,7 @@ export default function UserSecurityManager() {
                 </div>
 
                 {/* Tenant Association Info */}
-                <div className="bg-slate-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-slate-200/80 dark:border-zinc-700/60 text-xs space-y-1.5">
+                <div className="bg-slate-50 dark:bg-zinc-800/50 p-3 rounded-xl text-xs space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500 dark:text-zinc-400 font-semibold">Affiliation:</span>
                     <span className="text-slate-800 dark:text-zinc-200 font-bold truncate max-w-[180px]">
@@ -458,7 +459,7 @@ export default function UserSecurityManager() {
                 <div className="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-zinc-800">
                   <button
                     onClick={() => setSelectedUser(u)}
-                    className="flex-1 py-2 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 rounded-xl text-xs font-bold border border-slate-200 dark:border-zinc-700 transition-colors cursor-pointer"
+                    className="flex-1 py-2 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                   >
                     Details
                   </button>
@@ -467,7 +468,7 @@ export default function UserSecurityManager() {
                     onClick={() => handlePasswordReset(u)}
                     disabled={actionLoading === `reset-${u.id}`}
                     title="Send Password Reset Email"
-                    className="p-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/25 rounded-xl text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
+                    className="p-2 bg-slate-100 dark:bg-zinc-800 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-950/40 dark:hover:text-amber-400 text-slate-600 dark:text-zinc-300 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     <KeyRound className="w-4 h-4" />
                   </button>
@@ -475,7 +476,7 @@ export default function UserSecurityManager() {
                   <button
                     onClick={() => setRoleChangeModal({ user: u, targetRole: u.role === 'owner' ? 'member' : 'owner' })}
                     title="Change Role"
-                    className="p-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/25 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                    className="p-2 bg-slate-100 dark:bg-zinc-800 hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-950/40 dark:hover:text-purple-400 text-slate-600 dark:text-zinc-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                   >
                     <ShieldCheck className="w-4 h-4" />
                   </button>
@@ -484,7 +485,7 @@ export default function UserSecurityManager() {
                     <button
                       onClick={() => setDeleteConfirmUser(u)}
                       title="Delete User"
-                      className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-500/25 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                      className="p-2 bg-slate-100 dark:bg-zinc-800 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 text-slate-600 dark:text-zinc-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -517,7 +518,7 @@ export default function UserSecurityManager() {
                       {/* Profile Column */}
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center font-bold text-purple-600 dark:text-purple-400 text-xs shrink-0 overflow-hidden">
+                          <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center font-bold text-slate-700 dark:text-zinc-300 text-xs shrink-0 overflow-hidden">
                             {u.avatar_url ? (
                               <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
                             ) : (
@@ -546,7 +547,7 @@ export default function UserSecurityManager() {
                           <div className="flex items-center gap-1.5 text-indigo-700 dark:text-indigo-300 font-bold">
                             <Building2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                             <span className="truncate max-w-[140px]">{u.ownedGym.gym_name}</span>
-                            <span className="text-[9px] px-1.5 py-0.5 bg-indigo-500/15 rounded text-indigo-700 dark:text-indigo-300">Owner</span>
+                            <span className="text-[9px] px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-950/40 rounded text-indigo-700 dark:text-indigo-300 font-semibold">Owner</span>
                           </div>
                         ) : u.memberRecord ? (
                           <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 font-bold">
@@ -586,7 +587,7 @@ export default function UserSecurityManager() {
                               setRoleChangeModal({ user: u, targetRole: nextRole });
                             }}
                             title="Update Role"
-                            className="px-2.5 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/20 rounded-lg text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1"
+                            className="px-2.5 py-1.5 bg-slate-100 dark:bg-zinc-800 hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-950/40 dark:hover:text-purple-400 text-slate-700 dark:text-zinc-200 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer flex items-center gap-1"
                           >
                             <ShieldCheck className="w-3 h-3" />
                             Role
@@ -597,7 +598,7 @@ export default function UserSecurityManager() {
                             onClick={() => handlePasswordReset(u)}
                             disabled={actionLoading === `reset-${u.id}`}
                             title="Send Password Reset Email"
-                            className="p-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/20 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+                            className="p-1.5 bg-slate-100 dark:bg-zinc-800 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-950/40 dark:hover:text-amber-400 text-slate-600 dark:text-zinc-300 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
                           >
                             <KeyRound className="w-3.5 h-3.5" />
                           </button>
@@ -606,7 +607,7 @@ export default function UserSecurityManager() {
                           <button
                             onClick={() => setSelectedUser(u)}
                             title="View Full Profile & Raw ID"
-                            className="p-1.5 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 rounded-lg transition-colors cursor-pointer"
+                            className="p-1.5 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 rounded-lg transition-colors cursor-pointer"
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
                           </button>
@@ -616,7 +617,7 @@ export default function UserSecurityManager() {
                             <button
                               onClick={() => setDeleteConfirmUser(u)}
                               title="Delete Account"
-                              className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-500/20 rounded-lg transition-colors cursor-pointer"
+                              className="p-1.5 bg-slate-100 dark:bg-zinc-800 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 text-slate-600 dark:text-zinc-300 rounded-lg transition-colors cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -632,33 +633,47 @@ export default function UserSecurityManager() {
 
           {/* ── Pagination Controls ── */}
           {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-slate-200/80 dark:border-zinc-800 text-xs text-slate-500 dark:text-zinc-400">
-              <div>
-                Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-                {Math.min(currentPage * itemsPerPage, filteredUsers.length)} of {filteredUsers.length} accounts
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-zinc-800 text-xs text-slate-500 dark:text-zinc-400">
+              <div className="text-[11px] sm:text-xs">
+                Showing <strong className="text-slate-900 dark:text-white font-bold">{(currentPage - 1) * itemsPerPage + 1}</strong> to{' '}
+                <strong className="text-slate-900 dark:text-white font-bold">{Math.min(currentPage * itemsPerPage, filteredUsers.length)}</strong> of <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{filteredUsers.length}</strong> accounts
               </div>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2 pt-1 sm:pt-0 border-t border-slate-200/60 dark:border-zinc-800/60 sm:border-0">
                 <button
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1.5 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 disabled:opacity-40 rounded-lg font-bold text-slate-900 dark:text-white border border-slate-200 dark:border-zinc-700 transition-colors cursor-pointer"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 disabled:opacity-40 rounded-lg font-bold text-slate-900 dark:text-white border border-slate-200 dark:border-zinc-700 transition-all text-xs cursor-pointer active:scale-95 shadow-2xs"
                 >
-                  Prev
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Prev</span>
                 </button>
 
-                <div className="flex items-center gap-1 px-2">
-                  <span className="font-bold text-slate-900 dark:text-white">{currentPage}</span>
-                  <span>/</span>
-                  <span>{totalPages}</span>
+                <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-lg px-2.5 py-1 text-xs font-semibold shadow-2xs">
+                  <span className="text-slate-500 dark:text-zinc-400 text-[11px]">Page</span>
+                  <select
+                    value={currentPage}
+                    onChange={(e) => setCurrentPage(Number(e.target.value))}
+                    aria-label="Select page"
+                    className="bg-transparent text-slate-900 dark:text-white font-extrabold focus:outline-none cursor-pointer py-0.5 text-xs text-center"
+                  >
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                      <option key={p} value={p} className="bg-white dark:bg-zinc-900 text-slate-900 dark:text-white">
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-slate-400 dark:text-zinc-600">/</span>
+                  <span className="text-slate-700 dark:text-zinc-300 font-extrabold text-xs">{totalPages}</span>
                 </div>
 
                 <button
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-750 disabled:opacity-40 rounded-lg font-bold text-slate-900 dark:text-white border border-slate-200 dark:border-zinc-700 transition-colors cursor-pointer"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-750 disabled:opacity-40 rounded-lg font-bold text-slate-900 dark:text-white border border-slate-200 dark:border-zinc-700 transition-all text-xs cursor-pointer active:scale-95 shadow-2xs"
                 >
-                  Next
+                  <span>Next</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -679,7 +694,7 @@ export default function UserSecurityManager() {
             >
               <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-zinc-800">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center font-bold text-slate-800 dark:text-zinc-200 text-sm overflow-hidden shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center font-bold text-slate-800 dark:text-zinc-200 text-sm overflow-hidden shrink-0">
                     {selectedUser.avatar_url ? (
                       <img src={selectedUser.avatar_url} alt="" className="w-full h-full object-cover" />
                     ) : (
@@ -696,7 +711,7 @@ export default function UserSecurityManager() {
 
               {/* Data Properties */}
               <div className="space-y-3 text-xs">
-                <div className="bg-slate-50 dark:bg-zinc-800/50 p-3.5 rounded-xl border border-slate-200/80 dark:border-zinc-700/60 space-y-2">
+                <div className="bg-slate-50 dark:bg-zinc-800/50 p-3.5 rounded-xl space-y-2">
                   <p className="text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Identity Metadata</p>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
@@ -729,23 +744,23 @@ export default function UserSecurityManager() {
                 </div>
 
                 {/* Tenant Affiliation */}
-                <div className="bg-slate-50 dark:bg-zinc-800/50 p-3.5 rounded-xl border border-slate-200/80 dark:border-zinc-700/60 space-y-2">
+                <div className="bg-slate-50 dark:bg-zinc-800/50 p-3.5 rounded-xl space-y-2">
                   <p className="text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Tenant Connections</p>
                   {selectedUser.ownedGym ? (
-                    <div className="flex items-center justify-between text-indigo-700 dark:text-indigo-300 bg-indigo-500/10 p-2.5 rounded-lg border border-indigo-500/20">
+                    <div className="flex items-center justify-between text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 p-2.5 rounded-lg">
                       <div>
                         <p className="font-bold">{selectedUser.ownedGym.gym_name}</p>
                         <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-mono">Code: {selectedUser.ownedGym.unique_code} | Status: {selectedUser.ownedGym.status}</p>
                       </div>
-                      <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold">Gym Owner</span>
+                      <span className="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold">Gym Owner</span>
                     </div>
                   ) : selectedUser.memberRecord ? (
-                    <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 p-2.5 rounded-lg border border-emerald-500/20">
+                    <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-lg">
                       <div>
                         <p className="font-bold">{selectedUser.memberRecord.gyms?.gym_name || 'Gym'}</p>
                         <p className="text-[10px] text-emerald-600 dark:text-emerald-400">Athlete Record: {selectedUser.memberRecord.full_name}</p>
                       </div>
-                      <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">Member</span>
+                      <span className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">Member</span>
                     </div>
                   ) : (
                     <p className="text-slate-400 dark:text-zinc-500 italic">No gym or athlete connection currently active.</p>

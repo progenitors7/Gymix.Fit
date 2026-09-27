@@ -51,10 +51,10 @@ export default function SystemHealth() {
       }, {});
       setSettings(settingsMap);
 
-      if (isManual) showToast('Diagnostics probe completed successfully!');
+      if (isManual) showToast('System status refreshed successfully!');
     } catch (err) {
       console.error('[SystemHealth] Load failed:', err);
-      showToast('Diagnostics probe failed', 'error');
+      showToast('Failed to refresh status', 'error');
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -69,7 +69,7 @@ export default function SystemHealth() {
       setSettings(prev => ({ ...prev, [key]: newValue }));
       showToast(`${key.replace(/_/g, ' ').toUpperCase()} updated successfully`);
     } catch (err) {
-      showToast('Failed to update platform configuration', 'error');
+      showToast('Failed to update setting', 'error');
     } finally {
       setUpdating(null);
     }
@@ -84,33 +84,33 @@ export default function SystemHealth() {
       subtext: healthData?.dbEngine || 'PostgreSQL 17'
     },
     { 
-      label: 'API Query Latency', 
+      label: 'Response Time', 
       value: healthData?.latency || '32ms', 
       icon: Activity, 
       color: 'violet',
-      subtext: 'Supabase Serverless Ping'
+      subtext: 'Database server ping'
     },
     { 
-      label: 'Platform Reliability', 
+      label: 'Uptime', 
       value: '99.98%', 
       icon: Cpu, 
       color: 'indigo',
-      subtext: 'Zero Crash Anomalies'
+      subtext: 'System availability'
     },
     { 
-      label: 'Resource Headroom', 
-      value: '< 2.4%', 
+      label: 'Server Load', 
+      value: 'Normal (< 2%)', 
       icon: HardDrive, 
       color: 'emerald',
-      subtext: 'Optimal IOPS Budget'
+      subtext: 'Optimal operating limits'
     },
   ];
 
   if (loading && !healthData) {
     return (
       <div className="py-24 text-center">
-        <div className="w-10 h-10 border-3 border-blue-500/20 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">Running diagnostic probe...</p>
+        <div className="w-8 h-8 border-2 border-violet-500/20 border-t-violet-600 rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">Checking system status...</p>
       </div>
     );
   }
@@ -130,47 +130,45 @@ export default function SystemHealth() {
             <span className="inline-flex items-center justify-center p-1.5 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
               <Server className="w-4 h-4" />
             </span>
-            <span className="text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400">Infrastructure & Observability</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400">System Status</span>
           </div>
-          <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">System Health & Diagnostics</h3>
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">System Status & Performance</h3>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-0.5">
-            Real-time telemetry, database row metrics, and master platform switches.
+            Live database connection, system performance, and platform controls.
           </p>
         </div>
 
         <button 
           onClick={() => loadHealthAndSettings(true)}
           disabled={isRefreshing}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-xl text-xs font-semibold transition-all active:scale-[0.98] disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-xl text-xs font-semibold transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
         >
           <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          <span>{isRefreshing ? 'Scanning Cluster...' : 'Run Diagnostics Probe'}</span>
+          <span>{isRefreshing ? 'Checking...' : 'Refresh Status'}</span>
         </button>
       </div>
 
       {/* KPI Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {systemMetrics.map((m, i) => {
           const Icon = m.icon;
           return (
             <div 
               key={i} 
-              className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 transition-all"
+              className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 transition-all flex flex-col justify-between"
             >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">{m.label}</span>
-                <div className={`p-2 rounded-xl ${
-                  m.color === 'emerald' 
-                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400' 
-                    : m.color === 'indigo'
-                    ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
-                    : 'bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400'
-                }`}>
-                  <Icon className="w-4 h-4" />
+              <div>
+                <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-2">
+                  <span className="text-xs font-semibold">{m.label}</span>
+                  <Icon className={`w-4 h-4 ${
+                    m.color === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' :
+                    m.color === 'indigo' ? 'text-indigo-600 dark:text-indigo-400' :
+                    'text-violet-600 dark:text-violet-400'
+                  }`} />
                 </div>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">{m.value}</p>
               </div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{m.value}</p>
-              <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1">{m.subtext}</p>
+              <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1.5 font-normal truncate">{m.subtext}</p>
             </div>
           );
         })}
@@ -180,35 +178,33 @@ export default function SystemHealth() {
         {/* Left Column: Database Tables & Gateway Controls (8 Cols) */}
         <div className="lg:col-span-8 space-y-8">
           {/* Table Row Registry */}
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-7">
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-6 sm:p-7">
             <div className="flex items-center gap-3 pb-5 mb-6 border-b border-slate-100 dark:border-zinc-800">
-              <div className="p-2.5 rounded-xl bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400">
-                <FolderTree className="w-5 h-5" />
-              </div>
+              <FolderTree className="w-5 h-5 text-violet-600 dark:text-violet-400 shrink-0" />
               <div>
-                <h4 className="text-base font-bold text-slate-900 dark:text-white">Database Row Registry</h4>
-                <p className="text-xs text-slate-500 dark:text-zinc-400">Live indexed row volumes across primary Postgres tables.</p>
+                <h4 className="text-base font-bold text-slate-900 dark:text-white">Database Records Summary</h4>
+                <p className="text-xs text-slate-500 dark:text-zinc-400">Live record counts across primary database tables.</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
               {[
                 { label: 'Gym Owners', count: healthData?.metrics?.gyms ?? 0, table: 'gyms' },
-                { label: 'Athletes & Members', count: healthData?.metrics?.members ?? 0, table: 'members' },
-                { label: 'Payments & Ledger', count: healthData?.metrics?.payments ?? 0, table: 'payments' },
+                { label: 'Gym Members', count: healthData?.metrics?.members ?? 0, table: 'members' },
+                { label: 'Payments & Fees', count: healthData?.metrics?.payments ?? 0, table: 'payments' },
                 { label: 'Support Inquiries', count: healthData?.metrics?.tickets ?? 0, table: 'support_tickets' },
                 { label: 'SaaS Subscriptions', count: healthData?.metrics?.saasSubs ?? 0, table: 'saas_subscriptions' },
                 { label: 'Broadcast Log', count: healthData?.metrics?.broadcasts ?? 0, table: 'broadcasts' },
               ].map((t, idx) => (
                 <div 
                   key={idx} 
-                  className="bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/80 rounded-xl p-4 transition-all"
+                  className="bg-slate-50 dark:bg-zinc-800/60 rounded-xl p-4 transition-all"
                 >
                   <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 block">{t.label}</span>
-                  <p className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">
+                  <p className="text-xl font-bold text-slate-900 dark:text-white mt-1">
                     {t.count.toLocaleString()}
                   </p>
-                  <div className="mt-2 pt-2 border-t border-slate-200/60 dark:border-zinc-700 flex items-center justify-between text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
+                  <div className="mt-2 pt-2 border-t border-slate-200/60 dark:border-zinc-700/60 flex items-center justify-between text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
                     <span>TABLE</span>
                     <span className="text-slate-700 dark:text-zinc-300">public.{t.table}</span>
                   </div>
@@ -218,11 +214,9 @@ export default function SystemHealth() {
           </div>
 
           {/* Maintenance & Gateways Control Panel */}
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-7">
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-6 sm:p-7">
             <div className="flex items-center gap-3 pb-5 mb-6 border-b border-slate-100 dark:border-zinc-800">
-              <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
-                <Power className="w-5 h-5" />
-              </div>
+              <Power className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
               <div>
                 <h4 className="text-base font-bold text-slate-900 dark:text-white">Gateways & Maintenance Switches</h4>
                 <p className="text-xs text-slate-500 dark:text-zinc-400">Platform-wide kill switches and security guards.</p>
@@ -237,11 +231,7 @@ export default function SystemHealth() {
                   : 'bg-slate-50 dark:bg-zinc-800/60 border-slate-200 dark:border-zinc-700/80'
               }`}>
                 <div className="flex items-center justify-between mb-3">
-                  <div className={`p-2 rounded-xl ${
-                    settings.maintenance_mode ? 'bg-amber-500 text-white' : 'bg-slate-200 dark:bg-zinc-700 text-slate-600 dark:text-zinc-300'
-                  }`}>
-                    <ShieldAlert className="w-4 h-4" />
-                  </div>
+                  <ShieldAlert className={`w-5 h-5 ${settings.maintenance_mode ? 'text-amber-500' : 'text-slate-400 dark:text-zinc-500'}`} />
                   <button 
                     type="button"
                     onClick={() => toggleSetting('maintenance_mode')}
@@ -268,11 +258,7 @@ export default function SystemHealth() {
                   : 'bg-slate-50 dark:bg-zinc-800/60 border-slate-200 dark:border-zinc-700/80'
               }`}>
                 <div className="flex items-center justify-between mb-3">
-                  <div className={`p-2 rounded-xl ${
-                    settings.allow_new_registrations ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
-                  }`}>
-                    <Lock className="w-4 h-4" />
-                  </div>
+                  <Lock className={`w-5 h-5 ${settings.allow_new_registrations ? 'text-emerald-500' : 'text-rose-500'}`} />
                   <button 
                     type="button"
                     onClick={() => toggleSetting('allow_new_registrations')}
@@ -305,9 +291,9 @@ export default function SystemHealth() {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
                 Live Cloud Engine
               </span>
-              <h4 className="text-xl font-black tracking-tight">Supabase Cluster 100% Operational</h4>
+              <h4 className="text-xl font-bold tracking-tight">Supabase Cluster Operational</h4>
               <p className="text-xs text-white/80 leading-relaxed">
-                Serverless poolers and auth providers are operating within standard latency margins. Zero query queue backpressure detected.
+                Serverless poolers and auth providers are operating within normal latency margins.
               </p>
               <div className="pt-3 border-t border-white/20 flex items-center justify-between text-xs font-semibold">
                 <span>Postgres 17.6</span>
@@ -317,21 +303,19 @@ export default function SystemHealth() {
           </div>
 
           {/* Real-time Support Alert Box */}
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4">
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-6 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
-                <Bell className="w-4 h-4" />
-              </div>
+              <Bell className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               <h5 className="font-bold text-slate-900 dark:text-white text-sm">Support Queue Status</h5>
             </div>
 
             {healthData?.metrics?.openTickets > 0 ? (
-              <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 text-amber-800 dark:text-amber-300 text-xs font-medium leading-relaxed">
+              <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-xs font-medium leading-relaxed">
                 <AlertCircle className="w-4 h-4 inline mr-1.5 text-amber-600 dark:text-amber-400" />
                 You have <strong>{healthData.metrics.openTickets}</strong> open support ticket{healthData.metrics.openTickets > 1 ? 's' : ''} awaiting review in the Support Desk.
               </div>
             ) : (
-              <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-xs font-medium leading-relaxed">
+              <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 text-xs font-medium leading-relaxed">
                 <CheckCircle2 className="w-4 h-4 inline mr-1.5 text-emerald-600 dark:text-emerald-400" />
                 All gym owner support tickets are resolved. Zero pending queries.
               </div>

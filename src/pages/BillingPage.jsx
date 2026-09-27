@@ -3,12 +3,15 @@ import {
   CreditCard, 
   CheckCircle2, 
   Zap, 
-  Star,
-  RefreshCw,
-  Ticket,
-  Clock,
-  Gift,
-  ArrowRight
+  RefreshCw, 
+  Ticket, 
+  Clock, 
+  Gift, 
+  ArrowRight,
+  ShieldCheck,
+  Check,
+  Receipt,
+  HelpCircle
 } from 'lucide-react';
 import { useCurrentGym } from '../hooks/useCurrentGym';
 import { supabase } from '../lib/supabaseClient';
@@ -28,9 +31,9 @@ const DURATIONS = [
     price: 599, 
     discountPercent: 40, 
     savings: 400, 
-    dailyText: 'Only ₹20/day (~₹599/mo)',
-    badge: '40% OFF',
-    badgeColor: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+    billedText: 'Billed monthly',
+    perMonthText: '₹599 / month',
+    badge: null
   },
   { 
     months: 3, 
@@ -39,21 +42,33 @@ const DURATIONS = [
     price: 1499, 
     discountPercent: 40, 
     savings: 1000, 
-    dailyText: 'Only ₹16/day (~₹500/mo)', 
-    badge: 'MOST POPULAR (40% OFF)', 
-    badgeColor: 'bg-amber-400 text-black' 
+    billedText: 'Billed ₹1,499 quarterly',
+    perMonthText: '₹500 / month',
+    badge: 'Most Popular',
+    isPopular: true
   },
   { 
     months: 12, 
-    label: '12 Months + 1 Month Free', 
+    label: 'Annual', 
+    subtitle: '12 Months + 1 Mo Free',
     originalPrice: 9990, 
     price: 4999, 
     discountPercent: 50, 
     savings: 4991, 
-    dailyText: 'Best value (13 mos, ~₹416/mo)', 
-    badge: 'SAVE 50% (BEST VALUE)', 
-    badgeColor: 'bg-emerald-500 text-black' 
+    billedText: '13 months total access',
+    perMonthText: '₹385 / month',
+    badge: 'Save 50%',
+    isBestValue: true
   },
+];
+
+const PLAN_FEATURES = [
+  { title: 'Unlimited Members', desc: 'No cap on active gym members or member records' },
+  { title: 'WhatsApp Automation', desc: 'Auto fee reminders, welcome alerts & PDF bills' },
+  { title: 'QR Code Attendance', desc: 'Fast digital kiosk & member phone scan check-ins' },
+  { title: 'POS & Store Inventory', desc: 'Manage supplements, shakes, drinks & locker rentals' },
+  { title: 'Revenue & GST Reports', desc: 'Monthly cash-flow, dues ledger & financial exports' },
+  { title: 'Cloud Sync & Backups', desc: 'Multi-device real-time sync with 99.9% uptime' },
 ];
 
 export default function BillingPage() {
@@ -64,11 +79,15 @@ export default function BillingPage() {
   
   // Selection State
   const [durationsList, setDurationsList] = useState(DURATIONS);
-  const [selectedDuration, setSelectedDuration] = useState(DURATIONS[0]);
+  const [selectedDuration, setSelectedDuration] = useState(DURATIONS[1] || DURATIONS[0]);
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState(null);
   const [promoError, setPromoError] = useState('');
   const [verifyingPromo, setVerifyingPromo] = useState(false);
+
+  // Billing History
+  const [invoices, setInvoices] = useState([]);
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
 
   useEffect(() => {
     async function loadDbPrices() {
@@ -88,9 +107,11 @@ export default function BillingPage() {
             }
             if (dbPlan) {
               const currentPrice = Number(dbPlan.price);
+              const perMonthVal = dur.months === 12 ? Math.round(currentPrice / 13) : Math.round(currentPrice / dur.months);
               return {
                 ...dur,
                 price: currentPrice,
+                perMonthText: `₹${perMonthVal} / month`,
                 savings: (dur.originalPrice || currentPrice) - currentPrice
               };
             }
@@ -110,6 +131,31 @@ export default function BillingPage() {
     loadDbPrices();
   }, []);
 
+  // Fetch past invoices for gym
+  useEffect(() => {
+    async function loadInvoices() {
+      if (!gym?.id) return;
+      try {
+        setLoadingInvoices(true);
+        const { data, error } = await supabase
+          .from('saas_subscriptions')
+          .select('id, amount, currency, status, payment_status, duration_months, current_period_start, current_period_end, created_at')
+          .eq('gym_id', gym.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (!error && data) {
+          setInvoices(data);
+        }
+      } catch (err) {
+        console.error('Error loading invoices:', err);
+      } finally {
+        setLoadingInvoices(false);
+      }
+    }
+    loadInvoices();
+  }, [gym?.id]);
+
   const handleVerifyPromo = async () => {
     if (!promoCode) return;
     try {
@@ -119,25 +165,25 @@ export default function BillingPage() {
       const { data, error } = await supabase
         .from('promo_codes')
         .select('*')
-        .eq('code', promoCode.toUpperCase())
+        .eq('code', promoCode.toUpperCase().trim())
         .eq('is_active', true)
         .single();
 
       if (error || !data) {
-        setPromoError('Invalid or expired code');
+        setPromoError('Invalid or expired coupon code');
         setAppliedPromo(null);
         return;
       }
 
       // Check usage limits
       if (data.max_uses !== null && data.used_count >= data.max_uses) {
-        setPromoError('This code has reached its usage limit');
+        setPromoError('This coupon has reached its maximum usage limit');
         return;
       }
 
       // Check expiry
       if (data.expiry_date && new Date(data.expiry_date) < new Date()) {
-        setPromoError('This code has expired');
+        setPromoError('This coupon code has expired');
         return;
       }
 
@@ -148,7 +194,7 @@ export default function BillingPage() {
       }
       setPromoError('');
     } catch {
-      setPromoError('Error verifying code');
+      setPromoError('Unable to verify code. Please try again.');
     } finally {
       setVerifyingPromo(false);
     }
@@ -221,7 +267,7 @@ export default function BillingPage() {
       
       // Standard Razorpay Flow
       const isLoaded = await razorpayService.loadScript();
-      if (!isLoaded) throw new Error('Razorpay SDK failed to load');
+      if (!isLoaded) throw new Error('Razorpay payment gateway failed to load. Please check your internet connection.');
 
       // Create Order
       const { data, error } = await supabase.functions.invoke(BILLING_FUNCTION, {
@@ -251,7 +297,7 @@ export default function BillingPage() {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: data.amount,
         currency: data.currency,
-        name: 'Gymix',
+        name: 'Gymix.fit',
         description: `Pro Plan - ${selectedDuration.label}`,
         order_id: data.id,
         prefill: {
@@ -259,16 +305,15 @@ export default function BillingPage() {
           email: ownerEmail || '',
         },
         theme: {
-          color: '#059669', // Brand Accent Color
+          color: '#059669', // Emerald 600
         },
         modal: {
-          confirm_close: true, // Prevents users from accidentally closing the payment popup
+          confirm_close: true,
           ondismiss: () => {
             setProcessing(false);
           }
         },
         handler: async (response) => {
-          // Verify Payment
           const { error: verifyErr } = await supabase.functions.invoke(BILLING_FUNCTION, {
             body: { 
               action: 'verify-payment', 
@@ -278,7 +323,7 @@ export default function BillingPage() {
           });
 
           if (verifyErr) throw verifyErr;
-          setToastState({ message: 'Payment successful! Subscription active.', type: 'success' });
+          setToastState({ message: 'Payment verified! Subscription activated.', type: 'success' });
           await refreshGym();
           window.location.reload();
         }
@@ -290,7 +335,7 @@ export default function BillingPage() {
     } catch (err) {
       console.error(err);
       const rawMsg = err.message || '';
-      let errMsg = 'Payment action failed. Please try again.';
+      let errMsg = 'Payment process encountered an issue. Please try again.';
       if (rawMsg.includes('Failed to fetch') || rawMsg.includes('network') || rawMsg.includes('offline')) {
         errMsg = 'Connection lost. Please check your internet and try again.';
       } else if (rawMsg) {
@@ -305,16 +350,20 @@ export default function BillingPage() {
   if (isPlaystoreApp) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-6 text-center">
-        <div className="max-w-md w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-8 shadow-xs relative overflow-hidden animate-in fade-in duration-500">
-          <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-2xl mx-auto mb-4 border border-emerald-500/20">
-            🔒
+        <div className="max-w-md w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-8 shadow-xs relative overflow-hidden">
+          <div className="w-12 h-12 bg-slate-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center text-slate-700 dark:text-zinc-300 text-xl mx-auto mb-4">
+            <CreditCard className="w-6 h-6" />
           </div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">In-App Purchases Disabled</h2>
-          <p className="text-slate-500 dark:text-zinc-400 text-xs mb-6 leading-relaxed font-medium">
-            To comply with app store guidelines, subscription upgrades and renewals are not supported inside this application. 
-            <br/><br/>
-            Please manage your account online to proceed.
+          <p className="text-slate-500 dark:text-zinc-400 text-xs mb-6 leading-relaxed font-normal">
+            To comply with app store guidelines, subscription upgrades and renewals are managed directly on the web portal.
           </p>
+          <button
+            onClick={() => window.open('https://gymix.fit/billing', '_system')}
+            className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition-all shadow-xs cursor-pointer"
+          >
+            Open Web Portal
+          </button>
         </div>
       </div>
     );
@@ -325,7 +374,7 @@ export default function BillingPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
           <RefreshCw className="w-6 h-6 text-emerald-600 dark:text-emerald-400 animate-spin" />
-          <p className="text-slate-500 dark:text-zinc-400 text-xs font-semibold">Loading subscription details...</p>
+          <p className="text-slate-500 dark:text-zinc-400 text-xs font-medium">Loading subscription details...</p>
         </div>
       </div>
     );
@@ -345,21 +394,21 @@ export default function BillingPage() {
   if (showReturnToApp) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-8 sm:p-12 text-center space-y-5 max-w-md w-full shadow-xs relative overflow-hidden">
-          <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-2xl mx-auto mb-2">
-            🎉
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-8 sm:p-12 text-center space-y-5 max-w-md w-full shadow-xs">
+          <div className="w-12 h-12 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-6 h-6" />
           </div>
           
           <div className="space-y-1.5">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Payment Successful!</h2>
-            <p className="text-slate-500 dark:text-zinc-400 text-xs font-medium leading-relaxed">
-              Your Gymix subscription for <strong className="text-slate-900 dark:text-white">"{gymName}"</strong> is now active. You can close this window and return to the app.
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Payment Confirmed</h2>
+            <p className="text-slate-500 dark:text-zinc-400 text-xs leading-relaxed">
+              Your Gymix subscription for <span className="font-semibold text-slate-900 dark:text-white">{gymName}</span> is active. You can now return to the mobile application.
             </p>
           </div>
           
           <a
             href="com.gymix.fit://dashboard"
-            className="block w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-all text-xs shadow-xs text-center flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-all text-xs shadow-xs flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>Return to Mobile App</span>
             <ArrowRight className="w-4 h-4" />
@@ -370,212 +419,286 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="text-center space-y-3">
-        {isPending ? (
-          <>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full text-xs font-semibold">
-              <Zap className="w-3.5 h-3.5" />
-              Activate Your Account
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Welcome to <span className="text-emerald-600 dark:text-emerald-400">Gymix</span>
-            </h1>
-            <p className="text-slate-500 dark:text-zinc-400 max-w-xl mx-auto text-sm leading-relaxed">
-              You're one step away from managing your gym like a pro. Choose a plan below to unlock all features.
-            </p>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 text-xs font-semibold">
-              <CreditCard className="w-3.5 h-3.5" />
-              Subscription required to access the platform
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-semibold">
-              Used by growing gyms across India
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Gymix <span className="text-emerald-600 dark:text-emerald-400">Growth Plan</span>
-            </h1>
-            <p className="text-slate-500 dark:text-zinc-400 max-w-xl mx-auto text-sm leading-relaxed">
-              Unlock unlimited potential. One plan, everything included. Choose a duration to begin.
-            </p>
-            {(expiryDate || isExpired) && (
-              <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-semibold ${
-                isExpired
-                  ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
-                  : isExpiringSoon
-                    ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
-                    : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-              }`}>
-                <Clock className="w-3.5 h-3.5" />
-                {isExpired
-                  ? 'Your plan has expired. Renew to continue.'
-                  : `Current access valid until ${expiryDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {isPlaystoreApp && (
-        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 rounded-2xl p-4 sm:p-5 text-xs font-medium leading-relaxed space-y-1.5 max-w-5xl mx-auto">
-          <p className="text-xs font-bold flex items-center gap-1.5">
-            <CreditCard className="w-3.5 h-3.5" />
-            Google Play Policy Notice
-          </p>
-          <p>
-            To comply with Google Play Developer Guidelines, subscription billing updates cannot be completed directly inside the app. 
-            Please open **gymix.fit** on your browser to complete your renewal.
+    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-300">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-zinc-800">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+            Plans & Billing
+          </h1>
+          <p className="text-slate-500 dark:text-zinc-400 text-xs sm:text-sm mt-1">
+            Manage your Gymix software license, renewals, and invoice history.
           </p>
         </div>
-      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Duration Selection & Pricing */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Founding Gym Offer Banner */}
-          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-3.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-              <Star className="w-4 h-4 fill-current" />
+        {/* Current Status Pill */}
+        <div className="flex items-center">
+          {isPending ? (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 text-amber-700 dark:text-amber-400 rounded-lg text-xs font-medium">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              <span>Activation Pending</span>
             </div>
-            <div>
-              <h4 className="text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-wider text-xs">Founding Gym Launch Offer</h4>
-              <p className="text-slate-600 dark:text-zinc-400 text-xs font-medium">Up to 50% introductory discount unlocked on all plans!</p>
+          ) : isExpired ? (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 text-rose-700 dark:text-rose-400 rounded-lg text-xs font-medium">
+              <span className="w-2 h-2 rounded-full bg-rose-500" />
+              <span>Subscription Expired</span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-lg text-xs font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span>
+                Active {expiryDate ? `• Renews ${expiryDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Main Grid: Plans (2 cols) & Summary (1 col) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column: Plan Options & Feature Matrix */}
+        <div className="lg:col-span-2 space-y-8">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+                  Choose Billing Cycle
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                  All plans include every pro feature. Save up to 50% with quarterly or annual billing.
+                </p>
+              </div>
+            </div>
+
+            {/* Plan Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {durationsList.map((dur) => {
+                const isSelected = selectedDuration.months === dur.months;
+                return (
+                  <div
+                    key={dur.months}
+                    onClick={() => !isDurationDisabled && setSelectedDuration(dur)}
+                    className={`relative rounded-xl border p-5 transition-all text-left flex flex-col justify-between cursor-pointer ${
+                      isSelected
+                        ? 'border-emerald-600 dark:border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20 ring-1 ring-emerald-500/20'
+                        : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-slate-300 dark:hover:border-zinc-700'
+                    } ${isDurationDisabled && !isSelected ? 'opacity-40 cursor-not-allowed' : ''}`}
+                  >
+                    {dur.badge && (
+                      <div className="absolute top-3 right-3">
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+                          dur.isPopular 
+                            ? 'bg-emerald-600 text-white dark:bg-emerald-500' 
+                            : 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
+                        }`}>
+                          {dur.badge}
+                        </span>
+                      </div>
+                    )}
+
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
+                          isSelected 
+                            ? 'border-emerald-600 bg-emerald-600 text-white dark:border-emerald-500 dark:bg-emerald-500' 
+                            : 'border-slate-300 dark:border-zinc-700'
+                        }`}>
+                          {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                        </div>
+                        <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                          {dur.label}
+                        </span>
+                      </div>
+
+                      {dur.subtitle && (
+                        <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mb-3">
+                          {dur.subtitle}
+                        </p>
+                      )}
+
+                      <div className="mt-3">
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                            ₹{dur.price.toLocaleString('en-IN')}
+                          </span>
+                          {dur.originalPrice && dur.originalPrice > dur.price && (
+                            <span className="text-xs text-slate-400 line-through">
+                              ₹{dur.originalPrice.toLocaleString('en-IN')}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 font-medium">
+                          {dur.perMonthText}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 mt-4 border-t border-slate-100 dark:border-zinc-800/60 text-[11px] text-slate-500 dark:text-zinc-400">
+                      {dur.billedText}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
-            <h3 className="text-slate-900 dark:text-white font-bold tracking-tight mb-6 flex items-center gap-2 text-lg">
-              <Clock className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-              Select Duration
-            </h3>
+          {/* Included Features Section (Replaces generic squircle cards) */}
+          <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
+            <div className="mb-5">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                Included with every plan
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                Full access to all Gymix modules with no hidden upgrades or limits.
+              </p>
+            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {durationsList.map((dur) => (
-                <button
-                  key={dur.months}
-                  onClick={() => !isDurationDisabled && setSelectedDuration(dur)}
-                  disabled={isDurationDisabled}
-                  className={`relative p-5 rounded-2xl border-2 transition-all duration-200 text-left group active:scale-[0.98] cursor-pointer ${
-                    selectedDuration.months === dur.months
-                      ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-600 dark:border-emerald-500 shadow-xs'
-                      : 'bg-slate-50/60 dark:bg-zinc-950/60 border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700'
-                  } ${isDurationDisabled && selectedDuration.months !== dur.months ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {dur.badge && (
-                    <div className={`absolute -top-2.5 right-3 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full shadow-xs ${dur.badgeColor}`}>
-                      {dur.badge}
-                    </div>
-                  )}
-                  <div className="flex flex-col mb-3">
-                    <span className={`text-xs font-bold uppercase tracking-wider mb-1 ${
-                      selectedDuration.months === dur.months ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-zinc-400 group-hover:text-slate-900 dark:group-hover:text-white'
-                    }`}>
-                      {dur.label}
-                    </span>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-xs font-semibold text-slate-400 line-through">₹{dur.originalPrice}</span>
-                      <span className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white transition-colors">₹{dur.price}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 mt-1.5">
-                      <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                        SAVE {dur.discountPercent}% OFF
-                      </span>
-                    </div>
-                    <span className="text-xs mt-2 text-slate-500 dark:text-zinc-400 font-medium">
-                      {dur.dailyText}
-                    </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6">
+              {PLAN_FEATURES.map((feature, idx) => (
+                <div key={idx} className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                    <Check className="w-3 h-3 stroke-[2.5]" />
                   </div>
-                </button>
+                  <div>
+                    <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
+                      {feature.title}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5 leading-normal">
+                      {feature.desc}
+                    </p>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
 
-          {/* Trust Building Features */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-             {[
-               { icon: Star, text: "Made for Indian Gym Owners", color: "text-amber-500", bg: "bg-amber-500/10" },
-               { icon: Zap, text: "Simple. Fast. Reliable.", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" },
-               { icon: CheckCircle2, text: "Manage members, fees and attendance easily.", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" }
-             ].map((item, i) => (
-               <div key={i} className="flex flex-col items-start gap-2.5 p-4 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-xs">
-                 <div className={`w-8 h-8 rounded-lg ${item.bg} flex items-center justify-center ${item.color} shrink-0`}>
-                   <item.icon className="w-4 h-4" />
-                 </div>
-                 <span className="text-slate-600 dark:text-zinc-300 text-xs font-medium leading-relaxed">{item.text}</span>
-               </div>
-             ))}
+          {/* Billing & Invoice History */}
+          <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Receipt className="w-4 h-4 text-slate-500" />
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Payment History
+                </h3>
+              </div>
+              <span className="text-[11px] text-slate-400">
+                Past receipts & activations
+              </span>
+            </div>
+
+            {loadingInvoices ? (
+              <div className="py-6 flex items-center justify-center text-xs text-slate-400 gap-2">
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>Loading records...</span>
+              </div>
+            ) : invoices.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-500 dark:text-zinc-400">
+                No prior invoices recorded for this account.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-zinc-800">
+                {invoices.map((inv) => (
+                  <div key={inv.id} className="py-3 flex items-center justify-between text-xs">
+                    <div>
+                      <p className="font-medium text-slate-900 dark:text-white">
+                        {inv.duration_months ? `${inv.duration_months} Months Access` : 'Pro Subscription'}
+                      </p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {new Date(inv.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-slate-900 dark:text-white">
+                        ₹{Number(inv.amount || 0).toLocaleString('en-IN')}
+                      </p>
+                      <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full capitalize font-medium ${
+                        inv.payment_status === 'completed' || inv.status === 'active'
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                          : 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400'
+                      }`}>
+                        {inv.payment_status || inv.status || 'Processed'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right: Summary & Checkout */}
+        {/* Right Column: Order Summary & Checkout */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-xs sticky top-8">
-            <h3 className="text-slate-900 dark:text-white font-bold tracking-tight mb-6 text-lg">Order Summary</h3>
-            
-            <div className="space-y-3 mb-6">
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-500 dark:text-zinc-400 font-medium">Growth Plan ({selectedDuration.label})</span>
-                <div className="text-right">
-                  <span className="text-[10px] text-slate-400 line-through block">₹{selectedDuration.originalPrice}</span>
-                  <span className="text-slate-900 dark:text-white font-bold">₹{selectedDuration.price}</span>
-                </div>
+          <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 sticky top-6 shadow-xs">
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-4">
+              Order Summary
+            </h3>
+
+            <div className="space-y-3 pb-4 border-b border-slate-100 dark:border-zinc-800 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 dark:text-zinc-400">
+                  {gymName || 'Gym'} • {selectedDuration.label}
+                </span>
+                <span className="font-medium text-slate-900 dark:text-white">
+                  ₹{selectedDuration.price.toLocaleString('en-IN')}
+                </span>
               </div>
 
-              <div className="flex justify-between text-xs py-1.5 px-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Launch Discount ({selectedDuration.discountPercent}% OFF)</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold">-₹{selectedDuration.savings}</span>
-              </div>
-              
+              {selectedDuration.savings > 0 && !appliedPromo && (
+                <div className="flex justify-between items-center text-emerald-600 dark:text-emerald-400">
+                  <span>Introductory Discount ({selectedDuration.discountPercent}%)</span>
+                  <span>-₹{selectedDuration.savings.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+
               {appliedPromo && (
-                <div className="flex justify-between text-xs animate-in slide-in-from-top-2">
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                <div className="flex justify-between items-center text-emerald-600 dark:text-emerald-400">
+                  <span className="flex items-center gap-1 font-medium">
                     <Ticket className="w-3.5 h-3.5" />
-                    Promo: {appliedPromo.code}
+                    Coupon: {appliedPromo.code}
                   </span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                    -{appliedPromo.discount_type === 'full_free' ? '₹' + selectedDuration.price : 
-                      appliedPromo.discount_type === 'percentage' ? appliedPromo.discount_value + '%' : 
-                      '₹' + appliedPromo.discount_value}
+                  <span className="font-semibold">
+                    -{appliedPromo.discount_type === 'full_free' 
+                      ? '₹' + selectedDuration.price.toLocaleString('en-IN')
+                      : appliedPromo.discount_type === 'percentage' 
+                        ? `${appliedPromo.discount_value}%`
+                        : `₹${appliedPromo.discount_value.toLocaleString('en-IN')}`
+                    }
                   </span>
                 </div>
               )}
-              
-              <div className="h-px bg-slate-100 dark:bg-zinc-800 my-3" />
-              
-              <div className="flex justify-between items-baseline">
-                <div>
-                  <span className="text-slate-900 dark:text-white font-bold text-base block">Total</span>
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                    You save ₹{(selectedDuration.savings || 0) + (selectedDuration.price - finalAmount)}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs text-slate-400 line-through font-medium pr-1.5">₹{selectedDuration.originalPrice}</span>
-                  <span className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">₹{finalAmount}</span>
-                  <p className="text-slate-400 text-[10px] font-medium mt-0.5">Inclusive of all taxes</p>
-                </div>
+            </div>
+
+            {/* Total Row */}
+            <div className="py-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-baseline">
+              <div>
+                <span className="text-xs font-medium text-slate-600 dark:text-zinc-400 block">Total Due</span>
+                <span className="text-[10px] text-slate-400">Inclusive of all taxes</span>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-bold text-slate-900 dark:text-white">
+                  ₹{finalAmount.toLocaleString('en-IN')}
+                </span>
               </div>
             </div>
 
-            {/* Promo Code Input */}
-            <div className="space-y-2 mb-6">
-              <div className="relative">
-                <Ticket className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            {/* Coupon / Promo Input */}
+            <div className="py-4 space-y-2">
+              <label className="text-xs font-medium text-slate-600 dark:text-zinc-400 block">
+                Have a coupon code?
+              </label>
+              <div className="flex gap-2">
                 <input 
                   type="text"
-                  placeholder="HAVE A PROMO CODE?"
+                  placeholder="Enter code"
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
                   disabled={appliedPromo || verifyingPromo}
-                  className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl pl-10 pr-16 py-2.5 text-xs font-bold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all uppercase disabled:opacity-50 shadow-xs"
+                  className="flex-1 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-medium text-slate-900 dark:text-white uppercase placeholder:normal-case placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 disabled:opacity-50"
                 />
                 {appliedPromo ? (
                   <button 
                     onClick={() => { setAppliedPromo(null); setPromoCode(''); }}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-rose-500 text-xs font-bold uppercase hover:underline cursor-pointer"
+                    className="px-3 py-2 text-xs font-semibold text-rose-600 hover:text-rose-500 transition-colors cursor-pointer"
                   >
                     Remove
                   </button>
@@ -583,57 +706,74 @@ export default function BillingPage() {
                   <button 
                     onClick={handleVerifyPromo}
                     disabled={!promoCode || verifyingPromo}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase hover:underline disabled:opacity-50 cursor-pointer"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-900 dark:text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-40 cursor-pointer"
                   >
-                    {verifyingPromo ? '...' : 'Apply'}
+                    {verifyingPromo ? 'Checking...' : 'Apply'}
                   </button>
                 )}
               </div>
-              {promoError && <p className="text-rose-500 text-xs font-medium ml-1">{promoError}</p>}
+              {promoError && (
+                <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">
+                  {promoError}
+                </p>
+              )}
+              {appliedPromo && (
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                  Coupon applied successfully.
+                </p>
+              )}
             </div>
 
+            {/* Main Action Button */}
             <button
               disabled={processing}
               onClick={handleSubscribe}
-              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 group"
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-[0.99]"
             >
               {processing ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Processing Checkout...</span>
+                </>
               ) : finalAmount === 0 ? (
                 <>
-                  <Gift className="w-4 h-4 group-hover:scale-105 transition-transform" />
-                  Redeem on Web
+                  <Gift className="w-4 h-4" />
+                  <span>Activate 1-Month Free Access</span>
                 </>
               ) : isPlaystoreApp ? (
                 <>
-                  <CreditCard className="w-4 h-4 group-hover:scale-105 transition-transform" />
-                  Open Payment on Web
+                  <CreditCard className="w-4 h-4" />
+                  <span>Open Payment on Web</span>
                 </>
               ) : (
                 <>
-                  <Zap className="w-4 h-4 group-hover:scale-105 transition-transform" />
-                  Start Growing
+                  <span>Proceed to Pay</span>
+                  <span className="font-bold">•</span>
+                  <span>₹{finalAmount.toLocaleString('en-IN')}</span>
                 </>
               )}
             </button>
-          </div>
-        </div>
-      </div>
 
-      {/* Support Info */}
-      <div className="flex flex-col md:flex-row gap-6 items-center justify-between p-6 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xs">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
-            <Star className="w-6 h-6" />
+            {/* Security Notice */}
+            <div className="mt-4 pt-3 flex items-center justify-center gap-1.5 text-[11px] text-slate-400 dark:text-zinc-500">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span>Secured by Razorpay • UPI, Cards, NetBanking</span>
+            </div>
           </div>
-          <div>
-            <h4 className="text-slate-900 dark:text-white font-bold text-base tracking-tight">Need help choosing?</h4>
-            <p className="text-slate-500 dark:text-zinc-400 text-xs font-medium">Contact our support team for any billing related queries.</p>
+
+          {/* Help & Support Card */}
+          <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 p-5 flex items-start gap-3">
+            <HelpCircle className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
+                Questions about plans?
+              </h4>
+              <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
+                Need GST invoices, custom franchise multi-branch packages, or bank NEFT transfers? Contact our support team.
+              </p>
+            </div>
           </div>
         </div>
-        <button className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer">
-          Contact Support
-        </button>
       </div>
 
       <Toast 
@@ -644,4 +784,3 @@ export default function BillingPage() {
     </div>
   );
 }
-

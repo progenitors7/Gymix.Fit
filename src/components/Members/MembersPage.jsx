@@ -364,7 +364,7 @@ export default function MembersPage() {
         </motion.div>
 
         {/* ── Status Tabs (Clean Floating Pills - matching Subscriptions) ── */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar mb-6">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar mb-6 -mx-4 px-4 sm:mx-0 sm:px-0 w-[calc(100%+2rem)] sm:w-auto">
           {STATUS_TABS.map((tab) => {
             const isActive = statusFilter === tab.key;
             return (
@@ -391,6 +391,7 @@ export default function MembersPage() {
               </button>
             );
           })}
+          <div className="shrink-0 w-4 sm:hidden" aria-hidden="true" />
         </div>
 
         {/* ── Error state ── */}

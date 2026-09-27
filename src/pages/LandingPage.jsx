@@ -647,7 +647,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch max-w-6xl mx-auto">
             
             {/* Left Side Tab Controls (Col-span 4) */}
-            <div className="lg:col-span-4 flex flex-row lg:flex-col justify-start gap-3 overflow-x-auto pb-4 lg:pb-0 scrollbar-none snap-x whitespace-nowrap">
+            <div className="lg:col-span-4 flex flex-row lg:flex-col justify-start gap-3 overflow-x-auto pb-4 lg:pb-0 no-scrollbar snap-x whitespace-nowrap -mx-4 px-4 sm:mx-0 sm:px-0 w-[calc(100%+2rem)] lg:w-full">
               {[
                 { id: 'members', title: 'Member Records', sub: 'Control active memberships', icon: Users, color: '#863BFF' },
                 { id: 'payments', title: 'Invoices Ledger', sub: 'Collect cash & UPI receipts', icon: CreditCard, color: '#10B981' },
@@ -703,6 +703,7 @@ export default function LandingPage() {
                   </button>
                 );
               })}
+              <div className="shrink-0 w-4 lg:hidden" aria-hidden="true" />
             </div>
 
             {/* Right Side Dashboard View Wrapper (Col-span 8) */}

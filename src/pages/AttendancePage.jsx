@@ -309,32 +309,32 @@ export default function AttendancePage() {
       )}
 
       {/* KPI STATS ROW */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         {/* Active inside gym */}
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-slate-500 dark:text-zinc-400 text-xs font-medium">Currently Inside Gym</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.activeInside}</p>
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-3 sm:p-5 rounded-2xl flex items-center justify-between">
+          <div className="space-y-0.5 sm:space-y-1 min-w-0">
+            <p className="text-slate-500 dark:text-zinc-400 text-[10px] sm:text-xs font-medium truncate">Inside Gym</p>
+            <p className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white">{stats.activeInside}</p>
           </div>
-          <Flame className="w-5 h-5 text-slate-400 dark:text-zinc-500 stroke-[1.5]" />
+          <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 dark:text-zinc-500 stroke-[1.5] shrink-0" />
         </div>
 
         {/* Total arrivals today */}
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-slate-500 dark:text-zinc-400 text-xs font-medium">Total Check-Ins Today</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.todayArrivals}</p>
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-3 sm:p-5 rounded-2xl flex items-center justify-between">
+          <div className="space-y-0.5 sm:space-y-1 min-w-0">
+            <p className="text-slate-500 dark:text-zinc-400 text-[10px] sm:text-xs font-medium truncate">Check-Ins</p>
+            <p className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white">{stats.todayArrivals}</p>
           </div>
-          <Users className="w-5 h-5 text-slate-400 dark:text-zinc-500 stroke-[1.5]" />
+          <Users className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 dark:text-zinc-500 stroke-[1.5] shrink-0" />
         </div>
 
         {/* Checked outs today */}
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-slate-500 dark:text-zinc-400 text-xs font-medium">Completed Workouts Today</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.checkOuts}</p>
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-3 sm:p-5 rounded-2xl flex items-center justify-between">
+          <div className="space-y-0.5 sm:space-y-1 min-w-0">
+            <p className="text-slate-500 dark:text-zinc-400 text-[10px] sm:text-xs font-medium truncate">Completed</p>
+            <p className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white">{stats.checkOuts}</p>
           </div>
-          <CheckCircle className="w-5 h-5 text-slate-400 dark:text-zinc-500 stroke-[1.5]" />
+          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 dark:text-zinc-500 stroke-[1.5] shrink-0" />
         </div>
       </div>
 

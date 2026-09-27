@@ -17,7 +17,9 @@ import {
   X,
   FileText,
   Building2,
-  RefreshCw
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { superAdminService } from '../../services/superAdminService';
 import Toast from '../UI/Toast';
@@ -136,61 +138,49 @@ export default function RevenueLedger() {
       <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: 'success' })} />
 
       {/* ── Financial KPI Cards ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 rounded-2xl p-5 transition-all">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <IndianRupee className="w-5 h-5" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-2">
+              <span className="text-xs font-semibold">Total Collections</span>
+              <IndianRupee className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-              Realized Cash
-            </span>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">₹{stats.totalRevenue.toLocaleString('en-IN')}</p>
           </div>
-          <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Total SaaS Collections</p>
-          <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">₹{stats.totalRevenue.toLocaleString('en-IN')}</p>
-          <p className="text-[10px] text-slate-500 dark:text-zinc-500 mt-2 font-medium">Aggregate completed payments</p>
+          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1.5 font-normal">Completed payment receipts</p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 rounded-2xl p-5 transition-all">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
-              <Building2 className="w-5 h-5" />
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-2">
+              <span className="text-xs font-semibold">Active Subscriptions</span>
+              <Building2 className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-wider text-blue-700 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full">
-              Live Tenancies
-            </span>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{stats.activeSubs}</p>
           </div>
-          <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Active Paid Subscriptions</p>
-          <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">{stats.activeSubs}</p>
-          <p className="text-[10px] text-slate-500 dark:text-zinc-500 mt-2 font-medium">Gyms with active license access</p>
+          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1.5 font-normal">Active gym licenses</p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 rounded-2xl p-5 transition-all">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
-              <Receipt className="w-5 h-5" />
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-2">
+              <span className="text-xs font-semibold">Ledger Entries</span>
+              <Receipt className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 dark:text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-full">
-              Transactions
-            </span>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{stats.totalCount}</p>
           </div>
-          <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Total Ledger Entries</p>
-          <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">{stats.totalCount}</p>
-          <p className="text-[10px] text-slate-500 dark:text-zinc-500 mt-2 font-medium">Payment & subscription events</p>
+          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1.5 font-normal">Payment events recorded</p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 rounded-2xl p-5 transition-all">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400">
-              <TrendingUp className="w-5 h-5" />
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-2">
+              <span className="text-xs font-semibold">Average Plan Value</span>
+              <TrendingUp className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
-              Average Plan
-            </span>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">₹{stats.aov.toLocaleString('en-IN')}</p>
           </div>
-          <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Avg Transaction Value</p>
-          <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">₹{stats.aov.toLocaleString('en-IN')}</p>
-          <p className="text-[10px] text-slate-500 dark:text-zinc-500 mt-2 font-medium">Per captured SaaS payment</p>
+          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1.5 font-normal">Per payment average</p>
         </div>
       </div>
 
@@ -214,9 +204,9 @@ export default function RevenueLedger() {
         </div>
 
         {/* Status Filter Floating Pills & CSV */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-full sm:w-auto">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-[calc(100%+1.75rem)] sm:w-auto -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
           {[
-            { key: 'all', label: 'All Tx', count: transactions.length },
+            { key: 'all', label: 'All Payments', count: transactions.length },
             { key: 'captured', label: 'Captured', count: transactions.filter(t => t.payment_status === 'captured' || t.payment_status === 'completed').length },
             { key: 'active', label: 'Active', count: transactions.filter(t => t.status === 'active').length },
             { key: 'pending', label: 'Pending', count: transactions.filter(t => t.status === 'pending' || t.payment_status === 'pending').length },
@@ -263,6 +253,8 @@ export default function RevenueLedger() {
             <Download className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Export</span>
           </button>
+
+          <div className="shrink-0 w-3.5 sm:hidden" aria-hidden="true" />
         </div>
       </div>
 
@@ -294,7 +286,7 @@ export default function RevenueLedger() {
                     <tr key={tx.id} className="hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-black text-xs border border-slate-200 dark:border-zinc-700 shrink-0">
+                          <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-xs shrink-0">
                             {tx.gyms?.gym_name?.charAt(0).toUpperCase() || 'G'}
                           </div>
                           <div className="min-w-0">
@@ -305,7 +297,7 @@ export default function RevenueLedger() {
                       </td>
 
                       <td className="px-6 py-4">
-                        <span className="inline-block bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-200 text-[11px] font-bold px-2.5 py-1 rounded-lg">
+                        <span className="inline-block bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-[11px] font-medium px-2 py-0.5 rounded-md">
                           {tx.saas_plans?.name || 'Pro Tier'}
                         </span>
                       </td>
@@ -340,12 +332,12 @@ export default function RevenueLedger() {
                       </td>
 
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
                           (tx.payment_status === 'captured' || tx.payment_status === 'completed' || tx.status === 'active')
-                            ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20'
+                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
                             : tx.status === 'expired'
-                              ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20'
-                              : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20'
+                              ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
+                              : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
                         }`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${
                             (tx.payment_status === 'captured' || tx.payment_status === 'completed' || tx.status === 'active')
@@ -359,7 +351,7 @@ export default function RevenueLedger() {
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => setSelectedTx(tx)}
-                          className="p-2 bg-slate-100 dark:bg-zinc-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 text-slate-600 dark:text-zinc-300 rounded-xl transition-all cursor-pointer"
+                          className="p-2 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 rounded-lg transition-all cursor-pointer"
                           title="View Transaction Receipt"
                         >
                           <FileText className="w-4 h-4" />
@@ -377,7 +369,7 @@ export default function RevenueLedger() {
                 <div key={tx.id} className="p-4 space-y-3 hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition-colors">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-black text-sm border border-slate-200 dark:border-zinc-700 shrink-0">
+                      <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-sm shrink-0">
                         {tx.gyms?.gym_name?.charAt(0).toUpperCase() || 'G'}
                       </div>
                       <div>
@@ -385,10 +377,10 @@ export default function RevenueLedger() {
                         <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-mono mt-0.5">{tx.saas_plans?.name || 'Pro Plan'}</p>
                       </div>
                     </div>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
                       (tx.payment_status === 'captured' || tx.payment_status === 'completed' || tx.status === 'active')
-                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20'
-                        : 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20'
+                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+                        : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
                     }`}>
                       {tx.payment_status || tx.status || 'active'}
                     </span>
@@ -409,7 +401,7 @@ export default function RevenueLedger() {
 
                     <button
                       onClick={() => setSelectedTx(tx)}
-                      className="px-3 py-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 rounded-lg text-xs font-bold cursor-pointer"
+                      className="px-3 py-1.5 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
                     >
                       Receipt
                     </button>
@@ -427,44 +419,64 @@ export default function RevenueLedger() {
 
             {/* ── Pagination Controls ── */}
             {filtered.length > 0 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-slate-50 dark:bg-zinc-800/50 border-t border-slate-200 dark:border-zinc-800 text-xs text-slate-600 dark:text-zinc-400">
-                <div className="flex items-center gap-3">
-                  <span>
-                    Showing <strong className="text-slate-900 dark:text-white">{(page - 1) * perPage + 1}</strong> to <strong className="text-slate-900 dark:text-white">{Math.min(page * perPage, filtered.length)}</strong> of <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{filtered.length}</strong> transactions
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-3.5 sm:px-6 py-3 sm:py-4 bg-slate-50 dark:bg-zinc-800/50 border-t border-slate-200 dark:border-zinc-800 text-xs text-slate-600 dark:text-zinc-400">
+                <div className="flex items-center justify-between w-full sm:w-auto gap-2">
+                  <span className="text-[11px] sm:text-xs">
+                    Showing <strong className="text-slate-900 dark:text-white font-bold">{(page - 1) * perPage + 1}</strong> to <strong className="text-slate-900 dark:text-white font-bold">{Math.min(page * perPage, filtered.length)}</strong> of <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{filtered.length}</strong> transactions
                   </span>
-                  <div className="flex items-center gap-1.5 ml-2 border-l border-slate-200 dark:border-zinc-700 pl-3">
-                    <span>Rows:</span>
+                  <div className="flex items-center gap-1.5 shrink-0 pl-2.5 sm:pl-3 border-l border-slate-200 dark:border-zinc-700">
+                    <span className="text-[11px] sm:text-xs">Rows:</span>
                     <select
                       value={perPage}
                       onChange={(e) => setPerPage(Number(e.target.value))}
-                      className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-emerald-500 cursor-pointer"
+                      aria-label="Rows per page"
+                      className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white rounded-lg px-2 py-1 text-xs font-semibold focus:outline-none focus:border-emerald-500 cursor-pointer"
                     >
                       <option value={10}>10</option>
+                      <option value={15}>15</option>
                       <option value={20}>20</option>
+                      <option value={25}>25</option>
                       <option value={50}>50</option>
+                      <option value={100}>100</option>
                     </select>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2 pt-1 sm:pt-0 border-t border-slate-200/60 dark:border-zinc-800/60 sm:border-0">
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page <= 1}
-                    className="px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all font-bold"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all font-bold text-xs shadow-2xs active:scale-95"
                   >
-                    Previous
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Previous</span>
                   </button>
 
-                  <span className="px-3 text-xs font-bold text-slate-900 dark:text-white">
-                    Page {page} of {totalPages}
-                  </span>
+                  <div className="flex items-center gap-1.5 bg-white dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-lg px-2.5 py-1 text-xs font-semibold shadow-2xs">
+                    <span className="text-slate-500 dark:text-zinc-400 text-[11px]">Page</span>
+                    <select
+                      value={page}
+                      onChange={(e) => setPage(Number(e.target.value))}
+                      aria-label="Select page"
+                      className="bg-transparent text-slate-900 dark:text-white font-extrabold focus:outline-none cursor-pointer py-0.5 text-xs text-center"
+                    >
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                        <option key={p} value={p} className="bg-white dark:bg-zinc-900 text-slate-900 dark:text-white">
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="text-slate-400 dark:text-zinc-600">/</span>
+                    <span className="text-slate-700 dark:text-zinc-300 font-extrabold text-xs">{totalPages}</span>
+                  </div>
 
                   <button
                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
-                    className="px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all font-bold"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all font-bold text-xs shadow-2xs active:scale-95"
                   >
-                    Next
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -510,7 +522,7 @@ export default function RevenueLedger() {
 
               <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-zinc-800">
                 <span className="text-slate-500 dark:text-zinc-400">Payment Status</span>
-                <span className="text-emerald-700 dark:text-emerald-400 uppercase font-black tracking-wider text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                <span className="text-emerald-700 dark:text-emerald-400 uppercase font-bold tracking-wider text-[10px] bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full">
                   {selectedTx.payment_status || selectedTx.status || 'COMPLETED'}
                 </span>
               </div>

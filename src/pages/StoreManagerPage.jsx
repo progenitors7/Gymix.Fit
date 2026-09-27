@@ -289,8 +289,8 @@ export default function StoreManagerPage() {
         </div>
 
         {/* View Switcher Tabs & Actions - Clean Floating Pills */}
-        <div className="flex items-center gap-3 self-start sm:self-auto">
-          <div className="flex items-center gap-2">
+        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 flex items-center justify-between gap-3 overflow-x-auto pb-1 no-scrollbar w-[calc(100%+2rem)] sm:w-auto">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => setActiveSubTab('inventory')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-150 flex items-center gap-2 cursor-pointer ${
@@ -318,7 +318,7 @@ export default function StoreManagerPage() {
           {activeSubTab === 'inventory' && (
             <button
               onClick={openAddModal}
-              className="px-3.5 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 active:scale-95 cursor-pointer"
+              className="shrink-0 px-3.5 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 active:scale-95 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Add Product</span>
@@ -455,7 +455,7 @@ export default function StoreManagerPage() {
         /* ── ORDERS LOG ── */
         <div className="space-y-4">
           {/* Order Status Filters - Clean Floating Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          <div className="-mx-4 px-4 sm:mx-0 sm:px-0 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-[calc(100%+2rem)] sm:w-auto">
             {['all', 'pending', 'ready', 'completed', 'cancelled'].map((st) => (
               <button
                 key={st}
@@ -469,6 +469,7 @@ export default function StoreManagerPage() {
                 {st}
               </button>
             ))}
+            <div className="shrink-0 w-4 sm:hidden" aria-hidden="true" />
           </div>
 
           {ordersLoading ? (

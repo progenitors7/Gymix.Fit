@@ -51,6 +51,11 @@ const WA_PRESETS = [
   { label: 'Friendly Greeting', text: 'Hey {{name}}! Hope you are crushing your workouts. Your current plan expires on {{date}}.' }
 ];
 
+const unescapeNewlines = (str) => {
+  if (typeof str !== 'string') return str;
+  return str.replace(/\\n/g, '\n');
+};
+
 /* ── Section wrapper ── */
 function Section({ icon, title, description, children, id }) {
   return (
@@ -121,6 +126,16 @@ export default function SettingsPage() {
   const [biometricApiKey, setBiometricApiKey] = useState(gym?.biometric_api_key || '');
   const [savingBiometricSettings, setSavingBiometricSettings] = useState(false);
   const [pwaGuideTab, setPwaGuideTab] = useState('zkteco'); // 'zkteco' | 'hikvision'
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      const params = new URLSearchParams(window.location.search);
+      if (hash.includes('support') || params.get('ticketId')) return 'support';
+      if (hash.includes('automation') || hash.includes('whatsapp') || hash.includes('biometric')) return 'automations';
+      if (hash.includes('security')) return 'security';
+    }
+    return 'plans';
+  });
 
   useEffect(() => {
     if (gym) {
@@ -307,10 +322,10 @@ export default function SettingsPage() {
       setGlobalSettings(prev => ({
         ...prev,
         waAutopilotEnabled: gym.wa_autopilot_enabled ?? false,
-        waTemplateWelcome: gym.wa_template_welcome ?? DEFAULT_WELCOME_TEMPLATE,
-        waTemplateExpirySoon: gym.wa_template_expiry_soon ?? DEFAULT_EXPIRY_SOON_TEMPLATE,
-        waTemplateExpired: gym.wa_template_expired ?? DEFAULT_EXPIRED_TEMPLATE,
-        waTemplateLeft: gym.wa_template_left ?? DEFAULT_LEFT_TEMPLATE,
+        waTemplateWelcome: unescapeNewlines(gym.wa_template_welcome) ?? DEFAULT_WELCOME_TEMPLATE,
+        waTemplateExpirySoon: unescapeNewlines(gym.wa_template_expiry_soon) ?? DEFAULT_EXPIRY_SOON_TEMPLATE,
+        waTemplateExpired: unescapeNewlines(gym.wa_template_expired) ?? DEFAULT_EXPIRED_TEMPLATE,
+        waTemplateLeft: unescapeNewlines(gym.wa_template_left) ?? DEFAULT_LEFT_TEMPLATE,
       }));
     }
   }, [gym]);
@@ -375,10 +390,10 @@ export default function SettingsPage() {
       setGlobalSettings({
         currency: parsed.currency || '₹',
         waTemplate: 'Hello {{name}}, your plan expires on {{date}}.',
-        waTemplateWelcome: gym?.wa_template_welcome || parsed.waTemplateWelcome || DEFAULT_WELCOME_TEMPLATE,
-        waTemplateExpirySoon: gym?.wa_template_expiry_soon || parsed.waTemplateExpirySoon || DEFAULT_EXPIRY_SOON_TEMPLATE,
-        waTemplateExpired: gym?.wa_template_expired || parsed.waTemplateExpired || DEFAULT_EXPIRED_TEMPLATE,
-        waTemplateLeft: gym?.wa_template_left || parsed.waTemplateLeft || DEFAULT_LEFT_TEMPLATE,
+        waTemplateWelcome: unescapeNewlines(gym?.wa_template_welcome || parsed.waTemplateWelcome) || DEFAULT_WELCOME_TEMPLATE,
+        waTemplateExpirySoon: unescapeNewlines(gym?.wa_template_expiry_soon || parsed.waTemplateExpirySoon) || DEFAULT_EXPIRY_SOON_TEMPLATE,
+        waTemplateExpired: unescapeNewlines(gym?.wa_template_expired || parsed.waTemplateExpired) || DEFAULT_EXPIRED_TEMPLATE,
+        waTemplateLeft: unescapeNewlines(gym?.wa_template_left || parsed.waTemplateLeft) || DEFAULT_LEFT_TEMPLATE,
         waAutopilotEnabled: gym?.wa_autopilot_enabled ?? parsed.waAutopilotEnabled ?? false,
         waConnected: parsed.waConnected || false,
         waConnectedNumber: parsed.waConnectedNumber || '',
@@ -656,6 +671,7 @@ export default function SettingsPage() {
   // Support Scroll & Glow effect
   useEffect(() => {
     if (window.location.hash === '#support' || window.location.hash === '#support-center') {
+      setActiveTab('support');
       setTimeout(() => {
         const el = document.getElementById('support-center');
         if (el) {
@@ -666,7 +682,7 @@ export default function SettingsPage() {
             el.classList.remove('border-emerald-500/80', 'ring-2', 'ring-emerald-500/20');
           }, 3000);
         }
-      }, 500);
+      }, 300);
     }
   }, []);
 
@@ -674,13 +690,16 @@ export default function SettingsPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ticketId = params.get('ticketId');
-    if (ticketId && userTickets.length > 0) {
-      const found = userTickets.find(t => t.id === ticketId);
-      if (found) {
-        setSelectedUserTicket(found);
-        // Clean query parameters from URL to avoid repeated auto-open
-        const newUrl = window.location.pathname + window.location.hash;
-        window.history.replaceState({}, document.title, newUrl);
+    if (ticketId) {
+      setActiveTab('support');
+      if (userTickets.length > 0) {
+        const found = userTickets.find(t => t.id === ticketId);
+        if (found) {
+          setSelectedUserTicket(found);
+          // Clean query parameters from URL to avoid repeated auto-open
+          const newUrl = window.location.pathname + window.location.hash;
+          window.history.replaceState({}, document.title, newUrl);
+        }
       }
     }
   }, [userTickets]);
@@ -963,12 +982,67 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {/* Settings Navigation Tabs */}
+      <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-x-auto scrollbar-none mb-6">
+        <button
+          type="button"
+          onClick={() => setActiveTab('plans')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            activeTab === 'plans'
+              ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-xs'
+              : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <span>Plans & General</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('automations')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            activeTab === 'automations'
+              ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-xs'
+              : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Zap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <span>WhatsApp & Biometrics</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('security')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            activeTab === 'security'
+              ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-xs'
+              : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <span>Security & Data</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('support')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            activeTab === 'support'
+              ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-xs'
+              : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <LifeBuoy className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <span>Support & Help</span>
+        </button>
+      </div>
+
       <div className="grid gap-6">
-
-
-        {/* Membership Plans */}
-        <Section 
-          icon={<Calendar className="w-5 h-5" />}
+        {activeTab === 'plans' && (
+          <>
+            {/* Membership Plans */}
+            <Section 
+              icon={<Calendar className="w-5 h-5" />}
           title="Membership Plans" 
           description="Define your own subscription tiers and pricing"
         >
@@ -1035,6 +1109,38 @@ export default function SettingsPage() {
           </div>
         </Section>
 
+        {/* Global Settings */}
+        <Section 
+          icon={<SettingsIcon className="w-5 h-5" />}
+          title="Platform Preferences" 
+          description="Regional and platform settings for your gym"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300 px-1">Currency Symbol</label>
+              <select
+                value={globalSettings.currency}
+                onChange={e => setGlobalSettings({...globalSettings, currency: e.target.value})}
+                className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all shadow-xs appearance-none"
+              >
+                <option value="₹">₹ (INR)</option>
+                <option value="$">$ (USD)</option>
+                <option value="€">€ (EUR)</option>
+                <option value="£">£ (GBP)</option>
+              </select>
+            </div>
+          </div>
+          <div className="pt-2">
+            <button 
+              onClick={handleSaveGlobalSettings} 
+              disabled={savingSettings} 
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-50 text-white font-semibold rounded-xl text-xs transition-all shadow-xs cursor-pointer"
+            >
+              {savingSettings ? 'Saving...' : 'Save Preferences'}
+            </button>
+          </div>
+        </Section>
+
         {/* Gym Loyalty Coins */}
         <Section 
           icon={<Sparkles className="w-5.5 h-5.5 text-amber-400 fill-amber-400/20" />}
@@ -1088,13 +1194,17 @@ export default function SettingsPage() {
             </div>
           </div>
         </Section>
+          </>
+        )}
 
-        {/* Universal Biometric Integration */}
-        <Section 
-          icon={<Fingerprint className="w-5.5 h-5.5 text-emerald-600 dark:text-emerald-400 fill-emerald-500/10" />}
-          title="Universal Biometric Integration" 
-          description="Direct Cloud Plug-and-Play sync for ZKTeco, eSSL, BioMax, Realtime & Hikvision terminals"
-        >
+        {activeTab === 'automations' && (
+          <>
+            {/* Universal Biometric Integration */}
+            <Section 
+              icon={<Fingerprint className="w-5.5 h-5.5 text-emerald-600 dark:text-emerald-400 fill-emerald-500/10" />}
+              title="Universal Biometric Integration" 
+              description="Direct Cloud Plug-and-Play sync for ZKTeco, eSSL, BioMax, Realtime & Hikvision terminals"
+            >
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4.5 rounded-2xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800">
               <div>
@@ -1314,10 +1424,10 @@ export default function SettingsPage() {
         >
           <div className="space-y-4">
             {/* Connection Mode Selection Toggle */}
-            <div className="flex items-center justify-between p-4.5 rounded-2xl bg-white/[0.01] border border-white/5">
+            <div className="flex items-center justify-between p-4.5 rounded-2xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800">
               <div>
-                <p className="text-sm font-bold text-white">Enable WhatsApp Autopilot Mode</p>
-                <p className="text-[10px] text-gray-500 font-medium">
+                <p className="text-sm font-bold text-slate-900 dark:text-white">Enable WhatsApp Autopilot Mode</p>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium mt-0.5">
                   {globalSettings.waAutopilotEnabled 
                     ? "🟢 Reminders will send in the background automatically via your linked WhatsApp device." 
                     : "⚪ Reminders open manual click-to-chat web tabs (wa.me) for manual sending."}
@@ -1344,9 +1454,9 @@ export default function SettingsPage() {
 
                   showToast(newAutopilotState ? 'WhatsApp Autopilot Mode Enabled!' : 'WhatsApp Manual Mode Activated.');
                 }}
-                className={`w-12 h-7 rounded-full p-1 transition-all cursor-pointer relative flex items-center ${globalSettings.waAutopilotEnabled ? 'bg-emerald-500' : 'bg-white/10'}`}
+                className={`w-12 h-7 rounded-full p-1 transition-all cursor-pointer relative flex items-center ${globalSettings.waAutopilotEnabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-zinc-800'}`}
               >
-                <span className={`w-5 h-5 bg-white rounded-full shadow-md transition-all absolute ${globalSettings.waAutopilotEnabled ? 'right-1' : 'left-1'}`} />
+                <span className={`w-5 h-5 bg-white rounded-full shadow-xs transition-all absolute ${globalSettings.waAutopilotEnabled ? 'right-1' : 'left-1'}`} />
               </button>
             </div>
 
@@ -1354,13 +1464,13 @@ export default function SettingsPage() {
 
             {/* Autopilot Panel (Displays only when Autopilot Toggle is True) */}
             {globalSettings.waAutopilotEnabled && (
-              <div className="p-5 rounded-2xl bg-black/30 border border-white/5 space-y-4 animate-in fade-in duration-300">
+              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 space-y-4 animate-in fade-in duration-300">
                 
                 {/* STATE 1: Disconnected */}
                 {waSessionState === 'disconnected' && (
                   <div className="flex flex-col items-center py-6 space-y-5">
-                    <div className="w-14 h-14 bg-white/[0.02] border border-white/5 text-gray-500 rounded-2xl flex items-center justify-center shadow-inner">
-                      <Smartphone className="w-7 h-7" />
+                    <div className="w-12 h-12 bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-500 dark:text-zinc-400 rounded-xl flex items-center justify-center shadow-xs">
+                      <Smartphone className="w-6 h-6" />
                     </div>
                     
                     {/* Method Selector Tabs */}
@@ -1616,13 +1726,13 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => setGlobalSettings({...globalSettings, waTemplateWelcome: DEFAULT_WELCOME_TEMPLATE})}
-                  className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline uppercase tracking-wider cursor-pointer"
+                  className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
                 >
-                  Reset Default
+                  Reset to default
                 </button>
               </div>
               <textarea
-                rows={4}
+                rows={5}
                 value={globalSettings.waTemplateWelcome}
                 onChange={e => setGlobalSettings({...globalSettings, waTemplateWelcome: e.target.value})}
                 className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all resize-y shadow-xs"
@@ -1637,13 +1747,13 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => setGlobalSettings({...globalSettings, waTemplateExpirySoon: DEFAULT_EXPIRY_SOON_TEMPLATE})}
-                  className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline uppercase tracking-wider cursor-pointer"
+                  className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
                 >
-                  Reset Default
+                  Reset to default
                 </button>
               </div>
               <textarea
-                rows={4}
+                rows={5}
                 value={globalSettings.waTemplateExpirySoon}
                 onChange={e => setGlobalSettings({...globalSettings, waTemplateExpirySoon: e.target.value})}
                 className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all resize-y shadow-xs"
@@ -1658,13 +1768,13 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => setGlobalSettings({...globalSettings, waTemplateExpired: DEFAULT_EXPIRED_TEMPLATE})}
-                  className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline uppercase tracking-wider cursor-pointer"
+                  className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
                 >
-                  Reset Default
+                  Reset to default
                 </button>
               </div>
               <textarea
-                rows={4}
+                rows={5}
                 value={globalSettings.waTemplateExpired}
                 onChange={e => setGlobalSettings({...globalSettings, waTemplateExpired: e.target.value})}
                 className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all resize-y shadow-xs"
@@ -1679,13 +1789,13 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => setGlobalSettings({...globalSettings, waTemplateLeft: DEFAULT_LEFT_TEMPLATE})}
-                  className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline uppercase tracking-wider cursor-pointer"
+                  className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
                 >
-                  Reset Default
+                  Reset to default
                 </button>
               </div>
               <textarea
-                rows={4}
+                rows={5}
                 value={globalSettings.waTemplateLeft}
                 onChange={e => setGlobalSettings({...globalSettings, waTemplateLeft: e.target.value})}
                 className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all resize-y shadow-xs"
@@ -1725,39 +1835,11 @@ export default function SettingsPage() {
             </div>
           </div>
         </Section>
+          </>
+        )}
 
-        {/* Global Settings */}
-        <Section 
-          icon={<SettingsIcon className="w-5 h-5" />}
-          title="Global Settings" 
-          description="Platform preferences for your gym"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-400 px-1">Currency Symbol</label>
-              <select
-                value={globalSettings.currency}
-                onChange={e => setGlobalSettings({...globalSettings, currency: e.target.value})}
-                className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all shadow-xs appearance-none"
-              >
-                <option value="₹">₹ (INR)</option>
-                <option value="$">$ (USD)</option>
-                <option value="€">€ (EUR)</option>
-                <option value="£">£ (GBP)</option>
-              </select>
-            </div>
-          </div>
-          <div className="pt-2">
-            <button 
-              onClick={handleSaveGlobalSettings} 
-              disabled={savingSettings} 
-              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-50 text-white font-semibold rounded-xl text-xs transition-all shadow-xs cursor-pointer"
-            >
-              {savingSettings ? 'Saving...' : 'Save Settings'}
-            </button>
-          </div>
-        </Section>
-
+        {activeTab === 'security' && (
+          <>
         {/* Security */}
         <Section 
           icon={<ShieldCheck className="w-5 h-5" />}
@@ -1811,6 +1893,31 @@ export default function SettingsPage() {
           </button>
         </Section>
 
+        {/* Danger Zone */}
+        <div className="bg-red-50/40 dark:bg-red-950/10 border border-red-200 dark:border-red-900/40 rounded-2xl p-6 relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800/50 flex items-center justify-center text-red-600 dark:text-red-400">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-red-600 dark:text-red-400 font-bold text-base">Danger Zone</h3>
+                <p className="text-slate-600 dark:text-zinc-400 text-xs mt-0.5">Irreversible actions for your gym data</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowDangerModal(true)} 
+              className="px-5 py-2.5 bg-red-600 hover:bg-red-500 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-xs whitespace-nowrap cursor-pointer"
+            >
+              Wipe All Data
+            </button>
+          </div>
+        </div>
+          </>
+        )}
+
+        {activeTab === 'support' && (
+          <>
         {/* Support Center */}
         <Section 
           id="support-center"
@@ -1971,26 +2078,8 @@ export default function SettingsPage() {
             </div>
           </div>
         </Section>
-
-        <div className="bg-red-50/40 dark:bg-red-950/10 border border-red-200 dark:border-red-900/40 rounded-2xl p-6 relative overflow-hidden">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800/50 flex items-center justify-center text-red-600 dark:text-red-400">
-                <AlertTriangle className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-red-600 dark:text-red-400 font-bold text-base">Danger Zone</h3>
-                <p className="text-slate-600 dark:text-zinc-400 text-xs mt-0.5">Irreversible actions for your gym data</p>
-              </div>
-            </div>
-            <button 
-              onClick={() => setShowDangerModal(true)} 
-              className="px-5 py-2.5 bg-red-600 hover:bg-red-500 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-xs whitespace-nowrap cursor-pointer"
-            >
-              Wipe All Data
-            </button>
-          </div>
-        </div>
+          </>
+        )}
 
         {/* Danger Modal */}
         {showDangerModal && (

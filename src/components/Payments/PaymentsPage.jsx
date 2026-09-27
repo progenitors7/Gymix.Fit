@@ -159,7 +159,7 @@ export default function PaymentsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="p-6 sm:p-8 max-w-7xl mx-auto space-y-10"
+        className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-10"
       >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -251,7 +251,7 @@ export default function PaymentsPage() {
       {/* Tabs and Filters Panel */}
       <div className="space-y-4">
         {/* Tab Switcher - Clean Floating Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-[calc(100%+2rem)] sm:w-auto">
           <button
             onClick={() => { setActiveTab('subscriptions'); setStatusFilter('all'); }}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer ${
@@ -274,6 +274,7 @@ export default function PaymentsPage() {
             <Store className="w-3.5 h-3.5" />
             <span>Store Sales</span>
           </button>
+          <div className="shrink-0 w-4 sm:hidden" aria-hidden="true" />
         </div>
 
         {/* Search */}
@@ -290,7 +291,7 @@ export default function PaymentsPage() {
 
         {/* Status Filters - Clean Floating Pills */}
         {activeTab === 'subscriptions' && (
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          <div className="-mx-4 px-4 sm:mx-0 sm:px-0 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-[calc(100%+2rem)] sm:w-auto">
             {['all', 'paid', 'pending', 'overdue'].map((status) => {
               const isActive = statusFilter === status;
               return (
@@ -307,6 +308,7 @@ export default function PaymentsPage() {
                 </button>
               );
             })}
+            <div className="shrink-0 w-4 sm:hidden" aria-hidden="true" />
           </div>
         )}
       </div>

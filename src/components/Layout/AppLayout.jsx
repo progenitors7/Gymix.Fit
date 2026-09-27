@@ -196,9 +196,9 @@ function SidebarContent({ onClose, isMobile }) {
 
       {/* Footer Controls: Theme Switcher & User Profile */}
       <div className="p-3 border-t border-slate-200 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-950 space-y-3">
-        {/* Multi-Theme Switcher (Auto/Light/OLED/Abyss) */}
+        {/* Theme Switcher (Auto/Light/Dark) */}
         <div>
-          <ThemeToggle variant="segmented" className="w-full justify-between" />
+          <ThemeToggle variant="segmented" className="w-full" />
         </div>
 
         {/* User Card */}

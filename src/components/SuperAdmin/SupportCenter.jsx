@@ -143,10 +143,10 @@ export default function SupportCenter() {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold ${
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
             openCount > 0 
-              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50' 
-              : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50'
+              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400' 
+              : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
           }`}>
             <span className={`w-2 h-2 rounded-full ${openCount > 0 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
             {openCount > 0 ? `${openCount} Open Inquiries` : 'All Caught Up'}
@@ -219,11 +219,11 @@ export default function SupportCenter() {
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ${
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                       isHigh 
-                        ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50' 
+                        ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' 
                         : isMedium 
-                        ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50' 
+                        ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400' 
                         : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400'
                     }`}>
                       {ticket.priority || 'Normal'}
@@ -318,11 +318,11 @@ export default function SupportCenter() {
               <div className="flex-1 p-5 sm:p-6 space-y-5 overflow-y-auto max-h-[400px]">
                 {/* User Message Bubble */}
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 shrink-0">
                     <User className="w-4 h-4" />
                   </div>
                   <div className="flex-1">
-                    <div className="bg-slate-50 dark:bg-zinc-800/60 p-4 rounded-2xl rounded-tl-none border border-slate-200 dark:border-zinc-700">
+                    <div className="bg-slate-100 dark:bg-zinc-800/80 p-4 rounded-2xl rounded-tl-none">
                       <p className="text-xs text-slate-800 dark:text-zinc-200 leading-relaxed whitespace-pre-wrap">
                         {selectedTicket.description}
                       </p>
@@ -336,11 +336,11 @@ export default function SupportCenter() {
                 {/* Admin Reply Bubble */}
                 {selectedTicket.admin_response && (
                   <div className="flex items-start gap-3 flex-row-reverse">
-                    <div className="w-8 h-8 rounded-xl bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
                       <ShieldAlert className="w-4 h-4" />
                     </div>
                     <div className="flex-1 text-right">
-                      <div className="bg-violet-50 dark:bg-violet-950/30 p-4 rounded-2xl rounded-tr-none border border-violet-200 dark:border-violet-900/50 inline-block text-left max-w-[85%]">
+                      <div className="bg-violet-50 dark:bg-violet-950/40 p-4 rounded-2xl rounded-tr-none inline-block text-left max-w-[85%]">
                         <p className="text-xs font-medium text-slate-900 dark:text-white leading-relaxed whitespace-pre-wrap">
                           {selectedTicket.admin_response}
                         </p>

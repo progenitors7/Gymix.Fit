@@ -167,21 +167,25 @@ export default function NotificationsPage() {
         </button>
       </div>
 
-      {/* Control Bar (Segmented Tabs) */}
-      <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800 rounded-xl">
-        {['all', 'unread', 'payments', 'memberships', 'support', 'announcements'].map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              filter === f 
-                ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-xs border border-slate-200/60 dark:border-zinc-700/60' 
-                : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
-          </button>
-        ))}
+      {/* Control Bar (Clean Floating Filter Pills) */}
+      <div className="-mx-4 px-4 sm:mx-0 sm:px-0 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-[calc(100%+2rem)] sm:w-auto">
+        {['all', 'unread', 'payments', 'memberships', 'support', 'announcements'].map(f => {
+          const isActive = filter === f;
+          return (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer ${
+                isActive 
+                  ? 'bg-violet-600 text-white' 
+                  : 'bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              {f.charAt(0).toUpperCase() + f.slice(1)}
+            </button>
+          );
+        })}
+        <div className="shrink-0 w-4 sm:hidden" aria-hidden="true" />
       </div>
 
       {/* Notification List */}

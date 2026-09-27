@@ -666,7 +666,7 @@ export default function Dashboard() {
               </div>
               
               {/* Tabs Switcher */}
-              <div className="flex bg-slate-100/70 dark:bg-zinc-950/50 p-1 rounded-xl border border-slate-200/60 dark:border-white/[0.04] self-start text-xs font-semibold">
+              <div className="flex overflow-x-auto no-scrollbar max-w-full bg-slate-100/70 dark:bg-zinc-950/50 p-1 rounded-xl border border-slate-200/60 dark:border-white/[0.04] self-start text-xs font-semibold">
                 {[
                   { id: 'revenue', label: 'Revenue' },
                   { id: 'plans', label: 'Plans' },
@@ -676,7 +676,7 @@ export default function Dashboard() {
                   <button
                     key={tab.id}
                     onClick={() => setAnalyticsTab(tab.id)}
-                    className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                       analyticsTab === tab.id
                         ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-xs font-bold'
                         : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
