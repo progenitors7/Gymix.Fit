@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion'
 import { 
   Activity, Users, CreditCard, TrendingUp, MessageSquare, 
   Sparkles, ShieldCheck, Zap, ArrowRight, Download, Share, 
   Plus, Check, X, Smartphone, ArrowUpRight, BarChart3, QrCode,
   Menu, ChevronDown, Award, Star, Search, Calendar, Lock, Info, CheckCircle2,
-  Fingerprint, ShoppingBag, ExternalLink, Cpu
+  Fingerprint, ShoppingBag, ExternalLink, Cpu, Mail, Copy, MessageCircle
 } from 'lucide-react'
 import Logo from '../components/UI/Logo'
 
@@ -29,6 +29,23 @@ const InstagramIcon = (props) => (
 export default function LandingPage() {
   const navigate = useNavigate()
   
+  // Scroll progress for top progress bar
+  const { scrollYProgress } = useScroll()
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  })
+
+  // Founder email copy state
+  const [copiedEmail, setCopiedEmail] = useState(false)
+  const handleCopyEmail = (e) => {
+    if (e && e.stopPropagation) e.stopPropagation()
+    navigator.clipboard.writeText('founder@gymix.fit')
+    setCopiedEmail(true)
+    setTimeout(() => setCopiedEmail(false), 2500)
+  }
+
   // Mobile drawer state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   
@@ -324,6 +341,12 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#090C10] text-slate-100 overflow-x-hidden selection:bg-[#863BFF]/30 font-sans relative">
       
+      {/* ── TOP SCROLL PROGRESS BAR ── */}
+      <motion.div 
+        style={{ scaleX }} 
+        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#863BFF] via-[#38BDF8] to-[#10B981] origin-left z-[70] shadow-[0_0_12px_rgba(134,59,255,0.7)]" 
+      />
+
       {/* Background radiant glowing effects */}
       <div className="absolute top-[-100px] left-[5%] w-[350px] md:w-[600px] h-[350px] md:h-[600px] bg-[#863BFF]/8 blur-[100px] md:blur-[140px] rounded-full pointer-events-none" />
       <div className="absolute top-[30%] right-[10%] w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-[#10B981]/6 blur-[90px] md:blur-[130px] rounded-full pointer-events-none" />
@@ -334,7 +357,7 @@ export default function LandingPage() {
 
       <header 
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
-        className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/5 bg-[#090C10]/75 transition-all duration-300"
+        className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/5 bg-[#090C10]/85 transition-all duration-300 shadow-lg shadow-black/20"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           
@@ -350,12 +373,19 @@ export default function LandingPage() {
           </div>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-8 text-xs font-black uppercase tracking-wider text-slate-400">
-            <button onClick={() => scrollToId('features')} className="hover:text-white transition-colors">Features</button>
-            <button onClick={() => scrollToId('simulator')} className="hover:text-white transition-colors">Simulator</button>
-            <button onClick={() => scrollToId('pwa-installer')} className="hover:text-white transition-colors">Get App</button>
-            <button onClick={() => scrollToId('pricing')} className="hover:text-white transition-colors">Pricing</button>
-            <button onClick={() => scrollToId('faq')} className="hover:text-slate-200 transition-colors">FAQ</button>
+          <nav className="hidden lg:flex items-center gap-7 text-xs font-black uppercase tracking-wider text-slate-400">
+            <button onClick={() => scrollToId('features')} className="hover:text-white transition-colors cursor-pointer">Features</button>
+            <button onClick={() => scrollToId('simulator')} className="hover:text-white transition-colors cursor-pointer">Simulator</button>
+            <button onClick={() => scrollToId('pwa-installer')} className="hover:text-white transition-colors cursor-pointer">Get App</button>
+            <button onClick={() => scrollToId('pricing')} className="hover:text-white transition-colors cursor-pointer">Pricing</button>
+            <button onClick={() => scrollToId('faq')} className="hover:text-slate-200 transition-colors cursor-pointer">FAQ</button>
+            <button 
+              onClick={() => scrollToId('founder-contact')} 
+              className="hover:text-[#863BFF] text-slate-300 transition-colors cursor-pointer flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.03] border border-white/5 hover:border-[#863BFF]/30"
+            >
+              <Mail className="w-3.5 h-3.5 text-[#863BFF]" />
+              <span>Founder Desk</span>
+            </button>
           </nav>
 
           {/* Action Buttons */}
@@ -364,7 +394,7 @@ export default function LandingPage() {
             {deferredPrompt && (
               <button 
                 onClick={handleInstallClick}
-                className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-[#10B981] bg-[#10B981]/15 border border-[#10B981]/25 hover:bg-[#10B981]/25 rounded-xl transition-all duration-300"
+                className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-[#10B981] bg-[#10B981]/15 border border-[#10B981]/25 hover:bg-[#10B981]/25 rounded-xl transition-all duration-300 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 Install OS
@@ -373,7 +403,7 @@ export default function LandingPage() {
 
             <button 
               onClick={() => navigate('/login')} 
-              className="text-xs font-black uppercase tracking-wider text-slate-300 hover:text-[#863BFF] transition-all duration-200 px-3 py-2 whitespace-nowrap"
+              className="text-xs font-black uppercase tracking-wider text-slate-300 hover:text-[#863BFF] transition-all duration-200 px-3 py-2 whitespace-nowrap cursor-pointer"
             >
               Sign In
             </button>
@@ -384,7 +414,7 @@ export default function LandingPage() {
                 setPromoApplied(true);
                 scrollToId('pricing');
               }} 
-              className="hidden sm:flex px-4.5 py-2.5 text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-[#863BFF] to-[#601bdf] hover:from-[#9c5eff] hover:to-[#863BFF] text-white shadow-lg shadow-[#863BFF]/20 rounded-xl transition-all duration-300 items-center gap-1.5 hover:scale-105 active:scale-95 border border-[#863BFF]/30"
+              className="hidden sm:flex px-4.5 py-2.5 text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-[#863BFF] to-[#601bdf] hover:from-[#9c5eff] hover:to-[#863BFF] text-white shadow-lg shadow-[#863BFF]/20 rounded-xl transition-all duration-300 items-center gap-1.5 hover:scale-105 active:scale-95 border border-[#863BFF]/30 cursor-pointer"
             >
               Claim 1 Month Free
               <ArrowRight className="w-3.5 h-3.5" />
@@ -393,7 +423,7 @@ export default function LandingPage() {
             {/* Mobile Burger Menu Button */}
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white"
+              className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white cursor-pointer"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -420,7 +450,7 @@ export default function LandingPage() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="fixed inset-y-0 right-0 z-50 w-full max-w-xs bg-[#090C10]/95 backdrop-blur-2xl border-l border-white/5 p-6 flex flex-col justify-between"
+              className="fixed inset-y-0 right-0 z-50 w-full max-w-xs bg-[#090C10]/95 backdrop-blur-2xl border-l border-white/5 p-6 flex flex-col justify-between overflow-y-auto"
             >
               <div>
                 <div className="flex items-center justify-between pb-6 border-b border-white/5">
@@ -432,39 +462,66 @@ export default function LandingPage() {
                   </div>
                   <button 
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 border border-white/5 hover:bg-white/10"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 cursor-pointer"
                   >
                     <X className="w-4 h-4 text-white" />
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-4 mt-8">
+                <div className="flex flex-col gap-3 mt-6">
                   {[
                     { label: 'Features', target: 'features' },
                     { label: 'Simulator', target: 'simulator' },
                     { label: 'Get App', target: 'pwa-installer' },
                     { label: 'Pricing', target: 'pricing' },
-                    { label: 'FAQ', target: 'faq' }
+                    { label: 'FAQ', target: 'faq' },
+                    { label: 'Founder Desk', target: 'founder-contact' }
                   ].map((link, index) => (
                     <button
                       key={index}
                       onClick={() => scrollToId(link.target)}
-                      className="text-left py-2.5 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
+                      className="text-left py-2 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors cursor-pointer"
                     >
                       {link.label}
                     </button>
                   ))}
                 </div>
+
+                {/* Direct Founder Contact Box in Mobile Menu */}
+                <div className="mt-6 p-4 rounded-2xl bg-gradient-to-br from-[#863BFF]/10 to-[#10B981]/10 border border-white/10 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-white">
+                      <Mail className="w-3.5 h-3.5 text-[#863BFF]" />
+                      <span>Founder Line</span>
+                    </div>
+                    <span className="w-2 h-2 rounded-full bg-[#10B981] animate-ping" />
+                  </div>
+                  <p className="text-[11px] font-mono text-slate-300 font-bold select-all">founder@gymix.fit</p>
+                  <div className="flex gap-2 pt-1">
+                    <a
+                      href="mailto:founder@gymix.fit?subject=Gymix%20Inquiry"
+                      className="flex-1 py-1.5 text-center bg-[#863BFF] hover:bg-[#9c5eff] text-white text-[9px] font-black uppercase tracking-wider rounded-lg transition-colors"
+                    >
+                      Mail Direct
+                    </a>
+                    <button
+                      onClick={handleCopyEmail}
+                      className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-[9px] font-bold rounded-lg transition-colors cursor-pointer"
+                    >
+                      {copiedEmail ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-4 pt-6 border-t border-white/5">
+              <div className="space-y-3 pt-6 border-t border-white/5">
                 {deferredPrompt && (
                   <button
                     onClick={() => {
                       handleInstallClick();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full py-3.5 bg-[#10B981]/10 border border-[#10B981]/20 hover:bg-[#10B981]/25 text-[#10B981] text-[10px] font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-[#10B981]/10 border border-[#10B981]/20 hover:bg-[#10B981]/25 text-[#10B981] text-[10px] font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Download className="w-4 h-4" />
                     Install Standing PWA
@@ -477,7 +534,7 @@ export default function LandingPage() {
                     setPromoApplied(true);
                     scrollToId('pricing');
                   }}
-                  className="w-full py-3.5 bg-gradient-to-r from-[#863BFF] to-[#601bdf] hover:from-[#9c5eff] hover:to-[#863BFF] text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-[#863BFF]/10 text-center block border border-[#863BFF]/20"
+                  className="w-full py-3 bg-gradient-to-r from-[#863BFF] to-[#601bdf] hover:from-[#9c5eff] hover:to-[#863BFF] text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-[#863BFF]/10 text-center block border border-[#863BFF]/20 cursor-pointer"
                 >
                   Get 1 Month Free
                 </button>
@@ -503,16 +560,39 @@ export default function LandingPage() {
           <span className="relative z-10 text-[#10B981] animate-pulse">1 MONTH FREE TRIAL</span>
         </motion.div>
 
-        {/* Hero Title Typography */}
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1 }}
-          className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white leading-[1.05] tracking-tight uppercase italic max-w-5xl py-2"
-        >
-          UNLEASH YOUR <br className="hidden sm:inline" />
-          GYM'S <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#863BFF] to-[#10B981] drop-shadow-[0_0_30px_rgba(134,59,255,0.2)]">REVENUE</span> POTENTIAL
-        </motion.h1>
+        {/* Hero Title Container with Floating Tech Badges */}
+        <div className="relative max-w-5xl py-2">
+          {/* Left Floating Tech Badge */}
+          <motion.div
+            animate={{ y: [0, -8, 0] }}
+            transition={{ duration: 4.2, repeat: Infinity, ease: 'easeInOut' }}
+            className="hidden xl:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[10px] font-black uppercase text-emerald-400 absolute -left-12 top-10 backdrop-blur-md shadow-lg shadow-emerald-500/10 pointer-events-none"
+          >
+            <Zap className="w-3.5 h-3.5 text-emerald-400" />
+            <span>0.2s Biometric Scan</span>
+          </motion.div>
+
+          {/* Right Floating Tech Badge */}
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 4.8, repeat: Infinity, ease: 'easeInOut', delay: 0.4 }}
+            className="hidden xl:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#863BFF]/15 border border-[#863BFF]/30 text-[10px] font-black uppercase text-[#a87ffb] absolute -right-12 top-24 backdrop-blur-md shadow-lg shadow-[#863BFF]/10 pointer-events-none"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-[#863BFF]" />
+            <span>Zero Revenue Leakage</span>
+          </motion.div>
+
+          {/* Hero Title Typography */}
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white leading-[1.05] tracking-tight uppercase italic"
+          >
+            UNLEASH YOUR <br className="hidden sm:inline" />
+            GYM'S <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#863BFF] via-[#38BDF8] to-[#10B981] drop-shadow-[0_0_35px_rgba(134,59,255,0.3)]">REVENUE</span> POTENTIAL
+          </motion.h1>
+        </div>
 
         {/* Description Paragraph */}
         <motion.p
@@ -550,6 +630,23 @@ export default function LandingPage() {
           >
             Explore Dashboard Simulator
           </button>
+        </motion.div>
+
+        {/* Direct Founder Email Quick Micro-bar */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.32 }}
+          className="mt-4 flex items-center gap-2 text-slate-400 text-xs font-semibold"
+        >
+          <span>Have custom setup queries?</span>
+          <a
+            href="mailto:founder@gymix.fit?subject=Inquiry%20from%20Gym%20Owner"
+            className="text-white hover:text-[#863BFF] underline underline-offset-4 font-mono font-bold transition-colors inline-flex items-center gap-1"
+          >
+            <Mail className="w-3.5 h-3.5 text-[#863BFF]" />
+            founder@gymix.fit
+          </a>
         </motion.div>
 
         {/* Athlete App Prompts for Members */}
@@ -630,7 +727,13 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           
           {/* Header text */}
-          <div className="text-center space-y-4 max-w-3xl mx-auto mb-16">
+          <motion.div 
+            initial={{ opacity: 0, y: 25 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.6 }}
+            className="text-center space-y-4 max-w-3xl mx-auto mb-16"
+          >
             <span className="text-[#863BFF] text-[10px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-1.5">
               <Activity className="w-3.5 h-3.5 text-[#863BFF]" />
               Live Interactive Widget
@@ -641,7 +744,7 @@ export default function LandingPage() {
             <p className="text-slate-400 text-xs sm:text-sm font-semibold max-w-2xl mx-auto leading-relaxed">
               Click the interactive module selector tabs below. Watch how beautifully simple the Gymix operational panels represent information for members, instant payments, automatic entrance gates, and growth statistics.
             </p>
-          </div>
+          </motion.div>
 
           {/* Simulator Card Box Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch max-w-6xl mx-auto">
@@ -1246,7 +1349,13 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Title header */}
-          <div className="text-center space-y-4 max-w-3xl mx-auto mb-16">
+          <motion.div 
+            initial={{ opacity: 0, y: 25 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.6 }}
+            className="text-center space-y-4 max-w-3xl mx-auto mb-16"
+          >
             <span className="text-[#10B981] text-[10px] font-black uppercase tracking-[0.3em]">
               Gym Operational Command
             </span>
@@ -1256,7 +1365,7 @@ export default function LandingPage() {
             <p className="text-slate-400 text-xs sm:text-sm font-semibold max-w-xl mx-auto leading-relaxed">
               Consolidate spreadsheets, check-in registries, and invoice ledgers. Gymix manages every core structural asset so you can focus entirely on training members.
             </p>
-          </div>
+          </motion.div>
 
           {/* Features Grid column (Collapsible responsive grid) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6.5 mt-12">
@@ -1656,7 +1765,13 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Section text headers */}
-          <div className="text-center space-y-4 max-w-3xl mx-auto mb-14">
+          <motion.div 
+            initial={{ opacity: 0, y: 25 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.6 }}
+            className="text-center space-y-4 max-w-3xl mx-auto mb-14"
+          >
             <span className="text-[#10B981] text-[10px] font-black uppercase tracking-[0.3em]">
               Checkout Engine
             </span>
@@ -1666,7 +1781,7 @@ export default function LandingPage() {
             <p className="text-slate-400 text-xs sm:text-sm font-semibold max-w-xl mx-auto leading-relaxed">
               Design your system access duration. Select a custom billing cycle below and watch the real-time order summary calculation update. Enter an elite promo coupon to claim your trial.
             </p>
-          </div>
+          </motion.div>
 
           {/* Checkout Grid Wrapper (Collapses beautifully on mobile, grid columns on desktop) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-5xl mx-auto mt-12">
@@ -2084,7 +2199,13 @@ export default function LandingPage() {
       <section id="faq" className="py-20 md:py-28 border-t border-white/5 relative bg-[#090C10]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           
-          <div className="text-center space-y-4 mb-16">
+          <motion.div 
+            initial={{ opacity: 0, y: 25 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.6 }}
+            className="text-center space-y-4 mb-16"
+          >
             <span className="text-[#10B981] text-[10px] font-black uppercase tracking-[0.3em]">
               Support Registry
             </span>
@@ -2094,7 +2215,7 @@ export default function LandingPage() {
             <p className="text-slate-400 text-xs sm:text-sm font-semibold max-w-xl mx-auto">
               Got administrative inquiries? Browse answers concerning app deployment, biometric gate setups, and invoice structures.
             </p>
-          </div>
+          </motion.div>
 
           <div className="space-y-4">
             {faqData.map((faq, index) => {
@@ -2145,71 +2266,293 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── DIRECT FOUNDER CONNECT & EXECUTIVE ONBOARDING ── */}
+      <section id="founder-contact" className="py-20 md:py-28 border-t border-white/5 bg-gradient-to-b from-[#0C0E14] via-[#090C10] to-[#07090D] relative overflow-hidden">
+        {/* Ambient neon radial glows */}
+        <div className="absolute top-[20%] left-[10%] w-[450px] h-[450px] bg-[#863BFF]/8 blur-[140px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-[10%] right-[10%] w-[400px] h-[400px] bg-[#10B981]/6 blur-[130px] rounded-full pointer-events-none" />
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center space-y-4 max-w-3xl mx-auto mb-14">
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#863BFF]/10 border border-[#863BFF]/25 text-[10px] font-black uppercase tracking-widest text-[#863BFF]"
+            >
+              <Mail className="w-3.5 h-3.5 text-[#863BFF]" />
+              <span>Verified Executive Channel</span>
+            </motion.div>
+            
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="text-3xl sm:text-5xl font-black text-white tracking-tighter uppercase italic leading-[1.1]"
+            >
+              TALK DIRECTLY TO OUR FOUNDER
+            </motion.h2>
+            
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="text-slate-400 text-xs sm:text-sm font-semibold max-w-2xl mx-auto leading-relaxed"
+            >
+              Need a personalized multi-branch gym setup, customized turnstile biometric hardware integration, or want to discuss data migration from your existing registers? You have a direct line to our founding desk.
+            </motion.p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            {/* Main Founder Card (Col-span 7) */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="lg:col-span-7 glass-card rounded-[2.5rem] p-7 sm:p-9 bg-zinc-950/80 border border-white/10 shadow-2xl relative overflow-hidden flex flex-col justify-between"
+            >
+              <div className="absolute top-0 right-0 w-40 h-40 bg-[#863BFF]/10 blur-3xl pointer-events-none" />
+
+              <div className="space-y-6 relative z-10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#863BFF] to-[#601bdf] p-0.5 shadow-lg shadow-[#863BFF]/25">
+                      <div className="w-full h-full bg-[#0C0E14] rounded-[14px] flex items-center justify-center">
+                        <Mail className="w-5 h-5 text-[#863BFF]" />
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-black text-white tracking-tight uppercase">Direct Founder Desk</h3>
+                      <p className="text-[10px] text-[#10B981] font-bold uppercase tracking-wider flex items-center gap-1.5 pt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-ping" />
+                        Active & Monitored
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                    GoDaddy Secured
+                  </span>
+                </div>
+
+                {/* Email Display & Action Box */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-black/60 border border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest">Official Email Address</p>
+                    <a
+                      href="mailto:founder@gymix.fit"
+                      className="text-base sm:text-lg font-black text-white hover:text-[#863BFF] transition-colors tracking-tight font-mono select-all block"
+                    >
+                      founder@gymix.fit
+                    </a>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleCopyEmail}
+                      className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                    >
+                      {copiedEmail ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-[#10B981]" />
+                          <span className="text-[#10B981]">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 text-slate-400" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
+
+                    <a
+                      href="mailto:founder@gymix.fit?subject=Gymix%20Inquiry%20from%20Gym%20Owner"
+                      className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#863BFF] to-[#601bdf] hover:from-[#9c5eff] hover:to-[#863BFF] text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-[#863BFF]/20 active:scale-95 border border-[#863BFF]/30 cursor-pointer"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>Send Mail</span>
+                    </a>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-black text-white">
+                      <Zap className="w-3.5 h-3.5 text-amber-400" />
+                      Fast Turnaround
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-semibold">Priority response within 2-4 hours for all gym proprietors.</p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-black text-white">
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#10B981]" />
+                      Zero Middlemen
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-semibold">Talk directly to founding team without bot or sales runarounds.</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Side Card: Quick Consultation & Socials (Col-span 5) */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.15 }}
+              className="lg:col-span-5 glass-card rounded-[2.5rem] p-7 sm:p-9 bg-gradient-to-br from-zinc-950/90 via-zinc-950/70 to-emerald-950/20 border border-emerald-500/20 shadow-2xl flex flex-col justify-between"
+            >
+              <div className="space-y-5">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-[#10B981]">
+                  <MessageSquare className="w-6 h-6" />
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-black text-white uppercase italic tracking-tight">Need Real-Time Discussion?</h3>
+                  <p className="text-xs text-slate-400 font-semibold leading-relaxed pt-2">
+                    Prefer direct messaging? Connect with our team for quick onboarding guides, hardware advice, or personalized demo walk-throughs.
+                  </p>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <a
+                    href="mailto:founder@gymix.fit?subject=Direct%20Consultation%20Request"
+                    className="w-full py-3.5 px-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2.5 transition-all cursor-pointer"
+                  >
+                    <Mail className="w-4 h-4 text-[#863BFF]" />
+                    <span>Inquire via founder@gymix.fit</span>
+                  </a>
+
+                  <a
+                    href="https://instagram.com/gymix.fit"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3.5 px-4 rounded-xl bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2.5 transition-all cursor-pointer"
+                  >
+                    <InstagramIcon className="w-4 h-4 text-pink-400" />
+                    <span>Follow @gymix.fit</span>
+                  </a>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-white/5 mt-6 flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                <span>Domain: gymix.fit</span>
+                <span className="text-emerald-400">● 100% Verified</span>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* ── FOOTER ── */}
       <footer className="py-16 border-t border-white/5 relative z-10 bg-[#07090D]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex flex-col items-center md:items-start gap-3">
-            <div className="flex items-center gap-2.5">
-              <Logo className="w-8 h-8 opacity-70" />
-              <span className="font-black text-slate-400 text-sm tracking-tighter uppercase italic">
-                GYMIX <span className="text-[#863BFF]/75">.FIT</span>
-              </span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-12 border-b border-white/5">
+            {/* Col 1: Brand */}
+            <div className="space-y-3 md:col-span-1">
+              <div className="flex items-center gap-2.5">
+                <Logo className="w-8 h-8 opacity-90 text-white" />
+                <span className="font-black text-white text-base tracking-tighter uppercase italic">
+                  GYMIX <span className="text-[#863BFF]">.FIT</span>
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 font-semibold leading-relaxed">
+                The premium operating software engineered for growth-oriented fitness clubs, crossfit boxes, and gym chains across India.
+              </p>
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                v2.16.3 Operational
+              </div>
             </div>
-            <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider text-center md:text-left">
-              The premium software engine for elite gym spaces.
+
+            {/* Col 2: Navigation */}
+            <div className="space-y-2.5">
+              <h4 className="text-xs font-black uppercase tracking-wider text-white">Platform Navigation</h4>
+              <ul className="space-y-2 text-xs font-semibold text-slate-400">
+                <li><button onClick={() => scrollToId('features')} className="hover:text-white transition-colors cursor-pointer">System Features</button></li>
+                <li><button onClick={() => scrollToId('simulator')} className="hover:text-white transition-colors cursor-pointer">Live Simulator</button></li>
+                <li><button onClick={() => scrollToId('pricing')} className="hover:text-white transition-colors cursor-pointer">Pricing Calculator</button></li>
+                <li><button onClick={() => scrollToId('pwa-installer')} className="hover:text-white transition-colors cursor-pointer">Install PWA Appliance</button></li>
+                <li><button onClick={() => scrollToId('faq')} className="hover:text-white transition-colors cursor-pointer">Knowledge Base / FAQ</button></li>
+              </ul>
+            </div>
+
+            {/* Col 3: Direct Official Contact */}
+            <div className="space-y-2.5">
+              <h4 className="text-xs font-black uppercase tracking-wider text-white">Official Contacts</h4>
+              <div className="space-y-2 text-xs font-semibold text-slate-400">
+                <div className="flex items-center gap-2">
+                  <Mail className="w-3.5 h-3.5 text-[#863BFF]" />
+                  <a href="mailto:founder@gymix.fit" className="hover:text-white transition-colors font-mono font-bold text-slate-200">
+                    founder@gymix.fit
+                  </a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <InstagramIcon className="w-3.5 h-3.5 text-pink-500" />
+                  <a href="https://instagram.com/gymix.fit" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                    @gymix.fit
+                  </a>
+                </div>
+                <p className="text-[10px] text-slate-500 leading-normal pt-1">
+                  GoDaddy verified business inbox. Dedicated direct onboarding support for all active gyms.
+                </p>
+              </div>
+            </div>
+
+            {/* Col 4: App Download Badges */}
+            <div className="space-y-2.5">
+              <h4 className="text-xs font-black uppercase tracking-wider text-white">Get Mobile Apps</h4>
+              <div className="flex flex-col gap-2.5">
+                {/* Google Play Store Badge Button */}
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.gymix.fit"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2.5 px-3.5 py-2 bg-white border border-slate-200 hover:border-slate-350 hover:bg-slate-50 rounded-xl transition-all hover:scale-[1.02] active:scale-95 text-left w-full sm:w-[155px] shadow-sm"
+                >
+                  <svg viewBox="0 0 360 360" className="w-4 h-4 flex-shrink-0">
+                    <path d="M33 19.3c-1.4 1.5-2.2 3.8-2.2 6.8V334c0 3 0.8 5.3 2.2 6.8l1.2 1.2L194.5 181.7v-3.4L34.2 18.1l-1.2 1.2z" fill="#3bccff" />
+                    <path d="M248.5 236.3L194.5 182.2v-3.4l54 54.1 1.2-0.7 63.8-36.2c18.2-10.3 18.2-27.2 0-37.5L249.7 122.2l-1.2-0.7-54 54.1v6.8l54 53.9z" fill="#fec400" />
+                    <path d="M248.5 236.3l-54-54.1-160.3 160.3c5.3 5.6 14.1 6.3 23.9 0.7l190.4-106.9z" fill="#ff5a5f" />
+                    <path d="M248.5 123.7L58.1 16.8c-9.8-5.6-18.6-4.9-23.9 0.7l160.3 160.3 54-54.1z" fill="#00e676" />
+                  </svg>
+                  <div>
+                    <p className="text-[6.5px] text-slate-500 font-bold uppercase tracking-wider leading-none">GET IT ON</p>
+                    <p className="text-[11px] text-slate-950 font-black tracking-tight leading-none pt-0.5 font-sans">Google Play</p>
+                  </div>
+                </a>
+
+                {/* iOS Safari PWA Prompt Button */}
+                <button
+                  onClick={() => {
+                    setIsIOS(true);
+                    setShowInstallPrompt(true);
+                  }}
+                  className="flex items-center gap-2.5 px-3.5 py-2 bg-white border border-slate-200 hover:border-slate-350 hover:bg-slate-50 rounded-xl transition-all hover:scale-[1.02] active:scale-95 text-left w-full sm:w-[155px] shadow-sm cursor-pointer"
+                >
+                  <svg viewBox="0 0 384 512" className="w-3.5 h-3.5 flex-shrink-0 text-black fill-current">
+                    <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-48.7-22.9-76.9-22.9-35.7 0-77.8 20.6-101.8 53.6-45.7 62.8-10.8 153.9 34.8 210.6 21.5 27.5 47.8 55 74.1 53.5 26.6-1.5 35.7-18 69.4-18 33 0 41.8 18 69.4 18 27.1-1.5 50.4-24.6 71.9-53.5 26.3-34.4 33.7-61.9 34-63.3-.8-.4-66.2-25.4-66.8-97.3zM286.9 83.1c16.2-20.2 27.3-48.2 24.3-76.2-23.9 1-52.9 15.9-70.1 35.9-15.1 17.5-28.2 46-24.8 73.3 26.6 2 54.4-12.8 70.6-33z"/>
+                  </svg>
+                  <div>
+                    <p className="text-[6.5px] text-slate-500 font-bold uppercase tracking-wider leading-none">Download on the</p>
+                    <p className="text-[11px] text-slate-950 font-black tracking-tight leading-none pt-0.5 font-sans">App Store</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em]">
+              © 2026 GYMIX SYSTEMS. ALL RIGHTS RESERVED. SECURED OPERATING ENVIRONMENT.
             </p>
-            <a
-              href="https://instagram.com/gymix.fit"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 mt-1 text-slate-500 hover:text-pink-500 transition-colors text-xs font-bold tracking-wide group cursor-pointer"
-            >
-              <InstagramIcon className="w-4 h-4 text-slate-500 group-hover:text-pink-500 transition-colors" />
-              <span>@gymix.fit</span>
-            </a>
+            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-wider">
+              OFFICIAL DOMAIN: <span className="text-slate-400">GYMIX.FIT</span> • CONTACT: <span className="text-[#863BFF]">FOUNDER@GYMIX.FIT</span>
+            </p>
           </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {/* Google Play Store Badge Button */}
-            <a
-              href="https://play.google.com/store/apps/details?id=com.gymix.fit"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2.5 px-4 py-2 bg-white border border-slate-200 hover:border-slate-350 hover:bg-slate-50 rounded-xl transition-all hover:scale-[1.02] active:scale-95 text-left w-[145px] shadow-sm"
-            >
-              <svg viewBox="0 0 360 360" className="w-4 h-4 flex-shrink-0">
-                <path d="M33 19.3c-1.4 1.5-2.2 3.8-2.2 6.8V334c0 3 0.8 5.3 2.2 6.8l1.2 1.2L194.5 181.7v-3.4L34.2 18.1l-1.2 1.2z" fill="#3bccff" />
-                <path d="M248.5 236.3L194.5 182.2v-3.4l54 54.1 1.2-0.7 63.8-36.2c18.2-10.3 18.2-27.2 0-37.5L249.7 122.2l-1.2-0.7-54 54.1v6.8l54 53.9z" fill="#fec400" />
-                <path d="M248.5 236.3l-54-54.1-160.3 160.3c5.3 5.6 14.1 6.3 23.9 0.7l190.4-106.9z" fill="#ff5a5f" />
-                <path d="M248.5 123.7L58.1 16.8c-9.8-5.6-18.6-4.9-23.9 0.7l160.3 160.3 54-54.1z" fill="#00e676" />
-              </svg>
-              <div>
-                <p className="text-[6.5px] text-slate-500 font-bold uppercase tracking-wider leading-none">GET IT ON</p>
-                <p className="text-[11px] text-slate-950 font-black tracking-tight leading-none pt-0.5 font-sans">Google Play</p>
-              </div>
-            </a>
-
-            {/* iOS Safari PWA Prompt Button */}
-            <button
-              onClick={() => {
-                setIsIOS(true);
-                setShowInstallPrompt(true);
-              }}
-              className="flex items-center gap-2.5 px-4 py-2 bg-white border border-slate-200 hover:border-slate-350 hover:bg-slate-50 rounded-xl transition-all hover:scale-[1.02] active:scale-95 text-left w-[145px] shadow-sm cursor-pointer"
-            >
-              <svg viewBox="0 0 384 512" className="w-3.5 h-3.5 flex-shrink-0 text-black fill-current">
-                <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-48.7-22.9-76.9-22.9-35.7 0-77.8 20.6-101.8 53.6-45.7 62.8-10.8 153.9 34.8 210.6 21.5 27.5 47.8 55 74.1 53.5 26.6-1.5 35.7-18 69.4-18 33 0 41.8 18 69.4 18 27.1-1.5 50.4-24.6 71.9-53.5 26.3-34.4 33.7-61.9 34-63.3-.8-.4-66.2-25.4-66.8-97.3zM286.9 83.1c16.2-20.2 27.3-48.2 24.3-76.2-23.9 1-52.9 15.9-70.1 35.9-15.1 17.5-28.2 46-24.8 73.3 26.6 2 54.4-12.8 70.6-33z"/>
-              </svg>
-              <div>
-                <p className="text-[6.5px] text-slate-500 font-bold uppercase tracking-wider leading-none">Download on the</p>
-                <p className="text-[11px] text-slate-950 font-black tracking-tight leading-none pt-0.5 font-sans">App Store</p>
-              </div>
-            </button>
-          </div>
-          
-          <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.2em] text-center md:text-right">
-            © 2026 GYMIX SYSTEMS. ALL RIGHTS RESERVED. SECURED OPERATING ENVIRONMENT.
-          </p>
         </div>
       </footer>
 
