@@ -1,16 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   ShoppingBag, Trash2, Plus, Minus, ArrowRight, 
-  Check, Copy, AlertCircle, ShoppingCart, X, MessageSquare, Clock, PackageOpen
+  Check, AlertCircle, ShoppingCart, X, Clock
 } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
 import { toast } from 'react-hot-toast'
 import { isNativeCapacitorApp } from '../../utils/platform'
 
-export default function MemberStoreTab({ profile, membership, setActiveTab }) {
+export default function MemberStoreTab({ profile, membership }) {
+  const gymId = membership?.gym_id
+  const memberId = membership?.id
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadedGymId, setLoadedGymId] = useState(null)
   const [error, setError] = useState('')
   
   // Navigation inside store: 'shop' | 'orders'
@@ -24,6 +27,7 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
   // Member Orders log state
   const [myOrders, setMyOrders] = useState([])
   const [ordersLoading, setOrdersLoading] = useState(false)
+  const [loadedMemberId, setLoadedMemberId] = useState(null)
 
   // Checkout & Success state
   const [placingOrder, setPlacingOrder] = useState(false)
@@ -34,62 +38,86 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
   const [selectedProduct, setSelectedProduct] = useState(null)
 
   // Fetch active products
-  const fetchProducts = async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const { data, error: dbError } = await supabase
-        .from('store_products')
-        .select('*')
-        .eq('gym_id', membership.gym_id)
-        .eq('is_active', true)
-        .order('name', { ascending: true })
-
-      if (dbError) throw dbError
-      setProducts(data || [])
-    } catch (err) {
-      console.error('Error fetching gym products:', err)
-      setError('Failed to load store products.')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const fetchProducts = useCallback((isCurrent = () => true) => {
+    if (!gymId) return
+    return supabase
+      .from('store_products')
+      .select('*')
+      .eq('gym_id', gymId)
+      .eq('is_active', true)
+      .order('name', { ascending: true })
+      .then(({ data, error: dbError }) => {
+        if (!isCurrent()) return
+        if (dbError) throw dbError
+        setProducts(data || [])
+        setError('')
+      })
+      .catch(err => {
+        if (!isCurrent()) return
+        setProducts([])
+        console.error('Error fetching gym products:', err)
+        setError('Failed to load store products.')
+      })
+      .finally(() => {
+        if (isCurrent()) {
+          setLoadedGymId(gymId)
+          setLoading(false)
+        }
+      })
+  }, [gymId])
 
   // Fetch member's past orders
-  const fetchMyOrders = async () => {
-    setOrdersLoading(true)
-    try {
-      const { data, error: dbError } = await supabase
-        .from('store_orders')
-        .select('*')
-        .eq('member_id', membership.id)
-        .order('created_at', { ascending: false })
+  const fetchMyOrders = useCallback((isCurrent = () => true) => {
+    if (!memberId) return
+    return supabase
+      .from('store_orders')
+      .select('*')
+      .eq('member_id', memberId)
+      .order('created_at', { ascending: false })
+      .then(({ data, error: dbError }) => {
+        if (!isCurrent()) return
+        if (dbError) throw dbError
+        setMyOrders(data || [])
+      })
+      .catch(err => {
+        if (!isCurrent()) return
+        setMyOrders([])
+        console.error('Error fetching past orders:', err)
+      })
+      .finally(() => {
+        if (isCurrent()) {
+          setLoadedMemberId(memberId)
+          setOrdersLoading(false)
+        }
+      })
+  }, [memberId])
 
-      if (dbError) throw dbError
-      setMyOrders(data || [])
-    } catch (err) {
-      console.error('Error fetching past orders:', err)
-    } finally {
-      setOrdersLoading(false)
-    }
+  const refreshMyOrders = () => {
+    setOrdersLoading(true)
+    return fetchMyOrders()
   }
 
   useEffect(() => {
-    if (membership?.gym_id) {
-      fetchProducts()
+    let current = true
+    if (gymId) {
+      fetchProducts(() => current)
     }
-    if (membership?.id) {
-      fetchMyOrders()
+    if (memberId) {
+      fetchMyOrders(() => current)
     }
-  }, [membership?.gym_id, membership?.id])
+    return () => { current = false }
+  }, [gymId, memberId, fetchProducts, fetchMyOrders])
 
   // Cart operations
   const addToCart = (product) => {
+    if (!(product.stock_quantity > 0)) return
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id)
       if (existing) {
         return prev.map(item => 
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === product.id
+            ? { ...item, quantity: Math.min(item.quantity + 1, product.stock_quantity) }
+            : item
         )
       }
       return [...prev, { ...product, quantity: 1 }]
@@ -101,7 +129,7 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
       prev.map(item => {
         if (item.id === productId) {
           const newQty = item.quantity + change
-          return newQty > 0 ? { ...item, quantity: newQty } : null
+          return newQty > 0 ? { ...item, quantity: Math.min(newQty, item.stock_quantity) } : null
         }
         return item
       }).filter(Boolean)
@@ -285,7 +313,7 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
           <button
             onClick={() => {
               setStoreTab('orders');
-              fetchMyOrders();
+              refreshMyOrders();
             }}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer flex items-center gap-1.5 ${
               storeTab === 'orders' 
@@ -327,7 +355,7 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
       {/* Main Switcher Panels */}
       {storeTab === 'shop' ? (
         /* SHOP CATALOG PANEL */
-        loading ? (
+        loading || loadedGymId !== gymId ? (
           /* Amazon-style 2-column grid skeletons on mobile */
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {[1, 2, 3, 4].map(i => (
@@ -446,7 +474,7 @@ export default function MemberStoreTab({ profile, membership, setActiveTab }) {
         )
       ) : (
         /* MY ORDERS HISTORY LOG PANEL */
-        ordersLoading ? (
+        ordersLoading || loadedMemberId !== memberId ? (
           <div className="space-y-4">
             {[1, 2].map(i => (
               <div key={i} className="bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-2xl h-24 animate-pulse" />

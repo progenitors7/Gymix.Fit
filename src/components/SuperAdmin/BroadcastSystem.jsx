@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { 
   Megaphone, 
   Send, 
@@ -36,31 +36,35 @@ export default function BroadcastSystem() {
   const [gyms, setGyms] = useState([]);
   const [targetGymId, setTargetGymId] = useState('all');
 
-  const showToast = (message, type = 'success') => {
+  const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast({ message: '', type: 'success' }), 4000);
-  };
-
-  useEffect(() => {
-    fetchInitialData();
   }, []);
 
-  async function fetchInitialData() {
-    try {
-      setLoading(true);
-      const [broadcastData, gymData] = await Promise.all([
-        superAdminService.getBroadcasts(),
-        superAdminService.getAllGyms()
-      ]);
-      setBroadcasts(broadcastData || []);
-      setGyms(gymData || []);
-    } catch (err) {
-      console.error(err);
-      showToast('Failed to load broadcasts', 'error');
-    } finally {
-      setLoading(false);
-    }
+
+  const loadInitialData = useCallback(() => {
+    return Promise.all([superAdminService.getBroadcasts(), superAdminService.getAllGyms()])
+      .then(([broadcastData, gymData]) => {
+        setBroadcasts(broadcastData || []);
+        setGyms(gymData || []);
+      })
+      .catch(err => {
+        console.error(err);
+        showToast('Failed to load broadcasts', 'error');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [showToast]);
+
+  function fetchInitialData() {
+    setLoading(true);
+    return loadInitialData();
   }
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
 
   async function handleSubmit(e) {
     e.preventDefault();

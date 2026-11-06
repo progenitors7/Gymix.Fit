@@ -59,7 +59,7 @@ export const paymentService = {
     if (error) throw error;
 
     // Trigger instant push notification to Member if profile is linked
-    if (paymentData.member_id) {
+    if (paymentData.member_id && data.payment_status === 'paid') {
       supabase
         .from('members')
         .select('id, full_name, profile_id')

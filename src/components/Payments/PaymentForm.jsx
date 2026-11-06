@@ -61,7 +61,11 @@ export default function PaymentForm({ onSubmit, initialData = null, isSubmitting
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+      ...(name === 'member_id' ? { subscription_id: '' } : {})
+    }));
   };
 
   const handleSubmit = (e) => {
@@ -72,7 +76,7 @@ export default function PaymentForm({ onSubmit, initialData = null, isSubmitting
         plan_name: selectedPlan.name,
         duration_type: durationTypeFromDays(selectedPlan.duration_days),
         duration_days: selectedPlan.duration_days,
-        amount: parseFloat(formData.amount_paid),
+        amount: Number(selectedPlan.price),
         start_date: formData.payment_date
       };
     }

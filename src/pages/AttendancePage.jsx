@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Calendar, Clock, LogIn, LogOut, Search, RefreshCw, 
+  Calendar, LogIn, LogOut, Search, RefreshCw,
   Users, CheckCircle, Flame, Sparkles, Plus, X, AlertCircle
 } from 'lucide-react'
 import { useCurrentGym } from '../hooks/useCurrentGym'
@@ -10,72 +10,71 @@ import { connectionService } from '../services/connectionService'
 import toast from 'react-hot-toast'
 import PullToRefresh from '../components/UI/PullToRefresh'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
+import { localDateString } from '../utils/date'
 
 export default function AttendancePage() {
-  const { gym } = useCurrentGym()
+  const { gym, gymLoading } = useCurrentGym()
+  const gymId = gym?.id
   const [logs, setLogs] = useState([])
-  const [filteredLogs, setFilteredLogs] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loadedLogsKey, setLoadedLogsKey] = useState(null)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState(null)
+  const logsRequestRef = useRef(0)
+  const membersRequestRef = useRef(0)
+  const todayRequestRef = useRef(0)
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState(() => localDateString(new Date()))
 
   // KPIs
-  const [stats, setStats] = useState({
-    todayArrivals: 0,
-    activeInside: 0,
-    checkOuts: 0
-  })
+  const [todayLogs, setTodayLogs] = useState([])
+  const stats = {
+    todayArrivals: todayLogs.length,
+    activeInside: todayLogs.filter(log => !log.check_out_time).length,
+    checkOuts: todayLogs.filter(log => log.check_out_time).length
+  }
+  const logsKey = `${gymId}:${selectedDate}`
+  const loading = gymLoading || (!!gymId && loadedLogsKey !== logsKey)
 
   // Manual check-in States
   const [isKioskOpen, setIsKioskOpen] = useState(false)
   const [kioskSearch, setKioskSearch] = useState('')
   const [members, setMembers] = useState([])
-  const [loadingMembers, setLoadingMembers] = useState(false)
+  const [membersGymId, setMembersGymId] = useState(null)
+  const loadingMembers = isKioskOpen && membersGymId !== gymId
   const [actionLoading, setActionLoading] = useState(null)
 
-  const fetchMembersForManual = useCallback(async () => {
-    if (!gym?.id) return
-    setLoadingMembers(true)
-    try {
-      const { data, error: err } = await supabase
+  const fetchMembersForManual = useCallback(() => {
+    if (!gymId) return
+    const requestId = ++membersRequestRef.current
+    return supabase
         .from('members')
         .select('id, full_name, phone_number, membership_plan, expiry_date, status, avatar_url')
-        .eq('gym_id', gym.id)
+        .eq('gym_id', gymId)
         .order('full_name', { ascending: true })
-      if (err) throw err
-      setMembers(data || [])
-    } catch (e) {
-      console.error('Error fetching members:', e)
-    } finally {
-      setLoadingMembers(false)
-    }
-  }, [gym?.id])
+        .then(({ data, error: err }) => {
+          if (requestId !== membersRequestRef.current) return
+          if (err) throw err
+          setMembers(data || [])
+          setMembersGymId(gymId)
+        })
+        .catch(e => {
+          if (requestId !== membersRequestRef.current) return
+          console.error('Error fetching members:', e)
+          setMembers([])
+          setMembersGymId(gymId)
+        })
+  }, [gymId])
 
   useEffect(() => {
-    if (isKioskOpen && gym?.id) {
+    if (isKioskOpen && gymId) {
       fetchMembersForManual()
     }
-  }, [isKioskOpen, gym?.id, fetchMembersForManual])
-
-  const getActiveLogForMember = (memberId) => {
-    return logs.find(log => log.members?.id === memberId && !log.check_out_time)
-  }
+  }, [isKioskOpen, gymId, fetchMembersForManual])
 
   const getAttendanceStateForMember = (memberId) => {
-    const today = new Date()
-    const todayYear = today.getFullYear()
-    const todayMonth = today.getMonth()
-    const todayDate = today.getDate()
-
-    const memberTodayLogs = logs.filter(log => {
-      if (log.members?.id !== memberId) return false
-      const logD = new Date(log.check_in_time)
-      return logD.getFullYear() === todayYear && logD.getMonth() === todayMonth && logD.getDate() === todayDate
-    })
+    const memberTodayLogs = todayLogs.filter(log => log.member_id === memberId)
 
     const hasActive = memberTodayLogs.find(log => !log.check_out_time)
     const hasCompleted = memberTodayLogs.find(log => log.check_out_time)
@@ -86,17 +85,17 @@ export default function AttendancePage() {
   }
 
   const handleManualAttendance = async (member) => {
-    if (!gym?.id) return
+    if (!gymId) return
     setActionLoading(member.id)
     try {
-      const res = await connectionService.logManualAttendance(gym.id, member.id)
+      const res = await connectionService.logManualAttendance(gymId, member.id)
       if (res.success) {
         if (res.action === 'checkout') {
           toast.success(`${member.full_name} checked out successfully!`)
         } else {
           toast.success(`${member.full_name} checked in successfully!`)
         }
-        await fetchAttendanceLogs()
+        await Promise.all([fetchAttendanceLogs(), fetchTodayStats()])
       }
     } catch (err) {
       console.error('Error logging manual attendance:', err)
@@ -107,7 +106,8 @@ export default function AttendancePage() {
   }
 
   const fetchTodayStats = useCallback(async () => {
-    if (!gym?.id) return
+    if (!gymId) return
+    const requestId = ++todayRequestRef.current
     try {
       // Calculate start and end of current day in local timezone
       const startOfToday = new Date()
@@ -119,45 +119,26 @@ export default function AttendancePage() {
 
       const { data, error } = await supabase
         .from('attendance')
-        .select('check_out_time')
-        .eq('gym_id', gym.id)
+        .select('member_id, check_in_time, check_out_time')
+        .eq('gym_id', gymId)
         .gte('check_in_time', todayStartISO)
         .lte('check_in_time', todayEndISO)
 
       if (error) throw error
 
-      let arrivals = 0
-      let inside = 0
-      let outs = 0
-
-      if (data) {
-        arrivals = data.length
-        data.forEach(log => {
-          if (log.check_out_time) {
-            outs++
-          } else {
-            inside++
-          }
-        })
-      }
-
-      setStats({
-        todayArrivals: arrivals,
-        activeInside: inside,
-        checkOuts: outs
-      })
+      if (requestId === todayRequestRef.current) setTodayLogs(data || [])
     } catch (e) {
       console.error('Error fetching today stats:', e)
     }
-  }, [gym?.id])
+  }, [gymId])
 
   const fetchAttendanceLogs = useCallback(async () => {
-    if (!gym?.id) return
-    setError(null)
+    if (!gymId) return
+    const requestId = ++logsRequestRef.current
     
     try {
       // Filter by selectedDate using exact local day start & end boundaries
-      const targetDate = selectedDate || new Date().toISOString().split('T')[0]
+      const targetDate = selectedDate || localDateString(new Date())
       const [year, month, day] = targetDate.split('-').map(Number)
       const startDate = new Date(year, month - 1, day, 0, 0, 0, 0)
       const endDate = new Date(year, month - 1, day, 23, 59, 59, 999)
@@ -178,36 +159,32 @@ export default function AttendancePage() {
             avatar_url
           )
         `)
-        .eq('gym_id', gym.id)
+        .eq('gym_id', gymId)
         .gte('check_in_time', startISO)
         .lte('check_in_time', endISO)
         .order('check_in_time', { ascending: false })
 
+      if (requestId !== logsRequestRef.current) return
       if (err) throw err
       setLogs(data || [])
+      setError(null)
     } catch (e) {
+      if (requestId !== logsRequestRef.current) return
       console.error('Error fetching attendance logs:', e)
       setError(e.message || 'Failed to fetch logs')
+    } finally {
+      if (requestId === logsRequestRef.current) setLoadedLogsKey(`${gymId}:${selectedDate}`)
     }
-  }, [gym?.id, selectedDate])
+  }, [gymId, selectedDate])
 
   // Initial load
   useEffect(() => {
-    if (gym?.id) {
-      setLoading(true)
-      Promise.all([
-        fetchAttendanceLogs(),
-        fetchTodayStats()
-      ]).finally(() => setLoading(false))
-    }
-  }, [gym?.id, fetchAttendanceLogs, fetchTodayStats])
+    fetchAttendanceLogs()
+  }, [fetchAttendanceLogs])
 
-  // Reload logs when date selection changes
   useEffect(() => {
-    if (gym?.id) {
-      fetchAttendanceLogs()
-    }
-  }, [selectedDate, gym?.id, fetchAttendanceLogs])
+    fetchTodayStats()
+  }, [fetchTodayStats])
 
   const handleRefresh = async () => {
     setRefreshing(true)
@@ -220,7 +197,7 @@ export default function AttendancePage() {
 
   // Live Supabase Realtime Sync for attendance records
   useRealtimeSync({
-    gymId: gym?.id,
+    gymId,
     tables: ['attendance'],
     onUpdate: () => {
       fetchAttendanceLogs()
@@ -228,23 +205,16 @@ export default function AttendancePage() {
     }
   })
 
-  // Filter logs dynamically by search query (date is handled by DB)
-  useEffect(() => {
-    if (!logs) return
-
-    let filtered = [...logs]
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(log => {
-        const fullName = log.members?.full_name?.toLowerCase() || ''
-        const phone = log.members?.phone_number || ''
-        return fullName.includes(query) || phone.includes(query)
-      })
-    }
-
-    setFilteredLogs(filtered)
-  }, [logs, searchQuery])
+  const query = searchQuery.trim().toLowerCase()
+  const filteredLogs = logs.filter(log => !query ||
+    (log.members?.full_name || '').toLowerCase().includes(query) ||
+    String(log.members?.phone_number || '').includes(query)
+  )
+  const kioskQuery = kioskSearch.trim().toLowerCase()
+  const kioskMembers = members.filter(member => member.status !== 'left' && (
+    (member.full_name || '').toLowerCase().includes(kioskQuery) ||
+    String(member.phone_number || '').toLowerCase().includes(kioskQuery)
+  ))
 
   // Session duration helper
   const getSessionDuration = (inTime, outTime) => {
@@ -394,7 +364,7 @@ export default function AttendancePage() {
                 {filteredLogs.map((log) => {
                   const checkIn = new Date(log.check_in_time)
                   const checkOut = log.check_out_time ? new Date(log.check_out_time) : null
-                  const isToday = new Date().toISOString().split('T')[0] === checkIn.toISOString().split('T')[0]
+                  const isToday = localDateString(new Date()) === localDateString(checkIn)
 
                   return (
                     <tr key={log.id} className="text-xs font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition-colors group">
@@ -542,28 +512,16 @@ export default function AttendancePage() {
                     <div className="w-6 h-6 border-2 border-violet-500/20 border-t-violet-500 rounded-full animate-spin" />
                     <p className="text-xs font-medium">Loading roster...</p>
                   </div>
-                ) : (
-                  (() => {
-                    const query = kioskSearch.trim().toLowerCase()
-                    const filtered = members.filter(m => 
-                      m.full_name?.toLowerCase().includes(query) ||
-                      m.phone_number?.toLowerCase().includes(query)
-                    )
-
-                    if (filtered.length === 0) {
-                      return (
+                ) : kioskMembers.length === 0 ? (
                         <div className="text-center py-10 text-slate-400 dark:text-zinc-500 space-y-1">
                           <AlertCircle className="w-6 h-6 mx-auto text-slate-300 dark:text-zinc-600 mb-1" />
                           <p className="text-xs font-medium">No matching members found</p>
                         </div>
-                      )
-                    }
-
-                    return filtered.map(member => {
+                ) : kioskMembers.map(member => {
                       const attState = getAttendanceStateForMember(member.id)
                       const isCheckedIn = attState === 'active'
                       const isCompleted = attState === 'completed'
-                      const todayStr = new Date().toISOString().split('T')[0]
+                      const todayStr = localDateString(new Date())
                       const isExpired = member.status === 'expired' || (member.expiry_date && member.expiry_date < todayStr)
                       const isLeft = member.status === 'left'
 
@@ -636,9 +594,7 @@ export default function AttendancePage() {
                           </button>
                         </div>
                       )
-                    })
-                  })()
-                )}
+                    })}
               </div>
             </motion.div>
           </div>

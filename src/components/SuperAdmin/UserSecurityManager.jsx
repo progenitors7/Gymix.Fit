@@ -1,30 +1,19 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useCallback, useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShieldCheck,
   ShieldAlert,
   UserCheck,
-  UserX,
   Users,
   Search,
   RefreshCw,
   KeyRound,
-  Mail,
-  Phone,
   Building2,
-  Calendar,
-  Filter,
   CheckCircle2,
-  AlertCircle,
-  Clock,
-  MoreVertical,
   ExternalLink,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Lock,
   Trash2,
-  ArrowUpDown,
   X
 } from 'lucide-react';
 import { superAdminService } from '../../services/superAdminService';
@@ -47,22 +36,29 @@ export default function UserSecurityManager() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const data = await superAdminService.getAllUserProfiles();
-      setUsers(data || []);
-    } catch (err) {
-      console.error('Failed to load user profiles:', err);
-      setToast({ message: 'Error loading user profiles: ' + err.message, type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loadUsers = useCallback(() => {
+    return superAdminService.getAllUserProfiles()
+      .then((data) => {
+        setUsers(data || []);
+      })
+      .catch(err => {
+        console.error(err);
+        setToast({ message: 'Error loading user profiles: ' + err.message, type: 'error' });
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  function fetchUsers() {
+    setLoading(true);
+    return loadUsers();
+  }
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    loadUsers();
+  }, [loadUsers]);
+
 
   // Filtered and sorted users
   const filteredUsers = useMemo(() => {
@@ -101,9 +97,6 @@ export default function UserSecurityManager() {
   }, [filteredUsers, currentPage]);
 
   // Reset pagination on filter change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, roleFilter, statusFilter, sortOrder]);
 
   // Platform Metrics
   const metrics = useMemo(() => {
@@ -301,12 +294,12 @@ export default function UserSecurityManager() {
               type="text"
               placeholder="Search by name, email, phone, or linked gym..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors"
             />
             {searchTerm && (
               <button 
-                onClick={() => setSearchTerm('')}
+                onClick={() => { setSearchTerm(''); setCurrentPage(1); }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 text-xs cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
@@ -326,7 +319,7 @@ export default function UserSecurityManager() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setRoleFilter(tab.id)}
+                  onClick={() => { setRoleFilter(tab.id); setCurrentPage(1); }}
                   className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer ${
                     isActive
                       ? 'bg-violet-600 text-white'
@@ -354,7 +347,7 @@ export default function UserSecurityManager() {
             <span className="font-semibold text-slate-500 dark:text-zinc-400">Affiliation:</span>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
               className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 focus:outline-none focus:border-violet-500 cursor-pointer font-medium"
             >
               <option value="all">All Profiles</option>
@@ -368,7 +361,7 @@ export default function UserSecurityManager() {
             <span className="font-semibold text-slate-500 dark:text-zinc-400">Sort:</span>
             <select
               value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
+              onChange={(e) => { setSortOrder(e.target.value); setCurrentPage(1); }}
               className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 focus:outline-none focus:border-violet-500 cursor-pointer font-medium"
             >
               <option value="newest">Newest First</option>

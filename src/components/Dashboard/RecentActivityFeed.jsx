@@ -3,12 +3,10 @@ import {
   UserPlus,
   CreditCard,
   Bell,
-  Clock,
   History,
   TrendingUp,
   Activity
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 export default function RecentActivityFeed({ activities }) {
   if (!activities || activities.length === 0) {

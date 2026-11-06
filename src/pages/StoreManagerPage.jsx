@@ -10,11 +10,13 @@ import { toast } from 'react-hot-toast'
 
 export default function StoreManagerPage() {
   const { gym } = useGym()
+  const gymId = gym?.id
   const [activeSubTab, setActiveSubTab] = useState('inventory') // 'inventory' | 'orders'
   
   // Products states
   const [products, setProducts] = useState([])
   const [productsLoading, setProductsLoading] = useState(true)
+  const [inventoryGymId, setInventoryGymId] = useState(null)
   const [showProductModal, setShowProductModal] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
   
@@ -30,40 +32,50 @@ export default function StoreManagerPage() {
   // Orders states
   const [orders, setOrders] = useState([])
   const [ordersLoading, setOrdersLoading] = useState(true)
+  const [ordersGymId, setOrdersGymId] = useState(null)
   const [orderStatusFilter, setOrderStatusFilter] = useState('all') // 'all' | 'pending' | 'ready' | 'completed' | 'cancelled'
   
   // Limits
   const PRODUCT_LIMIT = 15
 
   // Fetch inventory products
-  const fetchInventory = useCallback(async () => {
-    if (!gym?.id) return
+  const fetchInventory = useCallback((isCurrent = () => true) => {
+    if (!gymId) return
+    return supabase
+      .from('store_products')
+      .select('*')
+      .eq('gym_id', gymId)
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (!isCurrent()) return
+        if (error) throw error
+        setProducts(data || [])
+      })
+      .catch(err => {
+        if (!isCurrent()) return
+        setProducts([])
+        console.error('[Store] Error fetching products:', err)
+        toast.error('Failed to load products inventory.')
+      })
+      .finally(() => {
+        if (isCurrent()) {
+          setInventoryGymId(gymId)
+          setProductsLoading(false)
+        }
+      })
+  }, [gymId])
+
+  const refreshInventory = () => {
     setProductsLoading(true)
-    try {
-      const { data, error } = await supabase
-        .from('store_products')
-        .select('*')
-        .eq('gym_id', gym.id)
-        .order('created_at', { ascending: false })
-      
-      if (error) throw error
-      setProducts(data || [])
-    } catch (err) {
-      console.error('[Store] Error fetching products:', err)
-      toast.error('Failed to load products inventory.')
-    } finally {
-      setProductsLoading(false)
-    }
-  }, [gym?.id])
+    return fetchInventory()
+  }
 
   // Fetch orders log
-  const fetchOrders = useCallback(async () => {
-    if (!gym?.id) return
-    setOrdersLoading(true)
-    try {
-      const { data, error } = await supabase
-        .from('store_orders')
-        .select(`
+  const fetchOrders = useCallback((isCurrent = () => true) => {
+    if (!gymId) return
+    return supabase
+      .from('store_orders')
+      .select(`
           *,
           members (
             full_name,
@@ -71,26 +83,41 @@ export default function StoreManagerPage() {
             avatar_url
           )
         `)
-        .eq('gym_id', gym.id)
-        .order('created_at', { ascending: false })
+      .eq('gym_id', gymId)
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (!isCurrent()) return
+        if (error) throw error
+        setOrders(data || [])
+      })
+      .catch(err => {
+        if (!isCurrent()) return
+        setOrders([])
+        console.error('[Store] Error fetching orders:', err)
+        toast.error('Failed to load orders log.')
+      })
+      .finally(() => {
+        if (isCurrent()) {
+          setOrdersGymId(gymId)
+          setOrdersLoading(false)
+        }
+      })
+  }, [gymId])
 
-      if (error) throw error
-      setOrders(data || [])
-    } catch (err) {
-      console.error('[Store] Error fetching orders:', err)
-      toast.error('Failed to load orders log.')
-    } finally {
-      setOrdersLoading(false)
-    }
-  }, [gym?.id])
+  const refreshOrders = () => {
+    setOrdersLoading(true)
+    return fetchOrders()
+  }
 
   useEffect(() => {
-    if (gym?.id) {
-      fetchInventory()
-      fetchOrders()
+    let current = true
+    if (gymId) {
+      fetchInventory(() => current)
+      fetchOrders(() => current)
     }
     localStorage.setItem('gymix_store_visited', 'true');
-  }, [gym?.id, fetchInventory, fetchOrders])
+    return () => { current = false }
+  }, [gymId, fetchInventory, fetchOrders])
 
   // Client-side canvas image compression to under 50KB base64
   const handleImageChange = async (e) => {
@@ -169,6 +196,17 @@ export default function StoreManagerPage() {
       return
     }
 
+    const price = Number(prodPrice)
+    const stock = Number(prodStock)
+    if (!Number.isFinite(price) || price < 0) {
+      toast.error('Enter a valid price of zero or more.')
+      return
+    }
+    if (!prodStock.trim() || !Number.isSafeInteger(stock) || stock < 0) {
+      toast.error('Stock must be a whole number of zero or more.')
+      return
+    }
+
     setProcessingProduct(true)
     try {
       if (editingProduct) {
@@ -178,8 +216,8 @@ export default function StoreManagerPage() {
           .update({
             name: prodName.trim(),
             description: prodDesc.trim() || null,
-            price: parseFloat(prodPrice),
-            stock_quantity: parseInt(prodStock, 10) || 0,
+            price,
+            stock_quantity: stock,
             image_url: prodImage || null,
             is_active: prodActive
           })
@@ -195,8 +233,8 @@ export default function StoreManagerPage() {
             gym_id: gym.id,
             name: prodName.trim(),
             description: prodDesc.trim() || null,
-            price: parseFloat(prodPrice),
-            stock_quantity: parseInt(prodStock, 10) || 0,
+            price,
+            stock_quantity: stock,
             image_url: prodImage || null,
             is_active: prodActive
           })
@@ -206,7 +244,7 @@ export default function StoreManagerPage() {
       }
 
       setShowProductModal(false)
-      fetchInventory()
+      refreshInventory()
     } catch (err) {
       console.error('[Store] Error saving product:', err)
       toast.error('Failed to save product.')
@@ -227,7 +265,7 @@ export default function StoreManagerPage() {
 
       if (error) throw error
       toast.success('Product deleted.')
-      fetchInventory()
+      refreshInventory()
     } catch (err) {
       console.error('[Store] Error deleting product:', err)
       toast.error('Failed to delete product.')
@@ -244,7 +282,7 @@ export default function StoreManagerPage() {
 
       if (error) throw error
       toast.success(product.is_active ? 'Product hidden from catalog.' : 'Product visible in catalog.')
-      fetchInventory()
+      refreshInventory()
     } catch (err) {
       console.error('[Store] Error toggling status:', err)
       toast.error('Failed to update product status.')
@@ -261,7 +299,7 @@ export default function StoreManagerPage() {
 
       if (error) throw error
       toast.success(`Order marked as ${newStatus}!`)
-      fetchOrders()
+      refreshOrders()
     } catch (err) {
       console.error('[Store] Error updating order:', err)
       toast.error('Failed to update order status.')
@@ -339,7 +377,7 @@ export default function StoreManagerPage() {
       {activeSubTab === 'inventory' ? (
         /* ── INVENTORY CATALOG ── */
         <div className="space-y-4">
-          {productsLoading ? (
+          {productsLoading || inventoryGymId !== gymId ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map(i => (
                 <div key={i} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl h-64 animate-pulse" />
@@ -472,7 +510,7 @@ export default function StoreManagerPage() {
             <div className="shrink-0 w-4 sm:hidden" aria-hidden="true" />
           </div>
 
-          {ordersLoading ? (
+          {ordersLoading || ordersGymId !== gymId ? (
             <div className="space-y-3">
               {[1, 2].map(i => (
                 <div key={i} className="h-32 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl animate-pulse" />

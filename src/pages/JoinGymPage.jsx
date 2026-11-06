@@ -22,8 +22,8 @@ export default function JoinGymPage() {
   const [error, setError] = useState(null);
   
   const [copied, setCopied] = useState(false);
-  const [isAndroid, setIsAndroid] = useState(false);
-  const [isiOS, setIsiOS] = useState(false);
+  const isAndroid = /android/i.test(navigator.userAgent);
+  const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
   const getNormalizedCode = (code) => {
     if (!code) return '';
@@ -65,10 +65,6 @@ export default function JoinGymPage() {
     
     fetchGymDetails();
     
-    // Platform Detection
-    const ua = navigator.userAgent.toLowerCase();
-    setIsAndroid(/android/i.test(ua));
-    setIsiOS(/iphone|ipad|ipod/i.test(ua));
   }, [gymCode]);
 
   const handleAction = () => {

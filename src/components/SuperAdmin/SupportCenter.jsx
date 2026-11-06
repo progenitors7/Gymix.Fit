@@ -1,19 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { 
   MessageSquare, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle, 
-  User, 
-  Filter,
+  User,
   Search,
   ChevronRight,
   Send,
-  MoreVertical,
   LifeBuoy,
   ShieldAlert,
-  Archive,
-  Star,
   Activity,
   Inbox,
   ArrowLeft
@@ -34,30 +27,31 @@ export default function SupportCenter() {
   const [toast, setToast] = useState({ message: '', type: 'success' });
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
 
-  const showToast = (message, type = 'success') => {
+  const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast({ message: '', type: 'success' }), 4000);
-  };
-
-  useEffect(() => {
-    fetchTickets();
   }, []);
 
-  async function fetchTickets() {
-    try {
-      setLoading(true);
-      const data = await superAdminService.getTickets();
-      setTickets(data || []);
-      if (data && data.length > 0 && !selectedTicket) {
-        setSelectedTicket(data[0]);
-      }
-    } catch (err) {
-      console.error('[SupportCenter] Failed to fetch tickets:', err);
-      showToast('Failed to load support tickets', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }
+
+  const loadTickets = useCallback(() => {
+    return superAdminService.getTickets()
+      .then((data) => {
+        setTickets(data || []);
+        if (data?.length) setSelectedTicket(current => current || data[0]);
+      })
+      .catch(err => {
+        console.error(err);
+        showToast('Failed to load support tickets', 'error');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [showToast]);
+
+
+  useEffect(() => {
+    loadTickets();
+  }, [loadTickets]);
 
   async function handleUpdateTicket(ticketId, updates) {
     try {

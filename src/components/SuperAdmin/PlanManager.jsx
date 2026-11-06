@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { 
   CreditCard, 
   Plus, 
-  Check, 
   X, 
   Crown, 
   Shield, 
@@ -11,11 +10,7 @@ import {
   CheckCircle2, 
   Settings, 
   MoreVertical,
-  Building2,
-  Calendar,
-  DollarSign,
-  Search,
-  ArrowRight
+  Search
 } from 'lucide-react';
 import { superAdminService } from '../../services/superAdminService';
 import Toast from '../UI/Toast';
@@ -44,49 +39,59 @@ export default function PlanManager() {
   const [deletePlanId, setDeletePlanId] = useState(null);
   const [deletingPlan, setDeletingPlan] = useState(false);
 
-  const showToast = (message, type = 'success') => {
+  const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast({ message: '', type: 'success' }), 4000);
-  };
-
-  useEffect(() => {
-    fetchPlans();
-    fetchSubscriptions();
   }, []);
 
-  async function fetchPlans() {
-    try {
-      setLoading(true);
-      const data = await superAdminService.getSaaSPlans();
-      setPlans(data || []);
-    } catch (err) {
-      console.error(err);
-      showToast('Failed to load SaaS plans', 'error');
-    } finally {
-      setLoading(false);
-    }
+
+  const loadPlans = useCallback(() => {
+    return superAdminService.getSaaSPlans()
+      .then((data) => {
+        setPlans(data || []);
+      })
+      .catch(err => {
+        console.error(err);
+        showToast('Failed to load SaaS plans', 'error');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [showToast]);
+
+  function fetchPlans() {
+    setLoading(true);
+    return loadPlans();
   }
 
-  async function fetchSubscriptions() {
-    try {
-      setLoadingSubscriptions(true);
-      const subData = await superAdminService.getAllSaaSSubscriptions();
-      setSubscriptions(subData || []);
-      const gymData = await superAdminService.getAllGyms();
-      setGymsData(gymData || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoadingSubscriptions(false);
-    }
+
+  const loadSubscriptions = useCallback(() => {
+    return superAdminService.getAllSaaSSubscriptions()
+      .then(async subData => {
+        setSubscriptions(subData || []);
+        const gymData = await superAdminService.getAllGyms();
+        setGymsData(gymData || []);
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoadingSubscriptions(false));
+  }, []);
+
+  function fetchSubscriptions() {
+    setLoadingSubscriptions(true);
+    return loadSubscriptions();
   }
+
+  useEffect(() => {
+    loadPlans();
+    loadSubscriptions();
+  }, [loadPlans, loadSubscriptions]);
 
   async function handleUpdateGymPlan(gymId, planId) {
     try {
       await superAdminService.updateGymSaaSPlan(gymId, planId ? planId : null);
       showToast('Gym subscription tier updated successfully');
       fetchSubscriptions();
-    } catch (err) {
+    } catch {
       showToast('Failed to update gym plan', 'error');
     }
   }
@@ -103,7 +108,7 @@ export default function PlanManager() {
       }
       handleCancelForm();
       fetchPlans();
-    } catch (err) {
+    } catch {
       showToast(editingId ? 'Failed to update plan' : 'Failed to create plan', 'error');
     }
   }

@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react';
 import { 
   CreditCard, 
   CheckCircle2, 
-  Zap, 
   RefreshCw, 
   Ticket, 
-  Clock, 
   Gift, 
   ArrowRight,
   ShieldCheck,
@@ -232,7 +230,7 @@ export default function BillingPage() {
             } else {
               window.open('https://gymix.fit/billing?source=app', '_system');
             }
-          } catch (e) {
+          } catch {
             window.open('https://gymix.fit/billing?source=app', '_system');
           }
         }, 800);
@@ -384,7 +382,6 @@ export default function BillingPage() {
   const expiryDate = gym?.subscription_expires_at ? new Date(gym.subscription_expires_at) : null;
   const isExpired = gym?.billing_status === 'expired';
   const isPending = gym?.billing_status === 'pending' || gym?.status === 'pending';
-  const isExpiringSoon = Number.isFinite(gym?.billing_days_left) && gym.billing_days_left >= 0 && gym.billing_days_left <= 7;
   const isDurationDisabled = appliedPromo?.discount_type === 'full_free';
 
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;

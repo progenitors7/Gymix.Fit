@@ -23,7 +23,7 @@ export default function ProtectedRoute({ children }) {
     try {
       await refreshGym()
       toast.success('Access status refreshed!')
-    } catch (err) {
+    } catch {
       toast.error('Failed to refresh status.')
     } finally {
       setRefreshing(false)

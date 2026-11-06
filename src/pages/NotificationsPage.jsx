@@ -1,15 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Bell, 
   CheckCircle2, 
   Clock, 
   ArrowRight, 
-  Trash2, 
   AlertTriangle, 
   AlertCircle,
   CreditCard,
-  User,
   Sparkles,
   ArrowLeft
 } from 'lucide-react';
@@ -21,23 +19,11 @@ export default function NotificationsPage() {
   const [filter, setFilter] = useState('all');
   const navigate = useNavigate();
 
-  const [updateConfig, setUpdateConfig] = useState(null);
-  const [currentVersion, setCurrentVersion] = useState(0);
-
-  useEffect(() => {
-    try {
-      const cachedConfig = localStorage.getItem('gymix_latest_version_config');
-      const cachedCurrent = localStorage.getItem('gymix_current_version_code');
-      if (cachedConfig) {
-        setUpdateConfig(JSON.parse(cachedConfig));
-      }
-      if (cachedCurrent) {
-        setCurrentVersion(parseInt(cachedCurrent, 10));
-      }
-    } catch (e) {
-      console.error('[NotificationsPage] Error reading cached update config:', e);
-    }
-  }, []);
+  const [updateConfig] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('gymix_latest_version_config') || 'null'); }
+    catch { return null; }
+  });
+  const [currentVersion] = useState(() => Number(localStorage.getItem('gymix_current_version_code')) || 0);
 
   const hasUpdate = updateConfig && currentVersion > 0 && currentVersion < updateConfig.latest_version_code;
 

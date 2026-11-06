@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useGym } from '../../hooks/useGym'
 import { isSuperAdmin } from '../../config/admins'
 import { useNotifications } from '../../hooks/useNotifications'
-import { useTheme } from '../../context/ThemeContext'
 import BroadcastBanner from './BroadcastBanner'
 import clsx from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -20,15 +19,11 @@ import {
   Menu,
   X,
   ShieldCheck,
-  ChevronRight,
   QrCode,
   Clock,
   Trophy,
   Store,
-  User,
-  Sun,
-  Moon,
-  Laptop
+  User
 } from 'lucide-react'
 import Logo from '../UI/Logo'
 import ThemeToggle from '../UI/ThemeToggle'
@@ -77,7 +72,7 @@ const NAV_GROUPS = [
 
 
 
-function SidebarContent({ onClose, isMobile }) {
+function SidebarContent({ onClose }) {
   const { user, profile, signOut } = useAuth()
   const { gym } = useGym()
   const { unreadCount } = useNotifications()
@@ -239,7 +234,6 @@ function SidebarContent({ onClose, isMobile }) {
 function BottomNav() {
   const location = useLocation()
   const { gym } = useGym()
-  const { unreadCount } = useNotifications()
 
   const isPaywalled = gym?.status === 'pending' || gym?.billing_status === 'expired'
 
@@ -286,19 +280,12 @@ function BottomNav() {
 }
 
 export default function AppLayout({ children }) {
-  const { user, profile } = useAuth()
+  const { profile } = useAuth()
 
-  // B2B2C Member Shell: Bypass owner layout sidebars & headers entirely
-  if (profile?.role === 'member') {
-    return (
-      <div className="fixed inset-0 bg-slate-50 dark:bg-zinc-950 overflow-hidden">
-        {children}
-      </div>
-    )
-  }
-
-  const [isSidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
+  const [sidebar, setSidebar] = useState({ path: location.pathname, open: false })
+  const isSidebarOpen = sidebar.path === location.pathname && sidebar.open
+  const setSidebarOpen = open => setSidebar({ path: location.pathname, open })
   const { gym } = useGym()
   const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || isNativeCapacitorApp()
   const showBillingReminder =
@@ -308,10 +295,19 @@ export default function AppLayout({ children }) {
     gym.billing_days_left >= 0 &&
     gym.billing_days_left <= 7
 
-  // Close sidebar on route change on mobile
-  useEffect(() => {
-    setSidebarOpen(false)
-  }, [location.pathname])
+  // Reset navigation state before rendering a different route.
+  if (sidebar.path !== location.pathname) {
+    setSidebar({ path: location.pathname, open: false })
+  }
+
+  // B2B2C Member Shell: Bypass owner layout sidebars & headers entirely
+  if (profile?.role === 'member') {
+    return (
+      <div className="fixed inset-0 bg-slate-50 dark:bg-zinc-950 overflow-hidden">
+        {children}
+      </div>
+    )
+  }
 
   const isSuperAdminPage = location.pathname.startsWith('/super-admin')
 
@@ -327,7 +323,7 @@ export default function AppLayout({ children }) {
     <div className="flex h-dvh bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 overflow-hidden selection:bg-violet-500/25 selection:text-violet-300">
       {/* ── Desktop sidebar ── */}
       <aside className="hidden lg:flex lg:w-[270px] flex-col shrink-0 z-50">
-        <SidebarContent isMobile={false} />
+        <SidebarContent />
       </aside>
 
       {/* Mobile Sidebar Overlay */}
@@ -348,7 +344,7 @@ export default function AppLayout({ children }) {
         "lg:hidden fixed top-0 bottom-0 left-0 w-[280px] z-[110] transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1)",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <SidebarContent onClose={() => setSidebarOpen(false)} isMobile={true} />
+        <SidebarContent onClose={() => setSidebarOpen(false)} />
       </aside>
 
       {/* ── Main content area ── */}

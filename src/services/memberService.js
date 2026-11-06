@@ -25,7 +25,9 @@ const MEMBER_WITH_SUBSCRIPTIONS = `
 const getStatusFromExpiry = (expiryDate) => {
   if (!expiryDate) return 'active'
 
-  const today = new Date(new Date().toISOString().split('T')[0])
+  const now = new Date()
+  const localDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const today = new Date(localDay)
   const expiry = new Date(expiryDate)
   const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24))
 

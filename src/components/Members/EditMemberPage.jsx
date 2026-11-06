@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, User, ShieldCheck, AlertCircle } from 'lucide-react'
+import { ArrowLeft, ShieldCheck, AlertCircle } from 'lucide-react'
 import { getMemberById } from '../../services/memberService'
 import { useMembers } from '../../hooks/useMembers'
 import MemberForm from './MemberForm'

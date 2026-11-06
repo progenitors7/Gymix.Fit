@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  X, Check, AlertCircle, Award, Calendar, 
-  CreditCard, Sparkles, UserCheck 
+  X, Check, AlertCircle, Award, CreditCard
 } from 'lucide-react'
 import DatePicker from '../UI/DatePicker'
 import { planService } from '../../services/planService'
 import { useCurrentGym } from '../../hooks/useCurrentGym'
+import { localDateString } from '../../utils/date'
 
 const inputCls = 'w-full pl-11 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/80 text-slate-900 dark:text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-violet-500 transition-colors shadow-xs'
 
@@ -29,78 +29,74 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
   const { gym } = useCurrentGym()
   
   // Plans & setup states
-  const [plans, setPlans] = useState([])
-  const [loadingPlans, setLoadingPlans] = useState(true)
+  const [plansResult, setPlansResult] = useState(null)
+  const plans = plansResult?.gymId === gym?.id ? plansResult.plans : []
+  const loadingPlans = !!gym?.id && plansResult?.gymId !== gym.id
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
   // Form Fields
-  const [form, setForm] = useState({
+  const formKey = `${gym?.id}:${request?.id}`
+  const defaults = {
     membership_plan: '',
-    join_date: new Date().toISOString().split('T')[0],
+    join_date: localDateString(new Date()),
     expiry_date: '',
-    phone_number: '',
-    gender: '',
+    phone_number: request?.profiles?.phone_number || '',
+    gender: request?.profiles?.gender || '',
     notes: ''
-  })
+  }
+  const [draft, setDraft] = useState(null)
+  const formState = draft?.key === formKey ? draft.value : defaults
+  const setForm = update => setDraft(current => ({
+    key: formKey, value: update(current?.key === formKey ? current.value : defaults)
+  }))
+  const membershipPlan = formState.membership_plan || plans[0]?.name || ''
+  const selectedPlan = plans.find(plan => plan.name === membershipPlan)
+  const expiryKey = `${formKey}:${formState.join_date}:${membershipPlan}`
+  const [expiryOverride, setExpiryOverride] = useState(null)
+  const expiryDate = new Date(`${formState.join_date}T00:00:00`)
+  if (selectedPlan) expiryDate.setDate(expiryDate.getDate() + Number(selectedPlan.duration_days))
+  const automaticExpiry = selectedPlan && !Number.isNaN(expiryDate.getTime()) ? localDateString(expiryDate) : ''
+  const form = {
+    ...formState, membership_plan: membershipPlan,
+    expiry_date: expiryOverride?.key === expiryKey ? expiryOverride.value : automaticExpiry
+  }
   
   // Payment Fields
   const [recordPayment, setRecordPayment] = useState(true)
-  const [amountPaid, setAmountPaid] = useState('')
+  const [amountDraft, setAmountDraft] = useState(null)
+  const amountPaid = amountDraft?.key === expiryKey ? amountDraft.value : String(selectedPlan?.price ?? '')
+  const setAmountPaid = value => setAmountDraft({ key: expiryKey, value })
   const [paymentMethod, setPaymentMethod] = useState('cash')
 
   // Load plans when modal opens
   useEffect(() => {
+    let active = true
     if (open && gym?.id) {
-      setLoadingPlans(true)
       planService.getPlans(gym.id)
         .then((data) => {
-          setPlans(data)
-          // Default to first plan if available
-          if (data && data.length > 0) {
-            const first = data[0]
-            setForm(f => ({ ...f, membership_plan: first.name }))
-          }
+          if (active) setPlansResult({ gymId: gym.id, plans: data || [] })
         })
-        .catch(console.error)
-        .finally(() => setLoadingPlans(false))
+        .catch(err => {
+          console.error(err)
+          if (active) setPlansResult({ gymId: gym.id, plans: [] })
+        })
     }
+    return () => { active = false }
   }, [open, gym?.id])
-
-  // Pre-fill phone_number and gender from the request's profile details when modal opens
-  useEffect(() => {
-    if (open && request?.profiles) {
-      setForm(f => ({
-        ...f,
-        phone_number: request.profiles.phone_number || '',
-        gender: request.profiles.gender || ''
-      }))
-    }
-  }, [open, request])
-
-  // Calculate Expiry Date based on Plan selection
-  useEffect(() => {
-    if (!form.join_date || !form.membership_plan || plans.length === 0) return
-
-    const selectedPlan = plans.find(p => p.name === form.membership_plan)
-    if (!selectedPlan) return
-
-    const date = new Date(form.join_date)
-    if (isNaN(date.getTime())) return
-
-    date.setDate(date.getDate() + selectedPlan.duration_days)
-    const expiry = date.toISOString().split('T')[0]
-
-    setForm(f => ({ ...f, expiry_date: expiry }))
-    setAmountPaid(selectedPlan.price.toString())
-  }, [form.join_date, form.membership_plan, plans])
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (submitting) return
     if (!form.membership_plan || !form.expiry_date) {
       setError('Membership Plan and Expiry Date are required')
+      return
+    }
+
+    if (recordPayment && (!Number.isFinite(Number(amountPaid)) || Number(amountPaid) < 0 || amountPaid === '')) {
+      setError('Enter a valid payment amount of zero or more')
       return
     }
 
@@ -219,7 +215,7 @@ export default function SmartApprovalModal({ open, request, onClose, onApproved 
                   <Field label="Calculated Expiry Date" required>
                     <DatePicker
                       value={form.expiry_date}
-                      onChange={(val) => setForm(f => ({ ...f, expiry_date: val }))}
+                      onChange={(value) => setExpiryOverride({ key: expiryKey, value })}
                     />
                   </Field>
                 </div>

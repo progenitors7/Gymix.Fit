@@ -15,13 +15,14 @@ import { useCurrentGym } from '../../hooks/useCurrentGym'
 import { supabase } from '../../lib/supabaseClient'
 import { planService } from '../../services/planService';
 import { toast } from 'react-hot-toast'
+import { localDateString } from '../../utils/date'
 
 const DEFAULTS = {
   full_name: '',
   phone_number: '',
   gender: '',
   membership_plan: '',
-  join_date: new Date().toISOString().split('T')[0],
+  join_date: '',
   expiry_date: '',
   notes: '',
   biometric_user_id: '',
@@ -70,14 +71,22 @@ const compressImage = (src, callback) => {
 
 
 export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mode = 'add' }) {
-  const [form, setForm] = useState({ ...DEFAULTS, ...initialValues })
+  const [formState, setForm] = useState(() => ({ ...DEFAULTS, join_date: localDateString(new Date()), ...initialValues }))
+  const [expiryOverride, setExpiryOverride] = useState(null)
   const [errors, setErrors] = useState({})
   const [globalError, setGlobalError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [recordPayment, setRecordPayment] = useState(mode === 'add')
-  const [amountPaid, setAmountPaid] = useState('')
+  const [amountOverride, setAmountPaid] = useState(null)
   const [plans, setPlans] = useState([])
   const { gym } = useCurrentGym()
+  const selectedPlan = plans.find(plan => plan.name === formState.membership_plan)
+  const expiryKey = `${formState.join_date}:${formState.membership_plan}`
+  const expiryDate = new Date(`${formState.join_date}T00:00:00`)
+  if (selectedPlan) expiryDate.setDate(expiryDate.getDate() + selectedPlan.duration_days)
+  const automaticExpiry = selectedPlan && !Number.isNaN(expiryDate.getTime()) ? localDateString(expiryDate) : formState.expiry_date
+  const form = { ...formState, expiry_date: expiryOverride?.key === expiryKey ? expiryOverride.value : automaticExpiry }
+  const amountPaid = amountOverride ?? (recordPayment && selectedPlan ? String(selectedPlan.price) : '')
 
   const [cameraStream, setCameraStream] = useState(null)
   const [showCamera, setShowCamera] = useState(false)
@@ -197,29 +206,6 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
       planService.getPlans(gym.id).then(setPlans).catch(console.error)
     }
   }, [gym?.id])
-
-  // Auto-calculate expiry date based on plan
-  useEffect(() => {
-    if (!form.join_date || !form.membership_plan) return
-
-    const selectedPlanObj = plans.find(p => p.name === form.membership_plan)
-    if (!selectedPlanObj) return
-
-    const date = new Date(form.join_date)
-    if (isNaN(date.getTime())) return
-
-    date.setDate(date.getDate() + selectedPlanObj.duration_days)
-    const newExpiry = date.toISOString().split('T')[0]
-    
-    if (newExpiry !== form.expiry_date) {
-      setForm(f => ({ ...f, expiry_date: newExpiry }))
-    }
-
-    // Also auto-fill amount if recording payment
-    if (recordPayment && !amountPaid) {
-      setAmountPaid(selectedPlanObj.price.toString())
-    }
-  }, [form.join_date, form.membership_plan, plans])
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 
@@ -482,7 +468,7 @@ export default function MemberForm({ initialValues = {}, onSubmit, onCancel, mod
             <Field label="Expiry Date" required error={errors.expiry_date}>
               <DatePicker
                 value={form.expiry_date}
-                onChange={(val) => setForm(f => ({ ...f, expiry_date: val }))}
+                onChange={(value) => setExpiryOverride({ key: expiryKey, value })}
               />
             </Field>
           </div>

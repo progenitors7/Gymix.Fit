@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { X, Calendar, CreditCard, Award, CheckCircle2, Activity } from 'lucide-react';
+import { X, Calendar, CreditCard, CheckCircle2, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import DatePicker from './DatePicker';
 import { unifiedService } from '../../services/unifiedService';
 import { useCurrentGym } from '../../hooks/useCurrentGym';
 import { planService } from '../../services/planService';
@@ -12,38 +11,37 @@ export default function QuickRenewModal({ isOpen, onClose, member, onSuccess }) 
   const [loading, setLoading] = useState(false);
   const [plans, setPlans] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [amount, setAmount] = useState(0);
-  const [expiryDate, setExpiryDate] = useState('');
+  const [expiryOverride, setExpiryOverride] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('cash');
 
   useEffect(() => {
+    let active = true;
     if (gym?.id) {
       planService.getPlans(gym.id).then(data => {
+        if (!active) return;
         setPlans(data);
-        if (data.length > 0) {
-          setSelectedPlan(data[0]);
-          setAmount(data[0].price);
-        }
+        setSelectedPlan(data[0] || null);
       }).catch(console.error);
     }
+    return () => { active = false; };
   }, [gym?.id]);
 
-  useEffect(() => {
-    if (selectedPlan) {
-      const date = new Date();
-      // If member is not expired, start from current expiry
-      const baseDate = member?.expiry_date && new Date(member.expiry_date) > new Date() 
-        ? new Date(member.expiry_date) 
-        : new Date();
-      
-      baseDate.setDate(baseDate.getDate() + selectedPlan.duration_days);
-      setExpiryDate(baseDate.toISOString().split('T')[0]);
-      setAmount(selectedPlan.price);
-    }
-  }, [selectedPlan, member]);
+  const amount = Number(selectedPlan?.price || 0);
+  const expiryKey = `${member?.id}:${member?.expiry_date}:${selectedPlan?.id}`;
+  const now = new Date();
+  const baseDate = member?.expiry_date && new Date(member.expiry_date) > now
+    ? new Date(member.expiry_date)
+    : now;
+  const durationDays = Number(selectedPlan?.duration_days);
+  let suggestedExpiry = '';
+  if (selectedPlan && Number.isFinite(durationDays) && durationDays > 0) {
+    baseDate.setUTCDate(baseDate.getUTCDate() + durationDays);
+    suggestedExpiry = baseDate.toISOString().split('T')[0];
+  }
+  const expiryDate = expiryOverride?.key === expiryKey ? expiryOverride.value : suggestedExpiry;
 
   const handleRenew = async () => {
-    if (!gym || !member) return;
+    if (!gym || !member || !selectedPlan || !expiryDate || loading) return;
     
     setLoading(true);
     try {
@@ -113,7 +111,7 @@ export default function QuickRenewModal({ isOpen, onClose, member, onSuccess }) 
                 {plans.map((plan) => (
                   <button
                     key={plan.id}
-                    onClick={() => setSelectedPlan(plan)}
+                    onClick={() => { setSelectedPlan(plan); setExpiryOverride(null); }}
                     className={`p-3 rounded-xl border text-left transition-colors cursor-pointer ${
                       selectedPlan?.id === plan.id 
                         ? 'bg-violet-50 dark:bg-violet-500/10 border-violet-500/40 text-violet-950 dark:text-violet-200 shadow-xs' 
@@ -141,7 +139,7 @@ export default function QuickRenewModal({ isOpen, onClose, member, onSuccess }) 
                 <input 
                   type="date" 
                   value={expiryDate}
-                  onChange={(e) => setExpiryDate(e.target.value)}
+                  onChange={(e) => setExpiryOverride({ key: expiryKey, value: e.target.value })}
                   className="w-full bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/80 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-violet-500 transition-colors shadow-xs"
                 />
               </div>
@@ -172,7 +170,7 @@ export default function QuickRenewModal({ isOpen, onClose, member, onSuccess }) 
             </button>
             <button
               onClick={handleRenew}
-              disabled={loading}
+              disabled={loading || !selectedPlan || !expiryDate}
               className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-xs transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
             >
               {loading ? (

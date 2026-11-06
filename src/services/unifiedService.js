@@ -61,7 +61,9 @@ export const unifiedService = {
       const subscription = await subscriptionService.createSubscription(gymId, {
         member_id: memberId,
         plan_name: planData.plan_name,
-        duration_type: planData.duration_type || 'custom',
+        // Fixed-day plans already have an exact expiry; calendar durations
+        // would recalculate it when the subscription is saved.
+        duration_type: planData.duration_days ? 'custom' : (planData.duration_type || 'custom'),
         amount: planData.amount,
         start_date: startDate,
         expiry_date: expiryDate
@@ -82,10 +84,11 @@ export const unifiedService = {
 
       // 3. Force Update Member (Safety Sync)
       // Although DB triggers exist, we force a sync here to ensure UI is immediate.
+      const savedExpiryDate = subscription.expiry_date || expiryDate;
       await updateMember(memberId, {
-        expiry_date: expiryDate,
+        expiry_date: savedExpiryDate,
         membership_plan: planData.plan_name,
-        status: getStatusFromExpiry(expiryDate)
+        status: getStatusFromExpiry(savedExpiryDate)
       });
 
       // 4. Invalidate stale dashboard stats cache

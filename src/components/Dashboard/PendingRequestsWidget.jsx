@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Users, UserPlus, Check, X, ShieldAlert, Sparkles, UserCheck,
-  Eye, Phone, Mail, Clock, MessageSquare, ExternalLink, Calendar
+  Users, UserPlus, Check, X, Eye, Phone
 } from 'lucide-react'
 import { connectionService } from '../../services/connectionService'
 import SmartApprovalModal from './SmartApprovalModal'
@@ -32,7 +31,9 @@ function formatTimeAgo(dateStr) {
 
 export default function PendingRequestsWidget({ gymId, gymCode, onRefreshStats, refreshKey }) {
   const [requests, setRequests] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loadedKey, setLoadedKey] = useState(null)
+  const requestKey = `${gymId}:${refreshKey}`
+  const loading = !!gymId && loadedKey !== requestKey
   const [selectedReq, setSelectedReq] = useState(null)
   const [previewReq, setPreviewReq] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -40,18 +41,13 @@ export default function PendingRequestsWidget({ gymId, gymCode, onRefreshStats, 
   const [rejectTargetId, setRejectTargetId] = useState(null)
 
   // Fetch pending connection requests
-  const fetchRequests = useCallback(async () => {
+  const fetchRequests = useCallback(() => {
     if (!gymId) return
-    setLoading(true)
-    try {
-      const data = await connectionService.getConnectionRequests(gymId)
-      setRequests(data)
-    } catch (err) {
-      console.error('Error fetching connection requests:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [gymId])
+    return connectionService.getConnectionRequests(gymId)
+      .then(data => setRequests(data))
+      .catch(err => console.error('Error fetching connection requests:', err))
+      .finally(() => setLoadedKey(`${gymId}:${refreshKey}`))
+  }, [gymId, refreshKey])
 
   useEffect(() => {
     fetchRequests()
@@ -93,7 +89,9 @@ export default function PendingRequestsWidget({ gymId, gymCode, onRefreshStats, 
   }
 
   // Handle smart approval complete
-  const handleApproveSubmit = async () => {
+  const handleApproveSubmit = async (request, memberData, paymentData) => {
+    await connectionService.approveConnectionRequest(request, memberData, paymentData)
+    toast.success('Connection approved. Member activated.')
     setModalOpen(false)
     setSelectedReq(null)
     fetchRequests()

@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 
 const Logo = ({ className = "w-12 h-12", ...props }) => {

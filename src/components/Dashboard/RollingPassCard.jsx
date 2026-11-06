@@ -5,7 +5,6 @@ import QRCode from 'qrcode'
 
 export default function RollingPassCard({ membership }) {
   const [passMode, setPassMode] = useState('qr') // 'qr' | 'biometric'
-  const [qrToken, setQrToken] = useState('')
   const [qrDataUrl, setQrDataUrl] = useState('')
   const [timeLeft, setTimeLeft] = useState(30)
   const [isZoomed, setIsZoomed] = useState(false)
@@ -31,7 +30,6 @@ export default function RollingPassCard({ membership }) {
       const timestamp = Math.floor(Date.now() / 1000)
       const token = `MEM_SECURE_${membership.id}_${membership.gym_id}_${timestamp}`
       if (!isMounted) return
-      setQrToken(token)
       setTimeLeft(30)
 
       try {

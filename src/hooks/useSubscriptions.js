@@ -3,7 +3,7 @@ import { subscriptionService } from '../services/subscriptionService';
 import { useCurrentGym } from './useCurrentGym';
 
 export function useSubscriptions() {
-  const { gym, isReady } = useCurrentGym();
+  const { gymId, isReady } = useCurrentGym();
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,7 +17,7 @@ export function useSubscriptions() {
     try {
       setLoading(true);
       setError(null);
-      const data = await subscriptionService.getAllSubscriptions(gym?.id);
+      const data = await subscriptionService.getAllSubscriptions(gymId);
       setSubscriptions(data ?? []);
     } catch (err) {
       console.error('Error fetching subscriptions:', err);
@@ -25,13 +25,13 @@ export function useSubscriptions() {
     } finally {
       setLoading(false);
     }
-  }, [isReady, gym?.id]);
+  }, [isReady, gymId]);
 
   const addSubscription = async (subscriptionData) => {
     try {
       setLoading(true);
       setError(null);
-      const newSubscription = await subscriptionService.createSubscription(gym.id, subscriptionData);
+      const newSubscription = await subscriptionService.createSubscription(gymId, subscriptionData);
       // We refetch to get the joined member data
       await fetchSubscriptions();
       return newSubscription;

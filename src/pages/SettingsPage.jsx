@@ -627,45 +627,30 @@ export default function SettingsPage() {
     if (!testPhone.trim()) return showToast('Please enter a valid phone number', 'error');
     setSendingTestMessage(true);
 
-    const messageContent = 'Hello! This is a test message dispatched from Gymix Autopilot Gateway. Your device linking is fully operational! 🟢🚀';
-
-    if (isRealBackend) {
-      try {
-        const res = await waFetch('/api/whatsapp/send', {
-          method: 'POST',
-          body: JSON.stringify({
-            gymId,
-            phone: testPhone,
-            message: messageContent
-          })
-        });
-        if (res.ok) {
-          showToast(`Real WhatsApp message sent successfully to ${testPhone}! 🚀`);
-        } else {
-          const data = await res.json();
-          throw new Error(data.error || 'Failed to dispatch');
-        }
-      } catch (err) {
-        showToast(err.message || 'Server dispatch failed, trying simulated mode...', 'error');
-        // Simulated fallback
-        runSimulatedTestMessage();
-      } finally {
-        setSendingTestMessage(false);
-        setShowTestModal(false);
-        setTestPhone('');
+    try {
+      if (!isRealBackend) {
+        throw new Error('WhatsApp gateway is offline. No message was sent.');
       }
-    } else {
-      runSimulatedTestMessage();
-    }
-  };
-
-  const runSimulatedTestMessage = () => {
-    setTimeout(() => {
-      setSendingTestMessage(false);
+      const res = await waFetch('/api/whatsapp/send', {
+        method: 'POST',
+        body: JSON.stringify({
+          gymId,
+          phone: testPhone,
+          message: 'Hello! This is a Gymix test message. Please confirm that you received it.'
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || data.success !== true || data.status !== 'queued') {
+        throw new Error(data.error || 'Gateway did not confirm the message was queued.');
+      }
+      showToast(`Test message queued for ${testPhone}. Receipt is not confirmed yet.`);
       setShowTestModal(false);
       setTestPhone('');
-      showToast(`Test message sent successfully to ${testPhone}! [Simulated Mode] 🚀`);
-    }, 1500);
+    } catch (err) {
+      showToast(err.message || 'Could not queue the test message.', 'error');
+    } finally {
+      setSendingTestMessage(false);
+    }
   };
 
   // Support Scroll & Glow effect

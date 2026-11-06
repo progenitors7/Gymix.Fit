@@ -1,4 +1,4 @@
-import React from 'react';
+;
 import { ShieldCheck, Mail, Lock, Database, Eye, FileText, ChevronLeft } from 'lucide-react';
 import Logo from '../components/UI/Logo';
 

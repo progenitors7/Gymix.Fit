@@ -32,6 +32,9 @@ export default function ScannerPage() {
   const isProcessingRef = useRef(false)
   const selectedCameraIdRef = useRef('')
   const resumeTimerRef = useRef(null)
+  const gymIdRef = useRef(gymId)
+  const offlineSyncRef = useRef(false)
+  const scanHandlerRef = useRef(null)
   const scannerId = 'qr-reader-container'
 
   // Keep camera ID ref in sync with React state so setTimeout closures always read the latest value
@@ -39,29 +42,45 @@ export default function ScannerPage() {
     selectedCameraIdRef.current = selectedCameraId
   }, [selectedCameraId])
 
+  useEffect(() => {
+    gymIdRef.current = gymId
+  }, [gymId])
+
   // ── Offline Sync ──────────────────────────────────────────────────────────
   // Sync queued offline check-in logs to the database using manual attendance logging bypass
   const syncOfflineLogs = useCallback(async () => {
-    if (!gymId || !navigator.onLine) return
+    if (!gymId || !navigator.onLine || offlineSyncRef.current) return
+    offlineSyncRef.current = true
     const queueKey = `gymix_offline_checkins_${gymId}`
-    const queue = JSON.parse(localStorage.getItem(queueKey) || '[]')
-    if (queue.length === 0) return
+    try {
+      const queue = JSON.parse(localStorage.getItem(queueKey) || '[]')
+      if (!Array.isArray(queue)) throw new Error('Offline attendance queue is invalid')
+      if (queue.length === 0) return
 
-    console.log(`[Scanner] Syncing ${queue.length} offline check-in(s)...`)
-    let successCount = 0
-    
-    for (const item of queue) {
-      try {
-        await connectionService.logManualAttendance(gymId, item.memberId)
-        successCount++
-      } catch (err) {
-        console.error('[Scanner] Failed to sync offline item:', item, err)
+      const synced = new Set()
+      for (const item of queue) {
+        try {
+          await connectionService.logManualAttendance(gymId, item.memberId)
+          synced.add(JSON.stringify(item))
+        } catch (err) {
+          console.error('[Scanner] Failed to sync offline item:', item, err)
+        }
       }
-    }
 
-    localStorage.removeItem(queueKey)
-    if (successCount > 0) {
-      toast.success(`Synced ${successCount} offline check-ins to server! ⚡`)
+      // Read again so scans added during synchronization are preserved too.
+      const currentQueue = JSON.parse(localStorage.getItem(queueKey) || '[]')
+      if (!Array.isArray(currentQueue)) throw new Error('Offline attendance queue is invalid')
+      const remaining = currentQueue.filter(item => !synced.has(JSON.stringify(item)))
+      if (remaining.length) localStorage.setItem(queueKey, JSON.stringify(remaining))
+      else localStorage.removeItem(queueKey)
+
+      if (synced.size > 0) {
+        toast.success(`Synced ${synced.size} offline check-ins to server! ⚡`)
+      }
+    } catch (err) {
+      console.error('[Scanner] Could not read or save offline attendance:', err)
+    } finally {
+      offlineSyncRef.current = false
     }
   }, [gymId])
 
@@ -75,16 +94,16 @@ export default function ScannerPage() {
 
   // ── Scanner State Helper ──────────────────────────────────────────────────
   /** Safely read the current Html5Qrcode scanner state without throwing. */
-  const getScannerState = () => {
+  const getScannerState = useCallback(() => {
     try {
       return html5QrCodeRef.current?.getState?.() ?? SCANNER_STATE.NOT_STARTED
     } catch {
       return SCANNER_STATE.NOT_STARTED
     }
-  }
+  }, [])
 
   // ── Start Camera (full hardware init — used on mount & camera change ONLY) ──
-  const startScanner = async (cameraId) => {
+  const startScanner = useCallback(async (cameraId) => {
     if (!cameraId || isProcessingRef.current) return
     setScannerError('')
 
@@ -121,7 +140,7 @@ export default function ScannerPage() {
       await html5QrCodeRef.current.start(
         cameraId,
         config,
-        (decodedText) => handleScanSuccess(decodedText),
+        (decodedText) => scanHandlerRef.current?.(decodedText),
         () => {} // Silent callback for QR discovery failures (standard behavior)
       )
       setScanning(true)
@@ -132,7 +151,7 @@ export default function ScannerPage() {
       setScannerError('Failed to initialize camera. Try selecting a different camera device.')
       setScanning(false)
     }
-  }
+  }, [getScannerState])
 
   // ── Stop Camera (full hardware teardown — only for cleanup & camera switch) ──
   const stopScanner = async () => {
@@ -179,8 +198,7 @@ export default function ScannerPage() {
   }
 
   // ── Camera Init & Permission Request ──────────────────────────────────────
-  const requestCameraAccess = () => {
-    setScannerError('')
+  const requestCameraAccess = useCallback(() => {
     
     const obtainDevices = () => {
       Html5Qrcode.getCameras()
@@ -231,7 +249,7 @@ export default function ScannerPage() {
     } else {
       obtainDevices()
     }
-  }
+  }, [startScanner])
 
   // Mount: request camera & start scanning. Unmount: full teardown.
   useEffect(() => {
@@ -239,7 +257,6 @@ export default function ScannerPage() {
 
     return () => {
       if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current)
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       if (html5QrCodeRef.current) {
         try {
           const state = html5QrCodeRef.current.getState?.() ?? SCANNER_STATE.NOT_STARTED
@@ -251,11 +268,12 @@ export default function ScannerPage() {
         }
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [requestCameraAccess])
 
   // ── QR Scan Success Handler ───────────────────────────────────────────────
   const handleScanSuccess = async (decodedText) => {
+    const gymId = gymIdRef.current
+    if (!gymId) return
     // Race-condition-safe duplicate check using ref (React state update is async and would be too slow)
     if (isProcessingRef.current) return
     isProcessingRef.current = true
@@ -380,6 +398,10 @@ export default function ScannerPage() {
     }
   }
 
+  useEffect(() => {
+    scanHandlerRef.current = handleScanSuccess
+  })
+
   return (
     <div className="p-6 sm:p-10 lg:p-12 max-w-2xl mx-auto space-y-8 pb-28 sm:pb-10">
       
@@ -411,7 +433,10 @@ export default function ScannerPage() {
                 {scannerError}
               </div>
               <button
-                onClick={requestCameraAccess}
+                onClick={() => {
+                  setScannerError('')
+                  requestCameraAccess()
+                }}
                 className="px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer"
               >
                 Retry Camera Access

@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabaseClient'
 import { createMember } from './memberService'
 import { unifiedService } from './unifiedService'
 import { pushNotificationService } from './pushNotificationService'
+import { localDateString } from '../utils/date'
 
 export const connectionService = {
   /**
@@ -316,7 +317,7 @@ export const connectionService = {
     if (!member) throw new Error('Athlete profile not found! ❌')
 
     // 2. Membership status checks
-    const todayStr = new Date().toISOString().split('T')[0]
+    const todayStr = localDateString(new Date())
     if (member.status === 'left') {
       throw new Error(`Athlete has disconnected/left the gym! (${member.full_name}) ❌`)
     }
@@ -515,7 +516,7 @@ export const connectionService = {
 
     // Parse token: MEM_SECURE_memberId_gymId_timestamp
     const parts = qrToken.split('_')
-    if (parts.length < 5 || parts[0] !== 'MEM' || parts[1] !== 'SECURE') {
+    if (parts.length !== 5 || parts[0] !== 'MEM' || parts[1] !== 'SECURE' || !parts[2] || !parts[3] || !/^\d+$/.test(parts[4])) {
       throw new Error('Invalid QR Code format! ❌')
     }
 

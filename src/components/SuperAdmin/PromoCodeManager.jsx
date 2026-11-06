@@ -8,7 +8,6 @@ import {
   Copy,
   Search,
   Check,
-  Percent,
   Tag,
   X
 } from 'lucide-react';

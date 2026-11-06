@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef } from 'react'
 import { ArrowDown, RefreshCw, Check } from 'lucide-react'
 
 const PULL_THRESHOLD = 65
@@ -63,7 +63,7 @@ export default function PullToRefresh({ onRefresh, children, className = '' }) {
         // Light haptic feedback when crossing threshold
         if (pull >= PULL_THRESHOLD && pull - deltaY * DAMPENING < 1) {
           if (navigator.vibrate) {
-            try { navigator.vibrate(12) } catch {}
+            try { navigator.vibrate(12) } catch { /* Haptics are optional on unsupported devices. */ }
           }
         }
       } else {
@@ -84,7 +84,7 @@ export default function PullToRefresh({ onRefresh, children, className = '' }) {
 
       try {
         if (navigator.vibrate) {
-          try { navigator.vibrate([10, 30, 10]) } catch {}
+          try { navigator.vibrate([10, 30, 10]) } catch { /* Haptics are optional on unsupported devices. */ }
         }
         await Promise.resolve(onRefresh())
         setJustCompleted(true)

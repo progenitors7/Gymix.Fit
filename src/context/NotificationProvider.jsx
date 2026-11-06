@@ -7,7 +7,7 @@ export function NotificationProvider({ children }) {
   const { gym } = useGym();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   const fetchNotifications = useCallback(async () => {
     if (!gym) {
@@ -24,7 +24,7 @@ export function NotificationProvider({ children }) {
       const { data, error } = await notificationService.getNotifications(gym.id);
       if (!error && data) {
         setNotifications(data);
-        setUnreadCount(data.filter(n => !n.is_read).length);
+
       }
     } catch (err) {
       console.error('[NotificationProvider] Error fetching notifications:', err);
@@ -35,24 +35,28 @@ export function NotificationProvider({ children }) {
 
   useEffect(() => {
     if (gym?.id) {
-      fetchNotifications();
+      const timer = setTimeout(() => fetchNotifications(), 0);
+      return () => clearTimeout(timer);
     }
   }, [gym?.id, fetchNotifications]);
 
   const markAsRead = async (id) => {
-    // Optimistic UI update
+    const result = await notificationService.markAsRead(id);
+    if (result?.error) return;
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
-    setUnreadCount(prev => Math.max(0, prev - 1));
+
     
-    await notificationService.markAsRead(id);
+
   };
 
   const markAllAsRead = async () => {
     if (!gym) return;
+    const result = await notificationService.markAllAsRead(gym.id);
+    if (result?.error) return;
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-    setUnreadCount(0);
+
     
-    await notificationService.markAllAsRead(gym.id);
+
   };
 
   return (

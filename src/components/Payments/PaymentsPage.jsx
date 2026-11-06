@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  Plus, 
   Search, 
   Receipt, 
   DollarSign, 
@@ -11,12 +10,8 @@ import {
   CreditCard, 
   Smartphone, 
   Building2,
-  CheckCircle2,
   Clock,
   AlertCircle,
-  MoreVertical,
-  User,
-  ArrowRight,
   TrendingUp,
   Store
 } from 'lucide-react';
@@ -55,10 +50,6 @@ export default function PaymentsPage() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [visibleCount, setVisibleCount] = useState(30);
   const observerRef = useRef();
-
-  useEffect(() => {
-    fetchPayments();
-  }, [fetchPayments]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -103,10 +94,6 @@ export default function PaymentsPage() {
 
   const visiblePayments = filteredPayments.slice(0, visibleCount);
   const visibleStoreOrders = filteredStoreOrders.slice(0, visibleCount);
-
-  useEffect(() => {
-    setVisibleCount(30);
-  }, [searchTerm, statusFilter, activeTab]);
 
   useEffect(() => {
     const totalLength = activeTab === 'subscriptions' ? filteredPayments.length : filteredStoreOrders.length;
@@ -253,7 +240,7 @@ export default function PaymentsPage() {
         {/* Tab Switcher - Clean Floating Pills */}
         <div className="-mx-4 px-4 sm:mx-0 sm:px-0 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-[calc(100%+2rem)] sm:w-auto">
           <button
-            onClick={() => { setActiveTab('subscriptions'); setStatusFilter('all'); }}
+            onClick={() => { setActiveTab('subscriptions'); setStatusFilter('all'); setVisibleCount(30); }}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer ${
               activeTab === 'subscriptions'
                 ? 'bg-violet-600 text-white'
@@ -264,7 +251,7 @@ export default function PaymentsPage() {
             <span>Subscription Collections</span>
           </button>
           <button
-            onClick={() => { setActiveTab('store'); setStatusFilter('all'); }}
+            onClick={() => { setActiveTab('store'); setStatusFilter('all'); setVisibleCount(30); }}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer ${
               activeTab === 'store'
                 ? 'bg-violet-600 text-white'
@@ -284,7 +271,7 @@ export default function PaymentsPage() {
             type="text"
             placeholder={activeTab === 'subscriptions' ? "Search by athlete name or plan…" : "Search by buyer name or product…"}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setSearchTerm(e.target.value); setVisibleCount(30); }}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-violet-500 transition-all"
           />
         </div>
@@ -297,7 +284,7 @@ export default function PaymentsPage() {
               return (
                 <button
                   key={status}
-                  onClick={() => setStatusFilter(status)}
+                  onClick={() => { setStatusFilter(status); setVisibleCount(30); }}
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize whitespace-nowrap transition-colors duration-150 cursor-pointer ${
                     isActive
                       ? 'bg-violet-600 text-white'
@@ -344,7 +331,7 @@ export default function PaymentsPage() {
           </p>
           {(searchTerm || statusFilter !== 'all') && (
             <button
-              onClick={() => { setSearchTerm(''); setStatusFilter('all'); }}
+              onClick={() => { setSearchTerm(''); setStatusFilter('all'); setVisibleCount(30); }}
               className="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline cursor-pointer"
             >
               Reset Filters

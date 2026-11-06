@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Fingerprint, ShoppingBag, ExternalLink, Search, ArrowLeft, 
-  Cpu, ShieldCheck, Check, Info, X, Star, Calendar, Settings, Zap
+import {
+  Fingerprint, ShoppingBag, Search, ArrowLeft,
+  Cpu, Info, X, Star, Zap
 } from 'lucide-react'
 import Logo from '../components/UI/Logo'
 
@@ -120,7 +120,7 @@ const HARDWARE_PRODUCTS = [
 
 export default function HardwareStorePage() {
   const navigate = useNavigate()
-  
+
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All') // 'All' | 'Fingerprint' | 'Face Recognition' | 'Maintenance & Tools'
@@ -144,7 +144,7 @@ export default function HardwareStorePage() {
 
   return (
     <div className="min-h-screen bg-[#090C10] text-slate-100 overflow-x-hidden selection:bg-[#863BFF]/30 font-sans relative pb-20">
-      
+
       {/* Background radiant glowing effects */}
       <div className="absolute top-[-100px] left-[5%] w-[350px] md:w-[600px] h-[350px] md:h-[600px] bg-[#863BFF]/8 blur-[100px] md:blur-[140px] rounded-full pointer-events-none" />
       <div className="absolute top-[30%] right-[10%] w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-[#10B981]/5 blur-[90px] md:blur-[130px] rounded-full pointer-events-none" />
@@ -157,8 +157,8 @@ export default function HardwareStorePage() {
       <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/5 bg-[#090C10]/75 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => navigate('/')} 
+            <button
+              onClick={() => navigate('/')}
               className="p-2.5 rounded-xl bg-white/5 border border-white/5 text-gray-400 hover:text-white transition-all transform active:scale-95 cursor-pointer"
               title="Go Back"
             >
@@ -178,7 +178,7 @@ export default function HardwareStorePage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 relative z-10 space-y-12">
-        
+
         {/* Banner Section */}
         <div className="text-center space-y-4 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#10B981]/10 border border-[#10B981]/25 text-[10px] font-black uppercase tracking-widest text-[#10B981]">
@@ -196,20 +196,20 @@ export default function HardwareStorePage() {
         {/* Filter Controls (Search + Category + Brand) */}
         <div className="p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] bg-white/[0.01] border border-white/5 backdrop-blur-md max-w-5xl mx-auto space-y-4">
           <div className="flex flex-col md:flex-row gap-4">
-            
+
             {/* Search */}
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-500" />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Search by name, specs or brand..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="w-full bg-black/40 border border-white/5 rounded-xl pl-11 pr-4 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#863BFF] transition-all font-semibold"
               />
               {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')} 
+                <button
+                  onClick={() => setSearchQuery('')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-white/5 rounded text-gray-500 hover:text-white"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -224,8 +224,8 @@ export default function HardwareStorePage() {
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border cursor-pointer whitespace-nowrap ${
-                    selectedCategory === cat 
-                      ? 'bg-[#863BFF]/25 border-[#863BFF]/40 text-white' 
+                    selectedCategory === cat
+                      ? 'bg-[#863BFF]/25 border-[#863BFF]/40 text-white'
                       : 'bg-black/20 border-white/5 text-slate-400 hover:text-white hover:border-white/10'
                   }`}
                 >
@@ -242,8 +242,8 @@ export default function HardwareStorePage() {
                   key={brand}
                   onClick={() => setSelectedBrand(brand)}
                   className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border cursor-pointer whitespace-nowrap ${
-                    selectedBrand === brand 
-                      ? 'bg-[#10B981]/20 border-[#10B981]/30 text-white' 
+                    selectedBrand === brand
+                      ? 'bg-[#10B981]/20 border-[#10B981]/30 text-white'
                       : 'bg-black/20 border-white/5 text-slate-400 hover:text-white hover:border-white/10'
                   }`}
                 >
@@ -276,7 +276,7 @@ export default function HardwareStorePage() {
                     <div className={`absolute inset-0 bg-gradient-to-tr ${prod.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`} />
 
                     <div className="space-y-5 relative z-10">
-                      
+
                       {/* Header Badge */}
                       <div className="flex justify-between items-start">
                         <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border ${prod.badgeColor}`}>
@@ -293,7 +293,7 @@ export default function HardwareStorePage() {
                         {/* Schematic lines */}
                         <div className="absolute inset-x-4 top-1/2 h-[1px] bg-white/5 pointer-events-none" />
                         <div className="absolute inset-y-4 left-1/2 w-[1px] bg-white/5 pointer-events-none" />
-                        
+
                         <IconComp className="w-12 h-12 text-slate-600 group-hover:text-white transition-colors duration-500 relative z-10" />
                         <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest pt-2.5 relative z-10">
                           {prod.category} hardware module

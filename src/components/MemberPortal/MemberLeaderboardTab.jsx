@@ -22,7 +22,7 @@ export default function MemberLeaderboardTab({
   const nextContender = userIndex > 0 ? leaderboard[userIndex - 1] : null
   const xpDiff = (userRank && nextContender) ? nextContender.xp_points - leaderboard[userIndex].xp_points : 0
 
-  let berdiriText = ''
+  let berdiriText
   if (userRank === 1) {
     berdiriText = '🥇 You are dominating the Leaderboard! Keep up the grind to defend your Crown!'
   } else if (userRank) {

@@ -8,17 +8,12 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Users, 
   Search, 
-  Plus, 
-  Filter, 
   Edit2, 
   Trash2, 
   UserPlus, 
-  MoreVertical,
   Phone,
   Calendar,
   Layers,
-  ArrowRight,
-  MessageCircle,
   Fingerprint,
   CheckCircle2,
   AlertTriangle,
@@ -27,7 +22,6 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { supabase } from '../../lib/supabaseClient';
 import { waFetch } from '../../lib/waFetch';
 import { useMembers } from '../../hooks/useMembers';
 import { useCurrentGym } from '../../hooks/useCurrentGym';
@@ -100,14 +94,11 @@ export default function MembersPage() {
     fetchMembers,
   } = useMembers();
 
-  const [localSearch, setLocalSearch] = useState(() => searchParams.get('search') || '');
+  const urlSearch = searchParams.get('search') || '';
+  const [searchDraft, setSearchDraft] = useState(null);
+  const localSearch = searchDraft?.url === urlSearch ? searchDraft.value : urlSearch;
+  const setLocalSearch = value => setSearchDraft({ url: urlSearch, value });
   const [statusFilter, setStatusFilter] = useState('all');
-
-  // Sync search query from URL if changed
-  useEffect(() => {
-    const urlQuery = searchParams.get('search') || '';
-    setLocalSearch(urlQuery);
-  }, [searchParams]);
 
   // Debounce search query to prevent rendering lag while typing
   useEffect(() => {
@@ -122,7 +113,9 @@ export default function MembersPage() {
 
   // Responsive layout state & infinite scroll state
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [visibleCount, setVisibleCount] = useState(30);
+  const pageKey = `${searchQuery}:${statusFilter}`;
+  const [page, setPage] = useState({ key: pageKey, count: 30 });
+  const visibleCount = page.key === pageKey ? page.count : 30;
   const observerRef = useRef();
 
   // Screen size detection for conditional rendering
@@ -146,11 +139,6 @@ export default function MembersPage() {
     return displayed.slice(0, visibleCount);
   }, [displayed, visibleCount]);
 
-  // Reset pagination when searching or changing filters
-  useEffect(() => {
-    setVisibleCount(30);
-  }, [searchQuery, statusFilter]);
-
   // Intersection observer trigger to load more members on scroll
   useEffect(() => {
     if (loading || visibleCount >= displayed.length) return;
@@ -158,7 +146,10 @@ export default function MembersPage() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + 30, displayed.length));
+          setPage(current => ({
+            key: pageKey,
+            count: Math.min((current.key === pageKey ? current.count : 30) + 30, displayed.length)
+          }));
         }
       },
       { threshold: 0.1 }
@@ -174,7 +165,7 @@ export default function MembersPage() {
         observer.unobserve(current);
       }
     };
-  }, [displayed.length, visibleCount, loading]);
+  }, [displayed.length, visibleCount, loading, pageKey]);
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
@@ -245,7 +236,6 @@ export default function MembersPage() {
         state: 'sending'
       });
 
-      const WA_BACKEND_URL = import.meta.env.VITE_WA_BACKEND_URL || 'http://localhost:5000';
       
       const sendPromise = async () => {
         try {
@@ -311,13 +301,6 @@ export default function MembersPage() {
       opacity: 1,
       transition: isNativeApp ? { duration: 0.1 } : { staggerChildren: 0.05 }
     }
-  };
-
-  const itemVariants = {
-    hidden: isNativeApp ? { opacity: 0 } : { opacity: 0, y: 10 },
-    show: isNativeApp 
-      ? { opacity: 1, transition: { duration: 0.1 } } 
-      : { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
   };
 
   return (

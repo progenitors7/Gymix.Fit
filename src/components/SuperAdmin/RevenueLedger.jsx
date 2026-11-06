@@ -1,17 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useCallback, useState, useEffect, useMemo } from 'react';
 import { 
   IndianRupee, 
   Search, 
-  Filter, 
   Download, 
   Calendar, 
-  CreditCard, 
-  ShieldCheck, 
-  AlertCircle, 
-  CheckCircle2, 
-  Clock, 
-  ExternalLink, 
-  ArrowUpRight,
+  AlertCircle,
   TrendingUp,
   Receipt,
   X,
@@ -34,26 +27,33 @@ export default function RevenueLedger() {
   const [selectedTx, setSelectedTx] = useState(null);
   const [toast, setToast] = useState({ message: '', type: 'success' });
 
-  const showToast = (message, type = 'success') => {
+  const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
-  };
-
-  useEffect(() => {
-    loadTransactions();
   }, []);
 
-  async function loadTransactions() {
-    try {
-      setLoading(true);
-      const data = await superAdminService.getSaaSTransactions();
-      setTransactions(data || []);
-    } catch (err) {
-      console.error(err);
-      showToast('Failed to load transaction ledger', 'error');
-    } finally {
-      setLoading(false);
-    }
+
+  const loadTransactionData = useCallback(() => {
+    return superAdminService.getSaaSTransactions()
+      .then((data) => {
+        setTransactions(data || []);
+      })
+      .catch(err => {
+        console.error(err);
+        showToast('Failed to load transaction ledger', 'error');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [showToast]);
+
+  function loadTransactions() {
+    setLoading(true);
+    return loadTransactionData();
   }
+
+  useEffect(() => {
+    loadTransactionData();
+  }, [loadTransactionData]);
 
   // Filter Transactions
   const filtered = useMemo(() => {
@@ -78,9 +78,6 @@ export default function RevenueLedger() {
   }, [transactions, search, statusFilter]);
 
   // Reset page when filter changes
-  useEffect(() => {
-    setPage(1);
-  }, [search, statusFilter, perPage]);
 
   // Pagination calculations
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
@@ -192,12 +189,12 @@ export default function RevenueLedger() {
           <input 
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search by Gym, Payment ID, Plan..."
             className="w-full pl-10 pr-9 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer">
+            <button onClick={() => { setSearch(''); setPage(1); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer">
               <X className="w-3.5 h-3.5" />
             </button>
           )}
@@ -216,7 +213,7 @@ export default function RevenueLedger() {
             return (
               <button
                 key={tab.key}
-                onClick={() => setStatusFilter(tab.key)}
+                onClick={() => { setStatusFilter(tab.key); setPage(1); }}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer ${
                   isActive
                     ? 'bg-violet-600 text-white'
@@ -428,7 +425,7 @@ export default function RevenueLedger() {
                     <span className="text-[11px] sm:text-xs">Rows:</span>
                     <select
                       value={perPage}
-                      onChange={(e) => setPerPage(Number(e.target.value))}
+                      onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1); }}
                       aria-label="Rows per page"
                       className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white rounded-lg px-2 py-1 text-xs font-semibold focus:outline-none focus:border-emerald-500 cursor-pointer"
                     >

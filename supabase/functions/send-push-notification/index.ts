@@ -32,13 +32,6 @@ Deno.serve(async (req) => {
     const fcmProjectId = Deno.env.get('FCM_PROJECT_ID');
     const fcmServiceAccountKey = Deno.env.get('FCM_SERVICE_ACCOUNT_KEY');
 
-    if (!fcmProjectId || !fcmServiceAccountKey) {
-      return new Response(
-        JSON.stringify({ error: 'FCM_PROJECT_ID and FCM_SERVICE_ACCOUNT_KEY must be set in Edge Function secrets' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const body = await req.json();
@@ -54,6 +47,12 @@ Deno.serve(async (req) => {
     }
     
     const isInternalCron = req.headers.get('x-internal-cron') === 'true';
+    if (isInternalCron && (!supabaseServiceKey || authHeader !== `Bearer ${supabaseServiceKey}`)) {
+      return new Response(JSON.stringify({ error: 'Invalid internal cron credentials' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     let authData = null;
     let isSuperAdmin = false;
 
@@ -97,6 +96,13 @@ Deno.serve(async (req) => {
     }
     // --- END SECURITY FIX ---
 
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'userIds array is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Automate WhatsApp alerts if autopilot is enabled and it is a member notification
     if (gymId && relatedMemberId && type) {
       try {
@@ -111,6 +117,7 @@ Deno.serve(async (req) => {
             .from('members')
             .select('full_name, phone_number, membership_plan, expiry_date')
             .eq('id', relatedMemberId)
+            .eq('gym_id', gymId)
             .maybeSingle();
 
           if (!memberErr && member && member.phone_number) {
@@ -135,10 +142,14 @@ Deno.serve(async (req) => {
                 .replace(/{{plan}}/g, member.membership_plan || 'Plan')
                 .replace(/{{date}}/g, expiry);
 
-              const waUrl = 'https://gymix-whatsapp-gateway.onrender.com/api/whatsapp/send';
+              const waBaseUrl = Deno.env.get('WA_BACKEND_URL');
+              const waSecret = Deno.env.get('WA_API_SECRET');
+              if (!waBaseUrl || !waSecret) throw new Error('WhatsApp gateway secrets are not configured');
+              const waUrl = `${waBaseUrl.replace(/\/$/, '')}/api/whatsapp/send`;
               const waRes = await fetch(waUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-API-KEY': waSecret },
+                signal: AbortSignal.timeout(15000),
                 body: JSON.stringify({
                   gymId: gymId,
                   phone: member.phone_number,
@@ -146,7 +157,10 @@ Deno.serve(async (req) => {
                 })
               });
               const waData = await waRes.json();
-              console.log('FCM_EDGE_FUNCTION: WhatsApp autopilot send outcome:', waData);
+              if (!waRes.ok || waData.success !== true) {
+                throw new Error(`WhatsApp gateway rejected request (${waRes.status})`);
+              }
+              console.log('FCM_EDGE_FUNCTION: WhatsApp request accepted:', waData.status);
             }
           }
         }
@@ -155,10 +169,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+    if (!fcmProjectId || !fcmServiceAccountKey) {
       return new Response(
-        JSON.stringify({ error: 'userIds array is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: true, sent: 0, pushSkipped: 'Firebase credentials are not configured; WhatsApp processing was attempted separately' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

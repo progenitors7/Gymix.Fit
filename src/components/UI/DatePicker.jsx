@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -54,6 +54,7 @@ export default function DatePicker({ value, onChange, label, placeholder = 'Sele
   return (
     <div className="relative w-full" ref={containerRef}>
       <div 
+        aria-label={label || placeholder}
         onClick={() => setIsOpen(!isOpen)}
         className={className || defaultTriggerCls}
       >

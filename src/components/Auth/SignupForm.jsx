@@ -11,7 +11,7 @@ import {
   CheckCircle2, 
   Building, 
   User, 
-  Sparkles 
+  Users
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -25,10 +25,11 @@ export default function SignupForm({ onSwitch, forcedRole }) {
   const paramGym = searchParams.get('gym')   // gym connection code
 
   // State Management
-  const [selectedRole, setSelectedRole] = useState(() => {
-    if (forcedRole) return forcedRole
-    return paramRole === 'owner' ? 'owner' : 'member'
-  })
+  const selectedRole = forcedRole || (
+    paramRole === 'owner' || (!paramRole && !paramGym && searchParams.has('plan'))
+      ? 'owner'
+      : 'member'
+  )
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -148,7 +149,7 @@ export default function SignupForm({ onSwitch, forcedRole }) {
           )}
           <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase italic leading-none px-2">
             {selectedRole === 'owner' ? (
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-fuchsia-300 to-violet-400 drop-shadow-[0_0_15px_rgba(124,58,237,0.25)]">Register Your Gym</span>
+              <span className="gx-register-title">Register Your Gym</span>
             ) : (
               'Athlete Sign Up'
             )}
@@ -159,31 +160,11 @@ export default function SignupForm({ onSwitch, forcedRole }) {
         </motion.div>
       </AnimatePresence>
 
-      {isOwnerFlow && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 via-fuchsia-500/5 to-white/[0.02] p-5 text-left shadow-xl shadow-violet-500/5"
-        >
-          <div className="flex items-start gap-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-violet-400/25 bg-violet-400/10">
-              <Building className="h-5 w-5 text-violet-300" />
-            </div>
-            <div className="space-y-1.5">
-              <p className="text-sm font-black uppercase tracking-wide text-white">You are creating a Gym Owner account</p>
-              <p className="text-[11px] font-semibold leading-relaxed text-zinc-400">
-                Use this only if you manage a gym. Members should go back and create an athlete account with their gym code.
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
       {/* ── Scanned Invite Header Banner ── */}
       {isInviteActive && (
         <div className="p-3.5 rounded-2xl bg-violet-500/10 border border-violet-500/20 text-center space-y-1">
           <p className="text-[10px] font-black text-violet-400 uppercase tracking-widest flex items-center justify-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+            <Users className="w-3.5 h-3.5 animate-pulse" />
             Athlete Invitation Active
           </p>
           <p className="text-[9.5px] font-bold text-zinc-400 uppercase tracking-wider">
@@ -340,6 +321,7 @@ export default function SignupForm({ onSwitch, forcedRole }) {
             />
             <button
               type="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-200 transition-colors cursor-pointer"
             >

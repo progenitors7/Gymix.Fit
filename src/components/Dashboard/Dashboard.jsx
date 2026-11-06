@@ -20,14 +20,11 @@ import { pushNotificationService } from '../../services/pushNotificationService'
 import PullToRefresh from '../UI/PullToRefresh';
 
 import { 
-  Users, 
   CheckCircle2, 
   Clock, 
   CircleDollarSign, 
   Search, 
   Plus, 
-  CalendarPlus, 
-  History,
   TrendingUp,
   ArrowRight,
   BellRing,
@@ -35,7 +32,6 @@ import {
   QrCode,
   Target,
   UserPlus,
-  SlidersHorizontal,
   Store,
   RefreshCw,
   Copy,
@@ -44,7 +40,6 @@ import {
 import Logo from '../UI/Logo'
 import { isNativeCapacitorApp } from '../../utils/platform'
 
-const isNativeApp = isNativeCapacitorApp() || window.matchMedia('(display-mode: standalone)').matches;
 
 /* ── Main Dashboard ── */
 export default function Dashboard() {
@@ -173,8 +168,6 @@ export default function Dashboard() {
   }, [gym?.id, fetchStats]);
 
   const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || isNativeCapacitorApp();
-  const daysLeft = gym?.billing_days_left;
-  const isExpiringSoon = Number.isFinite(daysLeft) && daysLeft >= 0 && daysLeft <= 7;
 
   const [showPosterModal, setShowPosterModal] = useState(false)
   const [posterQrUrl, setPosterQrUrl] = useState('')

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { 
   Activity, 
   Database, 
@@ -9,12 +9,10 @@ import {
   RefreshCw,
   Power,
   Lock,
-  Globe,
   Bell,
   CheckCircle2,
   AlertCircle,
   FolderTree,
-  Terminal,
   Server
 } from 'lucide-react';
 import { superAdminService } from '../../services/superAdminService';
@@ -28,38 +26,39 @@ export default function SystemHealth() {
   const [healthData, setHealthData] = useState(null);
   const [toast, setToast] = useState({ message: '', type: 'success' });
 
-  const showToast = (message, type = 'success') => {
+  const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast({ message: '', type: 'success' }), 4000);
-  };
-
-  useEffect(() => {
-    loadHealthAndSettings();
   }, []);
 
-  async function loadHealthAndSettings(isManual = false) {
-    try {
-      if (isManual) setIsRefreshing(true);
-      setLoading(true);
 
-      const health = await superAdminService.getSystemHealth();
-      setHealthData(health);
+  const loadHealthData = useCallback((isManual = false) => {
+    return superAdminService.getSystemHealth()
+      .then((health) => {
+        setHealthData(health);
+        const settingsMap = (health?.settings || []).reduce((acc, curr) => { acc[curr.key] = curr.value; return acc; }, {});
+        setSettings(settingsMap);
+        if (isManual) showToast('System status refreshed successfully!');
+      })
+      .catch(err => {
+        console.error(err);
+        showToast('Failed to refresh status', 'error');
+      })
+      .finally(() => {
+        setLoading(false);
+        setIsRefreshing(false);
+      });
+  }, [showToast]);
 
-      const settingsMap = (health?.settings || []).reduce((acc, curr) => {
-        acc[curr.key] = curr.value;
-        return acc;
-      }, {});
-      setSettings(settingsMap);
-
-      if (isManual) showToast('System status refreshed successfully!');
-    } catch (err) {
-      console.error('[SystemHealth] Load failed:', err);
-      showToast('Failed to refresh status', 'error');
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-    }
+  function loadHealthAndSettings(isManual = false) {
+    if (isManual) setIsRefreshing(true);
+    setLoading(true);
+    return loadHealthData(isManual);
   }
+
+  useEffect(() => {
+    loadHealthData();
+  }, [loadHealthData]);
 
   async function toggleSetting(key) {
     try {
@@ -68,7 +67,7 @@ export default function SystemHealth() {
       await superAdminService.updateSystemSetting(key, newValue);
       setSettings(prev => ({ ...prev, [key]: newValue }));
       showToast(`${key.replace(/_/g, ' ').toUpperCase()} updated successfully`);
-    } catch (err) {
+    } catch {
       showToast('Failed to update setting', 'error');
     } finally {
       setUpdating(null);

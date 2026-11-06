@@ -12,7 +12,7 @@ export function useMembers() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [hasFetched, setHasFetched] = useState(false)
+  const [fetchedGymId, setFetchedGymId] = useState(null)
 
   const fetchMembers = useCallback(async (isBackground = false) => {
     if (!isReady) {
@@ -60,13 +60,13 @@ export function useMembers() {
       }
     } finally {
       setLoading(false)
-      setHasFetched(true)
+      setFetchedGymId(gymId)
     }
   }, [isReady, gymId])
 
   useEffect(() => {
     let mounted = true;
-    if (isReady && !hasFetched) {
+    if (isReady && fetchedGymId !== gymId) {
       setTimeout(() => {
         if (mounted) fetchMembers(false)
       }, 0);
@@ -74,7 +74,7 @@ export function useMembers() {
     return () => {
       mounted = false;
     };
-  }, [fetchMembers, isReady, hasFetched])
+  }, [fetchMembers, isReady, fetchedGymId, gymId])
 
   // Live Supabase Realtime Sync for members list
   useRealtimeSync({
@@ -180,25 +180,6 @@ export function useMembers() {
     return newMember
   }, [gymId, gym])
 
-  const editMember = useCallback(async (id, formData) => {
-    const previousMember = members.find(m => m.id === id);
-    const wasAlreadyLeft = previousMember?.status === 'left';
-
-    const updated = await updateMember(id, formData)
-    setMembers((prev) => {
-      const updatedList = prev.map((m) => (m.id === id ? updated : m))
-      localStorage.setItem(`gym_members_cache_${gymId}`, JSON.stringify(updatedList))
-      return updatedList
-    })
-
-    // Trigger WhatsApp goodbye message if status changed to 'left' and autopilot is enabled
-    if (updated && updated.status === 'left' && !wasAlreadyLeft && updated.phone_number) {
-      _sendGoodbyeMessage(updated);
-    }
-
-    return updated
-  }, [gymId, gym, members])
-
   // Helper: send goodbye message via WhatsApp
   const _sendGoodbyeMessage = useCallback((member) => {
     try {
@@ -247,6 +228,25 @@ export function useMembers() {
       console.error('[Gymix WA] Goodbye message trigger error:', e);
     }
   }, [gymId, gym])
+
+  const editMember = useCallback(async (id, formData) => {
+    const previousMember = members.find(m => m.id === id);
+    const wasAlreadyLeft = previousMember?.status === 'left';
+
+    const updated = await updateMember(id, formData)
+    setMembers((prev) => {
+      const updatedList = prev.map((m) => (m.id === id ? updated : m))
+      localStorage.setItem(`gym_members_cache_${gymId}`, JSON.stringify(updatedList))
+      return updatedList
+    })
+
+    // Trigger WhatsApp goodbye message if status changed to 'left' and autopilot is enabled
+    if (updated && updated.status === 'left' && !wasAlreadyLeft && updated.phone_number) {
+      _sendGoodbyeMessage(updated);
+    }
+
+    return updated
+  }, [gymId, members, _sendGoodbyeMessage])
 
   // Hard-delete: gym owner permanently removes a member
   const removeMember = useCallback(async (id) => {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { 
   Smartphone, 
   Globe, 
@@ -14,20 +14,8 @@ import { motion } from 'framer-motion'
 
 export default function AppConnectionBridge({ gymCode, gymName, onContinueWeb }) {
   const [copied, setCopied] = useState(false)
-  const [isAndroid, setIsAndroid] = useState(false)
-  const [isIOS, setIsIOS] = useState(false)
-
-  useEffect(() => {
-    const ua = navigator.userAgent || navigator.vendor || window.opera
-    if (/android/i.test(ua)) {
-      setIsAndroid(true)
-    } else if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
-      setIsIOS(true)
-    } else {
-      // Default fallback if unknown mobile
-      setIsAndroid(true)
-    }
-  }, [])
+  const ua = navigator.userAgent || navigator.vendor || window.opera
+  const isAndroid = !(/iPad|iPhone|iPod/.test(ua) && !window.MSStream)
 
   const handleCopyCode = async () => {
     try {

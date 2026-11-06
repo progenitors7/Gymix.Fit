@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "wa-server": "node whatsapp-backend-service.cjs",
     "cap:sync": "npm run build && npx cap sync",
-    "cap:open": "npx cap open android"
+    "cap:open": "npx cap open android",
+    "test": "node --test tests/*.test.mjs src/components/SuperAdmin/super-admin.test.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.4",

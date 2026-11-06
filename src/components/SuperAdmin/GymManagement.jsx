@@ -1,15 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { 
   Search, 
-  Filter, 
   MoreVertical, 
   ShieldCheck, 
   ShieldAlert, 
   Ban, 
-  CheckCircle2, 
   AlertCircle, 
   X, 
-  Users, 
   Building2, 
   Calendar, 
   Tag, 
@@ -23,12 +20,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Edit2,
-  Sliders,
-  ToggleLeft,
-  ToggleRight,
   Download
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { superAdminService } from '../../services/superAdminService';
 import Toast from '../UI/Toast';
 import ConfirmModal from '../UI/ConfirmModal';
@@ -171,16 +164,11 @@ function PaginationControls({
 
 export default function GymManagement({ initialSubTab = 'owners', mode = null }) {
   // Navigation: 'owners' | 'members'
-  const [activeSubTab, setActiveSubTab] = useState(mode || initialSubTab);
-
-  useEffect(() => {
-    if (mode) setActiveSubTab(mode);
-    else if (initialSubTab) setActiveSubTab(initialSubTab);
-  }, [mode, initialSubTab]);
+  const activeSubTab = mode || initialSubTab;
 
   // Owners State & Pagination
   const [gyms, setGyms] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [gymsPage, setGymsPage] = useState(1);
@@ -188,14 +176,13 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
   
   // Members State & Pagination
   const [members, setMembers] = useState([]);
-  const [membersLoading, setMembersLoading] = useState(false);
+  const [membersLoading, setMembersLoading] = useState(true);
   const [membersSearch, setMembersSearch] = useState('');
   const [membersStatusFilter, setMembersStatusFilter] = useState('all');
   const [membersPage, setMembersPage] = useState(1);
   const [membersPerPage, setMembersPerPage] = useState(10);
 
   // Shared Action States
-  const navigate = useNavigate();
   const [updatingId, setUpdatingId] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [toast, setToast] = useState({ message: '', type: 'success' });
@@ -212,65 +199,70 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
     setConfirmState({ isOpen: true, title, message, confirmLabel, onConfirm });
   };
 
-  const showToast = (message, type = 'success') => {
+  const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
-  };
+  }, []);
 
   // Reset pagination on search or filter change
-  useEffect(() => {
-    setGymsPage(1);
-  }, [search, statusFilter, gymsPerPage]);
 
-  useEffect(() => {
-    setMembersPage(1);
-  }, [membersSearch, membersStatusFilter, membersPerPage]);
 
   // Optimized fetch: Only fetch data for active tab to eliminate server overhead
+
+  const fetchPlans = useCallback(() => {
+    return superAdminService.getSaaSPlans()
+      .then(plans => {
+        setSaasPlans(plans);
+        if (plans.length > 0) setSelectedPlan(plans[0].id);
+      })
+      .catch(err => console.error('[GymManagement] Error fetching SaaS plans:', err));
+  }, []);
+
+  const loadGyms = useCallback(() => {
+    return superAdminService.getAllGyms()
+      .then((data) => {
+        setGyms(data || []);
+      })
+      .catch(err => {
+        console.error(err);
+        showToast('Failed to load gym directory', 'error');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [showToast]);
+
+  function fetchGyms() {
+    setLoading(true);
+    return loadGyms();
+  }
+
+  const loadMembers = useCallback(() => {
+    return superAdminService.getAllMembers()
+      .then((data) => {
+        setMembers(Array.isArray(data) ? data : (data?.members || []));
+      })
+      .catch(err => {
+        console.error(err);
+        showToast('Failed to load member directory', 'error');
+      })
+      .finally(() => {
+        setMembersLoading(false);
+      });
+  }, [showToast]);
+
+  function fetchMembers() {
+    setMembersLoading(true);
+    return loadMembers();
+  }
+
   useEffect(() => {
     if (activeSubTab === 'owners') {
-      fetchGyms();
+      loadGyms();
       fetchPlans();
     } else {
-      fetchMembers();
+      loadMembers();
     }
-  }, [activeSubTab]);
-
-  async function fetchPlans() {
-    try {
-      const plans = await superAdminService.getSaaSPlans();
-      setSaasPlans(plans);
-      if (plans.length > 0) setSelectedPlan(plans[0].id);
-    } catch (err) {
-      console.error('[GymManagement] Error fetching SaaS plans:', err);
-    }
-  }
-
-  async function fetchGyms() {
-    try {
-      setLoading(true);
-      const data = await superAdminService.getAllGyms();
-      setGyms(data || []);
-    } catch (err) {
-      console.error('[GymManagement] Error fetching gyms:', err);
-      showToast('Failed to load gym directory', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function fetchMembers() {
-    try {
-      setMembersLoading(true);
-      const data = await superAdminService.getAllMembers();
-      const memberList = Array.isArray(data) ? data : (data?.members || []);
-      setMembers(memberList);
-    } catch (err) {
-      console.error('[GymManagement] Error fetching members:', err);
-      showToast('Failed to load member directory', 'error');
-    } finally {
-      setMembersLoading(false);
-    }
-  }
+  }, [activeSubTab, loadGyms, loadMembers, fetchPlans]);
 
   async function handleDeleteGym(gymId) {
     try {
@@ -280,7 +272,7 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
       showToast('Gym owner and profile deleted permanently');
       // Refresh members list as well due to cascade deletion
       fetchMembers();
-    } catch (err) {
+    } catch {
       showToast('Failed to delete gym owner', 'error');
     } finally {
       setUpdatingId(null);
@@ -298,7 +290,7 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
           await superAdminService.deleteMember(memberId);
           setMembers(prev => prev.filter(m => m.id !== memberId));
           showToast('Athlete record and profile permanently deleted');
-        } catch (err) {
+        } catch {
           showToast('Failed to delete athlete', 'error');
         } finally {
           setUpdatingId(null);
@@ -318,7 +310,7 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
         fetchGyms();
         fetchMembers();
       }
-    } catch (err) {
+    } catch {
       showToast('Failed to update gym status', 'error');
     } finally {
       setUpdatingId(null);
@@ -490,7 +482,7 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
               return (
                 <button
                   key={tab.key}
-                  onClick={() => setStatusFilter(tab.key)}
+                  onClick={() => { setStatusFilter(tab.key); setGymsPage(1); }}
                   className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer ${
                     isActive
                       ? 'bg-violet-600 text-white'
@@ -519,14 +511,14 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
                 type="text"
                 placeholder="Search by gym name, ID, owner name or email..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setGymsPage(1); }}
                 className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto relative">
               <select 
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => { setStatusFilter(e.target.value); setGymsPage(1); }}
                 className="w-full sm:w-auto appearance-none bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl pl-4 pr-10 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-200 transition-colors focus:outline-none focus:border-violet-500 cursor-pointer"
               >
                 <option value="all">All SaaS Status</option>
@@ -753,7 +745,7 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
                 totalItems={filteredGyms.length}
                 pageSize={gymsPerPage}
                 onPageChange={setGymsPage}
-                onPageSizeChange={setGymsPerPage}
+                onPageSizeChange={value => { setGymsPerPage(value); setGymsPage(1); }}
                 itemName="gyms"
               />
               {filteredGyms.length === 0 && (
@@ -782,7 +774,7 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
               return (
                 <button
                   key={tab.key}
-                  onClick={() => setMembersStatusFilter(tab.key)}
+                  onClick={() => { setMembersStatusFilter(tab.key); setMembersPage(1); }}
                   className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer ${
                     isActive
                       ? 'bg-violet-600 text-white'
@@ -811,14 +803,14 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
                 type="text"
                 placeholder="Search member by name, phone, email, gym..."
                 value={membersSearch}
-                onChange={(e) => setMembersSearch(e.target.value)}
+                onChange={(e) => { setMembersSearch(e.target.value); setMembersPage(1); }}
                 className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto relative">
               <select 
                 value={membersStatusFilter}
-                onChange={(e) => setMembersStatusFilter(e.target.value)}
+                onChange={(e) => { setMembersStatusFilter(e.target.value); setMembersPage(1); }}
                 className="w-full sm:w-auto appearance-none bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl pl-4 pr-10 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-200 transition-colors focus:outline-none focus:border-violet-500 cursor-pointer"
               >
                 <option value="all">All Status</option>
@@ -1056,7 +1048,7 @@ export default function GymManagement({ initialSubTab = 'owners', mode = null })
                     totalItems={filteredMembers.length}
                     pageSize={membersPerPage}
                     onPageChange={setMembersPage}
-                    onPageSizeChange={setMembersPerPage}
+                    onPageSizeChange={value => { setMembersPerPage(value); setMembersPage(1); }}
                     itemName="members"
                   />
                 </>

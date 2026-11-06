@@ -20,7 +20,8 @@ export function useSuperAdminStats() {
   }, []);
 
   useEffect(() => {
-    fetchStats();
+    const timer = setTimeout(fetchStats, 0);
+    return () => clearTimeout(timer);
   }, [fetchStats]);
 
   return { stats, loading, error, refresh: fetchStats };

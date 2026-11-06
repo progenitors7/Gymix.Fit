@@ -17,12 +17,16 @@ export function useRealtimeSync({
   debounceMs = 350
 }) {
   const onUpdateRef = useRef(onUpdate)
-  onUpdateRef.current = onUpdate
+  useEffect(() => {
+    onUpdateRef.current = onUpdate
+  }, [onUpdate])
 
   const debounceTimerRef = useRef(null)
+  const tablesKey = JSON.stringify(tables || [])
 
   useEffect(() => {
-    if (!gymId || !tables || tables.length === 0 || !onUpdateRef.current) return
+    const subscribedTables = JSON.parse(tablesKey)
+    if (!gymId || subscribedTables.length === 0) return
 
     const triggerUpdate = (payload) => {
       if (debounceTimerRef.current) {
@@ -35,10 +39,10 @@ export function useRealtimeSync({
       }, debounceMs)
     }
 
-    const channelName = `gymix-realtime-${gymId}-${tables.join('-')}`
+    const channelName = `gymix-realtime-${gymId}-${subscribedTables.join('-')}`
     let channel = supabase.channel(channelName)
 
-    tables.forEach((table) => {
+    subscribedTables.forEach((table) => {
       channel = channel.on(
         'postgres_changes',
         {
@@ -56,9 +60,9 @@ export function useRealtimeSync({
 
     channel.subscribe((status, err) => {
       if (status === 'SUBSCRIBED') {
-        console.log(`[Gymix Realtime] Channel connected successfully for tables: [${tables.join(', ')}]`)
+        console.log(`[Gymix Realtime] Channel connected successfully for tables: [${subscribedTables.join(', ')}]`)
       } else if (status === 'CHANNEL_ERROR') {
-        console.warn(`[Gymix Realtime] Channel error on [${tables.join(', ')}]:`, err)
+        console.warn(`[Gymix Realtime] Channel error on [${subscribedTables.join(', ')}]:`, err)
       }
     })
 
@@ -68,5 +72,5 @@ export function useRealtimeSync({
       }
       supabase.removeChannel(channel)
     }
-  }, [gymId, tables.join(','), debounceMs])
+  }, [gymId, tablesKey, debounceMs])
 }

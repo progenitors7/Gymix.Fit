@@ -24,6 +24,7 @@ import MemberLeaderboardTab from '../MemberPortal/MemberLeaderboardTab'
 import MemberProgressTab from '../MemberPortal/MemberProgressTab'
 import { MemberProfileTab, MemberOnboarding } from '../MemberPortal/MemberProfileTab'
 import MemberStoreTab from '../MemberPortal/MemberStoreTab'
+import { localDateString as getLocalDateStr } from '../../utils/date'
 
 export default function MemberDashboard() {
   const { profile, signOut, refreshProfile } = useAuth()
@@ -32,19 +33,9 @@ export default function MemberDashboard() {
   // Navigation & View tab: 'pass' | 'notifications' | 'attendance' | 'streaks' | 'leaderboard' | 'progress' | 'store' | 'profile'
   const validTabs = ['pass', 'notifications', 'attendance', 'streaks', 'leaderboard', 'progress', 'store', 'profile']
   const tabParam = searchParams.get('tab')
-  const [activeTab, setActiveTabState] = useState(() => {
-    return (tabParam && validTabs.includes(tabParam)) ? tabParam : 'pass'
-  })
-
-  // Sync state with URL params
-  useEffect(() => {
-    if (tabParam && validTabs.includes(tabParam) && tabParam !== activeTab) {
-      setActiveTabState(tabParam)
-    }
-  }, [tabParam])
+  const activeTab = validTabs.includes(tabParam) ? tabParam : 'pass'
 
   const setActiveTab = useCallback((tab) => {
-    setActiveTabState(tab)
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
       if (tab === 'pass') {
@@ -57,17 +48,13 @@ export default function MemberDashboard() {
   }, [setSearchParams])
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showNotificationBanner, setShowNotificationBanner] = useState(false)
-  const [showPwaBanner, setShowPwaBanner] = useState(false)
-
-  useEffect(() => {
+  const [showPwaBanner, setShowPwaBanner] = useState(() => {
     const isDismissed = localStorage.getItem('gymix_pwa_banner_dismissed') === 'true'
     const isPlaystoreApp = sessionStorage.getItem('is_playstore_app') === 'true' || isNativeCapacitorApp()
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
     
-    if (!isDismissed && !isPlaystoreApp && isMobile) {
-      setShowPwaBanner(true)
-    }
-  }, [])
+    return !isDismissed && !isPlaystoreApp && isMobile
+  })
 
   useEffect(() => {
     const checkNotificationPermission = async () => {
@@ -246,10 +233,8 @@ export default function MemberDashboard() {
   // Cooldown and quota states
   const [cooldownTimeLeft, setCooldownTimeLeft] = useState(0)
   const [nameChangeCount, setNameChangeCount] = useState(0)
-  const [lastNameChangeAt, setLastNameChangeAt] = useState(null)
   const [avatarCooldownTimeLeft, setAvatarCooldownTimeLeft] = useState(0)
   const [avatarChangeCount, setAvatarChangeCount] = useState(0)
-  const [lastAvatarChangeAt, setLastAvatarChangeAt] = useState(null)
 
   // Loading & State variables
   const [loading, setLoading] = useState(true)
@@ -262,9 +247,7 @@ export default function MemberDashboard() {
   const [coinTransactions, setCoinTransactions] = useState([])
   const [coinsLoading, setCoinsLoading] = useState(false)
   const [leaderboard, setLeaderboard] = useState([])
-  const [leaderboardLoading, setLeaderboardLoading] = useState(false)
   const [currentSeason, setCurrentSeason] = useState(1)
-  const [seasonEndDate, setSeasonEndDate] = useState(null)
   const [seasonHistory, setSeasonHistory] = useState({})
   const [historyLoading, setHistoryLoading] = useState(false)
 
@@ -279,20 +262,11 @@ export default function MemberDashboard() {
   // Connection Form states
   const [gymCode, setGymCode] = useState('')
   const [submittingReq, setSubmittingReq] = useState(false)
-  const [reqError, setReqError] = useState('')
-  const [reqSuccess, setReqSuccess] = useState('')
   const [scannedGym, setScannedGym] = useState(null)
   const [scannedGymLoading, setScannedGymLoading] = useState(false)
 
-  const getLocalDateStr = (d) => {
-    const year = d.getFullYear()
-    const month = String(d.getMonth() + 1).padStart(2, '0')
-    const date = String(d.getDate()).padStart(2, '0')
-    return `${year}-${month}-${date}`
-  }
-
   // Calculate check-in streaks dynamically from database logs (skipping Sundays as rest days)
-  const calculateStreak = (logs) => {
+  const calculateStreak = useCallback((logs) => {
     if (!logs || logs.length === 0) {
       setStreakCount(0)
       return
@@ -347,7 +321,7 @@ export default function MemberDashboard() {
     }
 
     setStreakCount(streak)
-  }
+  }, [])
 
   // Fetch Loyalty Coin transaction logs
   const fetchCoinsData = async (memberId) => {
@@ -369,7 +343,7 @@ export default function MemberDashboard() {
   }
 
   // Fetch member specific notifications + global announcements
-  const fetchMemberNotifications = async (memberId, gymId) => {
+  const fetchMemberNotifications = useCallback(async (memberId) => {
     setNotifsLoading(true)
     try {
       // 1. Fetch personal notifications
@@ -425,10 +399,10 @@ export default function MemberDashboard() {
     } finally {
       setNotifsLoading(false)
     }
-  }
+  }, [])
 
   // Automatic verification function to check for access pass expiry and send notification
-  const syncMemberNotifications = async (memberData) => {
+  const syncMemberNotifications = useCallback(async (memberData) => {
     if (!memberData || !memberData.expiry_date) return
 
     try {
@@ -493,7 +467,7 @@ export default function MemberDashboard() {
     } catch (err) {
       console.warn('Silent warning syncing member notifications:', err)
     }
-  }
+  }, [fetchMemberNotifications])
 
   // Mark single notification as read
   const markMemberNotifAsRead = async (notifId, type) => {
@@ -523,7 +497,6 @@ export default function MemberDashboard() {
 
   // Fetch Community Check-in Leaderboard
   const fetchLeaderboard = async (gymId) => {
-    setLeaderboardLoading(true)
     try {
       // 1. Automatically check and rotate season if expired (lazy trigger)
       try {
@@ -542,7 +515,6 @@ export default function MemberDashboard() {
 
       if (seasonData) {
         setCurrentSeason(seasonData.season_number)
-        setSeasonEndDate(seasonData.end_date)
       }
 
       // 3. Fetch current season members ranking
@@ -566,8 +538,6 @@ export default function MemberDashboard() {
       setLeaderboard(ranked)
     } catch (err) {
       console.error('Error fetching leaderboard:', err)
-    } finally {
-      setLeaderboardLoading(false)
     }
   }
 
@@ -655,8 +625,6 @@ export default function MemberDashboard() {
   // Fetch connection/membership details
   const loadMemberSystem = useCallback(async () => {
     if (!profile?.id) return
-    setLoading(true)
-    setReqError('')
 
     const executeFetch = async () => {
       // 0. Fetch latest profile details from database to compute onboarding completed and cooldowns
@@ -670,7 +638,6 @@ export default function MemberDashboard() {
 
       setOnboardingCompleted(dbProfile.onboarding_completed || false)
       setNameChangeCount(dbProfile.name_change_count || 0)
-      setLastNameChangeAt(dbProfile.last_name_change_at || null)
 
       // Calculate 3-month (90-day) cooldown for name/phone changes
       const chgCount = dbProfile.name_change_count || 0
@@ -702,7 +669,6 @@ export default function MemberDashboard() {
       }
       setAvatarCooldownTimeLeft(avDaysRemaining)
       setAvatarChangeCount(avChgCount)
-      setLastAvatarChangeAt(lastAvChgAt)
 
       // 1. Check if user is already an approved member
       const { data: memberData, error: memberError } = await supabase
@@ -792,11 +758,11 @@ export default function MemberDashboard() {
       }
     } catch (err) {
       console.error('Error loading member system:', err)
-      setReqError(err.message || 'Failed to load profile connection status.')
+      toast.error(err.message || 'Failed to load profile connection status.')
     } finally {
       setLoading(false)
     }
-  }, [profile?.id, profile?.full_name])
+  }, [profile?.id, calculateStreak, fetchMemberNotifications, syncMemberNotifications])
 
   useEffect(() => {
     loadMemberSystem()
@@ -844,8 +810,6 @@ export default function MemberDashboard() {
     localStorage.removeItem('scanned_gym_code')
     setScannedGym(null)
     setGymCode('')
-    setReqSuccess('')
-    setReqError('')
   }
 
   // Handle Gym Connection request submission
@@ -856,17 +820,15 @@ export default function MemberDashboard() {
     if (!targetCode) return
     
     setSubmittingReq(true)
-    setReqError('')
-    setReqSuccess('')
     try {
       const result = await connectionService.sendConnectionRequest(targetCode, profile.id)
-      setReqSuccess(`Request submitted to "${result.gym.gym_name}" successfully!`)
+      toast.success(`Request submitted to "${result.gym.gym_name}" successfully!`)
       setGymCode('')
       localStorage.removeItem('scanned_gym_code')
       setScannedGym(null)
       await loadMemberSystem()
     } catch (err) {
-      setReqError(err.message || 'Failed to submit request.')
+      toast.error(err.message || 'Failed to submit request.')
     } finally {
       setSubmittingReq(false)
     }
@@ -879,9 +841,9 @@ export default function MemberDashboard() {
     try {
       await connectionService.cancelConnectionRequest(connectionReq.id)
       setConnectionReq(null)
-      setReqSuccess('Connection request successfully cancelled.')
-    } catch (err) {
-      setReqError('Failed to cancel request.')
+      toast.success('Connection request successfully cancelled.')
+    } catch {
+      toast.error('Failed to cancel request.')
     } finally {
       setLoading(false)
     }

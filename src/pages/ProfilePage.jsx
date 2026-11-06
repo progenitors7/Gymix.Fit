@@ -1,10 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { 
   User, Phone, Camera, Trash2, 
   Building, Copy, Check, ArrowLeft,
-  ShieldCheck, ExternalLink, Settings, CreditCard, Sparkles
-} from 'lucide-react'
+  ShieldCheck, Settings, CreditCard} from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../hooks/useAuth'
 import { useGym } from '../hooks/useGym'
@@ -16,31 +15,28 @@ export default function ProfilePage() {
   const { gym, updateGymName } = useGym()
   const fileInputRef = useRef(null)
 
-  const [profileName, setProfileName] = useState(profile?.full_name || '')
-  const [profilePhone, setProfilePhone] = useState(profile?.phone_number || '')
-  const [profileGender, setProfileGender] = useState(profile?.gender || 'male')
-  const [profileAvatar, setProfileAvatar] = useState(profile?.avatar_url || '')
+  const [profileDraft, setProfileDraft] = useState(null)
+  const draft = profileDraft?.id === profile?.id ? profileDraft?.values || {} : {}
+  const profileName = draft.name ?? profile?.full_name ?? ''
+  const profilePhone = draft.phone ?? profile?.phone_number ?? ''
+  const profileGender = draft.gender ?? profile?.gender ?? 'male'
+  const profileAvatar = draft.avatar ?? profile?.avatar_url ?? ''
+  const updateDraft = (field, value) => setProfileDraft(previous => ({
+    id: profile?.id,
+    values: { ...(previous && previous.id === profile?.id ? previous.values : {}), [field]: value }
+  }))
+  const setProfileName = value => updateDraft('name', value)
+  const setProfilePhone = value => updateDraft('phone', value)
+  const setProfileGender = value => updateDraft('gender', value)
+  const setProfileAvatar = value => updateDraft('avatar', value)
 
   const [savingProfile, setSavingProfile] = useState(false)
   const [copiedGymCode, setCopiedGymCode] = useState(false)
 
-  const [newGymName, setNewGymName] = useState(gym?.gym_name || '')
+  const [gymNameDraft, setGymNameDraft] = useState(null)
+  const newGymName = gymNameDraft && gymNameDraft.id === gym?.id ? gymNameDraft.value : gym?.gym_name || ''
+  const setNewGymName = value => setGymNameDraft({ id: gym?.id, value })
   const [savingGymName, setSavingGymName] = useState(false)
-
-  useEffect(() => {
-    if (profile) {
-      setProfileName(profile.full_name || '')
-      setProfilePhone(profile.phone_number || '')
-      setProfileGender(profile.gender || 'male')
-      setProfileAvatar(profile.avatar_url || '')
-    }
-  }, [profile])
-
-  useEffect(() => {
-    if (gym) {
-      setNewGymName(gym.gym_name || '')
-    }
-  }, [gym])
 
   const compressImage = (file) => {
     return new Promise((resolve, reject) => {
@@ -120,6 +116,7 @@ export default function ProfilePage() {
       toast.success('Profile updated successfully!')
       if (refreshProfile) {
         await refreshProfile()
+        setProfileDraft(null)
       }
     } catch (err) {
       console.error('[Profile] Save failed:', err)
@@ -151,6 +148,7 @@ export default function ProfilePage() {
     setSavingGymName(true)
     try {
       await updateGymName(newGymName.trim())
+      setGymNameDraft(null)
       toast.success('Gym name updated successfully!')
     } catch (err) {
       console.error('[GymName] Update failed:', err)

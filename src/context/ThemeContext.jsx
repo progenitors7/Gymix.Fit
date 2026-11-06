@@ -1,12 +1,5 @@
-import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
-
-const ThemeContext = createContext({
-  theme: 'system', // 'system' | 'light' | 'dark' | 'abyss'
-  effectiveTheme: 'dark', // 'light' | 'dark' | 'abyss'
-  setTheme: () => {},
-  isDark: true,
-  isAbyss: false
-});
+import { useEffect, useState, useMemo } from 'react';
+import { ThemeContext } from './theme-context';
 
 const STORAGE_KEY = 'gymix_theme_preference';
 
@@ -108,12 +101,4 @@ export function ThemeProvider({ children }) {
       {children}
     </ThemeContext.Provider>
   );
-}
-
-export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
 }

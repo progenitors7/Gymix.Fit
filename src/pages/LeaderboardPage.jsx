@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Trophy, Info, History, X, User } from 'lucide-react'
+import { Trophy, Info, History, X } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useCurrentGym } from '../hooks/useCurrentGym'
 
@@ -10,7 +10,6 @@ export default function LeaderboardPage() {
   const [leaderboardLoading, setLeaderboardLoading] = useState(true)
   const [showLeaderboardInfo, setShowLeaderboardInfo] = useState(false)
   const [currentSeason, setCurrentSeason] = useState(1)
-  const [seasonEndDate, setSeasonEndDate] = useState(null)
   const [showHistoryModal, setShowHistoryModal] = useState(false)
   const [seasonHistory, setSeasonHistory] = useState({})
   const [historyLoading, setHistoryLoading] = useState(false)
@@ -35,7 +34,6 @@ export default function LeaderboardPage() {
 
       if (seasonData) {
         setCurrentSeason(seasonData.season_number)
-        setSeasonEndDate(seasonData.end_date)
       }
 
       // 3. Fetch standings ranking for the active season
@@ -112,7 +110,8 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     if (isReady && gymId) {
-      fetchLeaderboard(gymId)
+      const timer = setTimeout(() => fetchLeaderboard(gymId), 0)
+      return () => clearTimeout(timer)
     }
   }, [isReady, gymId, fetchLeaderboard])
 
@@ -420,9 +419,12 @@ export default function LeaderboardPage() {
                       
                       <div className="space-y-2">
                         {records.map((rec) => {
-                          let rankSymbol = '🥇'
-                          let colorClass = 'text-amber-500'
-                          if (rec.final_rank === 2) {
+                          let rankSymbol
+                          let colorClass
+                          if (rec.final_rank === 1) {
+                            rankSymbol = '🥇'
+                            colorClass = 'text-amber-500'
+                          } else if (rec.final_rank === 2) {
                             rankSymbol = '🥈'
                             colorClass = 'text-slate-500 dark:text-slate-300'
                           } else if (rec.final_rank === 3) {

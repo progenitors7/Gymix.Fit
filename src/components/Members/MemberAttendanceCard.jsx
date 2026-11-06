@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react'
-import { Calendar, Clock, LogIn, LogOut, Check, ChevronRight } from 'lucide-react'
+import { Calendar, LogIn } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
 
-export default function MemberAttendanceCard({ memberId, memberName, joinDate }) {
-  const [logs, setLogs] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+export default function MemberAttendanceCard({ memberId, joinDate }) {
+  const [result, setResult] = useState(null)
+  const loading = !!memberId && result?.memberId !== memberId
+  const logs = result?.memberId === memberId ? result.logs : []
+  const error = result?.memberId === memberId ? result.error : null
 
   useEffect(() => {
     if (!memberId) return
-    setLoading(true)
-    setError(null)
+    let active = true
 
     const fetchLogs = async () => {
       const { data, error: err } = await supabase
@@ -20,12 +20,14 @@ export default function MemberAttendanceCard({ memberId, memberName, joinDate })
         .order('check_in_time', { ascending: false })
 
       if (err) throw err
-      setLogs(data || [])
+      if (active) setResult({ memberId, logs: data || [], error: null })
     }
 
     fetchLogs()
-      .catch(e => setError(e.message || 'Failed to load logs'))
-      .finally(() => setLoading(false))
+      .catch(e => {
+        if (active) setResult({ memberId, logs: [], error: e.message || 'Failed to load logs' })
+      })
+    return () => { active = false }
   }, [memberId])
 
   // Compute calendar days for current month

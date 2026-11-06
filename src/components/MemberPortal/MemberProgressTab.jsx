@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { TrendingUp, Send, Copy, X, Check, Trash2, Camera, Upload, Building, Clock, Activity, ArrowRight } from 'lucide-react'
+import { TrendingUp, Send, Copy, Check, Camera } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
 import Logo from '../UI/Logo'
 import { toast } from 'react-hot-toast'
@@ -56,6 +56,11 @@ export default function MemberProgressTab({
   const handleAddProgressLog = async (e) => {
     e.preventDefault()
     if (!membership) return
+    const value = Number(newValue)
+    if (!Number.isFinite(value) || value <= 0) {
+      toast.error('Enter a weight greater than zero.')
+      return
+    }
     setLoggingProgress(true)
     try {
       const { error } = await supabase
@@ -64,7 +69,7 @@ export default function MemberProgressTab({
           member_id: membership.id,
           log_type: newLogType === 'PR' ? 'pr' : 'weight',
           exercise_name: newLogType === 'BODYWEIGHT' ? 'Body Weight' : newExerciseName,
-          value: parseFloat(newValue),
+          value,
           notes: newNotes.trim() || null,
           recorded_at: new Date().toISOString()
         })
@@ -559,6 +564,7 @@ export default function MemberProgressTab({
               <input 
                 type="number" 
                 step="0.1"
+                min="0.1"
                 value={newValue}
                 onChange={(e) => setNewValue(e.target.value)}
                 required

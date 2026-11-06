@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Zap, Sparkles } from 'lucide-react';
+import { ArrowLeft, Zap } from 'lucide-react';
 import SubscriptionForm from './SubscriptionForm';
 import { useSubscriptions } from '../../hooks/useSubscriptions';
 import { unifiedService } from '../../services/unifiedService';

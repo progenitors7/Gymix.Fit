@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../hooks/useAuth'
 import { isSuperAdmin } from '../config/admins'
@@ -10,8 +10,13 @@ export function GymProvider({ children }) {
   const [gym, setGym] = useState(null)
   const [gymLoading, setGymLoading] = useState(true)
   const [gymError, setGymError] = useState(null)
+  const requestRef = useRef(0)
+  const userId = user?.id
+  const cancelPendingRequests = useCallback(() => { requestRef.current++ }, [])
 
   const fetchGym = useCallback(async (targetUser) => {
+    const requestId = ++requestRef.current
+    const isCurrent = () => requestId === requestRef.current
     if (!targetUser) {
       setGym(null)
       setGymLoading(false)
@@ -45,6 +50,7 @@ export function GymProvider({ children }) {
             .limit(1)
             .maybeSingle();
 
+          if (!isCurrent()) return
           setGym({
             ...ghostGym,
             latest_saas_subscription: latestSub || null,
@@ -61,17 +67,16 @@ export function GymProvider({ children }) {
       }
     }
 
+    if (!isCurrent()) return
     // Try to load from cache first for instant UX
     const cacheKey = `gym_cache_${targetUser.id}`
     const cached = localStorage.getItem(cacheKey)
-    let hasCache = false
     if (cached) {
       try {
         const parsed = JSON.parse(cached)
         if (parsed) {
           setGym(parsed)
           setGymLoading(false)
-          hasCache = true
         }
       } catch (e) {
         console.error('[GymContext] Error parsing cached gym:', e)
@@ -85,7 +90,7 @@ export function GymProvider({ children }) {
     // Safety timeout: if fetch hangs beyond 8s, release loader only if we don't have cached data
     let completed = false
     const timer = setTimeout(() => {
-      if (!completed) {
+      if (!completed && isCurrent()) {
         console.warn('[GymContext] fetchGym timed out after 8 seconds!')
         completed = true
         if (!localStorage.getItem(cacheKey)) {
@@ -113,6 +118,10 @@ export function GymProvider({ children }) {
         }
       }
 
+      if (!isCurrent()) {
+        clearTimeout(timer)
+        return
+      }
       if (!gymData) {
         const emailPrefix = targetUser.email?.split('@')[0] || 'My'
         const initialGymName = targetUser.user_metadata?.gym_name || `${emailPrefix}'s Gym`
@@ -123,7 +132,7 @@ export function GymProvider({ children }) {
             // Unique constraint: gym already exists via DB trigger, re-fetch
             gymData = await getMyGym(targetUser.id)
             if (!gymData) {
-              throw new Error('Your gym exists but could not be loaded. Please try logging out and back in.')
+              throw new Error('Your gym exists but could not be loaded. Please try logging out and back in.', { cause: insertErr })
             }
           } else {
             throw insertErr
@@ -131,7 +140,7 @@ export function GymProvider({ children }) {
         }
       }
 
-      if (!completed) {
+      if (!completed && isCurrent()) {
         clearTimeout(timer)
         completed = true
         setGym(gymData)
@@ -142,7 +151,7 @@ export function GymProvider({ children }) {
       }
     } catch (err) {
       console.error('[GymContext] Error fetching gym:', err.message || err)
-      if (!completed) {
+      if (!completed && isCurrent()) {
         clearTimeout(timer)
         completed = true
         // Only trigger layout error if we don't even have cached data to show
@@ -159,15 +168,21 @@ export function GymProvider({ children }) {
     // Wait until auth is fully resolved (user + profile loaded)
     if (authLoading) return
 
-    if (user && profile && profile.role === 'owner') {
-      fetchGym(user)
-    } else {
-      // Not an owner (member, or no user) — no gym to fetch
-      setGym(null)
-      setGymLoading(false)
-      setGymError(null)
+    const timer = setTimeout(() => {
+      if (user && profile && profile.role === 'owner') {
+        fetchGym(user)
+      } else {
+        // Not an owner (member, or no user) — no gym to fetch.
+        setGym(null)
+        setGymLoading(false)
+        setGymError(null)
+      }
+    }, 0)
+    return () => {
+      clearTimeout(timer)
+      cancelPendingRequests()
     }
-  }, [user, profile, authLoading, fetchGym])
+  }, [user, profile, authLoading, fetchGym, cancelPendingRequests])
 
   const refreshGym = useCallback(async () => {
     const { data: { user: currentUser } } = await supabase.auth.getUser()
@@ -177,11 +192,11 @@ export function GymProvider({ children }) {
   const updateGymName = useCallback(async (newName) => {
     const updated = await updateGymNameService(newName)
     setGym(updated)
-    if (user?.id) {
-      localStorage.setItem(`gym_cache_${user.id}`, JSON.stringify(updated))
+    if (userId) {
+      localStorage.setItem(`gym_cache_${userId}`, JSON.stringify(updated))
     }
     return updated
-  }, [user?.id])
+  }, [userId])
 
   const value = {
     gym,

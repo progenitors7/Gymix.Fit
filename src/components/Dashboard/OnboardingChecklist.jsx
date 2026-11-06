@@ -83,7 +83,9 @@ export default function OnboardingChecklist({ profile, gym, stats }) {
     setIsDismissed(true);
     try {
       localStorage.setItem(DISMISS_KEY, 'true');
-    } catch {}
+    } catch {
+      // Dismissal still applies for this visit if browser storage is unavailable.
+    }
   };
 
   const nextPendingStep = steps.find(s => !s.completed);

@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, User, Tag, AlertTriangle, Search, Check, X, Phone, Sparkles, UserCheck } from 'lucide-react';
+import { Calendar, Tag, AlertTriangle, Search, Check, X, Phone } from 'lucide-react';
 import { useMembers } from '../../hooks/useMembers';
 import DatePicker from '../UI/DatePicker';
 import { planService } from '../../services/planService';
@@ -11,6 +11,8 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
   const navigate = useNavigate();
   const { members, fetchMembers } = useMembers();
   const [plans, setPlans] = useState([]);
+  const [plansLoaded, setPlansLoaded] = useState(false);
+  const [initializedMemberId, setInitializedMemberId] = useState(initialData?.plan_name ? initialData.member_id : null);
   const { gym } = useCurrentGym();
 
   const [memberSearch, setMemberSearch] = useState('');
@@ -27,9 +29,16 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
   });
 
   useEffect(() => {
+    let active = true;
     if (gym?.id) {
-      planService.getPlans(gym.id).then(setPlans).catch(console.error);
+      planService.getPlans(gym.id).then(data => {
+        if (active) { setPlans(data); setPlansLoaded(true); }
+      }).catch(error => {
+        console.error(error);
+        if (active) setPlansLoaded(true);
+      });
     }
+    return () => { active = false; };
   }, [gym?.id]);
 
   useEffect(() => {
@@ -50,7 +59,7 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
   }, []);
 
   // Helper: Populate dates and plan when a member is selected
-  const applyMemberDetails = (member, currentPlans = plans) => {
+  const applyMemberDetails = useCallback((member, currentPlans) => {
     if (!member) return;
     const todayStr = new Date().toISOString().split('T')[0];
     let suggestedStartDate = todayStr;
@@ -84,17 +93,21 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
 
       return next;
     });
-  };
+  }, []);
 
   // Auto-apply pre-selected initialData member when members load
   useEffect(() => {
-    if (initialData?.member_id && members.length > 0) {
+    if (initialData?.member_id && plansLoaded && initializedMemberId !== initialData.member_id && members.length > 0) {
       const m = members.find(item => item.id === initialData.member_id);
-      if (m && (!formData.member_id || formData.member_id !== m.id)) {
-        applyMemberDetails(m, plans);
+      if (m) {
+        const timer = setTimeout(() => {
+          applyMemberDetails(m, plans);
+          setInitializedMemberId(m.id);
+        }, 0);
+        return () => clearTimeout(timer);
       }
     }
-  }, [initialData?.member_id, members, plans]);
+  }, [initialData?.member_id, members, plans, plansLoaded, initializedMemberId, applyMemberDetails]);
 
   const selectedMember = useMemo(() => {
     return members.find(m => m.id === formData.member_id) || null;
@@ -120,9 +133,18 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
     setFormData(prev => {
       const next = { ...prev, [name]: value };
 
-      if (name === 'duration_type') {
-        if (value !== 'custom') {
-          next.expiry_date = subscriptionService.calculateExpiryDate(prev.start_date, value);
+      if (name === 'duration_type' || name === 'start_date') {
+        if (!next.start_date) {
+          next.expiry_date = '';
+        } else if (next.duration_type !== 'custom') {
+          next.expiry_date = subscriptionService.calculateExpiryDate(next.start_date, next.duration_type);
+        } else if (name === 'start_date') {
+          const plan = plans.find(p => p.name === next.plan_name);
+          if (plan) {
+            const date = new Date(`${next.start_date}T00:00:00Z`);
+            date.setUTCDate(date.getUTCDate() + Number(plan.duration_days));
+            next.expiry_date = date.toISOString().split('T')[0];
+          }
         }
       }
 
@@ -403,22 +425,7 @@ export default function SubscriptionForm({ onSubmit, initialData = null, isSubmi
           <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 ml-1">Activation Date</label>
           <DatePicker
             value={formData.start_date}
-            onChange={(val) => {
-              setFormData(prev => {
-                const next = { ...prev, start_date: val };
-                if (prev.duration_type && prev.duration_type !== 'custom') {
-                  next.expiry_date = subscriptionService.calculateExpiryDate(val, prev.duration_type);
-                } else {
-                  const matchedPlan = plans.find(p => p.name === prev.plan_name);
-                  if (matchedPlan) {
-                    const date = new Date(val);
-                    date.setDate(date.getDate() + matchedPlan.duration_days);
-                    next.expiry_date = date.toISOString().split('T')[0];
-                  }
-                }
-                return next;
-              });
-            }}
+            onChange={(val) => handleChange({ target: { name: 'start_date', value: val } })}
           />
         </div>
 

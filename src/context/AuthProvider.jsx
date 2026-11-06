@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { AuthContext } from './AuthContext'
 import { isNativeCapacitorApp } from '../utils/platform'
@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  const fetchProfile = async (uid) => {
+  const fetchProfile = useCallback(async (uid) => {
     if (!uid) return null
     const { data, error } = await supabase
       .from('profiles')
@@ -29,9 +29,9 @@ export function AuthProvider({ children }) {
       return null
     }
     return data
-  }
+  }, [])
 
-  const buildFallbackProfile = (currUser) => {
+  const buildFallbackProfile = useCallback((currUser) => {
     const cached = localStorage.getItem(`profile_cache_${currUser.id}`)
     if (cached) {
       try {
@@ -55,9 +55,9 @@ export function AuthProvider({ children }) {
       email: currUser.email,
       role: isAdmin ? 'super_admin' : savedRole
     }
-  }
+  }, [])
 
-  const syncProfile = async (currUser) => {
+  const syncProfile = useCallback(async (currUser) => {
     if (!currUser) {
       setProfile(null)
       return null
@@ -137,7 +137,7 @@ export function AuthProvider({ children }) {
 
     syncPromiseCache.set(currUser.id, promise)
     return promise
-  }
+  }, [fetchProfile, buildFallbackProfile])
 
   useEffect(() => {
     let settled = false
@@ -381,7 +381,7 @@ export function AuthProvider({ children }) {
         clearTimeout(timer)
         subscription.unsubscribe()
       }
-    }, [])
+    }, [syncProfile])
 
   const signUp = async (email, password, role = 'member', fullName = '', gymName = '') => {
     try {

@@ -1,54 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Megaphone, X, Info, AlertTriangle, CheckCircle, Sparkles } from 'lucide-react';
 import { superAdminService } from '../../services/superAdminService';
 
 export default function BroadcastBanner() {
   const [broadcasts, setBroadcasts] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isVisible, setIsVisible] = useState(false);
   const [dismissedIds, setDismissedIds] = useState(() => {
-    const saved = localStorage.getItem('dismissed_broadcasts');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = JSON.parse(localStorage.getItem('dismissed_broadcasts') || '[]');
+      return Array.isArray(saved) ? saved : [];
+    } catch {
+      return [];
+    }
   });
 
   useEffect(() => {
-    fetchBroadcasts();
-  }, []);
-
-  const fetchBroadcasts = async () => {
-    try {
-      const data = await superAdminService.getActiveBroadcasts();
-      // Filter out dismissed ones
-      const active = data.filter(b => !dismissedIds.includes(b.id));
-      setBroadcasts(active);
-      if (active.length > 0) {
-        setIsVisible(true);
+    let active = true;
+    const fetchBroadcasts = async () => {
+      try {
+        const data = await superAdminService.getActiveBroadcasts();
+        if (active) setBroadcasts(data || []);
+      } catch (error) {
+        console.error('Error fetching broadcasts:', error);
       }
-    } catch (error) {
-      console.error('Error fetching broadcasts:', error);
-    }
-  };
+    };
+    fetchBroadcasts();
+    return () => { active = false; };
+  }, []);
 
   const dismissBroadcast = (id) => {
     const newDismissed = [...dismissedIds, id];
     setDismissedIds(newDismissed);
-    localStorage.setItem('dismissed_broadcasts', JSON.stringify(newDismissed));
-    
-    // Remove from local state
-    const remaining = broadcasts.filter(b => b.id !== id);
-    setBroadcasts(remaining);
-    
-    if (remaining.length === 0) {
-      setIsVisible(false);
-    } else {
-      // Show next one if available
-      setCurrentIndex(0);
+    try {
+      localStorage.setItem('dismissed_broadcasts', JSON.stringify(newDismissed));
+    } catch (error) {
+      console.warn('Could not save dismissed announcements:', error);
     }
   };
 
-  if (!isVisible || broadcasts.length === 0) return null;
+  const activeBroadcasts = broadcasts.filter(b => !dismissedIds.includes(b.id));
+  if (activeBroadcasts.length === 0) return null;
 
-  const current = broadcasts[currentIndex];
+  const current = activeBroadcasts[0];
 
   const getTypeStyles = (type) => {
     switch (type) {
@@ -103,12 +95,12 @@ export default function BroadcastBanner() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {broadcasts.length > 1 && (
+          {activeBroadcasts.length > 1 && (
             <div className="flex items-center gap-1 mr-4">
-              {broadcasts.map((_, idx) => (
+              {activeBroadcasts.map((_, idx) => (
                 <div 
                   key={idx}
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentIndex ? 'bg-slate-900 dark:bg-white w-3' : 'bg-slate-300 dark:bg-white/20'}`}
+                  className={`w-1.5 h-1.5 rounded-full transition-all ${idx === 0 ? 'bg-slate-900 dark:bg-white w-3' : 'bg-slate-300 dark:bg-white/20'}`}
                 />
               ))}
             </div>

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, Search, Calendar, Clock, AlertCircle,
-  Phone, ArrowRight, Target, ShieldCheck, X, History, Edit3, Layers, Zap
+  Phone, X, History, Edit3, Layers, Zap
 } from 'lucide-react';
 import { useSubscriptions } from '../../hooks/useSubscriptions';
 import { subscriptionService } from '../../services/subscriptionService';
@@ -63,7 +63,8 @@ function MemberDetailModal({ sub, onClose, onEdit, onRenew }) {
   }, [memberId, sub.gym_id]);
 
   useEffect(() => {
-    fetchHistory();
+    const timer = setTimeout(fetchHistory, 0);
+    return () => clearTimeout(timer);
   }, [fetchHistory]);
 
   const joinDate = sub.members?.join_date;
@@ -265,7 +266,8 @@ export default function SubscriptionsPage() {
   const observerRef = useRef();
 
   useEffect(() => {
-    fetchSubscriptions();
+    const timer = setTimeout(fetchSubscriptions, 0);
+    return () => clearTimeout(timer);
   }, [fetchSubscriptions]);
 
   // Group subscriptions by member and select the current/most relevant subscription for each
@@ -315,10 +317,6 @@ export default function SubscriptionsPage() {
   });
 
   const visibleSubscriptions = filteredSubscriptions.slice(0, visibleCount);
-
-  useEffect(() => {
-    setVisibleCount(30);
-  }, [searchTerm, statusFilter]);
 
   useEffect(() => {
     if (loading || visibleCount >= filteredSubscriptions.length) return;
@@ -377,12 +375,12 @@ export default function SubscriptionsPage() {
               type="text"
               placeholder="Search athlete by name, phone, or plan..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); setVisibleCount(30); }}
               className="w-full bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 transition-all"
             />
             {searchTerm && (
               <button
-                onClick={() => setSearchTerm('')}
+                onClick={() => { setSearchTerm(''); setVisibleCount(30); }}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 transition-colors cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
@@ -395,7 +393,7 @@ export default function SubscriptionsPage() {
               return (
                 <button
                   key={filterKey}
-                  onClick={() => setStatusFilter(filterKey)}
+                  onClick={() => { setStatusFilter(filterKey); setVisibleCount(30); }}
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize whitespace-nowrap transition-colors duration-150 cursor-pointer ${
                     active
                       ? 'bg-violet-600 text-white'
@@ -441,7 +439,7 @@ export default function SubscriptionsPage() {
             </p>
             {searchTerm || statusFilter !== 'all' ? (
               <button
-                onClick={() => { setSearchTerm(''); setStatusFilter('all'); }}
+                onClick={() => { setSearchTerm(''); setStatusFilter('all'); setVisibleCount(30); }}
                 className="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline cursor-pointer"
               >
                 Reset Filters

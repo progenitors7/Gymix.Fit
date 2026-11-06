@@ -1,4 +1,3 @@
-import React from 'react';
 import { Sun, Moon, Laptop, Compass } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 

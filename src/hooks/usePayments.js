@@ -6,7 +6,7 @@ import { invalidateDashboardStatsCache } from './useDashboardStats';
 import { useRealtimeSync } from './useRealtimeSync';
 
 export function usePayments() {
-  const { gym, isReady } = useCurrentGym();
+  const { gymId, isReady } = useCurrentGym();
   const [payments, setPayments] = useState([]);
   const [storeOrders, setStoreOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,7 +23,7 @@ export function usePayments() {
       setError(null);
       
       // 1. Fetch Subscription Payments
-      const data = await paymentService.getAllPayments(gym?.id);
+      const data = await paymentService.getAllPayments(gymId);
       setPayments(data ?? []);
 
       // 2. Fetch Completed Store Orders
@@ -36,7 +36,7 @@ export function usePayments() {
             phone_number
           )
         `)
-        .eq('gym_id', gym?.id)
+        .eq('gym_id', gymId)
         .eq('status', 'completed')
         .order('created_at', { ascending: false })
         .limit(5000);
@@ -49,17 +49,17 @@ export function usePayments() {
     } finally {
       setLoading(false);
     }
-  }, [isReady, gym?.id]);
+  }, [isReady, gymId]);
 
   useEffect(() => {
-    if (isReady && gym?.id) {
-      fetchPayments();
-    }
-  }, [isReady, gym?.id, fetchPayments]);
+    if (!isReady || !gymId) return;
+    const timer = setTimeout(fetchPayments, 0);
+    return () => clearTimeout(timer);
+  }, [isReady, gymId, fetchPayments]);
 
   // Live Supabase Realtime Sync for payments and store orders
   useRealtimeSync({
-    gymId: gym?.id,
+    gymId,
     tables: ['payments', 'store_orders'],
     onUpdate: () => {
       fetchPayments();
@@ -70,8 +70,8 @@ export function usePayments() {
     try {
       setLoading(true);
       setError(null);
-      const newPayment = await paymentService.createPayment(gym.id, paymentData);
-      invalidateDashboardStatsCache(gym?.id);
+      const newPayment = await paymentService.createPayment(gymId, paymentData);
+      invalidateDashboardStatsCache(gymId);
       await fetchPayments();
       return newPayment;
     } catch (err) {
@@ -88,7 +88,7 @@ export function usePayments() {
       setLoading(true);
       setError(null);
       await paymentService.updatePayment(id, paymentData);
-      invalidateDashboardStatsCache(gym?.id);
+      invalidateDashboardStatsCache(gymId);
       await fetchPayments();
     } catch (err) {
       console.error('Error updating payment:', err);
@@ -104,7 +104,7 @@ export function usePayments() {
       setLoading(true);
       setError(null);
       await paymentService.deletePayment(id);
-      invalidateDashboardStatsCache(gym?.id);
+      invalidateDashboardStatsCache(gymId);
       setPayments(prev => prev.filter(p => p.id !== id));
     } catch (err) {
       console.error('Error deleting payment:', err);

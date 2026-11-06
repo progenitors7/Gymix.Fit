@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Settings, 
-  Power, 
-  UserPlus, 
-  MessageCircle, 
+import { useCallback, useState, useEffect } from 'react';
+import {
+
+  Power,
+  UserPlus,
+  MessageCircle,
   Save,
   Loader2,
   ShieldAlert,
-  Sliders,
-  CheckCircle2
+  Sliders
 } from 'lucide-react';
 import { superAdminService } from '../../services/superAdminService';
 import Toast from '../UI/Toast';
@@ -19,27 +18,34 @@ export default function SystemSettings() {
   const [saving, setSaving] = useState(null);
   const [toast, setToast] = useState({ message: '', type: 'success' });
 
-  const showToast = (message, type = 'success') => {
+  const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast({ message: '', type: 'success' }), 4000);
-  };
-
-  useEffect(() => {
-    fetchSettings();
   }, []);
 
-  async function fetchSettings(quiet = false) {
-    try {
-      if (!quiet) setLoading(true);
-      const data = await superAdminService.getSystemSettings();
-      setSettings(data || []);
-    } catch (err) {
-      console.error(err);
-      showToast('Failed to load system settings', 'error');
-    } finally {
-      if (!quiet) setLoading(false);
-    }
+
+  const loadSettings = useCallback((quiet = false) => {
+    return superAdminService.getSystemSettings()
+      .then((data) => {
+        setSettings(data || []);
+      })
+      .catch(err => {
+        console.error(err);
+        showToast('Failed to load system settings', 'error');
+      })
+      .finally(() => {
+        if (!quiet) setLoading(false);
+      });
+  }, [showToast]);
+
+  function fetchSettings(quiet = false) {
+    if (!quiet) setLoading(true);
+    return loadSettings(quiet);
   }
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   async function handleUpdate(key, value) {
     try {
@@ -47,7 +53,7 @@ export default function SystemSettings() {
       await superAdminService.updateSystemSetting(key, value);
       setSettings(prev => prev.map(s => s.key === key ? { ...s, value } : s));
       showToast(`${key.replace(/_/g, ' ').toUpperCase()} updated successfully`);
-    } catch (err) {
+    } catch {
       await fetchSettings(true);
       showToast('Failed to update setting', 'error');
     } finally {
@@ -66,10 +72,10 @@ export default function SystemSettings() {
 
   return (
     <div className="space-y-8 pb-12 animate-in fade-in duration-300 max-w-4xl mx-auto">
-      <Toast 
-        message={toast.message} 
-        type={toast.type} 
-        onClose={() => setToast({ message: '', type: 'success' })} 
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ message: '', type: 'success' })}
       />
 
       {/* Header Section */}
@@ -93,16 +99,16 @@ export default function SystemSettings() {
           const isRegistration = setting.key === 'allow_new_registrations';
 
           return (
-            <div 
+            <div
               key={setting.key}
               className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all"
             >
               <div className="flex items-start sm:items-center gap-4">
                 <div className={`p-3 rounded-2xl shrink-0 ${
-                  isMaintenance 
-                    ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400' 
-                    : isRegistration 
-                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400' 
+                  isMaintenance
+                    ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400'
+                    : isRegistration
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400'
                     : 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400'
                 }`}>
                   {isMaintenance ? <Power className="w-5 h-5" /> :
@@ -115,10 +121,10 @@ export default function SystemSettings() {
                     {setting.key.replace(/_/g, ' ').toUpperCase()}
                   </h4>
                   <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-lg mt-0.5 leading-relaxed">
-                    {isMaintenance 
-                      ? 'Lock the entire platform for maintenance. Non-super admin sessions will be blocked with a system notice.' 
-                      : isRegistration 
-                      ? 'Enable or pause new gym owner registration on the onboarding gateway.' 
+                    {isMaintenance
+                      ? 'Lock the entire platform for maintenance. Non-super admin sessions will be blocked with a system notice.'
+                      : isRegistration
+                      ? 'Enable or pause new gym owner registration on the onboarding gateway.'
                       : 'Define global configuration parameters across platform instances.'}
                   </p>
                 </div>
@@ -132,8 +138,8 @@ export default function SystemSettings() {
                     onClick={() => handleUpdate(setting.key, !setting.value)}
                     disabled={saving === setting.key}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                      setting.value 
-                        ? (isMaintenance ? 'bg-rose-500' : 'bg-violet-600') 
+                      setting.value
+                        ? (isMaintenance ? 'bg-rose-500' : 'bg-violet-600')
                         : 'bg-slate-300 dark:bg-zinc-700'
                     }`}
                   >
@@ -150,19 +156,19 @@ export default function SystemSettings() {
                   </button>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <input 
+                    <input
                       type="text"
                       value={typeof setting.value === 'object' ? JSON.stringify(setting.value) : (setting.value ?? '')}
                       onChange={(e) => {
                         let val = e.target.value;
                         if (typeof setting.value === 'object') {
-                          try { val = JSON.parse(e.target.value); } catch (_) {}
+                          try { val = JSON.parse(e.target.value); } catch { val = e.target.value; }
                         }
                         setSettings(prev => prev.map(s => s.key === setting.key ? { ...s, value: val } : s));
                       }}
                       className="px-3 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 w-48 sm:w-60"
                     />
-                    <button 
+                    <button
                       onClick={() => handleUpdate(setting.key, setting.value)}
                       disabled={saving === setting.key}
                       className="p-2 bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white rounded-xl transition-all disabled:opacity-50 cursor-pointer"

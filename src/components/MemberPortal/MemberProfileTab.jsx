@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   User, Phone, Sparkles, Upload, Camera, Trash2, 
@@ -15,19 +15,26 @@ export function MemberProfileTab({
   refreshProfile,
   cooldownTimeLeft,
   avatarCooldownTimeLeft,
-  nameChangeCount,
-  avatarChangeCount,
   setActiveTab
 }) {
-  const [profileName, setProfileName] = useState(profile?.full_name || '')
-  const [profilePhone, setProfilePhone] = useState(membership?.phone_number || profile?.phone_number || '')
-  const [profileGender, setProfileGender] = useState(membership?.gender || profile?.gender || 'male')
-  const [profileAvatar, setProfileAvatar] = useState(membership?.avatar_url || profile?.avatar_url || '')
+  const draftKey = `${profile?.id}:${membership?.id}`
+  const [draft, setDraft] = useState({})
+  const currentDraft = draft.key === draftKey ? draft : {}
+  const profileName = currentDraft.name ?? profile?.full_name ?? ''
+  const profilePhone = currentDraft.phone ?? membership?.phone_number ?? profile?.phone_number ?? ''
+  const profileGender = currentDraft.gender ?? membership?.gender ?? profile?.gender ?? 'male'
+  const profileAvatar = currentDraft.avatar ?? membership?.avatar_url ?? profile?.avatar_url ?? ''
+  const updateDraft = (field, value) => setDraft(current => ({
+    ...(current.key === draftKey ? current : {}), key: draftKey, [field]: value
+  }))
+  const setProfileName = value => updateDraft('name', value)
+  const setProfilePhone = value => updateDraft('phone', value)
+  const setProfileGender = value => updateDraft('gender', value)
+  const setProfileAvatar = value => updateDraft('avatar', value)
 
   const [savingProfile, setSavingProfile] = useState(false)
   const [profileSuccess, setProfileSuccess] = useState('')
   const [profileError, setProfileError] = useState('')
-  const [avatarSize, setAvatarSize] = useState(null)
   
   const [showCamera, setShowCamera] = useState(false)
   const [cameraStream, setCameraStream] = useState(null)
@@ -36,29 +43,6 @@ export function MemberProfileTab({
   const [copiedAthleteId, setCopiedAthleteId] = useState(false)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
 
-  useEffect(() => {
-    if (profile) {
-      setProfileName(profile.full_name || '')
-    }
-    const phoneVal = membership?.phone_number || profile?.phone_number || ''
-    const genderVal = membership?.gender || profile?.gender || 'male'
-    const avatarVal = membership?.avatar_url || profile?.avatar_url || ''
-    setProfilePhone(phoneVal)
-    setProfileGender(genderVal)
-    setProfileAvatar(avatarVal)
-    if (avatarVal && avatarVal.startsWith('data:')) {
-      setAvatarSize(getBase64SizeKB(avatarVal))
-    } else {
-      setAvatarSize(null)
-    }
-  }, [profile, membership])
-
-  const getBase64SizeKB = (base64Str) => {
-    if (!base64Str) return null
-    const stringLength = base64Str.length - 'data:image/jpeg;base64,'.length
-    const sizeInBytes = 4 * Math.ceil(stringLength / 3) * 0.562489633
-    return (sizeInBytes / 1024).toFixed(1)
-  }
 
   const compressImage = (file) => {
     return new Promise((resolve, reject) => {
@@ -139,7 +123,6 @@ export function MemberProfileTab({
 
     const base64 = canvas.toDataURL('image/jpeg', 0.35)
     setProfileAvatar(base64)
-    setAvatarSize(getBase64SizeKB(base64))
     stopCamera()
   }
 
@@ -150,7 +133,6 @@ export function MemberProfileTab({
     try {
       const base64 = await compressImage(file)
       setProfileAvatar(base64)
-      setAvatarSize(getBase64SizeKB(base64))
     } catch (err) {
       console.error('[File] Error compressing image:', err)
       setProfileError('Failed to process image. Select another file.')
@@ -163,7 +145,6 @@ export function MemberProfileTab({
       const googlePic = currentUser?.user_metadata?.avatar_url || currentUser?.user_metadata?.picture
       if (googlePic) {
         setProfileAvatar(googlePic)
-        setAvatarSize(null)
         setProfileSuccess('Google profile photo imported! ✨')
       } else {
         setProfileError('No profile photo found in active Google Account.')
@@ -356,7 +337,7 @@ export function MemberProfileTab({
       setProfileSuccess('Successfully disconnected from your gym. Your data will be kept for 30 days in case you wish to rejoin.')
       await loadMemberSystem()
       setActiveTab('pass')
-    } catch (err) {
+    } catch {
       setProfileError('Failed to leave gym. Please check your network.')
     } finally {
       setSavingProfile(false)
@@ -485,7 +466,6 @@ export function MemberProfileTab({
                     type="button"
                     onClick={() => {
                       setProfileAvatar('');
-                      setAvatarSize(null);
                     }}
                     disabled={avatarCooldownTimeLeft > 0 || savingProfile}
                     className="p-2.5 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 hover:border-rose-500/35 text-rose-400 rounded-xl text-xs transition-all flex items-center justify-center cursor-pointer active:scale-95 disabled:opacity-50"
@@ -806,19 +786,20 @@ export function MemberOnboarding({
   refreshProfile,
   signOut
 }) {
-  const [onboardName, setOnboardName] = useState(profile?.full_name || '')
-  const [onboardPhone, setOnboardPhone] = useState(profile?.phone_number || '')
-  const [onboardGender, setOnboardGender] = useState(profile?.gender || 'male')
+  const [draft, setDraft] = useState({})
+  const currentDraft = draft.id === profile?.id ? draft : {}
+  const onboardName = currentDraft.name ?? profile?.full_name ?? ''
+  const onboardPhone = currentDraft.phone ?? profile?.phone_number ?? ''
+  const onboardGender = currentDraft.gender ?? profile?.gender ?? 'male'
+  const updateDraft = (field, value) => setDraft(current => ({
+    ...(current.id === profile?.id ? current : {}), id: profile?.id, [field]: value
+  }))
+  const setOnboardName = value => updateDraft('name', value)
+  const setOnboardPhone = value => updateDraft('phone', value)
+  const setOnboardGender = value => updateDraft('gender', value)
   const [onboardSaving, setOnboardSaving] = useState(false)
   const [onboardError, setOnboardError] = useState('')
 
-  useEffect(() => {
-    if (profile) {
-      setOnboardName(profile.full_name || '')
-      setOnboardPhone(profile.phone_number || '')
-      setOnboardGender(profile.gender || 'male')
-    }
-  }, [profile])
 
   const handleOnboardSubmit = async (e) => {
     e.preventDefault()

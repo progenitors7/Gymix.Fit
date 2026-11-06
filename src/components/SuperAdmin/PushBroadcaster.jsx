@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { 
   Send, 
   Smartphone, 
   Users, 
   Radio,
   RefreshCw,
-  Clock,
   Info,
-  ShieldCheck,
   Volume2
 } from 'lucide-react';
 import { superAdminService } from '../../services/superAdminService';
@@ -18,7 +16,7 @@ export default function PushBroadcaster() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState({ message: '', type: 'success' });
-  const [dispatchHistory, setDispatchHistory] = useState([]);
+  const [, setDispatchHistory] = useState([]);
 
   const [form, setForm] = useState({
     title: '',
@@ -29,26 +27,33 @@ export default function PushBroadcaster() {
     playSound: true
   });
 
-  const showToast = (message, type = 'success') => {
+  const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
-  };
-
-  useEffect(() => {
-    fetchTokens();
   }, []);
 
-  async function fetchTokens() {
-    try {
-      setLoading(true);
-      const data = await superAdminService.getPushTokens();
-      setTokens(data || []);
-    } catch (err) {
-      console.error(err);
-      showToast('Notice: Could not load device fleet list', 'info');
-    } finally {
-      setLoading(false);
-    }
+
+  const loadTokens = useCallback(() => {
+    return superAdminService.getPushTokens()
+      .then((data) => {
+        setTokens(data || []);
+      })
+      .catch(err => {
+        console.error(err);
+        showToast('Notice: Could not load device fleet list', 'info');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [showToast]);
+
+  function fetchTokens() {
+    setLoading(true);
+    return loadTokens();
   }
+
+  useEffect(() => {
+    loadTokens();
+  }, [loadTokens]);
 
   async function handleSend(e) {
     e.preventDefault();
